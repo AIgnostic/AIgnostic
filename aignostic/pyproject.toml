@@ -1,0 +1,36 @@
+[tool.coverage.run]
+branch = true
+source = [ "aignostic" ]
+
+[tool.coverage.report]
+exclude_lines = ['if TYPE_CHECKING:']
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report html:'../coverage/aignostic/html' --cov-report xml:'../coverage/aignostic/coverage.xml' --html='../reports/aignostic/unittests/html/index.html' --junitxml='../reports/aignostic/unittests/junit.xml'"
+
+[tool.poetry]
+name = "aignostic"
+version = "1.0.0"
+description = "AIgnostic Risk Monitoring and Auditing"
+authors = [ ]
+license = 'Proprietary'
+readme = 'README.md'
+
+  [[tool.poetry.packages]]
+  include = "aignostic"
+
+  [tool.poetry.dependencies]
+  python = ">=3.9,<3.11"
+
+  [tool.poetry.group.dev.dependencies]
+  autopep8 = "2.3.1"
+  flake8 = "7.1.1"
+  pytest = "8.3.4"
+  pytest-sugar = "1.0.0"
+  pytest-cov = "6.0.0"
+  pytest-html = "4.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
