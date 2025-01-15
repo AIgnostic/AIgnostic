@@ -4,6 +4,8 @@ FROM python:3.12 AS builder
 # Set the working directory in the container
 WORKDIR /app
 
+# Metadata
+LABEL org.opencontainers.image.source = "https://github.com/AIgnostic/AIgnostic"
 
 # Install Node and pipx & poetry
 RUN apt-get update && apt-get install -y --no-install-suggests --no-install-recommends curl
