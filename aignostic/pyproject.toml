@@ -1,6 +1,6 @@
 [tool.coverage.run]
 branch = true
-source = [ "aignostic" ]
+source = ["aignostic"]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
@@ -13,28 +13,29 @@ addopts = "--cov --cov-report html:'../coverage/aignostic/html' --cov-report xml
 name = "aignostic"
 version = "1.0.0"
 description = "AIgnostic Risk Monitoring and Auditing"
-authors = [ ]
+authors = []
 license = 'Proprietary'
 readme = 'README.md'
 
-  [[tool.poetry.packages]]
-  include = "aignostic"
+[[tool.poetry.packages]]
+include = "aignostic"
 
-  [tool.poetry.dependencies]
-  python = ">=3.10,<3.13"
-  folktables = "^0.0.12"
-  numpy = "^2.2.1"
-  pydantic = "^2.10.5"
-  scikit-learn = "^1.6.1"
-  pytest = "^8.3.4"
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+folktables = "^0.0.12"
+numpy = "^2.2.1"
+scikit-learn = "^1.6.1"
+pytest = "^8.3.4"
+fastapi = { extras = ["standard"], version = "^0.115.6" }
+pydantic = "^2.10.5"
 
-  [tool.poetry.group.dev.dependencies]
-  autopep8 = "2.3.1"
-  flake8 = "7.1.1"
-  pytest = "8.3.4"
-  pytest-sugar = "1.0.0"
-  pytest-cov = "6.0.0"
-  pytest-html = "4.1.1"
+[tool.poetry.group.dev.dependencies]
+autopep8 = "2.3.1"
+flake8 = "7.1.1"
+pytest = "8.3.4"
+pytest-sugar = "1.0.0"
+pytest-cov = "6.0.0"
+pytest-html = "4.1.1"
 
 [build-system]
 requires = ["poetry-core"]
