@@ -31,7 +31,7 @@ jobs:
         uses: snok/install-poetry@v1
 
       - name: Inject export plugin (required by NX)
-        run: poetry self add poetry-plugin
+        run: poetry self add poetry-plugin-export
 
       # This enables task distribution via Nx Cloud
       # Run this command as early as possible, before dependencies are installed
