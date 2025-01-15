@@ -30,6 +30,9 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
+      - name: Inject export plugin (required by NX)
+        run: pipx inject poetry poetry-plugin-export
+
       # This enables task distribution via Nx Cloud
       # Run this command as early as possible, before dependencies are installed
       # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
