@@ -21,7 +21,7 @@ readme = 'README.md'
   include = "aignostic"
 
   [tool.poetry.dependencies]
-  python = ">=3.9,<3.11"
+  python = ">=3.9,<3.13"
 
   [tool.poetry.group.dev.dependencies]
   autopep8 = "2.3.1"
