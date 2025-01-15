@@ -67,6 +67,13 @@
         "cwd": "aignostic"
       },
       "cache": true
+    },
+    "container": {
+      "executor": "@nx-tools/nx-container:build",
+      "options": {
+        "context": "{workspaceRoot}",
+        "file": "{workspaceRoot}/aignostic/Dockerfile"
+      }
     }
   },
   "tags": [],

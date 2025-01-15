@@ -11,6 +11,10 @@
     ]
   },
   "plugins": [
-    "@nxlv/python"
+    "@nxlv/python",
+    {
+      "plugin": "@nx-tools/nx-container",
+      "options": {}
+    }
   ]
 }
