@@ -1,3 +1,3 @@
 """Unit tests configuration module."""
 
-pytest_plugins = []
+# pytest_plugins = []
