@@ -21,7 +21,10 @@ readme = 'README.md'
   include = "aignostic"
 
   [tool.poetry.dependencies]
-  python = ">=3.9,<3.13"
+  python = ">=3.10,<3.13"
+  folktables = "^0.0.12"
+  numpy = "^2.2.1"
+  pydantic = "^2.10.5"
 
   [tool.poetry.group.dev.dependencies]
   autopep8 = "2.3.1"
