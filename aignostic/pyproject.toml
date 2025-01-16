@@ -26,6 +26,7 @@ readme = 'README.md'
   numpy = "^2.2.1"
   pydantic = "^2.10.5"
   scikit-learn = "^1.6.1"
+  pytest = "^8.3.4"
 
   [tool.poetry.group.dev.dependencies]
   autopep8 = "2.3.1"
