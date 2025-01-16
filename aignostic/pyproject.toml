@@ -25,6 +25,7 @@ readme = 'README.md'
   folktables = "^0.0.12"
   numpy = "^2.2.1"
   pydantic = "^2.10.5"
+  scikit-learn = "^1.6.1"
 
   [tool.poetry.group.dev.dependencies]
   autopep8 = "2.3.1"
