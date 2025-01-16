@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
 import pickle
 
@@ -23,7 +23,7 @@ X_train, X_test, y_train, y_test, group_train, group_test = train_test_split(
     features, label, group, test_size=0.2, random_state=0)
 
 # Train the model using logistic regression and preprocess with standard scaling
-model = make_pipeline(StandardScaler(), LogisticRegression())
+model : Pipeline = make_pipeline(StandardScaler(), LogisticRegression())
 model.fit(X_train, y_train)
 
 yhat = model.predict(X_test)
@@ -36,6 +36,6 @@ print("Equality of opportunity violation: ", white_tpr - black_tpr)
 assert white_tpr - black_tpr <= 0.088 and white_tpr - black_tpr >= 0.086, "SciKit Model Not Trained Correctly"
 
 # save the model
-filename = 'scikit_model.sav'
+filename : str = 'scikit_model.sav'
 pickle.dump(model, open(filename, 'wb'))
 print("Success! Model trained and saved!")
