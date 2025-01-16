@@ -21,7 +21,11 @@ readme = 'README.md'
   include = "aignostic"
 
   [tool.poetry.dependencies]
-  python = ">=3.9,<3.13"
+  python = ">=3.10,<3.13"
+  numpy = ">=1.25.0,<2.1.4"
+  autogluon = "^1.2"
+  ipykernel = "^6.29.5"
+  folktables = "^0.0.12"
 
   [tool.poetry.group.dev.dependencies]
   autopep8 = "2.3.1"
