@@ -1,15 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI 
 from pydantic import BaseModel
-import pandas as pd
+import numpy as np
 
 app = FastAPI()
 
-
 class DataSet(BaseModel):
-    data: pd.DataFrame
+    data: np.ndarray
 
 class QueryOutput(BaseModel):
-    data: pd.DataFrame
+    data: np.ndarray
 
 @app.post("/query_all")
 def predict(dataset : DataSet) -> QueryOutput:
@@ -17,7 +16,7 @@ def predict(dataset : DataSet) -> QueryOutput:
     Given a dataset, predict the expected outputs for the model
     """
     # Return empty dataframe for now - fill this in with actual test models when trained 
-    return QueryOutput(data=pd.DataFrame())
+    return QueryOutput(data=np.array([]))
 
 """
 TODO: (Low Priority) Extend to batch querying / single datapoint querying for convenience

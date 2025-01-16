@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 from folktables import ACSIncome
 from autogluon.tabular import TabularPredictor
+
 
 
 if __name__ == '__main__':  
