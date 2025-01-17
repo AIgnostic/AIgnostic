@@ -50,7 +50,17 @@ jobs:
         with:
           node-version: 20
           cache: "npm"
+      # Cache python venv
+      - uses: actions/cache@v2
+        id: cache-venv-aignostic # name for referring later
+        with:
+          path: ./aignostic/.venv/ # what we cache: the virtualenv
+          # The cache key depends on requirements.txt
+          key: ${{ runner.os }}-venv-${{ hashFiles('aignostic/poetry.lock') }}-${{ hashFiles('aignostic/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
 
+      # Insall npm deps so NX works
       - run: npm ci --legacy-peer-deps
       - uses: nrwl/nx-set-shas@v4
 
@@ -60,12 +70,13 @@ jobs:
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
       # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
+      # True build step: Run lint, then test, then build
       - run: npx nx affected -t lint test build
   docker:
     # Note that build is not a dependency of this job, as this will build the same stuff as the build job anyway
     # However no point in building if lint or test fails!
     needs:
-      - main
+      - main # no point doing this if project doesn't work!
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -84,11 +95,17 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # Setup the tags for the docker image
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # What the tags mean:
+          # 1. Tag docker image with the branch name
+          # 2. Tag docker image with the PR number e.g. pr-1
+          # 3. Tag docker image with the commit SHA
+          # 4. Tag docker image with 'latest' if it's the default branch (main)
           # tags: |
           #   type=ref,event=branch
           #   type=ref,event=tag
@@ -101,6 +118,7 @@ jobs:
             type=ref,event=pr
             type=sha
             type=raw,value=latest
+      # Build tags with the tags we setup in the previous step
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@v6
@@ -115,7 +133,7 @@ jobs:
           cache-to: type=gha,mode=max
   deploy-tsuru:
     needs:
-      - docker
+      - docker # if we didn't build a container, don't do this!
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
