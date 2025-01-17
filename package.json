@@ -6,14 +6,13 @@
     "prepare": "husky"
   },
   "private": true,
-  "dependencies": {},
   "devDependencies": {
-    "@nx/js": "20.3.1",
-    "nx": "20.3.1",
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
+    "@nx/js": "20.3.1",
     "@nxlv/python": "^20.3.2",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "nx": "20.3.1"
   },
   "workspaces": [
     "libs/**",
