@@ -4,6 +4,7 @@ from aignostic.metrics.metrics import calculate_metrics
     Test calculate_metrics calls all metrics
 """
 
+
 def test_calculate_metrics():
     y_true = np.array([1, 0, 1, 1, 0, 1, 0, 0])
     y_pred = np.array([1, 0, 1, 0, 0, 1, 1, 0])

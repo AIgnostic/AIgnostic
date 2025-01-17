@@ -7,7 +7,9 @@
 
 import numpy as np
 
+
 def calculate_metrics(y_true, y_pred, metrics):
+
     """
         Calculate the metrics for the given y_true and y_pred
         Args:
@@ -21,24 +23,28 @@ def calculate_metrics(y_true, y_pred, metrics):
 
     return results
 
+
 def accuracy(y_true, y_pred):
     return (y_true == y_pred).mean()
+
 
 def precision(y_true, y_pred):
     precisions = [per_class_precision(y_true, y_pred, c) for c in np.unique(y_true)]
     return np.mean(precisions)
+
 
 def recall(y_true, y_pred):
     recalls = [per_class_recall(y_true, y_pred, c) for c in np.unique(y_true)]
     return np.mean(recalls)
 
 
-
 def per_class_recall(y_true, y_pred, c):
     tp = ((y_true == c) & (y_pred == c)).sum()
     fn = ((y_true == c) & (y_pred != c)).sum()
     return tp / (tp + fn)
+
+
 def per_class_precision(y_true, y_pred, c):
-    tp = ((y_true == c) & (y_pred == c)).sum() 
+    tp = ((y_true == c) & (y_pred == c)).sum()
     fp = ((y_true != c) & (y_pred == c)).sum()
     return tp / (tp + fp)
