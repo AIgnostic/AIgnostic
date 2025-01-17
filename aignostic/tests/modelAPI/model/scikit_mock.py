@@ -15,13 +15,9 @@ def predict(dataset : DataSet) -> QueryOutput:
     Given a dataset, predict the expected outputs for the model
     """
     # Return empty dataframe for now - fill this in with actual test models when trained
-    return QueryOutput(columns={})
-    # return QueryOutput(columns=model.predict(to_dataframe(dataset))).to_dict()
-
-@app.get("/hello")
-def hello() -> str:
-    print("Hello World")
-    return "Hello World"
+    if not dataset.columns:
+        return QueryOutput(columns={})
+    return QueryOutput(columns=model.predict(to_dataframe(dataset))).to_dict()
 
 """
 TODO: (Low Priority) Extend to batch querying / single datapoint querying for convenience
