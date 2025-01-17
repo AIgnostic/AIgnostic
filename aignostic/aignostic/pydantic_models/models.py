@@ -1,14 +1,11 @@
 from pydantic import BaseModel
 import pandas as pd
 
-
 class DataSet(BaseModel):
-    columns: list[dict]
-
+    columns: dict
 
 class QueryOutput(BaseModel):
-    columns: list[dict]
-
+    columns: dict
 
 def to_dataframe(dataset: DataSet) -> pd.DataFrame:
     """
