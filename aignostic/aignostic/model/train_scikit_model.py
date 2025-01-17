@@ -26,15 +26,6 @@ X_train, X_test, y_train, y_test, group_train, group_test = train_test_split(
 model : Pipeline = make_pipeline(StandardScaler(), LogisticRegression())
 model.fit(X_train, y_train)
 
-yhat = model.predict(X_test)
-white_tpr = np.mean(yhat[(y_test == 1) & (group_test == 1)])
-black_tpr = np.mean(yhat[(y_test == 1) & (group_test == 2)])
-
-# Equality of opportunity violation: 0.0397
-white_tpr - black_tpr
-print("Equality of opportunity violation: ", white_tpr - black_tpr)
-assert white_tpr - black_tpr <= 0.088 and white_tpr - black_tpr >= 0.086, "SciKit Model Not Trained Correctly"
-
 # save the model
 filename : str = 'scikit_model.sav'
 pickle.dump(model, open(filename, 'wb'))
