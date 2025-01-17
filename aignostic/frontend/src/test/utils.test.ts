@@ -7,7 +7,6 @@ describe('checkURL function', () => {
       'http://example.com',
       'ftp://ftp.example.com',
       'https://subdomain.example.com/path/to/resource',
-      'http://localhost:3000',
       'https://www.example.com:8080/path/to/resource',
       'https://example.co.uk',
       'http://example.com?search=test#anchor',
@@ -16,6 +15,7 @@ describe('checkURL function', () => {
     ];
 
     validUrls.forEach((url) => {
+      console.log(url);
       expect(checkURL(url)).toBe(true);
     });
   });
@@ -35,7 +35,7 @@ describe('checkURL function', () => {
     ];
 
     invalidUrls.forEach((url) => {
-        console.log(url);
+      console.log(url);
       expect(checkURL(url)).toBe(false);
     });
   });

@@ -7,12 +7,13 @@ function Homepage() {
   const handleSubmit = () => {
     if (modelURL && datasetURL) {
         //Enter into SanityCheckService
-      alert(`Input 1: ${modelURL}, Input 2: ${datasetURL}`);
-      alert(checkURL(modelURL) && checkURL(datasetURL))
-    
-
+      // alert(`Input 1: ${modelURL}, Input 2: ${datasetURL}`);
+      // alert(checkURL(modelURL) && checkURL(datasetURL))
+      console.log(`Input 1: ${modelURL}, Input 2: ${datasetURL}`);
+      console.log(checkURL(modelURL) && checkURL(datasetURL))
     } else {
-      alert('Please fill in both text inputs.');
+      console.log('Please fill in both text inputs.');
+      // alert('Please fill in both text inputs.');
     }
   };
 
