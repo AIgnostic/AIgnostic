@@ -1,4 +1,8 @@
-name: CI
+# Made from a combination of past projecs, namely:
+# - https://github.com/imperial/cpp-connect/
+# -
+
+name: CI & CD
 
 on:
   push:
@@ -10,6 +14,11 @@ permissions:
   actions: read
   contents: read
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: aignostic/aignostic
+  IMPAAS_APP_NAME: aignostic
+
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -18,13 +27,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python 3.12
+      # Poetry before Python because https://github.com/actions/setup-python/issues/765
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Set up Python 3.12 with Poetry
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: "poetry"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Inject export plugin (required by NX)
+        run: poetry self add poetry-plugin-export
 
       # This enables task distribution via Nx Cloud
       # Run this command as early as possible, before dependencies are installed
@@ -38,10 +51,84 @@ jobs:
           node-version: 20
           cache: "npm"
 
+      # Insall npm deps so NX works
       - run: npm ci --legacy-peer-deps
       - uses: nrwl/nx-set-shas@v4
+
+      - name: Install dependencies using poetry
+        run: npx nx run-many --target=install --all
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
       # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
+      # True build step: Run lint, then test, then build
       - run: npx nx affected -t lint test build
+  docker:
+    # Note that build is not a dependency of this job, as this will build the same stuff as the build job anyway
+    # However no point in building if lint or test fails!
+    needs:
+      - main # no point doing this if project doesn't work!
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Setup the tags for the docker image
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # What the tags mean:
+          # 1. Tag docker image with the branch name
+          # 2. Tag docker image wth the Git tag name if present
+          # 3. Tag docker image with the PR number e.g. pr-1
+          # 4. Tag docker image with the commit SHA
+          # 5. Tag docker image with 'latest' if it's the default branch (main)
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+      # Build tags with the tags we setup in the previous step
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./aignostic/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          no-cache: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  deploy-tsuru:
+    needs:
+      - docker # if we didn't build a container, don't do this!
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      TSURU_TOKEN: ${{ secrets.IMPAAS_DEPLOY_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install tsuru CLI
+        run: curl -fsSL "https://tsuru.io/get" | bash
+      - name: Add impaas target
+        run: tsuru target add impaas https://impaas.uk -s
+      - name: Deploy app
+        run: tsuru app deploy -i ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -a ${{ env.IMPAAS_APP_NAME }}

@@ -67,6 +67,27 @@
         "cwd": "aignostic"
       },
       "cache": true
+    },
+    "container": {
+      "executor": "@nx-tools/nx-container:build",
+      "options": {
+        "context": "{workspaceRoot}",
+        "file": "{workspaceRoot}/aignostic/Dockerfile",
+        "metadata": {
+          "images": [
+            "ghcr.io/aignostic/aignostic"
+          ],
+          "load": true,
+          "tags": [
+            "type=schedule",
+            "type=ref,event=branch",
+            "type=ref,event=tag",
+            "type=ref,event=pr",
+            "type=sha,prefix=sha-",
+            "type=raw,value=latest"
+          ]
+        }
+      }
     }
   },
   "tags": [],
