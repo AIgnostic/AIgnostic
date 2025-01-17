@@ -1,4 +1,8 @@
-name: CI
+# Made from a combination of past projecs, namely:
+# - https://github.com/imperial/cpp-connect/
+# -
+
+name: CI & CD
 
 on:
   push:
@@ -107,6 +111,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           no-cache: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
   deploy-tsuru:
     needs:
       - docker

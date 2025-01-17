@@ -6,7 +6,7 @@ api = APIRouter()
 
 @api.get("/")
 def hello():
-    return {"message": "Hello World!"}
+    return {"message": "Hello Worlds!"}
 
 
 @api.get("/repeat/{text}")  # /repeat/hello, /repeat/a,
