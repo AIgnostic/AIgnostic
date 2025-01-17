@@ -1,17 +1,18 @@
-from fastapi import FastAPI 
-from pydantic import BaseModel
+from fastapi import FastAPI
 import pandas as pd
 from aignostic.pydantic_models.models import DataSet, QueryOutput
 
 app = FastAPI()
 
+
 @app.post("/predict")
-def predict(dataset : DataSet) -> QueryOutput:
+def predict(dataset: DataSet) -> QueryOutput:
     """
     Given a dataset, predict the expected outputs for the model
     """
-    # Return empty dataframe for now - fill this in with actual test models when trained 
+    # Return empty dataframe for now - fill this in with actual test models when trained
     return QueryOutput(pd.DataFrame().to_dict())
+
 
 """
 TODO: (Low Priority) Extend to batch querying / single datapoint querying for convenience
