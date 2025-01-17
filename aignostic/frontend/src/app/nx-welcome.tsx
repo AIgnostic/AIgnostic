@@ -1,3 +1,5 @@
+import { FILE } from "dns";
+
 /*
  * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  This is a starter component and can be deleted.
@@ -397,6 +399,10 @@ export function NxWelcome({ title }: { title: string }) {
       margin-right: 1rem;
       width: 1.5rem;
     }
+    .vertical-container {
+          flex-direction: 'vertical'
+          flex: 1
+    }
     #love {
       color: rgba(107, 114, 128, 1);
       font-size: 0.875rem;
@@ -452,9 +458,16 @@ export function NxWelcome({ title }: { title: string }) {
                     d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
                   />
                 </svg>
-                <span>You&apos;re up and running</span>
+                <span>Input your model and dataset APIs</span>
               </h2>
-              <a href="#commands"> What&apos;s next? </a>
+
+              <div className="vertical-container">
+                <a href="#commands"> Quick Start - API wrapper for AIgnostic </a>
+                <a href="#commands"> Model API URL </a>
+                <a href="#commands"> Dataset API URL </a>
+              </div>
+              
+
             </div>
             <div className="logo-container">
               <svg
