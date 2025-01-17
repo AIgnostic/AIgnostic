@@ -1,17 +1,20 @@
 from fastapi import FastAPI
-import pandas as pd
+from sklearn.pipeline import Pipeline
+import pickle
 from aignostic.pydantic_models.models import DataSet, QueryOutput
 
 app = FastAPI()
 
+model: Pipeline = pickle.load(open("scikit_model.sav", "rb"))
 
-@app.post("/predict")
+
+@app.post("/query_all")
 def predict(dataset: DataSet) -> QueryOutput:
     """
     Given a dataset, predict the expected outputs for the model
     """
     # Return empty dataframe for now - fill this in with actual test models when trained
-    return QueryOutput(pd.DataFrame().to_dict())
+    return QueryOutput(model.predict(dataset.to_dataframe()))
 
 
 """

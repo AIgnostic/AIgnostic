@@ -14,6 +14,7 @@ module.exports = {
         "Chore",
         "Setup",
         "CI",
+        "Mock",
       ],
     ],
     "subject-case": [2, "always", "sentence-case"],
