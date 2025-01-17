@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - kishan-demo-ci-cd
   pull_request:
 
 permissions:
