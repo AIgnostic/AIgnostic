@@ -13,6 +13,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: aignostic/aignostic
+  IMPAAS_APP_NAME: aignostic
 
 jobs:
   main:
@@ -83,12 +84,18 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # tags: |
+          #   type=ref,event=branch
+          #   type=ref,event=tag
+          #   type=ref,event=pr
+          #   type=sha
+          #   type=raw,value=latest,enable={{is_default_branch}}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
             type=ref,event=pr
             type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@v6
@@ -99,3 +106,19 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           no-cache: true
+  deploy-tsuru:
+    needs:
+      - docker
+    # if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      TSURU_TOKEN: ${{ secrets.IMPAAS_DEPLOY_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install tsuru CLI
+        run: curl -fsSL "https://tsuru.io/get" | bash
+      - name: Add impaas target
+        run: tsuru target add impaas https://impaas.uk -s
+      - name: Deploy app
+        run: tsuru app deploy -i ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -a ${{ env.IMPAAS_APP_NAME }}
