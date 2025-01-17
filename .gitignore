@@ -215,3 +215,6 @@ Thumbs.db
 .nx/cache
 .nx/workspace-data
 
+# csv files downloaded from folktables dataset
+data/*.csv
+data/
