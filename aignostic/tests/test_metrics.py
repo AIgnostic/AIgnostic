@@ -5,7 +5,6 @@ from aignostic.metrics.metrics import calculate_metrics
 """
 
 def test_calculate_metrics():
-    # Use 8 data points for testing
     y_true = np.array([1, 0, 1, 1, 0, 1, 0, 0])
     y_pred = np.array([1, 0, 1, 0, 0, 1, 1, 0])
     metrics = ["accuracy", "precision", "recall"]
@@ -17,7 +16,6 @@ def test_calculate_metrics():
 
 
 def test_only_calcs_specified_metrics():
-    # Use 8 data points for testing
     y_true = np.array([1, 0, 1, 1, 0, 1, 0, 0])
     y_pred = np.array([1, 0, 1, 0, 0, 1, 1, 0])
     metrics = ["accuracy", "recall"]
