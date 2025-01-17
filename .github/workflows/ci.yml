@@ -28,13 +28,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python 3.12
+      - name: Set up Python 3.12 with Poetry
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: "poetry"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      # - name: Install Poetry
+      #   uses: snok/install-poetry@v1
 
       - name: Inject export plugin (required by NX)
         run: poetry self add poetry-plugin-export
@@ -50,15 +51,6 @@ jobs:
         with:
           node-version: 20
           cache: "npm"
-      # Cache python venv
-      - uses: actions/cache@v2
-        id: cache-venv-aignostic # name for referring later
-        with:
-          path: ./aignostic/.venv/ # what we cache: the virtualenv
-          # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-venv-${{ hashFiles('aignostic/poetry.lock') }}-${{ hashFiles('aignostic/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-venv-
 
       # Insall npm deps so NX works
       - run: npm ci --legacy-peer-deps
