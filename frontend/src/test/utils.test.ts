@@ -1,4 +1,7 @@
-import checkURL from "../app/utils";
+import checkURL from '../app/utils';
+
+// Provide a windows.alert mock
+window.alert = jest.fn();
 
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {
@@ -35,7 +38,8 @@ describe('checkURL function', () => {
     ];
 
     invalidUrls.forEach((url) => {
-        console.log(url);
+      console.log(url);
+
       expect(checkURL(url)).toBe(false);
     });
   });
