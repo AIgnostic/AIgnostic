@@ -83,7 +83,7 @@ function Homepage() {
 
         <Box style={styles.horizontalContainer}>
           New to AIgnostic? Read the docs to get started: 
-          <Button onClick={()=>{}} style={styles.button}>
+          <Button style={styles.button}>
             Getting Started
           </Button>
         </Box> 
