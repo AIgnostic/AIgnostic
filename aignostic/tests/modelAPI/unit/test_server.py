@@ -32,6 +32,7 @@ def test_empty_data_scikit():
 
 def test_valid_data_scikit_folktables():
     pass
+    # pass
     # # Import the folktables dataset and load the employment data 
     # data_source : ACSDataSource = ACSDataSource(survey_year='2018', horizon='1-Year', survey='person')
     # acs_data : pd.DataFrame = data_source.get_data(states=[
@@ -43,7 +44,7 @@ def test_valid_data_scikit_folktables():
     # features, label, _ = ACSEmployment.df_to_numpy(acs_data)
 
     # # Test the response is not empty given a non-empty input
-    # response = client_scikit.post("/predict", json={features.})
+    # response = client_scikit.post("/predict", json={features})
     # assert response.status_code == 200, response.text
 
     # # Test the response is the same as the expected response from the pickled model
