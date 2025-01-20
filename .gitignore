@@ -222,3 +222,6 @@ data/
 # ignore test output
 tests/test_log/*
 tests/test_log/
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
