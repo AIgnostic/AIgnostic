@@ -24,6 +24,7 @@ async def get_info(request: DatasetRequest):
         metrics = request.metrics
 
         print("Received request: ", datasetURL, modelURL, metrics)
+        print("YAY")
 
         # # Example of processing or passing data to a controller
         # # Here you could make a request to the dataset API or perform metric calculations
