@@ -37,7 +37,7 @@ function Homepage() {
   const [isDatasetURLValid, setIsDatasetURLValid] = useState(true);
   const [activeStep, setActiveStep] = React.useState(0);
   const [metricChips, setMetricChips] = useState(metrics.map((metric) => {return {"label": metric, "selected": true}}));
-
+  const [metricsHelperText, setMetricsHelperText] = useState('');
 
   const handleSubmit = () => {
     if (modelURL && datasetURL) {
@@ -78,7 +78,7 @@ function Homepage() {
       <Box style={styles.container}>
         <Box style={styles.logoContainer}>
           
-          <h1 style={styles.logoText}>AIgnostic</h1>
+          <h3 style={styles.logoText}>AIgnostic</h3>
         </Box>
 
         <Box style={styles.horizontalContainer}>
@@ -92,14 +92,8 @@ function Homepage() {
       <Stepper activeStep={activeStep} style={{width: "80%"}} orientation="vertical">
         {steps.map((step, index) => (
           <Step key={step.label}>
-            <StepLabel
-              optional={
-                index === steps.length - 1 ? (
-                  <Typography variant="caption">Last step</Typography>
-                ) : null
-              }
-            >
-              {step.label}
+            <StepLabel>
+              <h1>{step.label}</h1>
             </StepLabel>
             <StepContent>
               <Typography>{step.description}</Typography>
@@ -113,8 +107,8 @@ function Homepage() {
                         onChange={(e) => setModelURL(e.target.value)}
                         onBlur={() => setIsModelURLValid(checkURL(modelURL))}
                         style={styles.input}
-                        error={!!modelURL && !isModelURLValid}
-                        helperText={(!!modelURL && !isModelURLValid) ? 'Invalid URL' : ''}
+                        error={!isModelURLValid}
+                        helperText={(!isModelURLValid) ? 'Invalid URL format - please enter a valid URL' : ''}
                       />
                       <TextField
                         type="text"
@@ -123,8 +117,8 @@ function Homepage() {
                         onChange={(e) => setDatasetURL(e.target.value)}
                         onBlur={() => setIsDatasetURLValid(checkURL(datasetURL))}
                         style={styles.input}
-                        error={!!datasetURL && !isDatasetURLValid}
-                        helperText={(!!datasetURL && !isDatasetURLValid) ? 'Invalid URL' : ''}
+                        error={!isDatasetURLValid}
+                        helperText={(!isDatasetURLValid) ? 'Invalid URL format - please enter a valid URL' : ''}
                       />
                       
                     </Box>)
@@ -132,6 +126,7 @@ function Homepage() {
 
               {index === 2 && 
                   (<Box>
+                    <p style={{color: "red"}}>{metricsHelperText}</p>
                     {metricChips.map((metricChip) => (
                       <Chip 
                         label={metricChip.label}
@@ -149,24 +144,61 @@ function Homepage() {
                 (<Box>
                   <h3>Summary</h3>
                   <p>
-                    Model URL: {modelURL}
+                    Model URL: {modelURL ? modelURL : "You have not entered a model URL"}
                     <br/> <br/>
-                    Dataset URL: {datasetURL} 
+                    Dataset URL: {datasetURL ? datasetURL : "You have not entered a dataset URL"} 
                     <br/> <br/>
-                    Metrics: {metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label).join(", ")}
+                    Metrics: {metricChips.filter((metricChip) => metricChip.selected).length === 0 ? "You have not selected any metrics" :
+                              metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label).join(", ")}
                   </p>
                 </Box>)
                   }
 
 
               <Box sx={{ mb: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleNext}
-                  sx={{ mt: 1, mr: 1 }}
-                >
-                  {index === steps.length - 1 ? 'Generate Report' : 'Next'}
-                </Button>
+
+                {index === steps.length - 1 ?
+
+                  <Button
+                    variant="contained"
+                    onClick={ () => {
+                      // check that APIs are present and valid
+                      // if not, jump to step 0
+                      if (!modelURL || !datasetURL) {
+                        if (!modelURL) {
+                          setIsModelURLValid(false);
+                        }
+                        if (!datasetURL) {
+                          setIsDatasetURLValid(false);
+                        }
+                        setActiveStep(0);
+                      }
+
+                      // check that at least one metric is selected
+                      // if not, jump to step 2
+                      else if (metricChips.filter((metricChip) => metricChip.selected).length === 0) {
+                        setMetricsHelperText("Please select at least one metric");
+                        setActiveStep(2);
+                      }
+
+                      // if all checks pass, generate report
+                      else {
+                        handleSubmit();
+                      }
+                    }}
+                      
+                    sx={{ mt: 1, mr: 1 }}
+                  > Generate Report
+                  </Button>
+                  :
+                  <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    sx={{ mt: 1, mr: 1 }}
+                  > Next
+                  </Button>
+                }
+
                 <Button
                   disabled={index === 0}
                   onClick={handleBack}
