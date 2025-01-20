@@ -7,8 +7,13 @@ from aignostic.router.api import api as api_router
 
 
 origins = [
-    "http://localhost:8080",
+    "http://localhost:4200",
 ]
+
+# origins = [
+#     "http://localhost:4200",  # Frontend origin
+#     "https://aignostic.impaas.uk",  # Backend origin (if needed)
+# ]
 
 
 def create_application():

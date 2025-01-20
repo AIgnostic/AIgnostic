@@ -45,12 +45,24 @@ function Homepage() {
       console.log(`Selected Metrics: ${metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label).join(", ")}`);
       console.log(checkURL(modelURL) && checkURL(datasetURL))
       
-      const user_info = {"modelURL": modelURL, 
+      const user_info = 
+      { 
+        "modelURL": modelURL, 
         "datasetURL": datasetURL,
         "metrics": metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label)
       }
       
-      // send user_info to controller 
+      // send POST request to backend server
+      fetch('https://aignostic.impaas.uk/get_info', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(user_info),
+      })
+
+      console.log("Sent POST request to backend server");
+      
     } else {
       console.log('Please fill in both text inputs.');
       // alert('Please fill in both text inputs.');
