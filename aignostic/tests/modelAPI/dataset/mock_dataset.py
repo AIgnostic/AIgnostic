@@ -10,7 +10,6 @@ from aignostic.dataset_loader.loader import DatasetLoader
 app = FastAPI()
 
 
-
 parent_dir = os.path.dirname(os.path.dirname(__file__))
 csv_path = os.path.join(parent_dir, "dataset", "test.csv")
 dataset_loader = DatasetLoader(dataset_path=csv_path, dataset_type="csv")

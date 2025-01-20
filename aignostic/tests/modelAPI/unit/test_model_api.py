@@ -2,14 +2,14 @@ import pytest
 from fastapi.testclient import TestClient
 from tests.modelAPI.model.scikit_mock import app as scikit_app
 from tests.modelAPI.model.mock import app as mock_app
-from pytest_httpserver import HTTPServer
 import pandas as pd
 from aignostic.pydantic_models.models import Data
 from folktables import ACSDataSource, ACSEmployment
-from sklearn.model_selection import train_test_split
 import pickle
-import numpy as np
+from tests.modelAPI.model.huggingface_binclassifier import app as huggingface_app
 
+
+client_huggingface = TestClient(huggingface_app)
 client_scikit = TestClient(scikit_app)
 client_mock = TestClient(mock_app)
 
@@ -53,3 +53,12 @@ def test_valid_data_scikit_folktables():
     y_hat = model.predict(features)
 
     assert response.json() == {"column_names": None, "rows": [y_hat.tolist()]}, "Model output does not match expected output"
+
+
+def test_valid_data_huggingface():
+    # post a valid text
+    response = client_huggingface.post("/predict", json={"text": "I am happy"})
+    print(response)
+    print(response.json())
+    # assert response.status_code == 200
+
