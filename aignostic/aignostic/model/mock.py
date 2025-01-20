@@ -2,7 +2,9 @@ from fastapi import FastAPI
 import pandas as pd
 from aignostic.pydantic_models.models import DataSet, QueryOutput
 
+
 app = FastAPI()
+
 
 @app.post("/predict")
 def predict(dataset: DataSet) -> QueryOutput:
