@@ -10,12 +10,6 @@ origins = [
     "http://localhost:4200",
 ]
 
-# origins = [
-#     "http://localhost:4200",  # Frontend origin
-#     "https://aignostic.impaas.uk",  # Backend origin (if needed)
-# ]
-
-
 def create_application():
     api = FastAPI(
         title="AIgnostic", description="A FastAPI server for AIgnostic", version="0.1.0"
