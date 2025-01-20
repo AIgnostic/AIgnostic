@@ -9,7 +9,10 @@ from folktables import ACSDataSource, ACSEmployment
 from sklearn.model_selection import train_test_split
 import pickle
 import numpy as np
+from tests.modelAPI.model.huggingface_binclassifier import app as huggingface_app
 
+
+client_huggingface = TestClient(huggingface_app)
 client_scikit = TestClient(scikit_app)
 client_mock = TestClient(mock_app)
 
@@ -30,23 +33,11 @@ def test_empty_data_scikit():
     assert response.status_code == 200, response.text
     assert response.json() == {"columns": {}}, "Empty dataframe not returned given empty input"
 
-def test_valid_data_scikit_folktables():
-    pass
-    # pass
-    # # Import the folktables dataset and load the employment data 
-    # data_source : ACSDataSource = ACSDataSource(survey_year='2018', horizon='1-Year', survey='person')
-    # acs_data : pd.DataFrame = data_source.get_data(states=[
-    #     "AL"
-    # ], download=True)[0:1]
 
-    # features : np.ndarray
-    # label : np.ndarray
-    # features, label, _ = ACSEmployment.df_to_numpy(acs_data)
+def test_valid_data_huggingface():
+    # post a valid text
+    response = client_huggingface.post("/predict", json={"text": "I am happy"})
+    print(response)
+    print(response.json())
+    assert response.status_code == 200
 
-    # # Test the response is not empty given a non-empty input
-    # response = client_scikit.post("/predict", json={features})
-    # assert response.status_code == 200, response.text
-
-    # # Test the response is the same as the expected response from the pickled model
-    # model = pickle.load(open('scikit_model.sav', 'rb'))
-    # y_hat = model.predict(features)

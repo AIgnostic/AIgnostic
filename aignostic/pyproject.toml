@@ -31,6 +31,7 @@ uvicorn = "^0.34.0"
 pytest-httpserver = "^1.1.0"
 httpx = "^0.28.1"
 fastapi = {extras = ["standard"], version = "^0.115.6"}
+transformers = "^4.48.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.3.1"
