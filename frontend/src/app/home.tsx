@@ -60,6 +60,18 @@ function Homepage() {
         },
         body: JSON.stringify(user_info),
       })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Response from backend:", data);
+      })
+      .catch((error) => {
+        console.error("Error during fetch:", error.message);
+      });
 
       console.log("Sent POST request to backend server");
       
