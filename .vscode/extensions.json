@@ -3,11 +3,7 @@
     "nrwl.angular-console",
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
-<<<<<<< HEAD
-    "firsttris.vscode-jest-runner"
-=======
     "firsttris.vscode-jest-runner",
     "ms-playwright.playwright"
->>>>>>> 44f13f44eb00e7c84fc6e59970b4bceee57e4d65
   ]
 }
