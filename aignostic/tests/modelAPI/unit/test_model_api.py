@@ -61,3 +61,11 @@ def test_valid_data_huggingface_empty():
     with open('output.txt', 'w') as f:
         f.write(response.text)
     assert response.status_code == 200
+
+def test_invalid_inputs_fail():
+    """
+    Test that invalid inputs fail when /predict is called
+    """
+    input = {"column_names": [], "rows": ["Hello world", "Hello world"]}
+    response = client_huggingface.post("/predict", json=input)
+    assert response.status_code == 422, response.text
