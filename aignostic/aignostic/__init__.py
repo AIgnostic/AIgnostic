@@ -1,13 +1,14 @@
 """Root entrypoint of the application: starts our FastAPI Server"""
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.middleware.cors import CORSMiddleware
 
 from aignostic.router.api import api as api_router
 
 
 origins = [
     "http://localhost:4200",
+    "http://127.0.0.1:4200",
 ]
 
 
