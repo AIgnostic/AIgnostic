@@ -55,10 +55,9 @@ def test_valid_data_scikit_folktables():
     assert response.json() == {"column_names": None, "rows": [y_hat.tolist()]}, "Model output does not match expected output"
 
 
-def test_valid_data_huggingface():
+def test_valid_data_huggingface_empty():
     # post a valid text
-    response = client_huggingface.post("/predict", json={"text": "I am happy"})
-    print(response)
-    print(response.json())
-    # assert response.status_code == 200
-
+    response = client_huggingface.post("/predict", json={"column_names": [], "rows": [["Hello world"]]})
+    with open('output.txt', 'w') as f:
+        f.write(response.text)
+    assert response.status_code == 200
