@@ -218,3 +218,7 @@ Thumbs.db
 # csv files downloaded from folktables dataset
 data/*.csv
 data/
+
+# ignore test output
+tests/test_log/*
+tests/test_log/

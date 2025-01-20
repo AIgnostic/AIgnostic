@@ -3,21 +3,19 @@ from pydantic import BaseModel
 import numpy as np
 from sklearn.pipeline import Pipeline
 import pickle
-from aignostic.pydantic_models.models import DataSet, QueryOutput, to_dataframe
+from aignostic.pydantic_models.models import Data
 
 app = FastAPI()
 
 model : Pipeline = pickle.load(open('scikit_model.sav', 'rb'))
 
 @app.post("/predict")
-def predict(dataset : DataSet) -> QueryOutput:
+def predict(dataset : Data) -> Data:
     """
     Given a dataset, predict the expected outputs for the model
     """
-    # Return empty dataframe for now - fill this in with actual test models when trained
-    if not dataset.columns:
-        return QueryOutput(columns={})
-    return QueryOutput(columns=model.predict(to_dataframe(dataset))).to_dict()
+    # Return identical dataframe for now - fill this in with actual test models when trained
+    return Data(column_name=dataset.column_names, rows=dataset.rows)
 
 """
 TODO: (Low Priority) Extend to batch querying / single datapoint querying for convenience
