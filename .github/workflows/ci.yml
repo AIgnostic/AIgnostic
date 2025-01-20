@@ -134,8 +134,8 @@ jobs:
       - name: Deploy app
         run: tsuru app deploy -i ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -a ${{ env.IMPAAS_APP_NAME }}
   deploy-gh-pages:
-    needs:
-      - main
+    # needs:
+    #   - main
     # from https://github.com/JamesIves/github-pages-deploy-action
     concurrency: ci-${{ github.ref }} # Recommended if you intend to make multiple deployments in quick succession.
     # if: github.ref == 'refs/heads/main'
@@ -143,6 +143,7 @@ jobs:
     # From https://github.com/actions/deploy-pages
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
+      contents: write
       pages: write # to deploy to Pages
       id-token: write # to verify the deployment originates from an appropriate source
 
