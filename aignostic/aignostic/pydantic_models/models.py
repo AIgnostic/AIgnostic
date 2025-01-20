@@ -27,17 +27,24 @@ def arr_to_JSON(arr : np.array) -> dict:
     """
     column_names = None
     rows = list(list(r) for r in arr)
+    return {"column_names": column_names, "rows": rows}
 
 def csv_to_JSON(file_path : str, header_row : bool = True) -> dict:
     """
     Convert a csv to a JSON string in the required format
     """
     import csv
-    with open(file_path, 'r', newline='\n') as csvfile:
-        reader = csv.reader(csvfile)
-        rows = list(list(row) for row in reader)
-        if header_row:
-            column_names = list(next(reader))
-            return {"column_names": column_names, "rows": rows}
-        return {"column_names": None, "rows": rows}
-
+    with open(file_path, 'r', newline='') as csvfile:
+        csv_reader = csv.reader(csvfile)    
+        
+        header = None
+        rows = [[]]
+        try:
+            if header_row:
+                header = next(csv_reader)
+                header = [c.strip() for c in header]
+            
+            rows = [[value.strip() for value in row] for row in csv_reader]
+            return {"column_names": header, "rows": rows}
+        except StopIteration:
+            return {"column_names": header, "rows": rows}
