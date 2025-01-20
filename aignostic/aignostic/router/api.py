@@ -1,12 +1,15 @@
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
 
+
 api = APIRouter()
+
 
 class DatasetRequest(BaseModel):
     datasetURL: HttpUrl
     modelURL: HttpUrl
     metrics: list[str]
+
 
 @api.post("/get_info")
 async def get_info(request: DatasetRequest):

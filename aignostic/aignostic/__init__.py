@@ -10,6 +10,7 @@ origins = [
     "http://localhost:4200",
 ]
 
+
 def create_application():
     api = FastAPI(
         title="AIgnostic", description="A FastAPI server for AIgnostic", version="0.1.0"
