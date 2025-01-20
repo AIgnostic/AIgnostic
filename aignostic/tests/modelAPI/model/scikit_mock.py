@@ -15,7 +15,9 @@ def predict(dataset : Data) -> Data:
     Given a dataset, predict the expected outputs for the model
     """
     # Return identical dataframe for now - fill this in with actual test models when trained
-    return Data(column_name=dataset.column_names, rows=dataset.rows)
+    out : np.array = model.predict(dataset.rows)
+    rows = out.tolist() if len(dataset.rows) > 1 else [out.tolist()]
+    return Data(column_names=None, rows=rows)
 
 """
 TODO: (Low Priority) Extend to batch querying / single datapoint querying for convenience

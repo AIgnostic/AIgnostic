@@ -37,30 +37,19 @@ def test_empty_data_scikit():
     assert response.json() == {"column_names": [], "rows": [[]]}, "Empty values not returned given empty input"
     
 def test_valid_data_scikit_folktables():
-    # # Import the folktables dataset and load the employment data 
-    # data_source : ACSDataSource = ACSDataSource(survey_year='2018', horizon='1-Year', survey='person')
-    # acs_data : pd.DataFrame = data_source.get_data(states=[
-    #     "AL"
-    # ], download=True)[0:1]
-    # # features : np.ndarray
-    # # label : np.ndarray
-    # # features, label, _ = ACSEmployment.df_to_numpy(acs_data)
-    # features, label, groups = ACSEmployment.df_to_numpy(acs_data)
-
-    # with open('tests/test_log/test_log.txt', 'w') as f:
-    #     f.write(acs_data.to_string())
-    #     f.write('\n\n')
-    #     f.write(str(features))
-    #     f.write('\n\n')
-    #     f.write(str(label))
-    #     f.write('\n\n')
-    #     f.write(str(groups))
+    # Import the folktables dataset and load the employment data 
+    data_source : ACSDataSource = ACSDataSource(survey_year='2018', horizon='1-Year', survey='person')
+    acs_data : pd.DataFrame = data_source.get_data(states=[
+        "AL"
+    ], download=True)[0:1]
+    features, _, _ = ACSEmployment.df_to_numpy(acs_data)
         
-    # # Test the response is not empty given a non-empty input
-    # response = client_scikit.post("/predict", json=list(set(tuple(f) for f in features)))
-    # assert response.status_code == 200, response.text
+    # Test the response is not empty given a non-empty input
+    response = client_scikit.post("/predict", json={"column_names": None, "rows": features.tolist()})
+    assert response.status_code == 200, response.text
 
-    # # Test the response is the same as the expected response from the pickled model
-    # model = pickle.load(open('scikit_model.sav', 'rb'))
-    # y_hat = model.predict(features)
-    pass
+    # Test the response is the same as the expected response from the pickled model
+    model = pickle.load(open('scikit_model.sav', 'rb'))
+    y_hat = model.predict(features)
+
+    assert response.json() == {"column_names": None, "rows": [y_hat.tolist()]}, "Model output does not match expected output"
