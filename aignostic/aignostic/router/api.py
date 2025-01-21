@@ -66,10 +66,14 @@ def echo(request: Request):
 async def processData(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str]):
     # fetch data from datasetURL
     data = await fetch_data(datasetURL)
-    if data is None:
-        return
+
+    print("Data fetched.")
+
     # pass data to modelURL and return predictions
-    # TODO: data
+    prediction = await query_model(modelURL, data)
+
+    print("Prediction received.")
+
     # calculate metrics
 
 
@@ -77,6 +81,30 @@ async def fetch_data(dataURL: HttpUrl):
     try:
         # Send a GET request to the dataset API
         response = requests.get(dataURL)
+
+        # Check if the request was successful
+        response.raise_for_status()
+
+        # Parse the response JSON
+        data = response.json()
+
+        # Print or return the data
+        print("Data retrieved:", data)
+        return data
+    except requests.exceptions.RequestException as e:
+        print("Error while fetching data:", e)
+        return None
+    
+
+async def query_model(modelURL: HttpUrl, data: dict):
+    try:
+        print(modelURL)
+
+        # Send a POST request to the dataset API
+        response = requests.get(modelURL)
+        print("getted " + response)
+        response = requests.post(modelURL, json={"column_names": None, "rows": data.toList()})
+        print("posted " + response)
 
         # Check if the request was successful
         response.raise_for_status()
