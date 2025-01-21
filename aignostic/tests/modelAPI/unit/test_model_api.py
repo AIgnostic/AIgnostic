@@ -75,3 +75,17 @@ def test_invalid_inputs_fail():
     input = {"column_names": [], "rows": ["Hello world", "Hello world"]}
     response = client_huggingface.post("/predict", json=input)
     assert response.status_code == 422, response.text
+
+
+def test_multiple_inputs():
+    """
+    Test that multiple inputs are accepted and processed correctly by the pydantic model and 
+    the HuggingFace model API
+    """
+    input = {"column_names": [], "rows": [["Hello world"], ["Hello world"], ["Pizza is unhealthy"]]}
+    response = client_huggingface.post("/predict", json=input)
+    assert response.status_code == 200, response.text
+    out = response.json()
+    assert len(out["column_names"]) == 1, "Multiple inputs not processed correctly"
+    assert len(out["rows"]) == 3, "Multiple inputs not processed correctly"
+    
