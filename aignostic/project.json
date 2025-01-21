@@ -68,6 +68,14 @@
       },
       "cache": true
     },
+    "serve": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run uvicorn main:create_application --reload",
+        "cwd": "aignostic"
+      }
+    },
+
     "container": {
       "executor": "@nx-tools/nx-container:build",
       "options": {

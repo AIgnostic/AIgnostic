@@ -1,6 +1,6 @@
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
-
+import requests
 
 api = APIRouter()
 
@@ -24,6 +24,9 @@ async def get_info(request: DatasetRequest):
         metrics = request.metrics
 
         print("Received request: ", datasetURL, modelURL, metrics)
+
+        await processData(datasetURL, modelURL, metrics)
+
         print("YAY")
 
         # # Example of processing or passing data to a controller
@@ -58,3 +61,32 @@ class Request(BaseModel):  # class Request extends BaseModel
 @api.post("/echo")
 def echo(request: Request):
     return {"message": request.text}
+
+
+
+async def processData(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str]):
+    # fetch data from datasetURL
+    data = await fetch_data(datasetURL)
+
+    # pass data to modelURL and return predictions
+
+    # calculate metrics
+
+
+async def fetch_data(dataURL: HttpUrl):
+    try:
+        # Send a GET request to the dataset API
+        response = requests.get(dataURL)
+
+        # Check if the request was successful
+        response.raise_for_status()
+
+        # Parse the response JSON
+        data = response.json()
+
+        # Print or return the data
+        print("Data retrieved:", data)
+        return data
+    except requests.exceptions.RequestException as e:
+        print("Error while fetching data:", e)
+        return None

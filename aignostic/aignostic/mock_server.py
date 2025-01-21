@@ -21,15 +21,15 @@ acs_data = data_source.get_data(states=["AL"], download=True)
 def get_dataframe():
     try:
         # Convert DataFrame to a list of dictionaries (one dictionary per row)
-        acs_dict = acs_data.to_dict(orient="records")
+        acs_dict = acs_data.iloc[0].to_dict()
 
-        # Create a DataSet object
-        dataset = DataSet(data=acs_dict)
-
-        return jsonify(dataset.model_dump())
+        return jsonify({'datapoint':acs_dict})
 
     except ValidationError as e:
         return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/invalid-data', methods=['GET'])

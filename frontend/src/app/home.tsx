@@ -53,7 +53,7 @@ function Homepage() {
       }
       
       // send POST request to backend server
-      fetch('https://aignostic.impaas.uk/get_info', {
+      fetch('http://localhost:8000/get_info', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
