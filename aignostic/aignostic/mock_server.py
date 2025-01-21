@@ -23,7 +23,7 @@ def get_dataframe():
         # Convert DataFrame to a list of dictionaries (one dictionary per row)
         acs_dict = acs_data.iloc[0].to_dict()
 
-        return jsonify({'datapoint':acs_dict})
+        return jsonify({'datapoint': acs_dict})
 
     except ValidationError as e:
         return jsonify({"error": str(e)}), 400

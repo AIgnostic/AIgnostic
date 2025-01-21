@@ -63,13 +63,13 @@ def echo(request: Request):
     return {"message": request.text}
 
 
-
 async def processData(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str]):
     # fetch data from datasetURL
     data = await fetch_data(datasetURL)
-
+    if data is None:
+        return
     # pass data to modelURL and return predictions
-
+    # TODO: data
     # calculate metrics
 
 
