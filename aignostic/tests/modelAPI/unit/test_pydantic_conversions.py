@@ -1,4 +1,3 @@
-import pytest
 import aignostic.pydantic_models.models as models
 import numpy as np
 from tests.modelAPI.model.mock import app as mock_app
@@ -6,6 +5,7 @@ from fastapi.testclient import TestClient
 import pandas as pd
 
 mock_app = TestClient(mock_app)
+
 
 def test_conversion_from_numpy():
     """
@@ -16,6 +16,7 @@ def test_conversion_from_numpy():
     response = mock_app.post("/predict", json=data)
     assert response.status_code == 200, response.text
 
+
 def test_conversion_from_pandas():
     """
     Test conversion from pandas dataframe to pydantic model
@@ -24,7 +25,8 @@ def test_conversion_from_pandas():
     df = pd.DataFrame(df, columns=["a", "b", "c"])
     data = models.df_to_JSON(df)
     response = mock_app.post("/predict", json=data)
-    assert response.status_code == 200, response.text 
+    assert response.status_code == 200, response.text
+
 
 def test_conversion_from_csv():
     """

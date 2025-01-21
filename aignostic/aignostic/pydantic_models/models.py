@@ -1,8 +1,8 @@
-from typing import Any, Dict, List
 from pydantic import BaseModel
-from typing import Optional, List, Union
+from typing import Optional, List
 import numpy as np
 import pandas as pd
+
 
 class Data(BaseModel):
     """
@@ -13,15 +13,17 @@ class Data(BaseModel):
     column_names: Optional[List]
     rows: List[List]
 
+
 def df_to_JSON(df: pd.DataFrame) -> dict:
     """
     Convert a pandas dataframe to a JSON string in the required format
     """
-    column_names : list = list(df.columns)
-    rows : list[list] = list(list(r) for r in df.values)
+    column_names: list = list(df.columns)
+    rows: list[list] = list(list(r) for r in df.values)
     return {"column_names": column_names, "rows": rows}
 
-def arr_to_JSON(arr : np.array) -> dict:
+
+def arr_to_JSON(arr: np.array) -> dict:
     """
     Convert a pandas dataframe to a JSON string in the required format
     """
@@ -29,21 +31,21 @@ def arr_to_JSON(arr : np.array) -> dict:
     rows = list(list(r) for r in arr)
     return {"column_names": column_names, "rows": rows}
 
-def csv_to_JSON(file_path : str, header_row : bool = True) -> dict:
+
+def csv_to_JSON(file_path: str, header_row: bool = True) -> dict:
     """
     Convert a csv to a JSON string in the required format
     """
     import csv
     with open(file_path, 'r', newline='') as csvfile:
-        csv_reader = csv.reader(csvfile)    
-        
+        csv_reader = csv.reader(csvfile)
+
         header = None
         rows = [[]]
         try:
             if header_row:
                 header = next(csv_reader)
                 header = [c.strip() for c in header]
-            
             rows = [[value.strip() for value in row] for row in csv_reader]
             return {"column_names": header, "rows": rows}
         except StopIteration:

@@ -1,9 +1,7 @@
-import pytest
 from fastapi.testclient import TestClient
 from tests.modelAPI.model.scikit_mock import app as scikit_app
 from tests.modelAPI.model.mock import app as mock_app
 import pandas as pd
-from aignostic.pydantic_models.models import Data
 from folktables import ACSDataSource, ACSEmployment
 import pickle
 from tests.modelAPI.model.huggingface_binclassifier import app as huggingface_app
@@ -13,10 +11,12 @@ client_huggingface = TestClient(huggingface_app)
 client_scikit = TestClient(scikit_app)
 client_mock = TestClient(mock_app)
 
+
 def test_non_existent_endpoint_throws_error():
     response = client_scikit.get("/hello")
     print(response)
     assert response.status_code == 404, response.text
+
 
 def test_mock_api_returns_empty():
     # post empty pandas dataframe
@@ -26,7 +26,8 @@ def test_mock_api_returns_empty():
     })
     assert response.status_code == 200, response.text
     assert response.json() == {"column_names": [], "rows": [[]]}, "Empty values not returned given empty input"
-    
+
+
 def test_empty_data_scikit():
     # post empty pandas dataframe
     response = client_mock.post("/predict", json={
@@ -35,15 +36,16 @@ def test_empty_data_scikit():
     })
     assert response.status_code == 200, response.text
     assert response.json() == {"column_names": [], "rows": [[]]}, "Empty values not returned given empty input"
-    
+
+
 def test_valid_data_scikit_folktables():
-    # Import the folktables dataset and load the employment data 
-    data_source : ACSDataSource = ACSDataSource(survey_year='2018', horizon='1-Year', survey='person')
-    acs_data : pd.DataFrame = data_source.get_data(states=[
+    # Import the folktables dataset and load the employment data
+    data_source: ACSDataSource = ACSDataSource(survey_year='2018', horizon='1-Year', survey='person')
+    acs_data: pd.DataFrame = data_source.get_data(states=[
         "AL"
     ], download=True)[0:1]
     features, _, _ = ACSEmployment.df_to_numpy(acs_data)
-        
+
     # Test the response is not empty given a non-empty input
     response = client_scikit.post("/predict", json={"column_names": None, "rows": features.tolist()})
     assert response.status_code == 200, response.text
@@ -52,7 +54,10 @@ def test_valid_data_scikit_folktables():
     model = pickle.load(open('scikit_model.sav', 'rb'))
     y_hat = model.predict(features)
 
-    assert response.json() == {"column_names": None, "rows": [y_hat.tolist()]}, "Model output does not match expected output"
+    assert response.json() == {
+        "column_names": None,
+        "rows": [y_hat.tolist()]
+    }, "Model output does not match expected output"
 
 
 def test_valid_data_huggingface_empty():
@@ -61,6 +66,7 @@ def test_valid_data_huggingface_empty():
     with open('output.txt', 'w') as f:
         f.write(response.text)
     assert response.status_code == 200
+
 
 def test_invalid_inputs_fail():
     """

@@ -1,14 +1,10 @@
-from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from fastapi import FastAPI, HTTPException
 import pandas as pd
-from aignostic.pydantic_models.models import DataSet, QueryOutput, to_dataframe
 import random
-import os 
+import os
 from aignostic.dataset_loader.loader import DatasetLoader
 
 app = FastAPI()
-
 
 parent_dir = os.path.dirname(os.path.dirname(__file__))
 csv_path = os.path.join(parent_dir, "dataset", "test.csv")
@@ -29,8 +25,7 @@ def fetch_random_datapoint():
         raise HTTPException(status_code=404, detail="No matching datapoints found")
 
     random_index = random.randint(0, len(filtered_data) - 1)
-    datapoint =filtered_data.iloc[random_index].to_dict()
+    datapoint = filtered_data.iloc[random_index].to_dict()
     # Replace NaN with None in the datapoint
     cleaned_datapoint = {key: (value if pd.notna(value) else None) for key, value in datapoint.items()}
     return {"datapoint": cleaned_datapoint}
-

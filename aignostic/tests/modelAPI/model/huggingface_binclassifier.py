@@ -1,12 +1,12 @@
 from transformers import pipeline
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 from aignostic.pydantic_models.models import Data
-from fastapi.testclient import TestClient
 
 app = FastAPI()
 
 # utilising hugging face high-level pipeline for sentiment analysis
 pipe = pipeline("text-classification", model="siebert/sentiment-roberta-large-english")
+
 
 @app.post("/predict")
 def predict(dataset: Data):
@@ -18,7 +18,7 @@ def predict(dataset: Data):
                 raise HTTPException(status_code=400, detail="Input text must be a single string")
             else:
                 results.append(pipe(text[0]))
-                assert type(text) == list, "Input text must be encapsulated in a list"
+                assert isinstance(text, list), "Input text must be encapsulated in a list"
         # Return the classification result
         return Data(column_names=["response"], rows=results)
     except Exception as e:
