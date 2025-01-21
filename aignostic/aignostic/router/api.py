@@ -43,7 +43,7 @@ async def get_info(request: DatasetRequest):
 
 @api.get("/")
 def hello():
-    return {"message": "Hello Worlds!"}
+    return {"message": "Pushed at 21/01/2025 07:32"}
 
 
 @api.get("/repeat/{text}")  # /repeat/hello, /repeat/a,
