@@ -33,7 +33,7 @@ def validate_dataframe(data: list[dict]) -> pd.DataFrame:
 
 
 @app.get('/validate_dataset')
-async def validate_dataset_url(url: str = Query(..., description="The URL of the dataset")):
+async def validate_dataset_url(url: str = Query(..., description="Dataset URL")):
     """
     Validate a dataset URL and return the columns and number of rows.
     """
@@ -50,9 +50,9 @@ async def validate_dataset_url(url: str = Query(..., description="The URL of the
             "rows": dataframe.shape[0]
         })
     except requests.exceptions.RequestException:
-        raise HTTPException(status_code=500, detail="Failed to fetch data")
+        raise HTTPException(status_code=400, detail="Failed to fetch data")
     except ValidationError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid data format: {e.errors()}")
+        raise HTTPException(status_code=400, detail=f"Invalid data format")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

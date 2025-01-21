@@ -15,7 +15,10 @@ acs_data = data_source.get_data(states=["AL"], download=True)
 async def get_dataframe():
     """
     Retrieves a single row of data from the ACS dataset, converts it to a dictionary,
-    and returns it in a JSON response as part of a dataset.
+    and returns it in a JSON response as part of a dataset. 
+    
+    Note: Retrieving the entire dataset takes 30 seconds, which increases testing time 
+    significantly.
     """
     try:
         acs_row = acs_data.iloc[0]
@@ -34,13 +37,11 @@ async def get_invalid_data():
     """
     Returns an invalid JSON response, which cannot be parsed into a DataFrame.
     """
-    invalid_data = "This is not a valid JSON or tabular data"
     return JSONResponse(
         content={
-            "error": "Invalid data format. Cannot be parsed into DataFrame.",
-            "data": invalid_data
+            "data": "This is not expected tabular data"
         },
-        status_code=400
+        status_code=200
     )
 
 
