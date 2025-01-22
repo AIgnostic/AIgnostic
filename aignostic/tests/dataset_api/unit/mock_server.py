@@ -25,26 +25,21 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     our expected JSON format, and returns it in a JSON response. Defaults to
     fetching the first row of the ACS data.
 
-    Args: 
+    Args:
         indices (list[int]): A list of indices to fetch from the ACS data.
-    Returns: 
+    Returns:
         JSONResponse: A JSON response containing the random datapoints.
     """
     try:
-        
-        acs_datapoints = pd.concat([features.iloc[indices], label.iloc[indices]], axis=1)
 
-        # return JSONResponse(content=df_to_JSON(acs_datapoints), status_code=200)
-        # acs_datapoints = features
-        # # Log the acs_datapoints DataFrame
-        # logger.info("ACS Datapoints:\n%s", acs_datapoints)
+        acs_datapoints = pd.concat([features.iloc[indices], label.iloc[indices]], axis=1)
         acs_datapoints = acs_datapoints.replace({
             pd.NA: None,
             np.nan: None,
             float('inf'): None,
             float('-inf'): None
         })
-        # # 
+
         return JSONResponse(content=df_to_JSON(acs_datapoints), status_code=200)
     except Exception as e:
         print(e)

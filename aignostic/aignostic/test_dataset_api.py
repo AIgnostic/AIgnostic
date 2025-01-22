@@ -5,7 +5,7 @@ import pandas as pd
 
 app = Flask(__name__)
 
- 
+
 def verify_dataframe(url):
     try:
         response = requests.get(url)

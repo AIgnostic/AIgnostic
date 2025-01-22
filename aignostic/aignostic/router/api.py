@@ -12,7 +12,7 @@ class DatasetRequest(BaseModel):
     modelURL: HttpUrl
     metrics: list[str]
 
- 
+
 @api.post("/evaluate")
 async def generate_metrics_from_info(request: DatasetRequest):
     """
@@ -57,21 +57,9 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     try:
         rows = data["rows"]
         feature, true_label = [rows[0][:-1]], [rows[0][-1]]
-        print("Feature:", feature)
-    
-        print("True Label:", true_label)
-        print("Shape of Features:", len(feature))
-        print("Shape of Feature:", len(feature[0]))
-        print("Shape of TL:", len(true_label))
-        print("Split Data")
         prediction = await query_model(modelURL, {"column_names": data["column_names"][:-1],  "rows": feature})
-        print("Queried Model")
-        print(prediction)
         predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
-        print("Processed Data")
         metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
-        print("Calculated Metrics")
-        print(metrics_results)
     except Exception as e:
         print(f"Error while processing data: {e}")
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
