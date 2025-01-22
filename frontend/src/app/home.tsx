@@ -108,8 +108,6 @@ function Homepage() {
           <h3 style={styles.logoText}>AIgnostic Frontend</h3>
         </Box>
 
-        <p>Selected Item: {selectedItem}</p>
-
         <Box style={styles.horizontalContainer}>
           New to AIgnostic? Read the docs to get started:
           <Button style={styles.button}>Getting Started</Button>
@@ -130,7 +128,9 @@ function Homepage() {
               <Typography>{step.description}</Typography>
 
               {index === 0 && (
-                <Box>
+                <Box style = {{
+                  padding: '15px',
+                }}>
                   <TextField
                     type="text"
                     label = "Model API URL"
@@ -144,6 +144,7 @@ function Homepage() {
                         ? 'Invalid URL format - please enter a valid URL'
                         : ''
                     }
+                 
                   />
                   <TextField
                     type="text"
@@ -163,7 +164,7 @@ function Homepage() {
               )}
 
               {index === 2 && (
-                <Box>
+                <Box style={{ padding: '15px' }}>
                   <p style={{ color: 'red' }}>{metricsHelperText}</p>
                   {metricChips.map((metricChip) => (
                     <Chip
@@ -183,6 +184,9 @@ function Homepage() {
                   ))}
 
                   <Dropdown
+                    style ={{
+                      marginTop: '20px',
+                    }}
                     items={items}
                     label="Select target label(s)"
                     value={selectedItem}
@@ -192,7 +196,7 @@ function Homepage() {
               )}
 
               {index === steps.length - 1 && (
-                <Box>
+                <Box style={{ padding: '15px' }}>
                   <h3>Summary</h3>
                   <p>
                     Model URL:{' '}
@@ -317,9 +321,10 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   input: {
     width: '100%',
-    padding: '10px',
     marginBottom: '10px',
     fontSize: '16px',
+    alignContent: 'center',
+    
   },
   button: {
     padding: '10px 20px',
