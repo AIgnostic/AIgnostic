@@ -1,5 +1,4 @@
 from fastapi.testclient import TestClient
-from threading import Thread
 from typing import List
 import pytest
 from mock_server import app as client_mock
@@ -36,7 +35,7 @@ def start_mock_server():
     config = uvicorn.Config(client_mock, host="127.0.0.1", port=5000)
     server = uvicorn.Server(config)
 
-    # From https://stackoverflow.com/questions/61577643/python-how-to-use-fastapi-and-uvicorn-run-without-blocking-the-thread
+    # From https://stackoverflow.com/questions/61577643
     with server.run_in_thread():
         yield
 
