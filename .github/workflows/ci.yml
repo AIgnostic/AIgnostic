@@ -103,6 +103,8 @@ jobs:
             type=ref,event=pr
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
+      - name: Free up Disk space
+        run: ./scripts/free_up_space_gha.sh
       # Build tags with the tags we setup in the previous step
       - name: Build and push Docker image
         id: push
@@ -113,13 +115,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          no-cache: true
+          # no-cache: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
   deploy-tsuru:
     needs:
       - docker # if we didn't build a container, don't do this!
-    if: github.ref == 'refs/heads/main'    ## TODO: UNCOMMENT ONCE NEW DEPLOYMENT IS READY
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       TSURU_TOKEN: ${{ secrets.IMPAAS_DEPLOY_TOKEN }}
