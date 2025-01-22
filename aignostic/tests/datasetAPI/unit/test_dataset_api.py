@@ -34,7 +34,6 @@ def start_mock_server():
     def run_mock_server():
         import uvicorn
         uvicorn.run(client_mock, host="127.0.0.1", port=5000)
-
     thread = Thread(target=run_mock_server)
     thread.daemon = True
     thread.start()

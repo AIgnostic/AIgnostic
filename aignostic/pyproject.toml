@@ -42,6 +42,7 @@ transformers = "^4.48.0"                                          # Dev
 torch = { version = "^2.5.1", source = "pytorch-gpu-src" }        # Dev
 torchvision = { version = "^0.20.1", source = "pytorch-gpu-src" } # Dev
 torchaudio = { version = "^2.5.1", source = "pytorch-gpu-src" }   # Dev
+mypy = "^1.14.1"
 
 
 [[tool.poetry.source]]

@@ -1,0 +1,112 @@
+on:
+  workflow_call:
+    inputs:
+      run_poetry_install:
+        description: 'Run poetry install'
+        required: false
+        type: boolean
+        default: true
+      nx_tasks:
+        description: 'Nx tasks to run'
+        required: false
+        type: string
+        default: 'affected -t lint test build'
+      artifact_name:
+        description: 'Name of the artifact to upload'
+        required: true
+        type: string
+        default: 'nx-run'
+      artifact_path:
+        description: 'Path of the artifact to upload'
+        required: true
+        type: string
+        default: 'dist/'
+
+jobs:
+  nx_run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Poetry before Python because https://github.com/actions/setup-python/issues/765
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        if: ${{ inputs.run_poetry_install }}
+      - name: Set up Python 3.12 with Poetry
+        uses: actions/setup-python@v5
+        if: ${{ inputs.run_poetry_install }}
+        with:
+          python-version: '3.12'
+          cache: 'poetry'
+
+      - name: Inject export plugin (required by NX)
+        if: ${{ inputs.run_poetry_install }}
+        run: poetry self add poetry-plugin-export
+
+      # This enables task distribution via Nx Cloud
+      # Run this command as early as possible, before dependencies are installed
+      # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
+      # Uncomment this line to enable task distribution
+      # - run: npx nx-cloud start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="build"
+
+      # Cache node_modules
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # Insall npm deps so NX works
+      - run: npm ci --legacy-peer-deps
+      - uses: nrwl/nx-set-shas@v4
+
+      - name: Install dependencies using poetry
+        if: ${{ inputs.run_poetry_install }}
+        run: npx nx run-many --target=install --all
+
+      # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
+      # - run: npx nx-cloud record -- echo Hello World
+      # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
+      # True build step: Run lint, then test, then build
+      - run: npx nx ${{ inputs.nx_tasks }}
+      # - name: Test Report
+      #   uses: dorny/test-reporter@v1
+      #   if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
+      #   with:
+      #     name: Tests # Name of the check run which will be created
+      #     path: reports/frontend/jest-*.xml,reports/aignostic/unittests/junit.xml # Path to test results
+      #     reporter: jest-junit # Format of test results
+      # # - name: Jest Coverage Report
+      # #   if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
+      # #   uses: ArtiomTr/jest-coverage-report-action@v2
+      # #   with:
+      # #     coverage-file: ./coverage/frontend/report.json
+      - name: Jest Test Report
+        uses: dorny/test-reporter@v1
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test')
+        with:
+          name: Jest Tests # Name of the check run which will be created
+          path: ./reports/frontend/jest-results.xml # Path to test results
+          reporter: jest-junit # Format of test results
+      - name: Jest Coverage Comment
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test')
+        uses: MishaKav/jest-coverage-comment@main
+        with:
+          title: Jest Coverage Report (frontend)
+          coverage-summary-path: ./coverage/frontend/coverage-summary.json
+          junitxml-path: ./reports/frontend/jest-results.xml
+      - name: Pytest Coverage Report
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          title: Pytest Coverage Report (aignostic)
+          pytest-xml-coverage-path: ./coverage/aignostic/coverage.xml
+          junitxml-path: ./reports/aignostic/unittests/junit.xml
+      - name: Archive  ${{ inputs.artifact_path }} as ${{ inputs.artifact_name }}
+        if: (success() || failure()) && hashFiles('coverage/') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ inputs.artifact_path }}
+      # Build stage shoukld

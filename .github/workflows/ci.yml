@@ -13,6 +13,10 @@ on:
 permissions:
   actions: read
   contents: read
+  checks: write
+  issues: write
+  packages: write
+  pull-requests: write
 
 env:
   REGISTRY: ghcr.io
@@ -20,54 +24,47 @@ env:
   IMPAAS_APP_NAME: aignostic
 
 jobs:
-  main:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  lint:
+    uses: ./.github/workflows/nx-run.yml
+    with:
+      run_poetry_install: true
+      nx_tasks: 'affected -t lint'
+      artifact_name: 'lint-reports'
+      artifact_path: 'dist/'
+    secrets: inherit
+  test:
+    uses: ./.github/workflows/nx-run.yml
+    with:
+      run_poetry_install: true
+      nx_tasks: 'affected -t test'
+      artifact_name: 'test-coverage'
+      artifact_path: 'coverage/'
+    secrets: inherit
+  build:
+    uses: ./.github/workflows/nx-run.yml
+    with:
+      run_poetry_install: true
+      nx_tasks: 'affected -t build'
+      artifact_name: 'build-artifact'
+      artifact_path: 'dist/'
+    secrets: inherit
+  type-checks:
+    uses: ./.github/workflows/nx-run.yml
+    with:
+      run_poetry_install: true
+      nx_tasks: 'affected -t type-checks'
+      artifact_name: 'type-checks'
+      artifact_path: 'reports/'
+    secrets: inherit
 
-      # Poetry before Python because https://github.com/actions/setup-python/issues/765
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-      - name: Set up Python 3.12 with Poetry
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'poetry'
-
-      - name: Inject export plugin (required by NX)
-        run: poetry self add poetry-plugin-export
-
-      # This enables task distribution via Nx Cloud
-      # Run this command as early as possible, before dependencies are installed
-      # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
-      # Uncomment this line to enable task distribution
-      # - run: npx nx-cloud start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="build"
-
-      # Cache node_modules
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      # Insall npm deps so NX works
-      - run: npm ci --legacy-peer-deps
-      - uses: nrwl/nx-set-shas@v4
-
-      - name: Install dependencies using poetry
-        run: npx nx run-many --target=install --all
-
-      # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
-      # - run: npx nx-cloud record -- echo Hello World
-      # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
-      # True build step: Run lint, then test, then build
-      - run: npx nx affected -t lint test build
   docker:
     # Note that build is not a dependency of this job, as this will build the same stuff as the build job anyway
     # However no point in building if lint or test fails!
     needs:
-      - main # no point doing this if project doesn't work!
+      - lint
+      - test
+      - build
+      - type-checks
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -134,7 +131,10 @@ jobs:
         run: tsuru app deploy -i ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -a ${{ env.IMPAAS_APP_NAME }}
   deploy-gh-pages:
     needs:
-      - main
+      - lint
+      - test
+      - build
+      - type-checks
     # from https://github.com/JamesIves/github-pages-deploy-action
     concurrency: ci-${{ github.ref }} # Recommended if you intend to make multiple deployments in quick succession.
     if: github.ref == 'refs/heads/main'
