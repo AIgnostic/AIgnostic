@@ -14,7 +14,6 @@ client_mock = TestClient(mock_app)
 
 def test_non_existent_endpoint_throws_error():
     response = client_scikit.get("/hello")
-    print(response)
     assert response.status_code == 404, response.text
 
 
