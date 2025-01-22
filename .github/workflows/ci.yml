@@ -29,24 +29,32 @@ jobs:
     with:
       run_poetry_install: true
       nx_tasks: 'affected -t lint'
+      artifact_name: 'lint-reports'
+      artifact_path: 'dist/'
     secrets: inherit
   test:
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
       nx_tasks: 'affected -t test'
+      artifact_name: 'test-reports'
+      artifact_path: 'reports/'
     secrets: inherit
   build:
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
       nx_tasks: 'affected -t build'
+      artifact_name: 'build-artifact'
+      artifact_path: 'dist/'
     secrets: inherit
   type-checks:
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
       nx_tasks: 'affected -t type-checks'
+      artifact_name: 'type-checks'
+      artifact_path: 'reports/'
     secrets: inherit
 
   docker:

@@ -11,6 +11,16 @@ on:
         required: false
         type: string
         default: 'affected -t lint test build'
+      artifact_name:
+        description: 'Name of the artifact to upload'
+        required: true
+        type: string
+        default: 'nx-run'
+      artifact_path:
+        description: 'Path of the artifact to upload'
+        required: true
+        type: string
+        default: 'dist/'
 
 jobs:
   nx_run:
@@ -93,22 +103,10 @@ jobs:
           title: Pytest Coverage Report (aignostic)
           pytest-xml-coverage-path: ./coverage/aignostic/coverage.xml
           junitxml-path: ./reports/aignostic/unittests/junit.xml
-      - name: Archive code coverage results
+      - name: Archive  ${{ inputs.artifact_path }} as ${{ inputs.artifact_name }}
         if: (success() || failure()) && hashFiles('coverage/') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-reports-${{ github.action }}-${{ github.run_id }}
-          path: coverage/
-      - name: Archive test reports
-        if: (success() || failure()) && hashFiles('reports/') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports-${{ github.action }}-${{ github.run_id }}
-          path: reports/
-      - name: Archive Build
-        if: (success() || failure()) && hashFiles('dist/') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ github.action }}-${{ github.run_id }}
-          path: dist/
+          name: ${{ inputs.artifact_name }}
+          path: ${{ inputs.artifact_path }}
       # Build stage shoukld
