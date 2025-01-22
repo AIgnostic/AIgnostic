@@ -10,6 +10,15 @@
       "options": {
         "base": "/AIgnostic/"
       }
+    },
+    "test": {
+      "options": {
+        "codeCoverage": true,
+        "config": "jest.config.ts",
+        "coverage": true,
+        "outputFile": "../coverage/frontend/report.json",
+        "json": true
+      }
     }
   }
 }
