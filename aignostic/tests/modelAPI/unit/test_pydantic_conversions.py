@@ -13,6 +13,7 @@ def test_conversion_from_numpy():
     """
     arr = np.array([[1, 2, 3], [4, 5, 6]]).astype(float)
     data = models.arr_to_JSON(arr)
+    data["column_names"] = ["a", "b", "c"]
     response = mock_app.post("/predict", json=data)
     assert response.status_code == 200, response.text
 

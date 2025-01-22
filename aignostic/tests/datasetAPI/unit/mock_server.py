@@ -1,33 +1,42 @@
 from folktables import ACSDataSource
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from fastapi.responses import JSONResponse
 import pandas as pd
+import numpy as np
 
 
 app = FastAPI()
 
 
-data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
+data_source = ACSDataSource(survey_year="2019", horizon="1-Year", survey="person")
 acs_data = data_source.get_data(states=["AL"], download=True)
 
 
-@app.get('/acs-dataframe')
-async def get_dataframe():
+@app.get('/fetch-datapoints')
+async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     """
-    Retrieves a single row of data from the ACS dataset, converts it to a dictionary,
-    and returns it in a JSON response as part of a dataset. 
-    
-    Note: Retrieving the entire dataset takes 30 seconds, which increases testing time 
-    significantly.
+    Given a list of indices, fetch the data at each index and convert into
+    our expected JSON format, and returns it in a JSON response. Defaults to
+    fetching the first row of the ACS data.
+
+    Args:
+        indices (list[int]): A list of indices to fetch from the ACS data.
+
+    Returns:
+        JSONResponse: A JSON response containing the random datapoints.
     """
     try:
-        acs_row = acs_data.iloc[0]
-        acs_dict = acs_row.replace({
+        acs_rows = acs_data.iloc[indices]
+        acs_rows = acs_rows.replace({
             pd.NA: None,
+            np.nan: None,
             float('inf'): None,
             float('-inf'): None
-        }).to_dict()
-        return JSONResponse(content=[acs_dict])
+        })
+        return JSONResponse(content={
+            "column_names": acs_rows.columns.tolist(),
+            "rows": acs_rows.values.tolist()
+        })
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -35,11 +44,13 @@ async def get_dataframe():
 @app.get('/invalid-data')
 async def get_invalid_data():
     """
-    Returns an invalid JSON response, which cannot be parsed into a DataFrame.
+    Returns an invalid JSON response, which cannot be parsed into our expected
+    Pydantic model.
     """
     return JSONResponse(
         content={
-            "data": "This is not expected tabular data"
+            "column_names": "This is not a list as expected",
+            "rows": []
         },
         status_code=200
     )

@@ -1,16 +1,16 @@
 from fastapi import FastAPI
-from aignostic.pydantic_models.models import Data
+from aignostic.pydantic_models.models import DataSet
 
 app = FastAPI()
 
 
 @app.post("/predict")
-def predict(dataset: Data) -> Data:
+def predict(dataset: DataSet) -> DataSet:
     """
     Given a dataset, predict the expected outputs for the model
     """
     # Return empty dataframe for now - fill this in with actual test models when trained
-    return Data(column_names=[], rows=[[]])
+    return DataSet(column_names=[], rows=[[]])
 
 
 """

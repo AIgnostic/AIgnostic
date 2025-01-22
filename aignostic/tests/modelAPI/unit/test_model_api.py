@@ -47,7 +47,13 @@ def test_valid_data_scikit_folktables():
     features, _, _ = ACSEmployment.df_to_numpy(acs_data)
 
     # Test the response is not empty given a non-empty input
-    response = client_scikit.post("/predict", json={"column_names": None, "rows": features.tolist()})
+    response = client_scikit.post(
+        "/predict",
+        json={
+            "column_names": acs_data.columns.tolist(),
+            "rows": features.tolist()
+        }
+    )
     assert response.status_code == 200, response.text
 
     # Test the response is the same as the expected response from the pickled model
@@ -55,7 +61,7 @@ def test_valid_data_scikit_folktables():
     y_hat = model.predict(features)
 
     assert response.json() == {
-        "column_names": None,
+        "column_names": acs_data.columns.tolist(),
         "rows": [y_hat.tolist()]
     }, "Model output does not match expected output"
 
