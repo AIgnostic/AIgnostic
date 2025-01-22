@@ -86,27 +86,25 @@ function Homepage() {
       // alert('Please fill in both text inputs.');
     }
   };
-
-  const handleNext = () => {
+  // TODO: put helpers into util 
+  // const modifyActiveStep = (change: number) => {
+  //   setState((prevState) => ({
+  //     ...prevState,
+  //     activeStep: prevState.activeStep + change,
+  //   }));
+  // };
+  const setStateWrapper = <K extends keyof typeof state>(key: K, value: typeof state[K]) => {
     setState((prevState) => ({
-      ...prevState, 
-      activeStep: prevState.activeStep + 1, 
+      ...prevState,
+      [key]: value,
     }));
   };
+  
+  const handleNext = () => {setStateWrapper("activeStep", state.activeStep + 1)};
 
-  const handleBack = () => {
-    setState((prevState) => ({
-      ...prevState, 
-      activeStep: prevState.activeStep - 1, 
-    }));
-  };
+  const handleBack = () => {setStateWrapper("activeStep", state.activeStep - 1)};
 
-  const handleReset = () => {
-    setState((prevState) => ({
-      ...prevState, 
-      activeStep: 0, 
-    }));
-  };
+  const handleReset = () => {setStateWrapper("activeStep", 0);};
 
 
   // Placeholder for the dropdown items
@@ -154,10 +152,7 @@ function Homepage() {
                       }));
                     }} 
                     onBlur={() => {
-                      setState((prevState) => ({
-                        ...prevState,
-                        isModelURLValid: checkURL(state.modelURL),
-                      }));
+                      setStateWrapper("isModelURLValid", checkURL(state.modelURL))
                     }} 
                     style={styles.input}
                     error={!state.isModelURLValid}
@@ -173,16 +168,10 @@ function Homepage() {
                     label = "Dataset API URL"
                     value={state.datasetURL}
                     onChange={(e) => {
-                      setState((prevState) => ({
-                        ...prevState, 
-                        datasetURL: e.target.value, 
-                      }));
+                      setStateWrapper("datasetURL", e.target.value)
                     }} 
                     onBlur={() => {
-                      setState((prevState) => ({
-                        ...prevState,
-                        isDatasetURLValid: checkURL(state.datasetURL),
-                      }));
+                      setStateWrapper("isDatasetURLValid", checkURL(state.datasetURL))
                     }}                    
                     style={styles.input}
                     error={!state.isDatasetURLValid}
@@ -204,17 +193,11 @@ function Homepage() {
                       variant="filled"
                       onDelete={() => {
                         metricChip.selected = !metricChip.selected;
-                        setState((prevState) => ({
-                          ...prevState, 
-                          metricChips: [...prevState.metricChips],
-                        }));
+                        setStateWrapper("metricChips", [...state.metricChips])
                       }}
                       onClick={() => {
                         metricChip.selected = !metricChip.selected;
-                        setState((prevState) => ({
-                          ...prevState,
-                          metricChips: [...prevState.metricChips],
-                        }))
+                        setStateWrapper("metricChips", [...state.metricChips])
                       }}
                       color={metricChip.selected ? 'primary' : 'default'}
                       style={{ margin: '5px' }}
@@ -266,21 +249,12 @@ function Homepage() {
                       // if not, jump to step 0
                       if (!state.modelURL || !state.datasetURL) {
                         if (!state.modelURL) {
-                          setState((prevState) => ({
-                            ...prevState,
-                            isModelURLValid: false,
-                          }));
+                          setStateWrapper("isModelURLValid", false)
                         }
                         if (!state.datasetURL) {
-                          setState((prevState) => ({
-                            ...prevState, 
-                            isDatasetURLValid: false,
-                          }));
+                          setStateWrapper("isDatasetURLValid", false)
                         }
-                        setState((prevState) => ({
-                          ...prevState,
-                          activeStep: 0,
-                        }))
+                        setStateWrapper("activeStep", 0)
                       }
 
                       // check that at least one metric is selected
@@ -289,16 +263,9 @@ function Homepage() {
                         state.metricChips.filter((metricChip) => metricChip.selected)
                           .length === 0
                       ) {
-                        setState((prevState) => ({
-                          ...prevState,
-                          metricsHelperText: 'Please select at least one metric',
-                        }))
-                        setState((prevState) => ({
-                          ...prevState,
-                          activeStep: 2,
-                        }))
+                        setStateWrapper("metricsHelperText", 'Please select at least one metric')
+                        setStateWrapper('activeStep', 2)
                       }
-
                       // if all checks pass, generate report
                       else {
                         handleSubmit();
