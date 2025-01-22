@@ -81,10 +81,10 @@ async def processData(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str]
 
     print("Prediction received. Predicted labels:", predictedLabels)
 
-    metrics = list(map(lambda x: x.lower(), metrics))    
+    metrics = list(map(lambda x: x.lower(), metrics))
     metricsResults = metricsLib.calculate_metrics(trueLabel, predictedLabels, metrics)
     print("Metrics calculated:", metricsResults)
-    
+
     return metricsResults
 
 
