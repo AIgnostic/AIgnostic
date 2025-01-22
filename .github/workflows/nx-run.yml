@@ -97,18 +97,18 @@ jobs:
         if: (success() || failure()) && hashFiles('coverage/') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-reports
+          name: code-coverage-reports-${{ github.action }}-${{ github.run_id }}
           path: coverage/
       - name: Archive test reports
         if: (success() || failure()) && hashFiles('reports/') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: test-reports-${{ github.action }}-${{ github.run_id }}
           path: reports/
       - name: Archive Build
         if: (success() || failure()) && hashFiles('dist/') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: build
+          name: build-${{ github.action }}-${{ github.run_id }}
           path: dist/
       # Build stage shoukld
