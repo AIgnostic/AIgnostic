@@ -10,11 +10,12 @@ import numpy as np
 
 def calculate_metrics(y_true, y_pred, metrics):
     """
-        Calculate the metrics for the given y_true and y_pred
-        Args:
-            y_true: list of true labels
-            y_pred: list of predicted labels
-            metrics: list of metric functions e.g. "accuracy", "precision"
+    Calculate the metrics for the given y_true and y_pred
+    
+    Params:
+        y_true: list of true labels
+        y_pred: list of predicted labels
+        metrics: list of metric functions e.g. "accuracy", "precision"
     """
     print("Y_TRUE", y_true)
     print("Y_PRED", y_pred)

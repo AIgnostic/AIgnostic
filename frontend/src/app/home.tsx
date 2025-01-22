@@ -38,6 +38,7 @@ function Homepage() {
   const [activeStep, setActiveStep] = React.useState(0);
   const [metricChips, setMetricChips] = useState(metrics.map((metric) => { return { "label": metric, "selected": true } }));
   const [metricsHelperText, setMetricsHelperText] = useState('');
+  const BACKEND_URL = 'http://localhost:8000/get_info';
 
   const handleSubmit = () => {
     if (modelURL && datasetURL) {
@@ -52,7 +53,7 @@ function Homepage() {
       }
 
       // send POST request to backend server
-      fetch('http://localhost:8000/get_info', {
+      fetch(BACKEND_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

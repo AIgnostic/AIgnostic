@@ -4,7 +4,6 @@ import requests
 import aignostic.metrics.metrics as metricsLib
 
 
-
 api = APIRouter()
 
 
@@ -26,9 +25,9 @@ async def generate_metrics_from_info(request: DatasetRequest):
         modelURL = request.modelURL
         metrics = request.metrics
 
-        await process_data(datasetURL, modelURL, metrics)
+        results = await process_data(datasetURL, modelURL, metrics)
 
-        return {"message": "Data successfully received"}
+        return {"message": "Data successfully received", "results": results}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -52,20 +51,23 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     - metrics: list of metrics that should be applied
     """
 
-    
-    # fetch data from datasetURL
-    data = await fetch_data(datasetURL)
+    try:
+        # fetch data from datasetURL
+        data = await fetch_data(datasetURL)
 
-    # strip the label from the datapoint
-    feature, trueLabel = [data[0][:-1]], [data[0][-1]]
+        # strip the label from the datapoint
+        feature, trueLabel = [data[0][:-1]], [data[0][-1]]
 
-    # pass data to modelURL and return predictions
-    prediction = await query_model(modelURL, {"column_names": None, "rows": feature})
-    predictedLabels = [item for sublist in prediction["rows"] for item in sublist]
+        # pass data to modelURL and return predictions
+        prediction = await query_model(modelURL, {"column_names": None, "rows": feature})
+        predictedLabels = [item for sublist in prediction["rows"] for item in sublist]
 
-    metricsResults = metricsLib.calculate_metrics(trueLabel, predictedLabels, metrics)
-    
-    return metricsResults
+        metricsResults = metricsLib.calculate_metrics(trueLabel, predictedLabels, metrics)
+        
+        return metricsResults
+    except Exception as e:
+        print("Error while processing data:", e)
+        return None
 
 
 async def fetch_data(dataURL: HttpUrl):
@@ -87,14 +89,17 @@ async def fetch_data(dataURL: HttpUrl):
 
         # Return the data
         return data
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print("Error while fetching data:", e)
         return None
 
 
 async def query_model(modelURL: HttpUrl, data: dict):
     """
-    
+    Helper function to query the model API
+
+    Params:
+    - modelURL : API URL of the model
     """
     try:
         # Send a POST request to the dataset API
@@ -108,9 +113,6 @@ async def query_model(modelURL: HttpUrl, data: dict):
 
         # Return the data
         return data
-    except requests.exceptions.RequestException as e:
-        print("Error while fetching data:", e)
-        return None
     except Exception as e:
         print("Error while fetching data:", e)
         return None
