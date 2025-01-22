@@ -118,7 +118,9 @@ jobs:
         run: tsuru app deploy -i ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -a ${{ env.IMPAAS_APP_NAME }}
   deploy-gh-pages:
     needs:
-      - main
+      - lint
+      - test
+      - build
     # from https://github.com/JamesIves/github-pages-deploy-action
     concurrency: ci-${{ github.ref }} # Recommended if you intend to make multiple deployments in quick succession.
     if: github.ref == 'refs/heads/main'
