@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - 1.4B-pipeline-integration
   pull_request:
 
 permissions:
@@ -119,7 +120,7 @@ jobs:
   deploy-tsuru:
     needs:
       - docker # if we didn't build a container, don't do this!
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'    ## TODO: UNCOMMENT ONCE NEW DEPLOYMENT IS READY
     runs-on: ubuntu-latest
     env:
       TSURU_TOKEN: ${{ secrets.IMPAAS_DEPLOY_TOKEN }}
