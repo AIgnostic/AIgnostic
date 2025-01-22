@@ -21,7 +21,6 @@ features, label, group = ACSEmployment.df_to_numpy(acs_data)
 @app.route('/acs-dataframe', methods=['GET'])
 def get_dataframe():
     try:
-
         # Return one data point (feature + label) from the ACS Employment data
         datapoint = features[0].tolist() + [label[0].tolist()]
         print("Datapoint", [datapoint])
