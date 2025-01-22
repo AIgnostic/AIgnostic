@@ -48,7 +48,19 @@ function Homepage() {
     })),
     metricsHelperText: '',
   });
+
+  const setStateWrapper = <K extends keyof typeof state>(key: K, value: typeof state[K]) => {
+    setState((prevState) => ({
+      ...prevState,
+      [key]: value,
+    }));
+  };
   
+  const handleNext = () => {setStateWrapper("activeStep", state.activeStep + 1)};
+
+  const handleBack = () => {setStateWrapper("activeStep", state.activeStep - 1)};
+
+  const handleReset = () => {setStateWrapper("activeStep", 0);};
 
   const handleSubmit = () => {
     if (state.modelURL && state.datasetURL) {
@@ -86,26 +98,6 @@ function Homepage() {
       // alert('Please fill in both text inputs.');
     }
   };
-  // TODO: put helpers into util 
-  // const modifyActiveStep = (change: number) => {
-  //   setState((prevState) => ({
-  //     ...prevState,
-  //     activeStep: prevState.activeStep + change,
-  //   }));
-  // };
-  const setStateWrapper = <K extends keyof typeof state>(key: K, value: typeof state[K]) => {
-    setState((prevState) => ({
-      ...prevState,
-      [key]: value,
-    }));
-  };
-  
-  const handleNext = () => {setStateWrapper("activeStep", state.activeStep + 1)};
-
-  const handleBack = () => {setStateWrapper("activeStep", state.activeStep - 1)};
-
-  const handleReset = () => {setStateWrapper("activeStep", 0);};
-
 
   // Placeholder for the dropdown items
   const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
