@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from aignostic.pydantic_models.data_models import DataSet
 
+
 app = FastAPI()
 
 
@@ -14,6 +15,7 @@ def predict(dataset: DataSet) -> DataSet:
 
 
 """
-TODO: (Low Priority) Extend to batch querying / single datapoint querying for convenience
+TODO: (Low Priority) Extend to batch querying
+or single datapoint querying for convenience
 (e.g. if dataset is very large)
 """

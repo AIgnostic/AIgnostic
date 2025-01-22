@@ -6,6 +6,7 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 export default defineConfig({
   root: __dirname,
+  base: '/AIgnostic/',
   cacheDir: '../node_modules/.vite/frontend',
   server: {
     port: 4200,
