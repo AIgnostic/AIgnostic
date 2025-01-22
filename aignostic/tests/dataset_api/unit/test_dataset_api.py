@@ -45,6 +45,7 @@ def start_mock_server():
 def test_server_validates_client_dataset_correctly_given_valid_url(start_mock_server):
     response = server_mock.get("/validate-dataset?url=" + valid_url)
     assert response.status_code == 200
+    assert len(response.json()["columns"]) == len(expected_ACS_column_names)
     assert response.json()["columns"] == expected_ACS_column_names
     assert response.json()["rows"] == 2
 
