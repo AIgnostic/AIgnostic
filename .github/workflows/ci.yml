@@ -103,8 +103,6 @@ jobs:
             type=ref,event=pr
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
-      - name: Free up Disk space
-        run: ./scripts/free_up_space_gha.sh
       # Build tags with the tags we setup in the previous step
       - name: Build and push Docker image
         id: push
