@@ -120,7 +120,7 @@ function Homepage() {
         activeStep={activeStep}
         style={{ width: '80%' }}
         orientation="vertical"
-      >
+        >
         {steps.map((step, index) => (
           <Step key={step.label}>
             <StepLabel>
@@ -257,7 +257,13 @@ function Homepage() {
                 ) : (
                   <Button
                     variant="contained"
-                    onClick={handleNext}
+                    onClick={() => {
+                      if (index === 0 && !(isModelURLValid && isDatasetURLValid)) {
+                        alert("One or both URLs are invalid. Please provide valid URLs.");
+                        handleReset(); // Optionally reset if invalid
+                      } else {
+                        handleNext();
+                      }}}
                     sx={{ mt: 1, mr: 1 }}
                   >
                     {' '}
