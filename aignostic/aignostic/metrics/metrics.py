@@ -12,15 +12,23 @@ def calculate_metrics(y_true, y_pred, metrics):
     """
         Calculate the metrics for the given y_true and y_pred
         Args:
-            y_true: numpy array of true labels
-            y_pred: numpy array of predicted labels
+            y_true: list of true labels
+            y_pred: list of predicted labels
             metrics: list of metric functions e.g. "accuracy", "precision"
     """
-    results = {}
-    for metric in metrics:
-        results[metric] = globals()[metric](y_true, y_pred)
+    print("Y_TRUE", y_true)
+    print("Y_PRED", y_pred)
+    print("METRICS", metrics)
 
-    return results
+    try:
+        results = {}
+        for metric in metrics:
+            results[metric] = globals()[metric](np.array(y_true), np.array(y_pred))
+
+        return results
+    except Exception as e:
+        print("Error while calculating metrics:", e)
+        return None
 
 
 def accuracy(y_true, y_pred):

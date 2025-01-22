@@ -1,7 +1,7 @@
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
 import requests
-import aignostic.metrics as metricsLib
+import aignostic.metrics.metrics as metricsLib
 
 api = APIRouter()
 
@@ -77,11 +77,15 @@ async def processData(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str]
 
     # pass data to modelURL and return predictions
     prediction = await query_model(modelURL, {"column_names": None, "rows": feature})
+    predictedLabels = [item for sublist in prediction["rows"] for item in sublist]
 
-    print("Prediction received.")
+    print("Prediction received. Predicted labels:", predictedLabels)
 
-    # calculate metrics
-    # metricsLib.calculate_metrics(metrics, prediction)
+    metrics = list(map(lambda x: x.lower(), metrics))    
+    metricsResults = metricsLib.calculate_metrics(trueLabel, predictedLabels, metrics)
+    print("Metrics calculated:", metricsResults)
+    
+    return metricsResults
 
 
 async def fetch_data(dataURL: HttpUrl):
