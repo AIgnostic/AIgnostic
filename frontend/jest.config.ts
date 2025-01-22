@@ -10,7 +10,7 @@ const config = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   collectCoverage: true,
   coverageDirectory: '../coverage/frontend',
-  coverageReporters: ['clover', 'json', 'lcov', 'text'],
+  coverageReporters: ['clover', 'json', 'lcov', 'text', 'json-summary', 'html'],
   reporters: [
     'default',
     [

@@ -15,9 +15,7 @@
       "options": {
         "codeCoverage": true,
         "config": "jest.config.ts",
-        "coverage": true,
-        "outputFile": "../coverage/frontend/report.json",
-        "json": true
+        "coverage": true
       },
       "outputs": [
         "{workspaceRoot}/coverage/frontend",
