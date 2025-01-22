@@ -50,6 +50,25 @@ function Homepage() {
         "metrics": metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label)
       }
       
+      // Create the text content for the file
+      const textContent = `
+      AIgnostic Report
+      ===================
+      Model API URL: ${user_info.modelURL}
+      Dataset API URL: ${user_info.datasetURL}
+      Selected Metrics: ${
+        user_info.metrics.length > 0
+          ? user_info.metrics.join(", ")
+          : "No metrics selected"
+      }
+    `;
+
+      // Create a Blob and download it as a text file
+      const blob = new Blob([textContent], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "AIgnostic_Report.txt";
+      link.click();
       // send user_info to controller 
     } else {
       console.log('Please fill in both text inputs.');
