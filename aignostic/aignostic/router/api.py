@@ -1,6 +1,9 @@
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
 import requests
+import aignostic.pydantic_models.models as models
+import pandas as pd
+import aignostic.metrics as metricsLib
 
 api = APIRouter()
 
@@ -67,14 +70,20 @@ async def processData(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str]
     # fetch data from datasetURL
     data = await fetch_data(datasetURL)
 
-    print("Data fetched.")
+    print("Data fetched. Query form ", {"column_names": None, "rows": data})
+
+    # strip the label from the datapoint
+    feature, trueLabel = [data[0][:-1]], [data[0][-1]]
+    print("Feature", feature)
+    print("True Label", trueLabel)
 
     # pass data to modelURL and return predictions
-    prediction = await query_model(modelURL, data)
+    prediction = await query_model(modelURL, {"column_names": None, "rows": feature})
 
     print("Prediction received.")
 
     # calculate metrics
+    # metricsLib.calculate_metrics(metrics, prediction)
 
 
 async def fetch_data(dataURL: HttpUrl):
@@ -101,10 +110,12 @@ async def query_model(modelURL: HttpUrl, data: dict):
         print(modelURL)
 
         # Send a POST request to the dataset API
-        response = requests.get(modelURL)
-        print("getted " + response)
-        response = requests.post(modelURL, json={"column_names": None, "rows": data.toList()})
-        print("posted " + response)
+        # response = requests.get(modelURL)
+        # print("getted " + response)
+
+        print(data)
+
+        response = requests.post(url=modelURL, json=data)
 
         # Check if the request was successful
         response.raise_for_status()
@@ -113,8 +124,11 @@ async def query_model(modelURL: HttpUrl, data: dict):
         data = response.json()
 
         # Print or return the data
-        print("Data retrieved:", data)
+        print("Data retrieved:", str(data))
         return data
     except requests.exceptions.RequestException as e:
+        print("Error while fetching data:", e)
+        return None
+    except Exception as e:
         print("Error while fetching data:", e)
         return None

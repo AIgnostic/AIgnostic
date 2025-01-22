@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-from folktables import ACSDataSource
+from folktables import ACSDataSource, ACSEmployment
 from pydantic import BaseModel, ValidationError
 from typing import List, Dict
 
@@ -14,16 +14,19 @@ app = Flask(__name__)
 # Fetch ACS data from Alabama in 2018 using Folktables
 data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
 acs_data = data_source.get_data(states=["AL"], download=True)
+features, label, group = ACSEmployment.df_to_numpy(acs_data)
 
 
 # Takes 30 seconds to run
 @app.route('/acs-dataframe', methods=['GET'])
 def get_dataframe():
     try:
-        # Convert DataFrame to a list of dictionaries (one dictionary per row)
-        acs_dict = acs_data.iloc[0].to_dict()
 
-        return jsonify({'datapoint': acs_dict})
+        # Return one data point (feature + label) from the ACS Employment data
+        datapoint = features[0].tolist() + [label[0].tolist()]
+        print("Datapoint", [datapoint])
+
+        return jsonify([datapoint])
 
     except ValidationError as e:
         return jsonify({"error": str(e)}), 400
