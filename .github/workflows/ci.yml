@@ -56,6 +56,7 @@ jobs:
       - lint
       - test
       - build
+      - type-checks
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -125,6 +126,7 @@ jobs:
       - lint
       - test
       - build
+      - type-checks
     # from https://github.com/JamesIves/github-pages-deploy-action
     concurrency: ci-${{ github.ref }} # Recommended if you intend to make multiple deployments in quick succession.
     if: github.ref == 'refs/heads/main'
