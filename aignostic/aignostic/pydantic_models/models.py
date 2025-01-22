@@ -1,17 +1,52 @@
 from pydantic import BaseModel
+from typing import Optional, List
+import numpy as np
 import pandas as pd
 
 
-class DataSet(BaseModel):
-    columns: list[dict]
-
-
-class QueryOutput(BaseModel):
-    columns: list[dict]
-
-
-def to_dataframe(dataset: DataSet) -> pd.DataFrame:
+class Data(BaseModel):
     """
-    Convert a pydantic dataset to a pandas dataframe
+    A Pydantic model for a dataset to be sent over HTTP by JSON
+      - column_names: Optional[List] - the names of the columns in the dataset
+      - rows: List[List] - the rows of the dataset
     """
-    return pd.DataFrame(columns=dataset.columns)
+    column_names: Optional[List]
+    rows: List[List]
+
+
+def df_to_JSON(df: pd.DataFrame) -> dict:
+    """
+    Convert a pandas dataframe to a JSON string in the required format
+    """
+    column_names: list = list(df.columns)
+    rows: list[list] = list(list(r) for r in df.values)
+    return {"column_names": column_names, "rows": rows}
+
+
+def arr_to_JSON(arr: np.array) -> dict:
+    """
+    Convert a pandas dataframe to a JSON string in the required format
+    """
+    column_names = None
+    rows = list(list(r) for r in arr)
+    return {"column_names": column_names, "rows": rows}
+
+
+def csv_to_JSON(file_path: str, header_row: bool = True) -> dict:
+    """
+    Convert a csv to a JSON string in the required format
+    """
+    import csv
+    with open(file_path, 'r', newline='') as csvfile:
+        csv_reader = csv.reader(csvfile)
+
+        header = None
+        rows = [[]]
+        try:
+            if header_row:
+                header = next(csv_reader)
+                header = [c.strip() for c in header]
+            rows = [[value.strip() for value in row] for row in csv_reader]
+            return {"column_names": header, "rows": rows}
+        except StopIteration:
+            return {"column_names": header, "rows": rows}
