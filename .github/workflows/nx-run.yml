@@ -74,19 +74,19 @@ jobs:
       # #     coverage-file: ./coverage/frontend/report.json
       - name: Jest Test Report
         uses: dorny/test-reporter@v1
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && (hashFiles('./reports/frontend/jest-results.xml') != '')
         with:
           name: Jest Tests # Name of the check run which will be created
           path: ./reports/frontend/jest-results.xml # Path to test results
           reporter: jest-junit # Format of test results
       - name: Jest Coverage Comment
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test')
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && (hashFiles('./coverage/frontend/report.json') != '')
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
           coverage-file: ./coverage/frontend/report.json
           base-coverage-file: ./coverage/frontend/report.json
       - name: Pytest Coverage Report
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test')  && (hashFiles('./coverage/aignostic/coverage.xml') != '') # run this step even if previous step failed and nx_tasks includes "test"
         uses: MishaKav/pytest-coverage-comment@main
         with:
           title: Pytest Coverage Report (aignostic)
