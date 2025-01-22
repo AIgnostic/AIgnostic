@@ -3,6 +3,8 @@ from fastapi import APIRouter, HTTPException
 import requests
 import aignostic.metrics.metrics as metricsLib
 
+
+
 api = APIRouter()
 
 
@@ -49,6 +51,8 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     - modelURL : API URL of the dataset
     - metrics: list of metrics that should be applied
     """
+
+    
     # fetch data from datasetURL
     data = await fetch_data(datasetURL)
 
@@ -66,7 +70,10 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
 
 async def fetch_data(dataURL: HttpUrl):
     """
-    Helpe
+    Helper function to fetch data from the dataset API
+
+    Params:
+    - dataURL : API URL of the dataset
     """
     try:
         # Send a GET request to the dataset API
