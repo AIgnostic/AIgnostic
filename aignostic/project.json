@@ -66,7 +66,13 @@
         "command": "poetry run pytest tests/",
         "cwd": "aignostic"
       },
-      "cache": true
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/tests/**/*.py",
+        "{projectRoot}/aignostic/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{projectRoot}/poetry.lock"
+      ]
     },
     "container": {
       "executor": "@nx-tools/nx-container:build",

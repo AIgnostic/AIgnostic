@@ -18,7 +18,15 @@
         "coverage": true,
         "outputFile": "../coverage/frontend/report.json",
         "json": true
-      }
+      },
+      "outputs": [
+        "{workspaceRoot}/coverage/frontend",
+        "{workspaceRoot}/reports/frontend"
+      ],
+      "inputs": [
+        "{projectRoot}/src/**/*.*(ts|tsx)",
+        "{projectRoot}/jest.config.ts"
+      ]
     }
   }
 }
