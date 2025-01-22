@@ -17,13 +17,16 @@ ENV PATH="/root/.local/bin:${PATH}"
 RUN pipx install poetry
 
 # Copy the application monorepo to the container
-COPY . /app
+COPY ./package.json /app
+COPY ./nx.json /app
+COPY ./package-lock.json /app
+COPY ./aignostic /app/aignostic
 
 # Run npm ci
 RUN npm ci
 
 # Run poetry install via nx
-RUN npx nx run-many -t install --all
+RUN npx nx install aignostic --args="--only main"
 
 # Copy venv & application code to new image
 # Second stage: runtime

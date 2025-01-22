@@ -22,27 +22,26 @@ include = "aignostic"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-folktables = "^0.0.12"
 numpy = "^2.2.1"
 pydantic = "^2.10.5"
-scikit-learn = "^1.6.1"
-pytest = "^8.3.4"
 uvicorn = "^0.34.0"
-pytest-httpserver = "^1.1.0"
-httpx = "^0.28.1"
-fastapi = {extras = ["standard"], version = "^0.115.6"}
-transformers = "^4.48.0"
-torch = {version = "^2.5.1", source = "pytorch-gpu-src"}
-torchvision = {version = "^0.20.1", source = "pytorch-gpu-src"}
-torchaudio = {version = "^2.5.1", source = "pytorch-gpu-src"}
+fastapi = { extras = ["standard"], version = "^0.115.6" }
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.3.1"
 flake8 = "7.1.1"
-pytest = "8.3.4"
+pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
 pytest-cov = "6.0.0"
 pytest-html = "4.1.1"
+folktables = "^0.0.12"                                            # DEV
+scikit-learn = "^1.6.1"                                           # DEV
+pytest-httpserver = "^1.1.0"                                      # Dev
+httpx = "^0.28.1"                                                 # Dev
+transformers = "^4.48.0"                                          # Dev
+torch = { version = "^2.5.1", source = "pytorch-gpu-src" }        # Dev
+torchvision = { version = "^0.20.1", source = "pytorch-gpu-src" } # Dev
+torchaudio = { version = "^2.5.1", source = "pytorch-gpu-src" }   # Dev
 
 
 [[tool.poetry.source]]
