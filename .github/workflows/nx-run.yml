@@ -60,18 +60,24 @@ jobs:
       # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
       # True build step: Run lint, then test, then build
       - run: npx nx ${{ inputs.nx_tasks }}
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
+      # - name: Test Report
+      #   uses: dorny/test-reporter@v1
+      #   if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
+      #   with:
+      #     name: Tests # Name of the check run which will be created
+      #     path: reports/frontend/jest-*.xml,reports/aignostic/unittests/junit.xml # Path to test results
+      #     reporter: jest-junit # Format of test results
+      # # - name: Jest Coverage Report
+      # #   if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
+      # #   uses: ArtiomTr/jest-coverage-report-action@v2
+      # #   with:
+      # #     coverage-file: ./coverage/frontend/report.json
+      - name: Jest Coverage Comment
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test')
+        uses: MishaKav/jest-coverage-comment@main
         with:
-          name: Tests # Name of the check run which will be created
-          path: reports/frontend/jest-*.xml,reports/aignostic/unittests/junit.xml # Path to test results
-          reporter: jest-junit # Format of test results
-      - name: Jest Coverage Report
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
-        uses: ArtiomTr/jest-coverage-report-action@v2
-        with:
-          coverage-file: ./coverage/frontend/report.json
+          coverage-summary-path: ./coverage/frontend/report.json
+          junitxml-path: ./reports/frontend/jest-results.xml
       - name: Pytest Coverage Report
         if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
         uses: MishaKav/pytest-coverage-comment@main
