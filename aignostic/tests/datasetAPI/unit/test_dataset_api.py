@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from threading import Thread
 from typing import List
 import pytest
 from mock_server import app as client_mock
@@ -30,14 +31,14 @@ def test_client_returns_invalid_data_correctly():
 # Server tests
 @pytest.fixture(scope="module")
 def start_mock_server():
-    import uvicorn
-
-    config = uvicorn.Config(client_mock, host="127.0.0.1", port=5000)
-    server = uvicorn.Server(config)
-
-    # From https://stackoverflow.com/questions/61577643
-    with server.run_in_thread():
-        yield
+    def run_mock_server():
+        import uvicorn
+        uvicorn.run(client_mock, host="127.0.0.1", port=5000)
+    thread = Thread(target=run_mock_server)
+    thread.daemon = True
+    thread.start()
+    yield
+    thread.join()
 
 
 def test_server_validates_client_dataset_correctly_given_valid_url(start_mock_server):
