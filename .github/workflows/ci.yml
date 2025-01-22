@@ -37,8 +37,8 @@ jobs:
     with:
       run_poetry_install: true
       nx_tasks: 'affected -t test'
-      artifact_name: 'test-reports'
-      artifact_path: 'reports/'
+      artifact_name: 'test-coverage'
+      artifact_path: 'coverage/'
     secrets: inherit
   build:
     uses: ./.github/workflows/nx-run.yml
