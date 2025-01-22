@@ -9,6 +9,7 @@ const config = {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../coverage/frontend',
+  coverageReporters: ['text-summary', 'json', 'json-summary'],
   reporters: [
     'default',
     [
