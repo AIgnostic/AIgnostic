@@ -1,6 +1,6 @@
 from transformers import pipeline
 from fastapi import FastAPI, HTTPException
-from aignostic.pydantic_models.models import DataSet
+from aignostic.pydantic_models.data_models import DataSet
 
 app = FastAPI()
 

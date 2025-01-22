@@ -1,5 +1,5 @@
 from pydantic import ValidationError
-from aignostic.pydantic_models.models import DataSet
+from aignostic.pydantic_models.data_models import DataSet
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 import requests
@@ -23,24 +23,21 @@ def fetch_data(url: str) -> dict:
         raise ValueError(f"Invalid JSON response: {str(e)}")
 
 
-def validate_dataset(data: dict) -> DataSet:
+def parse_dataset(data: dict) -> DataSet:
     try:
         dataset = DataSet(column_names=data.get("column_names", []),
                           rows=data.get("rows", []))
     except Exception as e:
         raise ValueError(f"Unable to parse data into DataFrame: {str(e)}")
 
-    for i in range(len(dataset.rows)):
-        if len(dataset.column_names) != len(dataset.rows[i]):
-            raise ValidationError(
-                f"Number of column names not equal to number of elements in row {i}"
-            )
+    if any(len(dataset.column_names) != len(row) for row in dataset.rows):
+        raise ValidationError("Number of column names not equal to the number of elements in one or more rows")
 
     return dataset
 
 
 @app.get('/validate-dataset')
-async def validate_dataset_url(url: str = Query(..., description="Dataset URL")):
+async def validate_dataset(url: str = Query(..., description="Dataset URL")):
     """
     Validate a dataset URL and return the columns and number of rows.
     """
@@ -49,7 +46,7 @@ async def validate_dataset_url(url: str = Query(..., description="Dataset URL"))
 
     try:
         data = fetch_data(url)
-        dataset = validate_dataset(data)
+        dataset = parse_dataset(data)
         return JSONResponse(content={
             "message": "Data successfully parsed into DataFrame",
             "columns": dataset.column_names,
