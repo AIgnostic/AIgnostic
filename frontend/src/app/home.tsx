@@ -35,27 +35,30 @@ const steps = [
 const metrics = ['Accuracy', 'Precision', 'Recall'];
 
 function Homepage() {
-  const [modelURL, setModelURL] = useState('');
-  const [datasetURL, setDatasetURL] = useState('');
-  const [isModelURLValid, setIsModelURLValid] = useState(true);
-  const [isDatasetURLValid, setIsDatasetURLValid] = useState(true);
-  const [activeStep, setActiveStep] = React.useState(0);
-  const [metricChips, setMetricChips] = useState(
-    metrics.map((metric) => {
-      return { label: metric, selected: true };
-    })
-  );
-  const [metricsHelperText, setMetricsHelperText] = useState('');
+  const [state, setState] = useState({
+    modelURL: '',
+    datasetURL: '',
+    isModelURLValid: true,
+    isDatasetURLValid: true,
+    activeStep: 0,
+    selectedItem: '',
+    metricChips: metrics.map((metric) => ({
+      label: metric,
+      selected: true,
+    })),
+    metricsHelperText: '',
+  });
+  
 
   const handleSubmit = () => {
-    if (modelURL && datasetURL) {
-      console.log(`Input 1: ${modelURL}, Input 2: ${datasetURL}`);
-      console.log(`Selected Metrics: ${metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label).join(", ")}`);
-      console.log(checkURL(modelURL) && checkURL(datasetURL))
+    if (state.modelURL && state.datasetURL) {
+      console.log(`Input 1: ${state.modelURL}, Input 2: ${state.datasetURL}`);
+      console.log(`Selected Metrics: ${state.metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label).join(", ")}`);
+      console.log(checkURL(state.modelURL) && checkURL(state.datasetURL))
       
-      const user_info = {"modelURL": modelURL, 
-        "datasetURL": datasetURL,
-        "metrics": metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label)
+      const user_info = {"modelURL": state.modelURL, 
+        "datasetURL": state.datasetURL,
+        "metrics": state.metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label)
       }
       
       // Create the text content for the file
@@ -85,15 +88,24 @@ function Homepage() {
   };
 
   const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    setState((prevState) => ({
+      ...prevState, 
+      activeStep: prevState.activeStep + 1, 
+    }));
   };
 
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setState((prevState) => ({
+      ...prevState, 
+      activeStep: prevState.activeStep - 1, 
+    }));
   };
 
   const handleReset = () => {
-    setActiveStep(0);
+    setState((prevState) => ({
+      ...prevState, 
+      activeStep: 0, 
+    }));
   };
 
 
@@ -115,7 +127,7 @@ function Homepage() {
       </Box>
 
       <Stepper
-        activeStep={activeStep}
+        activeStep={state.activeStep}
         style={{ width: '80%' }}
         orientation="vertical"
         >
@@ -134,13 +146,23 @@ function Homepage() {
                   <TextField
                     type="text"
                     label = "Model API URL"
-                    value={modelURL}
-                    onChange={(e) => setModelURL(e.target.value)}
-                    onBlur={() => setIsModelURLValid(checkURL(modelURL))}
+                    value={state.modelURL}
+                    onChange={(e) => {
+                      setState((prevState) => ({
+                        ...prevState, 
+                        modelURL: e.target.value, 
+                      }));
+                    }} 
+                    onBlur={() => {
+                      setState((prevState) => ({
+                        ...prevState,
+                        isModelURLValid: checkURL(state.modelURL),
+                      }));
+                    }} 
                     style={styles.input}
-                    error={!isModelURLValid}
+                    error={!state.isModelURLValid}
                     helperText={
-                      !isModelURLValid
+                      !state.isModelURLValid
                         ? 'Invalid URL format - please enter a valid URL'
                         : ''
                     }
@@ -149,13 +171,23 @@ function Homepage() {
                   <TextField
                     type="text"
                     label = "Dataset API URL"
-                    value={datasetURL}
-                    onChange={(e) => setDatasetURL(e.target.value)}
-                    onBlur={() => setIsDatasetURLValid(checkURL(datasetURL))}
+                    value={state.datasetURL}
+                    onChange={(e) => {
+                      setState((prevState) => ({
+                        ...prevState, 
+                        datasetURL: e.target.value, 
+                      }));
+                    }} 
+                    onBlur={() => {
+                      setState((prevState) => ({
+                        ...prevState,
+                        isDatasetURLValid: checkURL(state.datasetURL),
+                      }));
+                    }}                    
                     style={styles.input}
-                    error={!isDatasetURLValid}
+                    error={!state.isDatasetURLValid}
                     helperText={
-                      !isDatasetURLValid
+                      !state.isDatasetURLValid
                         ? 'Invalid URL format - please enter a valid URL'
                         : ''
                     }
@@ -165,18 +197,24 @@ function Homepage() {
 
               {index === 2 && (
                 <Box style={{ padding: '15px' }}>
-                  <p style={{ color: 'red' }}>{metricsHelperText}</p>
-                  {metricChips.map((metricChip) => (
+                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
+                  {state.metricChips.map((metricChip) => (
                     <Chip
                       label={metricChip.label}
                       variant="filled"
                       onDelete={() => {
                         metricChip.selected = !metricChip.selected;
-                        setMetricChips([...metricChips]);
+                        setState((prevState) => ({
+                          ...prevState, 
+                          metricChips: [...prevState.metricChips],
+                        }));
                       }}
                       onClick={() => {
                         metricChip.selected = !metricChip.selected;
-                        setMetricChips([...metricChips]);
+                        setState((prevState) => ({
+                          ...prevState,
+                          metricChips: [...prevState.metricChips],
+                        }))
                       }}
                       color={metricChip.selected ? 'primary' : 'default'}
                       style={{ margin: '5px' }}
@@ -200,18 +238,18 @@ function Homepage() {
                   <h3>Summary</h3>
                   <p>
                     Model URL:{' '}
-                    {modelURL ? modelURL : 'You have not entered a model URL'}
+                    {state.modelURL ? state.modelURL : 'You have not entered a model URL'}
                     <br /> <br />
                     Dataset URL:{' '}
-                    {datasetURL
-                      ? datasetURL
+                    {state.datasetURL
+                      ? state.datasetURL
                       : 'You have not entered a dataset URL'}
                     <br /> <br />
                     Metrics:{' '}
-                    {metricChips.filter((metricChip) => metricChip.selected)
+                    {state.metricChips.filter((metricChip) => metricChip.selected)
                       .length === 0
                       ? 'You have not selected any metrics'
-                      : metricChips
+                      : state.metricChips
                           .filter((metricChip) => metricChip.selected)
                           .map((metricChip) => metricChip.label)
                           .join(', ')}
@@ -226,26 +264,39 @@ function Homepage() {
                     onClick={() => {
                       // check that APIs are present and valid
                       // if not, jump to step 0
-                      if (!modelURL || !datasetURL) {
-                        if (!modelURL) {
-                          setIsModelURLValid(false);
+                      if (!state.modelURL || !state.datasetURL) {
+                        if (!state.modelURL) {
+                          setState((prevState) => ({
+                            ...prevState,
+                            isModelURLValid: false,
+                          }));
                         }
-                        if (!datasetURL) {
-                          setIsDatasetURLValid(false);
+                        if (!state.datasetURL) {
+                          setState((prevState) => ({
+                            ...prevState, 
+                            isDatasetURLValid: false,
+                          }));
                         }
-                        setActiveStep(0);
+                        setState((prevState) => ({
+                          ...prevState,
+                          activeStep: 0,
+                        }))
                       }
 
                       // check that at least one metric is selected
                       // if not, jump to step 2
                       else if (
-                        metricChips.filter((metricChip) => metricChip.selected)
+                        state.metricChips.filter((metricChip) => metricChip.selected)
                           .length === 0
                       ) {
-                        setMetricsHelperText(
-                          'Please select at least one metric'
-                        );
-                        setActiveStep(2);
+                        setState((prevState) => ({
+                          ...prevState,
+                          metricsHelperText: 'Please select at least one metric',
+                        }))
+                        setState((prevState) => ({
+                          ...prevState,
+                          activeStep: 2,
+                        }))
                       }
 
                       // if all checks pass, generate report
@@ -262,7 +313,7 @@ function Homepage() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      if (index === 0 && !(isModelURLValid && isDatasetURLValid)) {
+                      if (index === 0 && !(state.isModelURLValid && state.isDatasetURLValid)) {
                         alert("One or both URLs are invalid. Please provide valid URLs.");
                         handleReset(); // Optionally reset if invalid
                       } else {
