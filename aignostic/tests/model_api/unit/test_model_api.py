@@ -1,10 +1,10 @@
 from fastapi.testclient import TestClient
-from tests.modelAPI.model.scikit_mock import app as scikit_app
-from tests.modelAPI.model.mock import app as mock_app
+from tests.model_api.model.scikit_mock import app as scikit_app
+from tests.model_api.model.mock import app as mock_app
 import pandas as pd
 from folktables import ACSDataSource, ACSEmployment
 import pickle
-from tests.modelAPI.model.huggingface_binclassifier import app as huggingface_app
+from tests.model_api.model.huggingface_binclassifier import app as huggingface_app
 
 
 client_huggingface = TestClient(huggingface_app)
@@ -47,7 +47,13 @@ def test_valid_data_scikit_folktables():
     features, _, _ = ACSEmployment.df_to_numpy(acs_data)
 
     # Test the response is not empty given a non-empty input
-    response = client_scikit.post("/predict", json={"column_names": None, "rows": features.tolist()})
+    response = client_scikit.post(
+        "/predict",
+        json={
+            "column_names": acs_data.columns.tolist(),
+            "rows": features.tolist()
+        }
+    )
     assert response.status_code == 200, response.text
 
     # Test the response is the same as the expected response from the pickled model
@@ -55,7 +61,7 @@ def test_valid_data_scikit_folktables():
     y_hat = model.predict(features)
 
     assert response.json() == {
-        "column_names": None,
+        "column_names": acs_data.columns.tolist(),
         "rows": [y_hat.tolist()]
     }, "Model output does not match expected output"
 
