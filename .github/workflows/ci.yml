@@ -20,17 +20,38 @@ env:
   IMPAAS_APP_NAME: aignostic
 
 jobs:
-  main:
+  lint:
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
-      nx_tasks: 'affected -t lint test build'
+      nx_tasks: 'affected -t lint'
     secrets: inherit
+  test:
+    uses: ./.github/workflows/nx-run.yml
+    with:
+      run_poetry_install: true
+      nx_tasks: 'affected -t test'
+    secrets: inherit
+  build:
+    uses: ./.github/workflows/nx-run.yml
+    with:
+      run_poetry_install: true
+      nx_tasks: 'affected -t build'
+    secrets: inherit
+  type-checks:
+    uses: ./.github/workflows/nx-run.yml
+    with:
+      run_poetry_install: true
+      nx_tasks: 'affected -t type-checks'
+    secrets: inherit
+
   docker:
     # Note that build is not a dependency of this job, as this will build the same stuff as the build job anyway
     # However no point in building if lint or test fails!
     needs:
-      - main # no point doing this if project doesn't work!
+      - lint
+      - test
+      - build
     runs-on: ubuntu-latest
     permissions:
       contents: read
