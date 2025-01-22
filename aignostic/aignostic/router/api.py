@@ -1,8 +1,6 @@
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
 import requests
-import aignostic.pydantic_models.models as models
-import pandas as pd
 import aignostic.metrics as metricsLib
 
 api = APIRouter()
@@ -103,7 +101,7 @@ async def fetch_data(dataURL: HttpUrl):
     except requests.exceptions.RequestException as e:
         print("Error while fetching data:", e)
         return None
-    
+
 
 async def query_model(modelURL: HttpUrl, data: dict):
     try:
