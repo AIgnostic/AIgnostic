@@ -8,8 +8,9 @@ const config = {
     '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['@nx/react/babel'] }],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  collectCoverage: true,
   coverageDirectory: '../coverage/frontend',
-  coverageReporters: ['text-summary', 'json', 'json-summary'],
+  coverageReporters: ['clover', 'json', 'lcov', 'text'],
   reporters: [
     'default',
     [
