@@ -113,13 +113,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          no-cache: true
+          # no-cache: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
   deploy-tsuru:
     needs:
       - docker # if we didn't build a container, don't do this!
-    if: github.ref == 'refs/heads/main'    ## TODO: UNCOMMENT ONCE NEW DEPLOYMENT IS READY
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       TSURU_TOKEN: ${{ secrets.IMPAAS_DEPLOY_TOKEN }}

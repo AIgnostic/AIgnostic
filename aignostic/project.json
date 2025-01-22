@@ -96,6 +96,13 @@
           ]
         }
       }
+    },
+    "serve": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run uvicorn main:create_application --reload",
+        "cwd": "aignostic"
+      }
     }
   },
   "tags": [],

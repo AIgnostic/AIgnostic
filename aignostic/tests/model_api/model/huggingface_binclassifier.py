@@ -1,6 +1,6 @@
 from transformers import pipeline
 from fastapi import FastAPI, HTTPException
-from aignostic.pydantic_models.models import Data
+from aignostic.pydantic_models.data_models import DataSet
 
 app = FastAPI()
 
@@ -9,10 +9,7 @@ pipe = pipeline("text-classification", model="siebert/sentiment-roberta-large-en
 
 
 @app.post("/predict")
-def predict(dataset: Data):
-    """
-    Predicts output from HuggingFace model - one prompt at a time
-    """
+def predict(dataset: DataSet):
     try:
         input_text = dataset.rows
         results = []
@@ -23,7 +20,7 @@ def predict(dataset: Data):
                 results.append(pipe(text[0]))
                 assert isinstance(text, list), "Input text must be encapsulated in a list"
         # Return the classification result
-        return Data(column_names=["response"], rows=results)
+        return DataSet(column_names=["response"], rows=results)
     except Exception as e:
         # Handle exceptions and return an HTTP 500 error
         raise HTTPException(status_code=500, detail=str(e))
