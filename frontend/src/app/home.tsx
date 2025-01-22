@@ -102,7 +102,7 @@ function Homepage() {
       <Box style={styles.container}>
         <Box style={styles.logoContainer}>
           
-          <h3 style={styles.logoText}>AIgnostic</h3>
+          <h3 style={styles.logoText}>AIgnostic Frontend</h3>
         </Box>
 
         <Box style={styles.horizontalContainer}>
