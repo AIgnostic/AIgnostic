@@ -12,8 +12,8 @@ class DatasetRequest(BaseModel):
     metrics: list[str]
 
 
-@api.post("/get_info")
-async def get_info(request: DatasetRequest):
+@api.post("/evaluate")
+async def generate_metrics_from_info(request: DatasetRequest):
     """
     Frontend will post URLs, metrics, etc., as JSON to this endpoint.
     This function validates, processes, and forwards the data to the controller.
@@ -24,20 +24,7 @@ async def get_info(request: DatasetRequest):
         modelURL = request.modelURL
         metrics = request.metrics
 
-        print("Received request: ", datasetURL, modelURL, metrics)
-
-        await processData(datasetURL, modelURL, metrics)
-
-        print("YAY")
-
-        # # Example of processing or passing data to a controller
-        # # Here you could make a request to the dataset API or perform metric calculations
-        # result = {
-        #     "api_url": api_url,
-        #     "processed_metrics": [metric.upper() for metric in metrics],  # Example processing
-        # }
-
-        # return {"message": "Data successfully processed", "result": result}
+        await process_data(datasetURL, modelURL, metrics)
 
         return {"message": "Data successfully received"}
 
@@ -46,49 +33,41 @@ async def get_info(request: DatasetRequest):
 
 
 @api.get("/")
-def hello():
+def info():
     return {"message": "Pushed at 21/01/2025 07:32"}
 
 
-@api.get("/repeat/{text}")  # /repeat/hello, /repeat/a,
-def repeat(text: str):
-    return {"message": text}
+async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str]):
+    """
+    Controller function. Takes data from the frontend, received at the endpoint and then:
+    - Passes to data endpoint and fetch data
+    - Process the data in preparation for passing to the model
+    - Pass to the model, and get the predicitons
 
-
-class Request(BaseModel):  # class Request extends BaseModel
-    text: str
-
-
-@api.post("/echo")
-def echo(request: Request):
-    return {"message": request.text}
-
-
-async def processData(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str]):
+    Params:
+    - datasetURL : API URL of the dataset
+    - modelURL : API URL of the dataset
+    - metrics: list of metrics that should be applied
+    """
     # fetch data from datasetURL
     data = await fetch_data(datasetURL)
 
-    print("Data fetched. Query form ", {"column_names": None, "rows": data})
-
     # strip the label from the datapoint
     feature, trueLabel = [data[0][:-1]], [data[0][-1]]
-    print("Feature", feature)
-    print("True Label", trueLabel)
 
     # pass data to modelURL and return predictions
     prediction = await query_model(modelURL, {"column_names": None, "rows": feature})
     predictedLabels = [item for sublist in prediction["rows"] for item in sublist]
 
-    print("Prediction received. Predicted labels:", predictedLabels)
-
-    metrics = list(map(lambda x: x.lower(), metrics))    
     metricsResults = metricsLib.calculate_metrics(trueLabel, predictedLabels, metrics)
-    print("Metrics calculated:", metricsResults)
     
     return metricsResults
 
 
 async def fetch_data(dataURL: HttpUrl):
+    """
+    Helpe
+    """
     try:
         # Send a GET request to the dataset API
         response = requests.get(dataURL)
@@ -99,8 +78,7 @@ async def fetch_data(dataURL: HttpUrl):
         # Parse the response JSON
         data = response.json()
 
-        # Print or return the data
-        print("Data retrieved:", data)
+        # Return the data
         return data
     except requests.exceptions.RequestException as e:
         print("Error while fetching data:", e)
@@ -108,15 +86,11 @@ async def fetch_data(dataURL: HttpUrl):
 
 
 async def query_model(modelURL: HttpUrl, data: dict):
+    """
+    
+    """
     try:
-        print(modelURL)
-
         # Send a POST request to the dataset API
-        # response = requests.get(modelURL)
-        # print("getted " + response)
-
-        print(data)
-
         response = requests.post(url=modelURL, json=data)
 
         # Check if the request was successful
@@ -125,8 +99,7 @@ async def query_model(modelURL: HttpUrl, data: dict):
         # Parse the response JSON
         data = response.json()
 
-        # Print or return the data
-        print("Data retrieved:", str(data))
+        # Return the data
         return data
     except requests.exceptions.RequestException as e:
         print("Error while fetching data:", e)

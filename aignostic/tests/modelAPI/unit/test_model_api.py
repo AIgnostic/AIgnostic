@@ -63,8 +63,6 @@ def test_valid_data_scikit_folktables():
 def test_valid_data_huggingface_empty():
     # post a valid text
     response = client_huggingface.post("/predict", json={"column_names": [], "rows": [["Hello world"]]})
-    with open('output.txt', 'w') as f:
-        f.write(response.text)
     assert response.status_code == 200
 
 

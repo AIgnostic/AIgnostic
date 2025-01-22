@@ -36,22 +36,21 @@ function Homepage() {
   const [isModelURLValid, setIsModelURLValid] = useState(true);
   const [isDatasetURLValid, setIsDatasetURLValid] = useState(true);
   const [activeStep, setActiveStep] = React.useState(0);
-  const [metricChips, setMetricChips] = useState(metrics.map((metric) => {return {"label": metric, "selected": true}}));
+  const [metricChips, setMetricChips] = useState(metrics.map((metric) => { return { "label": metric, "selected": true } }));
   const [metricsHelperText, setMetricsHelperText] = useState('');
 
   const handleSubmit = () => {
     if (modelURL && datasetURL) {
-      console.log(`Input 1: ${modelURL}, Input 2: ${datasetURL}`);
-      console.log(`Selected Metrics: ${metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label).join(", ")}`);
-      console.log(checkURL(modelURL) && checkURL(datasetURL))
-      
-      const user_info = 
-      { 
-        "modelURL": modelURL, 
+      const requestedMetrics = metricChips.filter((metricChip: any) => metricChip.selected)
+        .map((metricChip: any) => (metricChip.label))
+
+      const user_info =
+      {
+        "modelURL": modelURL,
         "datasetURL": datasetURL,
-        "metrics": metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label)
+        "metrics": requestedMetrics
       }
-      
+
       // send POST request to backend server
       fetch('http://localhost:8000/get_info', {
         method: 'POST',
@@ -60,21 +59,21 @@ function Homepage() {
         },
         body: JSON.stringify(user_info),
       })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("Response from backend:", data);
-      })
-      .catch((error) => {
-        console.error("Error during fetch:", error.message);
-      });
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Response from backend:", data);
+        })
+        .catch((error) => {
+          console.error("Error during fetch:", error.message);
+        });
 
       console.log("Sent POST request to backend server");
-      
+
     } else {
       console.log('Please fill in both text inputs.');
       // alert('Please fill in both text inputs.');
@@ -94,26 +93,26 @@ function Homepage() {
   };
 
 
-  
-  
+
+
 
   return (
-    <Box sx={[styles.container ]}>
+    <Box sx={[styles.container]}>
       <Box style={styles.container}>
         <Box style={styles.logoContainer}>
-          
+
           <h3 style={styles.logoText}>AIgnostic Frontend</h3>
         </Box>
 
         <Box style={styles.horizontalContainer}>
-          New to AIgnostic? Read the docs to get started: 
+          New to AIgnostic? Read the docs to get started:
           <Button style={styles.button}>
             Getting Started
           </Button>
-        </Box> 
+        </Box>
       </Box>
-      
-      <Stepper activeStep={activeStep} style={{width: "80%"}} orientation="vertical">
+
+      <Stepper activeStep={activeStep} style={{ width: "80%" }} orientation="vertical">
         {steps.map((step, index) => (
           <Step key={step.label}>
             <StepLabel>
@@ -122,46 +121,46 @@ function Homepage() {
             <StepContent>
               <Typography>{step.description}</Typography>
 
-              {index === 0 && 
-                  (<Box>
-                      <TextField
-                        type="text"
-                        placeholder="Enter Model API URL"
-                        value={modelURL}
-                        onChange={(e) => setModelURL(e.target.value)}
-                        onBlur={() => setIsModelURLValid(checkURL(modelURL))}
-                        style={styles.input}
-                        error={!isModelURLValid}
-                        helperText={(!isModelURLValid) ? 'Invalid URL format - please enter a valid URL' : ''}
-                      />
-                      <TextField
-                        type="text"
-                        placeholder="Enter Dataset API URL"
-                        value={datasetURL}
-                        onChange={(e) => setDatasetURL(e.target.value)}
-                        onBlur={() => setIsDatasetURLValid(checkURL(datasetURL))}
-                        style={styles.input}
-                        error={!isDatasetURLValid}
-                        helperText={(!isDatasetURLValid) ? 'Invalid URL format - please enter a valid URL' : ''}
-                      />
-                      
-                    </Box>)
+              {index === 0 &&
+                (<Box>
+                  <TextField
+                    type="text"
+                    placeholder="Enter Model API URL"
+                    value={modelURL}
+                    onChange={(e) => setModelURL(e.target.value)}
+                    onBlur={() => setIsModelURLValid(checkURL(modelURL))}
+                    style={styles.input}
+                    error={!isModelURLValid}
+                    helperText={(!isModelURLValid) ? 'Invalid URL format - please enter a valid URL' : ''}
+                  />
+                  <TextField
+                    type="text"
+                    placeholder="Enter Dataset API URL"
+                    value={datasetURL}
+                    onChange={(e) => setDatasetURL(e.target.value)}
+                    onBlur={() => setIsDatasetURLValid(checkURL(datasetURL))}
+                    style={styles.input}
+                    error={!isDatasetURLValid}
+                    helperText={(!isDatasetURLValid) ? 'Invalid URL format - please enter a valid URL' : ''}
+                  />
+
+                </Box>)
               }
 
-              {index === 2 && 
-                  (<Box>
-                    <p style={{color: "red"}}>{metricsHelperText}</p>
-                    {metricChips.map((metricChip) => (
-                      <Chip 
-                        label={metricChip.label}
-                        variant="filled"
-                        onDelete={() => {metricChip.selected = !metricChip.selected; setMetricChips([...metricChips])}}
-                        onClick={() => {metricChip.selected = !metricChip.selected; setMetricChips([...metricChips])}}
-                        color={metricChip.selected ? "primary" : "default"}
-                        style={{margin: '5px'}} 
-                      />
-                    ))}
-                  </Box>)
+              {index === 2 &&
+                (<Box>
+                  <p style={{ color: "red" }}>{metricsHelperText}</p>
+                  {metricChips.map((metricChip) => (
+                    <Chip
+                      label={metricChip.label}
+                      variant="filled"
+                      onDelete={() => { metricChip.selected = !metricChip.selected; setMetricChips([...metricChips]) }}
+                      onClick={() => { metricChip.selected = !metricChip.selected; setMetricChips([...metricChips]) }}
+                      color={metricChip.selected ? "primary" : "default"}
+                      style={{ margin: '5px' }}
+                    />
+                  ))}
+                </Box>)
               }
 
               {index === steps.length - 1 &&
@@ -169,14 +168,14 @@ function Homepage() {
                   <h3>Summary</h3>
                   <p>
                     Model URL: {modelURL ? modelURL : "You have not entered a model URL"}
-                    <br/> <br/>
-                    Dataset URL: {datasetURL ? datasetURL : "You have not entered a dataset URL"} 
-                    <br/> <br/>
+                    <br /> <br />
+                    Dataset URL: {datasetURL ? datasetURL : "You have not entered a dataset URL"}
+                    <br /> <br />
                     Metrics: {metricChips.filter((metricChip) => metricChip.selected).length === 0 ? "You have not selected any metrics" :
-                              metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label).join(", ")}
+                      metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label).join(", ")}
                   </p>
                 </Box>)
-                  }
+              }
 
 
               <Box sx={{ mb: 2 }}>
@@ -185,7 +184,7 @@ function Homepage() {
 
                   <Button
                     variant="contained"
-                    onClick={ () => {
+                    onClick={() => {
                       // check that APIs are present and valid
                       // if not, jump to step 0
                       if (!modelURL || !datasetURL) {
@@ -210,7 +209,7 @@ function Homepage() {
                         handleSubmit();
                       }
                     }}
-                      
+
                     sx={{ mt: 1, mr: 1 }}
                   > Generate Report
                   </Button>
@@ -235,11 +234,11 @@ function Homepage() {
           </Step>
         ))}
       </Stepper>
-  </Box>
+    </Box>
   );
 }
 
-const styles : { [key: string]: React.CSSProperties} = {
+const styles: { [key: string]: React.CSSProperties } = {
   container: {
     display: 'flex',
     flexDirection: 'column',

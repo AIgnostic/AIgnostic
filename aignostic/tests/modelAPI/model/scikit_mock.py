@@ -7,7 +7,7 @@ import uvicorn
 
 app = FastAPI()
 
-model: Pipeline = pickle.load(open('/home/tisya/AIgnostic/aignostic/scikit_model.sav', 'rb'))
+model: Pipeline = pickle.load(open('scikit_model.sav', 'rb'))
 
 
 @app.post("/predict", response_model=Data)
@@ -19,18 +19,15 @@ def predict(dataset: Data) -> Data:
     out: np.array = None
     try:
         out = model.predict(dataset.rows)
+        rows = out.tolist() if len(dataset.rows) > 1 else [out.tolist()]
+        return Data(column_names=[], rows=rows)
     except Exception as e:
         print("Error while predicting:", e)
-        return Data(column_names=None, rows=[[]])
+        return Data(column_names=[], rows=[[]])
 
-    rows = out.tolist() if len(dataset.rows) > 1 else [out.tolist()]
-    return Data(column_names=None, rows=rows)
 
 
 """
 TODO: (Low Priority) Extend to batch querying / single datapoint querying for convenience
 (e.g. if dataset is very large)
 """
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=5001)
