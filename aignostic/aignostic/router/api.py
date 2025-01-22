@@ -1,7 +1,7 @@
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
 import requests
-import aignostic.metrics.metrics as metricsLib
+import aignostic.metrics.metrics as metrics_lib
 
 
 api = APIRouter()
@@ -19,18 +19,14 @@ async def generate_metrics_from_info(request: DatasetRequest):
     Frontend will post URLs, metrics, etc., as JSON to this endpoint.
     This function validates, processes, and forwards the data to the controller.
     """
-    try:
-        # Extract data from the validated request
-        datasetURL = request.datasetURL
-        modelURL = request.modelURL
-        metrics = request.metrics
+    # Extract data from the validated request
+    datasetURL = request.datasetURL
+    modelURL = request.modelURL
+    metrics = request.metrics
 
-        results = await process_data(datasetURL, modelURL, metrics)
+    results = await process_data(datasetURL, modelURL, metrics)
 
-        return {"message": "Data successfully received", "results": results}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"message": "Data successfully received", "results": results}
 
 
 @api.get("/")
@@ -51,26 +47,25 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     - metrics: list of metrics that should be applied
     """
 
-    try:
-        # fetch data from datasetURL
-        data = await fetch_data(datasetURL)
+    # fetch data from datasetURL
+    data: dict = await fetch_data(datasetURL)
 
-        # strip the label from the datapoint
-        feature, trueLabel = [data[0][:-1]], [data[0][-1]]
+    # strip the label from the datapoint
+    try:
+        feature, true_label = [data[0][:-1]], [data[0][-1]]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
         # pass data to modelURL and return predictions
-        prediction = await query_model(modelURL, {"column_names": None, "rows": feature})
-        predictedLabels = [item for sublist in prediction["rows"] for item in sublist]
+    prediction = await query_model(modelURL, {"column_names": None, "rows": feature})
+    predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
 
-        metricsResults = metricsLib.calculate_metrics(trueLabel, predictedLabels, metrics)
-        
-        return metricsResults
-    except Exception as e:
-        print("Error while processing data:", e)
-        return None
+    metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
+
+    return metrics_results
 
 
-async def fetch_data(dataURL: HttpUrl):
+async def fetch_data(dataURL: HttpUrl) -> dict:
     """
     Helper function to fetch data from the dataset API
 
@@ -89,9 +84,10 @@ async def fetch_data(dataURL: HttpUrl):
 
         # Return the data
         return data
+    except requests.exceptions.RequestException as e:
+        HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
     except Exception as e:
-        print("Error while fetching data:", e)
-        return None
+        HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
 
 
 async def query_model(modelURL: HttpUrl, data: dict):
@@ -114,5 +110,4 @@ async def query_model(modelURL: HttpUrl, data: dict):
         # Return the data
         return data
     except Exception as e:
-        print("Error while fetching data:", e)
-        return None
+        HTTPException(status_code=500, detail=f"Error while querying model: {e}")

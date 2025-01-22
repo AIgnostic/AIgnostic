@@ -55,7 +55,7 @@ def test_valid_data_scikit_folktables():
     y_hat = model.predict(features)
 
     assert response.json() == {
-        "column_names": None,
+        "column_names": [],
         "rows": [y_hat.tolist()]
     }, "Model output does not match expected output"
 

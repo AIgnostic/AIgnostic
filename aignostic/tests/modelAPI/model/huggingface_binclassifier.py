@@ -10,6 +10,9 @@ pipe = pipeline("text-classification", model="siebert/sentiment-roberta-large-en
 
 @app.post("/predict")
 def predict(dataset: Data):
+    """
+    Predicts output from HuggingFace model - one prompt at a time
+    """
     try:
         input_text = dataset.rows
         results = []
