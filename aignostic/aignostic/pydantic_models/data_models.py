@@ -1,16 +1,29 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import List
 import numpy as np
 import pandas as pd
 
 
-class Data(BaseModel):
+# TODO: Implement in validate_dataset_api.py endpoint
+class ValidateDatasetRequest(BaseModel):
     """
-    A Pydantic model for a dataset to be sent over HTTP by JSON
-      - column_names: Optional[List] - the names of the columns in the dataset
-      - rows: List[List] - the rows of the dataset
+    A model for a dataset to be validated
+
+    Attributes:
+        url: str - the URL of the dataset to be validated
     """
-    column_names: Optional[List]
+    url: str
+
+
+class DataSet(BaseModel):
+    """
+    A model for a dataset to be sent over HTTP by JSON
+
+    Attributes:
+        column_names: List[str] - the names of the columns in the dataset
+        rows: List[List] - the rows of the dataset
+    """
+    column_names: List[str]
     rows: List[List]
 
 
