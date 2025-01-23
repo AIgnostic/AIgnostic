@@ -1,8 +1,10 @@
 
 from folktables import ACSDataSource, ACSEmployment
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.security import APIKeyHeader
 import pandas as pd
+
 import numpy as np
 from aignostic.pydantic_models.data_models import df_to_JSON
 import logging
@@ -12,14 +14,20 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-
+MOCK_API_KEY = "dataset-api-key"
+api_key_header = APIKeyHeader(name="api-key", auto_error=False)
 data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
 acs_data = data_source.get_data(states=["AL"], download=True)
 features, label, group = ACSEmployment.df_to_pandas(acs_data)
 
+def get_api_key(api_key: str = Depends(api_key_header)):
+    if (api_key_header == MOCK_API_KEY):
+        return api_key_header
+    raise HTTPException(status_code=401, detail="Unauthorised Access: Invalid API Key")
 
 @app.get('/fetch-datapoints')
-async def fetch_datapoints(indices: list[int] = Body([0, 1])):
+
+async def fetch_datapoints(indices: list[int] = Body([0, 1]), dependencies=[Depends(get_api_key)]):
     """
     Given a list of indices, fetch the data at each index and convert into
     our expected JSON format, and returns it in a JSON response. Defaults to
