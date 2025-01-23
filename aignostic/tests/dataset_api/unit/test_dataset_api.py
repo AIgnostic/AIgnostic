@@ -38,13 +38,12 @@ def start_mock_server():
     def run_mock_server():
         nonlocal server
         server.run()
-    
+
     thread = Thread(target=run_mock_server)
     thread.start()
     yield
     server.should_exit = True
     thread.join()
-
 
 
 def test_server_validates_client_dataset_correctly_given_valid_url(start_mock_server):

@@ -4,30 +4,39 @@ from fastapi import FastAPI, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 import pandas as pd
-
 import numpy as np
 from aignostic.pydantic_models.data_models import df_to_JSON
-import logging
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
 MOCK_API_KEY = "dataset-api-key"
-api_key_header = APIKeyHeader(name="api-key", auto_error=False)
+api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
+
 acs_data = data_source.get_data(states=["AL"], download=True)
 features, label, group = ACSEmployment.df_to_pandas(acs_data)
 
+
+def extract_api_key(api_key: str):
+    if api_key.startswith('Bearer '):
+        return api_key.split(' ')[1]
+    return None
+
+
 def get_api_key(api_key: str = Depends(api_key_header)):
-    if (api_key_header == MOCK_API_KEY):
-        return api_key_header
-    raise HTTPException(status_code=401, detail="Unauthorised Access: Invalid API Key")
+    """
+    Check if the API key is valid
+    """
+    api_key = extract_api_key(api_key)
+    if not api_key:
+        raise HTTPException(status_code=403, detail="Forbidden Request: API Key not in expected format")
+    elif api_key == MOCK_API_KEY:
+        return api_key
+    raise HTTPException(status_code=401, detail=f"Unauthorised Access: Invalid API Key - {api_key}")
 
-@app.get('/fetch-datapoints')
 
-async def fetch_datapoints(indices: list[int] = Body([0, 1]), dependencies=[Depends(get_api_key)]):
+@app.get('/fetch-datapoints', dependencies=[Depends(get_api_key)])
+async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     """
     Given a list of indices, fetch the data at each index and convert into
     our expected JSON format, and returns it in a JSON response. Defaults to
