@@ -84,13 +84,13 @@ jobs:
       # #     coverage-file: ./coverage/frontend/report.json
       - name: Jest Test Report
         uses: dorny/test-reporter@v1
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test')
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test')  && hashFiles('./reports/frontend/jest-results.xml') != ''
         with:
           name: Jest Tests # Name of the check run which will be created
           path: ./reports/frontend/jest-results.xml # Path to test results
           reporter: jest-junit # Format of test results
       - name: Jest Coverage Comment
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test')
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/frontend/coverage-summary.json') != ''
         uses: MishaKav/jest-coverage-comment@main
         with:
           title: Jest Coverage Report (frontend)
