@@ -87,16 +87,18 @@ function Homepage() {
           return response.json();
         })
         .then((data) => {
+          console.log("FRONTEND", data["results"]);
           const results = data["results"]
           // Create the text content for the file
-          const textContent = `
-          AIgnostic Report
-          ===================
-          Model API URL: ${user_info.modelURL}
-          Dataset API URL: ${user_info.datasetURL}
-          
-          Metrics Results: ${results}
-          `;
+          const textContent = "AIgnostic Report" + "\n" +
+                              "===================" + "\n" +
+                              `Model API URL: ${user_info.modelURL}` + "\n" +
+                              `Dataset API URL: ${user_info.datasetURL}` + "\n" + "\n" +
+
+                              "Metrics Results:" + "\n" +
+                              Object.entries(results).map(([metric, value]) => {
+                                return `  - ${metric}: ${value}`;
+                              }).join('\n') + "\n";                  
     
           // Create a Blob and download it as a text file
           const blob = new Blob([textContent], { type: "text/plain" });
