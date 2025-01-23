@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from tests.model_api.model.scikit_mock import app as scikit_app
 from tests.model_api.model.mock import app as mock_app
 import pandas as pd
-from folktables import ACSDataSource, ACSEmployment  # type: ignore
+from folktables import ACSDataSource, ACSEmployment
 import pickle
 from tests.model_api.model.huggingface_binclassifier import app as huggingface_app
 

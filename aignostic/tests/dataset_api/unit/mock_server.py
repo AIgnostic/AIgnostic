@@ -1,4 +1,4 @@
-from folktables import ACSDataSource  # type: ignore
+from folktables import ACSDataSource
 from fastapi import FastAPI, Body
 from fastapi.responses import JSONResponse
 import pandas as pd

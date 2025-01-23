@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import numpy as np
-from sklearn.pipeline import Pipeline  # type: ignore
+from sklearn.pipeline import Pipeline
 import pickle
 from aignostic.pydantic_models.data_models import DataSet
 

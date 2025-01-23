@@ -40,7 +40,7 @@ def arr_to_JSON(arr: np.ndarray) -> dict:
     """
     Convert a pandas dataframe to a JSON string in the required format
     """
-    column_names = None
+    column_names = []
     rows: list[list] = list(list(r) for r in arr)
     return {"column_names": column_names, "rows": rows}
 
@@ -53,7 +53,7 @@ def csv_to_JSON(file_path: str, header_row: bool = True) -> dict:
     with open(file_path, 'r', newline='') as csvfile:
         csv_reader = csv.reader(csvfile)
 
-        header = None
+        header = []
         rows: list[list] = [[]]
         try:
             if header_row:
