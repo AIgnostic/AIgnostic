@@ -25,11 +25,12 @@ async def generate_metrics_from_info(request: DatasetRequest):
     metrics = request.metrics
 
     results = await process_data(datasetURL, modelURL, metrics)
-    print("Got results")
 
     return {"message": "Data successfully received", "results": results}
 
 
+# Sanity check endpoint
+# This for checking time of last deployment
 @api.get("/")
 def info():
     return {"message": "Pushed at 21/01/2025 07:32"}
@@ -50,9 +51,7 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
 
     # fetch data from datasetURL
     data: dict = await fetch_data(datasetURL)
-    print(data)
 
-    print("Fetched Data")
     # strip the label from the datapoint
     try:
         rows = data["rows"]
@@ -61,7 +60,6 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
         predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
         metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
     except Exception as e:
-        print(f"Error while processing data: {e}")
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
     return metrics_results
@@ -112,5 +110,4 @@ async def query_model(modelURL: HttpUrl, data: dict):
         # Return the data
         return data
     except Exception as e:
-        print(f"Error while querying model: {e}")
         HTTPException(status_code=500, detail=f"Error while querying model: {e}")
