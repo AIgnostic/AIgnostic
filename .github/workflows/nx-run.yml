@@ -97,7 +97,7 @@ jobs:
           coverage-summary-path: ./coverage/frontend/coverage-summary.json
           junitxml-path: ./reports/frontend/jest-results.xml
       - name: Pytest Coverage Report
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') # run this step even if previous step failed and nx_tasks includes "test"
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/aignostic/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
         uses: MishaKav/pytest-coverage-comment@main
         with:
           title: Pytest Coverage Report (aignostic)
