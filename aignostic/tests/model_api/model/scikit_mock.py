@@ -3,10 +3,11 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 import pickle
 from aignostic.pydantic_models.data_models import DataSet
+import os
 
 app = FastAPI()
 
-model: Pipeline = pickle.load(open('scikit_model.sav', 'rb'))
+model: Pipeline = pickle.load(open(os.path.join(os.path.dirname(__file__), '../../../scikit_model.sav'), 'rb'))
 
 
 @app.post("/predict")
@@ -24,3 +25,7 @@ def predict(dataset: DataSet) -> DataSet:
 TODO: (Low Priority) Extend to batch querying / single datapoint querying for convenience
 (e.g. if dataset is very large)
 """
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=5001)

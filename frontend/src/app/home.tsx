@@ -9,6 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import Dropdown from './dropdown';
+import { AIGNOSTIC, HOME } from './constants';
 
 const steps = [
   {
@@ -107,12 +108,17 @@ function Homepage() {
     <Box sx={[styles.container]}>
       <Box style={styles.container}>
         <Box style={styles.logoContainer}>
-          <h3 style={styles.logoText}>AIgnostic Frontend</h3>
+          <h3 style={styles.logoText}>{AIGNOSTIC}</h3>
         </Box>
 
         <Box style={styles.horizontalContainer}>
-          New to AIgnostic? Read the docs to get started:
-          <Button style={styles.button}>Getting Started</Button>
+          New to {AIGNOSTIC}? Read the docs to get started:
+          <Button 
+            style={styles.button}
+            onClick={() => {
+              window.open(`${HOME}/api-docs`, '_blank', 'noopener,noreferrer');
+            }}
+          >Getting Started</Button>
         </Box>
       </Box>
 
