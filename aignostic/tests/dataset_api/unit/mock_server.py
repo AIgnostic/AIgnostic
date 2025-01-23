@@ -1,15 +1,21 @@
-from folktables import ACSDataSource
+
+from folktables import ACSDataSource, ACSEmployment
 from fastapi import FastAPI, Body
 from fastapi.responses import JSONResponse
 import pandas as pd
 import numpy as np
+from aignostic.pydantic_models.data_models import df_to_JSON
+import logging
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app: FastAPI = FastAPI()
 
 
-data_source = ACSDataSource(survey_year="2019", horizon="1-Year", survey="person")
+data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
 acs_data = data_source.get_data(states=["AL"], download=True)
+features, label, group = ACSEmployment.df_to_pandas(acs_data)
 
 
 @app.get('/fetch-datapoints')
@@ -21,23 +27,22 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
 
     Args:
         indices (list[int]): A list of indices to fetch from the ACS data.
-
     Returns:
         JSONResponse: A JSON response containing the random datapoints.
     """
     try:
-        acs_rows = acs_data.iloc[indices]
-        acs_rows = acs_rows.replace({
+
+        acs_datapoints = pd.concat([features.iloc[indices], label.iloc[indices]], axis=1)
+        acs_datapoints = acs_datapoints.replace({
             pd.NA: None,
             np.nan: None,
             float('inf'): None,
             float('-inf'): None
         })
-        return JSONResponse(content={
-            "column_names": acs_rows.columns.tolist(),
-            "rows": acs_rows.values.tolist()
-        })
+
+        return JSONResponse(content=df_to_JSON(acs_datapoints), status_code=200)
     except Exception as e:
+        print(e)
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 

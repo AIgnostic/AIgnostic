@@ -33,6 +33,7 @@ const steps = [
 ];
 
 const metrics = ['Accuracy', 'Precision', 'Recall'];
+const BACKEND_URL = 'http://localhost:8000/evaluate';
 
 function Homepage() {
   const [state, setState] = useState({
@@ -55,7 +56,7 @@ function Homepage() {
       [key]: value,
     }));
   };
-  
+
   const handleNext = () => {setStateWrapper("activeStep", state.activeStep + 1)};
 
   const handleBack = () => {setStateWrapper("activeStep", state.activeStep - 1)};
@@ -64,38 +65,56 @@ function Homepage() {
 
   const handleSubmit = () => {
     if (state.modelURL && state.datasetURL) {
-      console.log(`Input 1: ${state.modelURL}, Input 2: ${state.datasetURL}`);
-      console.log(`Selected Metrics: ${state.metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label).join(", ")}`);
-      console.log(checkURL(state.modelURL) && checkURL(state.datasetURL))
-      
-      const user_info = {"modelURL": state.modelURL, 
+      const user_info = {
+        "modelURL": state.modelURL, 
         "datasetURL": state.datasetURL,
-        "metrics": state.metricChips.filter((metricChip) => metricChip.selected).map((metricChip) => metricChip.label)
-      }
-      
-      // Create the text content for the file
-      const textContent = `
-      AIgnostic Report
-      ===================
-      Model API URL: ${user_info.modelURL}
-      Dataset API URL: ${user_info.datasetURL}
-      Selected Metrics: ${
-        user_info.metrics.length > 0
-          ? user_info.metrics.join(", ")
-          : "No metrics selected"
-      }
-    `;
+        "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
+                                    .map((metricChip: any) => (metricChip.label).toLowerCase())
+      };
 
-      // Create a Blob and download it as a text file
-      const blob = new Blob([textContent], { type: "text/plain" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "AIgnostic_Report.txt";
-      link.click();
-      // send user_info to controller 
-    } else {
-      console.log('Please fill in both text inputs.');
-      // alert('Please fill in both text inputs.');
+      // send POST request to backend server
+      fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(user_info),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          const results = data["results"]
+          // Create the text content for the file
+          const textContent = "AIgnostic Report" + "\n" +
+                              "===================" + "\n" +
+                              `Model API URL: ${user_info.modelURL}` + "\n" +
+                              `Dataset API URL: ${user_info.datasetURL}` + "\n" + "\n" +
+
+                              "Metrics Results:" + "\n" +
+                              Object.entries(results).map(([metric, value]) => {
+                                return `  - ${metric}: ${value}`;
+                              }).join('\n') + "\n";                  
+    
+          // Create a Blob and download it as a text file
+          const blob = new Blob([textContent], { type: "text/plain" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "AIgnostic_Report.txt";
+          link.click();
+        })
+        .catch((error) => {
+          console.error("Error during fetch:", error.message);
+        });
+
+
+
+
+    } else { 
+      // ERROR
     }
   };
 
