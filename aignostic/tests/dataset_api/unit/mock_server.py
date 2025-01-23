@@ -1,11 +1,11 @@
-from folktables import ACSDataSource
+from folktables import ACSDataSource  # type: ignore
 from fastapi import FastAPI, Body
 from fastapi.responses import JSONResponse
 import pandas as pd
 import numpy as np
 
 
-app = FastAPI()
+app: FastAPI = FastAPI()
 
 
 data_source = ACSDataSource(survey_year="2019", horizon="1-Year", survey="person")

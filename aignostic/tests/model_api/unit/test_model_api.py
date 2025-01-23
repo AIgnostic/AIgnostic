@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from tests.model_api.model.scikit_mock import app as scikit_app
 from tests.model_api.model.mock import app as mock_app
 import pandas as pd
-from folktables import ACSDataSource, ACSEmployment
+from folktables import ACSDataSource, ACSEmployment  # type: ignore
 import pickle
 from tests.model_api.model.huggingface_binclassifier import app as huggingface_app
 
@@ -61,8 +61,8 @@ def test_valid_data_scikit_folktables():
     y_hat = model.predict(features)
 
     assert response.json() == {
-        "column_names": acs_data.columns.tolist(),
-        "rows": [y_hat.tolist()]
+        "column_names": list(acs_data.columns),
+        "rows": [list(y_hat)]
     }, "Model output does not match expected output"
 
 

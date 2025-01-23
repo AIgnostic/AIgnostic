@@ -1,4 +1,4 @@
-from transformers import pipeline
+from transformers import pipeline  # type: ignore
 from fastapi import FastAPI, HTTPException
 from aignostic.pydantic_models.data_models import DataSet
 

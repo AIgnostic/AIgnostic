@@ -1,12 +1,12 @@
 from fastapi.testclient import TestClient
-from threading import Thread
 from typing import List
 import pytest
-from mock_server import app as client_mock
-from aignostic.dataset.validate_dataset_api import app as server_mock
-from tests.datasetAPI.constants import expected_ACS_column_names
+from mock_server import app as client_mock  # type: ignore
+from aignostic.dataset.validate_dataset_api import app as datasetapi_mock
+from tests.dataset_api.constants import expected_ACS_column_names
+import uvicorn
 
-server_mock = TestClient(server_mock)
+server_mock = TestClient(datasetapi_mock)
 client_mock = TestClient(client_mock)
 
 local_server = "http://127.0.0.1:5000"
@@ -31,19 +31,18 @@ def test_client_returns_invalid_data_correctly():
 # Server tests
 @pytest.fixture(scope="module")
 def start_mock_server():
-    def run_mock_server():
-        import uvicorn
-        uvicorn.run(client_mock, host="127.0.0.1", port=5000)
-    thread = Thread(target=run_mock_server)
-    thread.daemon = True
-    thread.start()
-    yield
-    thread.join()
+    config = uvicorn.Config(client_mock, host="127.0.0.1", port=5000)
+    server = uvicorn.Server(config)
+    # From https://stackoverflow.com/questions/61577643/
+    # python-how-to-use-fastapi-and-uvicorn-run-without-blocking-the-thread
+    with server.run_in_thread():
+        yield
 
 
 def test_server_validates_client_dataset_correctly_given_valid_url(start_mock_server):
     response = server_mock.get("/validate-dataset?url=" + valid_url)
     assert response.status_code == 200
+    assert len(response.json()["columns"]) == len(expected_ACS_column_names)
     assert response.json()["columns"] == expected_ACS_column_names
     assert response.json()["rows"] == 2
 
