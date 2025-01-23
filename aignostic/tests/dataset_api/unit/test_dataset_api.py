@@ -5,6 +5,7 @@ from mock_server import app as client_mock  # type: ignore
 from aignostic.dataset.validate_dataset_api import app as datasetapi_mock
 from tests.dataset_api.constants import expected_ACS_column_names
 import uvicorn
+from threading import Thread
 
 server_mock = TestClient(datasetapi_mock)
 client_mock = TestClient(client_mock)
@@ -31,12 +32,22 @@ def test_client_returns_invalid_data_correctly():
 # Server tests
 @pytest.fixture(scope="module")
 def start_mock_server():
-    config = uvicorn.Config(client_mock, host="127.0.0.1", port=5000)
+    config = uvicorn.Config(client_mock, host="127.0.0.1", port=5005)
     server = uvicorn.Server(config)
-    # From https://stackoverflow.com/questions/61577643/
-    # python-how-to-use-fastapi-and-uvicorn-run-without-blocking-the-thread
-    with server.run_in_thread():
-        yield
+
+    def run_mock_server():
+        nonlocal server
+        server.run()
+
+    thread = Thread(target=run_mock_server)
+    thread.start()
+    yield
+    server.should_exit = True
+    thread.join()
+    # # From https://stackoverflow.com/questions/61577643/
+    # # python-how-to-use-fastapi-and-uvicorn-run-without-blocking-the-thread
+    # with server.run_in_thread():
+    #     yield
 
 
 def test_server_validates_client_dataset_correctly_given_valid_url(start_mock_server):

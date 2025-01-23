@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.pipeline import Pipeline  # type: ignore
 import pickle
 from aignostic.pydantic_models.data_models import DataSet
+from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 
@@ -16,7 +17,7 @@ def predict(dataset: DataSet) -> DataSet:
     """
     # Return identical dataframe for now - fill this in with actual test models when trained
     out: np.ndarray = model.predict(dataset.rows)
-    rows: list[list] = list(out) if len(dataset.rows) > 1 else [list(out)]
+    rows: list[list] = out.tolist() if len(dataset.rows) > 1 else [out.tolist()]
     return DataSet(column_names=dataset.column_names, rows=rows)
 
 
