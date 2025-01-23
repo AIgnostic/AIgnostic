@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from aignostic.pydantic_models.data_models import DataSet
 
 
-app = FastAPI()
+app: FastAPI = FastAPI()
 
 
 @app.post("/predict")

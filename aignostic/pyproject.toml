@@ -26,6 +26,9 @@ numpy = "^2.2.1"
 pydantic = "^2.10.5"
 uvicorn = "^0.34.0"
 fastapi = { extras = ["standard"], version = "^0.115.6" }
+pandas = "^2.2.3"
+types-requests = "^2.32.0.20241016"
+pandas-stubs = "^2.2.3.241126"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.3.1"
@@ -42,7 +45,6 @@ transformers = "^4.48.0"                                          # Dev
 torch = { version = "^2.5.1", source = "pytorch-gpu-src" }        # Dev
 torchvision = { version = "^0.20.1", source = "pytorch-gpu-src" } # Dev
 torchaudio = { version = "^2.5.1", source = "pytorch-gpu-src" }   # Dev
-mypy = "^1.14.1"
 
 
 [[tool.poetry.source]]
