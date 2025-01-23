@@ -1,32 +1,32 @@
-# from fastapi.testclient import TestClient
-# from typing import List
+from fastapi.testclient import TestClient
+from typing import List
 # import pytest
-# from mock_server import app as client_mock  # type: ignore
-# from aignostic.dataset.validate_dataset_api import app as datasetapi_mock
+from mock_server import app as client_mock  # type: ignore
+from aignostic.dataset.validate_dataset_api import app as datasetapi_mock
 # from tests.dataset_api.constants import expected_ACS_column_names
 # import uvicorn
 # from threading import Thread
 
-# server_mock = TestClient(datasetapi_mock)
-# client_mock = TestClient(client_mock)
+server_mock = TestClient(datasetapi_mock)
+client_mock = TestClient(client_mock)
 
-# local_server = "http://127.0.0.1:5000"
-# valid_url = local_server + "/fetch-datapoints"
-# unexpected_data_url = local_server + "/invalid-data"
-# invalid_url = local_server + "/invalid-url"
-
-
-# # Client tests
-# def test_client_returns_data():
-#     response = client_mock.get("/fetch-datapoints")
-#     assert response.status_code == 200
-#     assert response.json() != {}
+local_server = "http://127.0.0.1:5000"
+valid_url = local_server + "/fetch-datapoints"
+unexpected_data_url = local_server + "/invalid-data"
+invalid_url = local_server + "/invalid-url"
 
 
-# def test_client_returns_invalid_data_correctly():
-#     response = client_mock.get("/invalid-data")
-#     assert response.status_code == 200
-#     assert not isinstance(response.json()["column_names"], List)
+# Client tests
+def test_client_returns_data():
+    response = client_mock.get("/fetch-datapoints")
+    assert response.status_code == 200
+    assert response.json() != {}
+
+
+def test_client_returns_invalid_data_correctly():
+    response = client_mock.get("/invalid-data")
+    assert response.status_code == 200
+    assert not isinstance(response.json()["column_names"], List)
 
 
 # # Server tests
