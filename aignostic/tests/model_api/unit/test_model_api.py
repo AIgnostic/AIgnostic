@@ -5,7 +5,6 @@ import pandas as pd
 from folktables import ACSDataSource, ACSEmployment  # type: ignore
 import pickle
 from tests.model_api.model.huggingface_binclassifier import app as huggingface_app
-import numpy as np
 
 
 client_huggingface = TestClient(huggingface_app)

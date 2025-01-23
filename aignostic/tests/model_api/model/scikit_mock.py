@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.pipeline import Pipeline  # type: ignore
 import pickle
 from aignostic.pydantic_models.data_models import DataSet
-from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 
