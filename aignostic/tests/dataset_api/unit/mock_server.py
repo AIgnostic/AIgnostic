@@ -10,7 +10,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+app: FastAPI = FastAPI()
 
 
 data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
