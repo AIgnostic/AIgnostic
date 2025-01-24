@@ -23,9 +23,8 @@ async def generate_metrics_from_info(request: DatasetRequest):
     datasetURL = request.datasetURL
     modelURL = request.modelURL
     metrics = request.metrics
-
+    print("evaluating")
     results = await process_data(datasetURL, modelURL, metrics)
-
     return {"message": "Data successfully received", "results": results}
 
 
@@ -50,16 +49,26 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     """
 
     # fetch data from datasetURL
+    print("fetching data")
+
     data: dict = await fetch_data(datasetURL)
+
+    print(f"fetched: {data}")
+
 
     # strip the label from the datapoint
     try:
-        rows = data["rows"]
-        feature, true_label = [rows[0][:-1]], [rows[0][-1]]
-        prediction = await query_model(modelURL, {"column_names": data["column_names"][:-1],  "rows": feature})
-        predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
-        metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
+        print("processing data")
+        features = data["features"]
+        labels = data["labels"]
+        group_ids = data["group_ids"]
+        predictions = await query_model(modelURL, {"features": features, "labels": labels, "group_ids": group_ids})  
+        print(predictions) 
+        predicted_labels = predictions["predictions"]
+
+        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, metrics)
     except Exception as e:
+        print(f"Error while processing data: {e}")
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
     return metrics_results
@@ -98,7 +107,7 @@ async def query_model(modelURL: HttpUrl, data: dict):
     - modelURL : API URL of the model
     """
     try:
-        # Send a POST request to the dataset API
+        # Send a POST request to the model API
         response = requests.post(url=modelURL, json=data)
 
         # Check if the request was successful

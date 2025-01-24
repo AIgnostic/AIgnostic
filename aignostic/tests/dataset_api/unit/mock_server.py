@@ -4,8 +4,8 @@ from fastapi import FastAPI, Body
 from fastapi.responses import JSONResponse
 import pandas as pd
 import numpy as np
-from aignostic.pydantic_models.data_models import df_to_JSON
 import logging
+from aignostic.pydantic_models.data_models import DataSet
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ acs_data = data_source.get_data(states=["AL"], download=True)
 features, label, group = ACSEmployment.df_to_pandas(acs_data)
 
 
-@app.get('/fetch-datapoints')
+@app.get('/fetch-datapoints', response_model=DataSet)
 async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     """
     Given a list of indices, fetch the data at each index and convert into
@@ -31,18 +31,26 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
         JSONResponse: A JSON response containing the random datapoints.
     """
     try:
+        filtered_features = features.iloc[indices].replace({pd.NA: None, np.nan: None}).astype(str)
+        filtered_labels = label.iloc[indices].replace({pd.NA: None, np.nan: None}).astype(str)
+        filtered_group_ids = group.iloc[indices].replace({pd.NA: None, np.nan: None})
 
-        acs_datapoints = pd.concat([features.iloc[indices], label.iloc[indices]], axis=1)
-        acs_datapoints = acs_datapoints.replace({
-            pd.NA: None,
-            np.nan: None,
-            float('inf'): None,
-            float('-inf'): None
-        })
+        print(filtered_features)
+        filtered_features = list(list(r) for r in filtered_features.values)
+        filtered_labels = list(list(r) for r in filtered_labels.values)
+        filtered_group_ids = list(filtered_group_ids.values)
 
-        return JSONResponse(content=df_to_JSON(acs_datapoints), status_code=200)
+        dataset = DataSet(
+            features=filtered_features,
+            labels=filtered_labels,
+            group_ids=filtered_group_ids
+        )
+
+        return JSONResponse(content=dataset.dict(), status_code=200)
+       
+
     except Exception as e:
-        print(e)
+        logger.error("Error fetching datapoints: %s", str(e))
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 

@@ -2,23 +2,35 @@ from fastapi import FastAPI
 import numpy as np
 from sklearn.pipeline import Pipeline
 import pickle
-from aignostic.pydantic_models.data_models import DataSet
-import os
+from aignostic.pydantic_models.data_models import DataSet, ModelResponse
+import os#
+import logging
+from fastapi.responses import JSONResponse
+
 app = FastAPI()
 
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 model: Pipeline = pickle.load(open(os.path.join(os.path.dirname(__file__), '../../../scikit_model.sav'), 'rb'))
 
-
 @app.post("/predict")
-def predict(dataset: DataSet) -> DataSet:
+def predict(dataset: DataSet) -> ModelResponse:
     """
     Given a dataset, predict the expected outputs for the model
     """
-    # Return identical dataframe for now - fill this in with actual test models when trained
-    out: np.ndarray = model.predict(dataset.rows)
-    rows: list[list] = out.tolist() if len(dataset.rows) > 1 else [out.tolist()]
-    return DataSet(column_names=dataset.column_names, rows=rows)
+    try : 
+        out = []
+        for feature in dataset.features:
+            lol = model.predict(np.array([feature]))
+            out.append(lol.astype(str))
+        out = [pred.tolist() for pred in out]
+        return JSONResponse(content={"predictions": dataset.labels}, status_code=200)
+
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 
 """
