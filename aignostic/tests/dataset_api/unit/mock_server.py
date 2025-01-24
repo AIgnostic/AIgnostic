@@ -48,7 +48,7 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
         JSONResponse: A JSON response containing the random datapoints.
     """
     try:
-
+        print("retriving data")
         acs_datapoints = pd.concat([features.iloc[indices], label.iloc[indices]], axis=1)
         acs_datapoints = acs_datapoints.replace({
             pd.NA: None,

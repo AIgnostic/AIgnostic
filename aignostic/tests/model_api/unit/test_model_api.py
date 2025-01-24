@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from tests.model_api.model.scikit_mock import app as scikit_app
+from tests.model_api.model.scikit_mock import MOCK_API_KEY as scikit_model_key
 from tests.model_api.model.mock import app as mock_app
 import pandas as pd
 from folktables import ACSDataSource, ACSEmployment
@@ -51,7 +52,8 @@ def test_valid_data_scikit_folktables():
         json={
             "column_names": acs_data.columns.tolist(),
             "rows": features.tolist()
-        }
+        },
+        headers={"Authorization": f"Bearer {scikit_model_key}"}
     )
     assert response.status_code == 200, response.text
 
