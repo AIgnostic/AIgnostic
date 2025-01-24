@@ -110,7 +110,7 @@ jobs:
           directory: ./coverage
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Archive  ${{ inputs.artifact_path }} as ${{ inputs.artifact_name }}
-        if: (success() || failure()) && hashFiles('coverage/') != ''
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'build')
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
