@@ -5,7 +5,9 @@ import pickle
 from aignostic.pydantic_models.data_models import DataSet
 import os
 
+
 app = FastAPI()
+
 
 model: Pipeline = pickle.load(open(os.path.join(os.path.dirname(__file__), '../../../scikit_model.sav'), 'rb'))
 

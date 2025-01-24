@@ -11,6 +11,10 @@ export default defineConfig({
   server: {
     port: 4200,
     host: 'localhost',
+    fs: {
+      strict: false, // Disable strict file watching
+      allow: ['../'], // Limit the directories being watched
+    },
   },
   preview: {
     port: 4300,
