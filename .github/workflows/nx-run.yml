@@ -89,20 +89,20 @@ jobs:
           name: Jest Tests # Name of the check run which will be created
           path: ./reports/frontend/jest-results.xml # Path to test results
           reporter: jest-junit # Format of test results
-      # - name: Jest Coverage Comment
-      #   if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/frontend/coverage-summary.json') != ''
-      #   uses: MishaKav/jest-coverage-comment@main
-      #   with:
-      #     title: Jest Coverage Report (frontend)
-      #     coverage-summary-path: ./coverage/frontend/coverage-summary.json
-      #     junitxml-path: ./reports/frontend/jest-results.xml
-      # - name: Pytest Coverage Report
-      #   if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/aignostic/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
-      #   uses: MishaKav/pytest-coverage-comment@main
-      #   with:
-      #     title: Pytest Coverage Report (aignostic)
-      #     pytest-xml-coverage-path: ./coverage/aignostic/coverage.xml
-      #     junitxml-path: ./reports/aignostic/unittests/junit.xml
+      - name: Jest Coverage Comment
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/frontend/coverage-summary.json') != ''
+        uses: MishaKav/jest-coverage-comment@main
+        with:
+          title: Jest Coverage Report (frontend)
+          coverage-summary-path: ./coverage/frontend/coverage-summary.json
+          junitxml-path: ./reports/frontend/jest-results.xml
+      - name: Pytest Coverage Report
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/aignostic/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          title: Pytest Coverage Report (aignostic)
+          pytest-xml-coverage-path: ./coverage/aignostic/coverage.xml
+          junitxml-path: ./reports/aignostic/unittests/junit.xml
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         if: (success() || failure()) && contains(inputs.nx_tasks, 'test')

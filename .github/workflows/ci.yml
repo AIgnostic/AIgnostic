@@ -36,7 +36,7 @@ jobs:
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
-      nx_tasks: 'run-many -t test --all' # DO NOT ACCEPT UNTIL I CHANGE THIS BACK!
+      nx_tasks: 'affected -t test'
       artifact_name: 'test-coverage'
       artifact_path: 'coverage/'
     secrets: inherit
