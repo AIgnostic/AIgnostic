@@ -206,17 +206,7 @@ function Homepage() {
                     onChange={(e) => {
                       setStateWrapper("modelAPIKey", e.target.value)
                     }}
-                    //{/*May need to check for validity */}
-                    // onBlur={() => {
-                    //   setStateWrapper("isModelURLValid", checkURL(state.modelAPIKey))
-                    // }}
                     style={styles.input}
-                  // error={!state.isModelURLValid}
-                  // helperText={
-                  //   !state.isModelURLValid
-                  //     ? 'Invalid URL format - please enter a valid URL'
-                  //     : ''
-                  // }
                   />
                   <TextField
                     type="text"
@@ -225,16 +215,7 @@ function Homepage() {
                     onChange={(e) => {
                       setStateWrapper("datasetAPIKey", e.target.value)
                     }}
-                    // onBlur={() => {
-                    //   setStateWrapper("isModelURLValid", checkURL(state.modelURL))
-                    // }}
                     style={styles.input}
-                  // error={!state.isModelURLValid}
-                  // helperText={
-                  //   !state.isModelURLValid
-                  //     ? 'Invalid URL format - please enter a valid URL'
-                  //     : ''
-                  // }
                   />
                 </Box>
               )}
