@@ -28,11 +28,7 @@ async def generate_metrics_from_info(request: DatasetRequest):
     datasetAPIKey = request.datasetAPIKey
     modelAPIKey = request.modelAPIKey
     metrics = request.metrics
-
-
-    results = await process_data(datasetURL, modelURL, metrics, datasetAPIKey=datasetAPIKey, modelAPIKey=modelAPIKey)
-    print("Got results")
-
+    results = await process_data(datasetURL, modelURL, metrics, datasetAPIKey, modelAPIKey)
     return {"message": "Data successfully received", "results": results}
 
 
@@ -41,7 +37,8 @@ def info():
     return {"message": "Pushed at 21/01/2025 07:32"}
 
 
-async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str], datasetAPIKey, modelAPIKey):
+async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str],
+                       datasetAPIKey, modelAPIKey):
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Passes to data endpoint and fetch data
@@ -97,13 +94,12 @@ async def fetch_data(dataURL: HttpUrl, datasetAPIKey) -> dict:
 
         # Return the data
         return data
-    except requests.exceptions.RequestException as e:
+    except HTTPException as e:
         if response.status_code == 401:
             raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
         raise HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
-
 
 async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
     """
@@ -130,8 +126,19 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
 
         # Return the data
         return data
+    except Exception as e:
+        if isinstance(e, requests.exceptions.RequestException):
+            # Re-raise the original `RequestException`
+            raise e
+        else:
+            # Handle non-RequestException errors as 500 Internal Server Errors
+            print(f"Unexpected error: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail="An unexpected error occurred. Please try again later."
+            )
     except requests.exceptions.RequestException as e:
-        if response.status_code == 401:
+        if e.status_code == 401:
             raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
         raise HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
     except Exception as e:
