@@ -2,10 +2,10 @@ from fastapi import FastAPI
 import numpy as np
 from sklearn.pipeline import Pipeline
 import pickle
-from aignostic.pydantic_models.data_models import DataSet, ModelResponse
+from aignostic.pydantic_models.data_models import ModelInput, ModelResponse
 import os#
 import logging
-from fastapi.responses import JSONResponse
+from fastapi import HTTPException
 
 app = FastAPI()
 
@@ -15,22 +15,19 @@ logger = logging.getLogger(__name__)
 
 model: Pipeline = pickle.load(open(os.path.join(os.path.dirname(__file__), '../../../scikit_model.sav'), 'rb'))
 
-@app.post("/predict")
-def predict(dataset: DataSet) -> ModelResponse:
+@app.post("/predict", response_model = ModelResponse)
+def predict(input: ModelInput) -> ModelResponse:
     """
     Given a dataset, predict the expected outputs for the model
     """
-    try : 
-        out = []
-        for feature in dataset.features:
-            lol = model.predict(np.array([feature]))
-            out.append(lol.astype(str))
-        out = [pred.tolist() for pred in out]
-        return JSONResponse(content={"predictions": dataset.labels}, status_code=200)
-
+    try:
+        if input.features == [[]]:
+            return ModelResponse(predictions=input.features)
+        output: np.ndarray = model.predict(input.features)
+        predictions : list[list] = output.tolist() if len(input.features) > 1 else [output.tolist()]
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
+        return HTTPException(detail=f"Error occured during model prediction: {e}", status_code=500)
+    return ModelResponse(predictions=predictions)
 
 
 """

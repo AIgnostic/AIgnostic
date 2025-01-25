@@ -1,17 +1,17 @@
 from fastapi import FastAPI
-from aignostic.pydantic_models.data_models import DataSet
+from aignostic.pydantic_models.data_models import ModelInput, ModelResponse
 
 
 app: FastAPI = FastAPI()
 
 
-@app.post("/predict")
-def predict(dataset: DataSet) -> DataSet:
+@app.post("/predict", response_model=ModelResponse)
+def predict(input: ModelInput) -> ModelResponse:
     """
     Given a dataset, predict the expected outputs for the model
+    NOTE: this is a mock implementation and is left blank on purpose 
     """
-    # Return empty dataframe for now - fill this in with actual test models when trained
-    return DataSet(column_names=[], rows=[[]])
+    return ModelResponse(predictions=input.labels)
 
 
 """

@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 import pandas as pd
 import numpy as np
 import logging
-from aignostic.pydantic_models.data_models import DataSet
+from aignostic.pydantic_models.data_models import ModelInput
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ acs_data = data_source.get_data(states=["AL"], download=True)
 features, label, group = ACSEmployment.df_to_pandas(acs_data)
 
 
-@app.get('/fetch-datapoints', response_model=DataSet)
+@app.get('/fetch-datapoints', response_model=ModelInput)
 async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     """
     Given a list of indices, fetch the data at each index and convert into
@@ -40,7 +40,7 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
         filtered_labels = list(list(r) for r in filtered_labels.values)
         filtered_group_ids = list(filtered_group_ids.values)
 
-        dataset = DataSet(
+        dataset = ModelInput(
             features=filtered_features,
             labels=filtered_labels,
             group_ids=filtered_group_ids

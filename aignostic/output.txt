@@ -1,1 +1,1 @@
-{"column_names":["response"],"rows":[[{"label":"POSITIVE","score":0.9964361190795898}]]}
+{"predictions":[[{"label":"POSITIVE","score":0.9970186948776245}]]}
