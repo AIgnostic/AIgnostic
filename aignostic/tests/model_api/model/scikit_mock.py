@@ -21,7 +21,7 @@ def predict(input: ModelInput) -> ModelResponse:
     Given a dataset, predict the expected outputs for the model
     """
     try:
-        if input.features == [[]]:
+        if not input.features or input.features == [[]]:
             return ModelResponse(predictions=input.features)
         output: np.ndarray = model.predict(input.features)
         predictions : list[list] = output.tolist() if len(input.features) > 1 else [output.tolist()]

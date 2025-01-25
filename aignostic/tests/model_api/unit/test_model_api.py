@@ -17,7 +17,7 @@ def test_non_existent_endpoint_throws_error():
     assert response.status_code == 404, response.text
 
 
-def test_mock_api_returns_empty():
+def test_mock_returns_empty():
     # post empty pandas dataframe
     response = basic_mock.post("/predict", json={
         "features": [],  # Empty list for no columns
