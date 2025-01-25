@@ -27,9 +27,8 @@ async def generate_metrics_from_info(request: DatasetRequest):
     datasetAPIKey = request.datasetAPIKey
     modelAPIKey = request.modelAPIKey
     metrics = request.metrics
- 
+
     results = await process_data(datasetURL, modelURL, metrics, datasetAPIKey, modelAPIKey)
-    print("Got results")
 
     return {"message": "Data successfully received", "results": results}
 
@@ -53,7 +52,6 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     """
     # fetch data from datasetURL
     data: dict = await fetch_data(datasetURL, datasetAPIKey)
-    print(data)
 
     print("Fetched Data")
     # strip the label from the datapoint
@@ -61,7 +59,7 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     feature, true_label = [rows[0][:-1]], [rows[0][-1]]
     prediction = await query_model(
         modelURL,
-        {   
+        {
             "column_names": data["column_names"][:-1],
             "rows": feature
         },
@@ -69,7 +67,7 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     )
     predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
     metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
-    
+
     return metrics_results
 
 
@@ -128,6 +126,7 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
 
         # Return the data
         return data
+
     except requests.exceptions.RequestException as e:
         if response.status_code == 401:
             raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
