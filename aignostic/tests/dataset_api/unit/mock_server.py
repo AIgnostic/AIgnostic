@@ -1,24 +1,24 @@
 
 from folktables import ACSDataSource, ACSEmployment
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.security import APIKeyHeader
 import pandas as pd
 import numpy as np
 from aignostic.pydantic_models.data_models import df_to_JSON
-import logging
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-app: FastAPI = FastAPI()
-
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+from utils import get_dataset_api_key
+app = FastAPI()
 
 data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
+
 acs_data = data_source.get_data(states=["AL"], download=True)
 features, label, group = ACSEmployment.df_to_pandas(acs_data)
 
 
-@app.get('/fetch-datapoints')
+@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)])
 async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     """
     Given a list of indices, fetch the data at each index and convert into

@@ -29,25 +29,22 @@ def test_client_returns_invalid_data_correctly():
     assert not isinstance(response.json()["column_names"], List)
 
 
-# # Server tests
-# @pytest.fixture(scope="module")
-# def start_mock_server():
-#     config = uvicorn.Config(client_mock, host="127.0.0.1", port=5005)
-#     server = uvicorn.Server(config)
+# Server tests
+@pytest.fixture(scope="module")
+def start_mock_server():
+    import uvicorn
+    config = uvicorn.Config(app=client_mock, host="127.0.0.1", port=5000)
+    server = uvicorn.Server(config)
 
-#     def run_mock_server():
-#         nonlocal server
-#         server.run()
+    def run_mock_server():
+        nonlocal server
+        server.run()
 
-#     thread = Thread(target=run_mock_server)
-#     thread.start()
-#     yield
-#     server.should_exit = True
-#     thread.join()
-#     # # From https://stackoverflow.com/questions/61577643/
-#     # # python-how-to-use-fastapi-and-uvicorn-run-without-blocking-the-thread
-#     # with server.run_in_thread():
-#     #     yield
+    thread = Thread(target=run_mock_server)
+    thread.start()
+    yield
+    server.should_exit = True
+    thread.join()
 
 
 # def test_server_validates_client_dataset_correctly_given_valid_url(start_mock_server):

@@ -1,77 +1,92 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import checkURL from './utils';
-import { Box, Button, Chip, TextField } from '@mui/material';
+import Dropdown from './components/dropdown';
+import { metrics, steps, BACKEND_URL } from './constants';
+import Title from './components/title';
+import styles from './home.styles';
 import {
+  Box, 
+  Button, 
+  Chip, 
+  TextField,
   Stepper,
   Step,
   StepLabel,
   StepContent,
   Typography,
 } from '@mui/material';
-import Dropdown from './dropdown';
-import { AIGNOSTIC, HOME } from './constants';
-import styles from './styles';
-
-const steps = [
-  {
-    label: 'Enter model and dataset API URLs',
-    description: `Enter the URLs for your model and dataset APIs to get started.
-                  For more information about creating the APIs, see the documentation - click 'Getting Started'.`,
-  },
-  {
-    label: 'Select Legislation',
-    description: `Select the legislations that you want to comply with.`,
-  },
-  {
-    label: 'Select Metrics',
-    description: `Select the metrics you want to analyze your model with. 
-      These will be used to quantify your compliance score with your selected metrics.`,
-  },
-  {
-    label: 'Summary and Generate Report',
-    description: `Check that you are happy with your selections and generate your compliance report.
-                  Report generation may take some time.`,
-  },
-];
-
-const metrics = ['Accuracy', 'Precision', 'Recall'];
-const BACKEND_URL = 'http://localhost:8000/evaluate';
 
 function Homepage() {
   const [state, setState] = useState({
     modelURL: '',
     datasetURL: '',
+    modelAPIKey: '',
+    datasetAPIKey: '',
     isModelURLValid: true,
     isDatasetURLValid: true,
     activeStep: 0,
     selectedItem: '',
     metricChips: metrics.map((metric) => ({
+      id: metric,
       label: metric,
       selected: true,
     })),
     metricsHelperText: '',
   });
 
+  const getValues = {
+    modelURL: {
+      label: "Model API URL",
+      value: state.modelURL,
+      isValid: state.isModelURLValid,
+      validKey: "isModelURLValid",
+    },
+    datasetURL: {
+      label: "Dataset API URL",
+      value: state.datasetURL,
+      isValid: state.isDatasetURLValid,
+      validKey: "isDatasetURLValid",
+    },
+    modelAPIKey: {
+      label: "Model API Key",
+      value: state.modelAPIKey,
+      isValid: undefined,
+      validKey: undefined,
+    },
+    datasetAPIKey: {
+      label: "Dataset API Key",
+      value: state.datasetAPIKey,
+      isValid: undefined,
+      validKey: undefined,
+    },
+  };
+  
   const setStateWrapper = <K extends keyof typeof state>(key: K, value: typeof state[K]) => {
     setState((prevState) => ({
       ...prevState,
       [key]: value,
     }));
   };
+  const getErrorProps = (isValid: boolean, errorMessage: string) => ({
+    error: !isValid, 
+    helperText: !isValid ? errorMessage : '',
+  });
 
-  const handleNext = () => {setStateWrapper("activeStep", state.activeStep + 1)};
+  const handleNext = () => { setStateWrapper("activeStep", state.activeStep + 1) };
 
-  const handleBack = () => {setStateWrapper("activeStep", state.activeStep - 1)};
+  const handleBack = () => { setStateWrapper("activeStep", state.activeStep - 1) };
 
-  const handleReset = () => {setStateWrapper("activeStep", 0);};
+  const handleReset = () => { setStateWrapper("activeStep", 0); };
 
   const handleSubmit = () => {
     if (state.modelURL && state.datasetURL) {
       const user_info = {
-        "modelURL": state.modelURL, 
+        "modelURL": state.modelURL,
         "datasetURL": state.datasetURL,
+        "modelAPIKey": state.modelAPIKey,
+        "datasetAPIKey": state.datasetAPIKey,
         "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
-                                    .map((metricChip: any) => (metricChip.label).toLowerCase())
+          .map((metricChip: { label: string; selected: boolean }) => (metricChip.label).toLowerCase())
       };
 
       // send POST request to backend server
@@ -92,15 +107,15 @@ function Homepage() {
           const results = data["results"]
           // Create the text content for the file
           const textContent = "AIgnostic Report" + "\n" +
-                              "===================" + "\n" +
-                              `Model API URL: ${user_info.modelURL}` + "\n" +
-                              `Dataset API URL: ${user_info.datasetURL}` + "\n" + "\n" +
+            "===================" + "\n" +
+            `Model API URL: ${user_info.modelURL}` + "\n" +
+            `Dataset API URL: ${user_info.datasetURL}` + "\n" + "\n" +
 
-                              "Metrics Results:" + "\n" +
-                              Object.entries(results).map(([metric, value]) => {
-                                return `  - ${metric}: ${value}`;
-                              }).join('\n') + "\n";                  
-    
+            "Metrics Results:" + "\n" +
+            Object.entries(results).map(([metric, value]) => {
+              return `  - ${metric}: ${value}`;
+            }).join('\n') + "\n";
+            
           // Create a Blob and download it as a text file
           const blob = new Blob([textContent], { type: "text/plain" });
           const link = document.createElement("a");
@@ -111,12 +126,8 @@ function Homepage() {
         .catch((error) => {
           console.error("Error during fetch:", error.message);
         });
-
-
-
-
-    } else { 
-      // ERROR
+    } else {
+      console.log('Please fill in both text inputs.');
     }
   };
 
@@ -126,28 +137,13 @@ function Homepage() {
 
   return (
     <Box sx={[styles.container]}>
-      <Box style={styles.container}>
-        <Box style={styles.container}>
-          <h3 style={styles.logoText}>{AIGNOSTIC}</h3>
-        </Box>
-
-        <Box style={styles.horizontalContainer}>
-          New to {AIGNOSTIC}? Read the docs to get started:
-          <Button 
-            style={styles.button}
-            variant="contained"
-            onClick={() => {
-              window.open(`${HOME}/api-docs`, '_blank', 'noopener,noreferrer');
-            }}
-          >Getting Started</Button>
-        </Box>
-      </Box>
+      <Title />
 
       <Stepper
         activeStep={state.activeStep}
         style={{ width: '80%' }}
         orientation="vertical"
-        >
+      >
         {steps.map((step, index) => (
           <Step key={step.label}>
             <StepLabel>
@@ -156,75 +152,71 @@ function Homepage() {
             <StepContent>
               <Typography>{step.description}</Typography>
 
+              {/* 1. ENTER MODEL AND DATASET API  URLS CONTENT */}
               {index === 0 && (
-                <Box style = {{
-                  padding: '15px',
-                }}>
-                  <TextField
-                    type="text"
-                    label = "Model API URL"
-                    value={state.modelURL}
-                    onChange={(e) => {
-                      setState((prevState) => ({
-                        ...prevState, 
-                        modelURL: e.target.value, 
-                      }));
-                    }} 
-                    onBlur={() => {
-                      setStateWrapper("isModelURLValid", checkURL(state.modelURL))
-                    }} 
-                    style={styles.input}
-                    error={!state.isModelURLValid}
-                    helperText={
-                      !state.isModelURLValid
-                        ? 'Invalid URL format - please enter a valid URL'
-                        : ''
-                    }
-                
-                  />
-                  <TextField
-                    type="text"
-                    label = "Dataset API URL"
-                    value={state.datasetURL}
-                    onChange={(e) => {
-                      setStateWrapper("datasetURL", e.target.value)
-                    }} 
-                    onBlur={() => {
-                      setStateWrapper("isDatasetURLValid", checkURL(state.datasetURL))
-                    }}                    
-                    style={styles.input}
-                    error={!state.isDatasetURLValid}
-                    helperText={
-                      !state.isDatasetURLValid
-                        ? 'Invalid URL format - please enter a valid URL'
-                        : ''
-                    }
-                  />
-                </Box>
+               <Box style={{ padding: '15px' }}>
+               {(['modelURL', 'datasetURL', 'modelAPIKey', 'datasetAPIKey'] as (keyof typeof getValues)[])
+               .map((key) => {
+                 const field = getValues[key]; 
+                 const handleOnBlur = field.validKey && field.isValid !== undefined
+                   ? () => {
+                       setStateWrapper(
+                         field.validKey as keyof typeof state,
+                         checkURL(field.value)
+                       );
+                     }
+                   : undefined; // Don't do anything for fields that don't need validation onBlur
+                 
+                 const errorProps = field.isValid !== undefined
+                   ? getErrorProps(field.isValid, 'Invalid URL') // Only set errorProps if the field has isValid
+                   : undefined;
+                 
+                return ( 
+                <TextField
+                  style={styles.input}
+                  key={key}
+                  label={field.label}
+                  value={field.value}
+                  onChange={(e) => {
+                  setStateWrapper(key, e.target.value);
+                  }}
+                onBlur={handleOnBlur}
+                helperText={field.isValid !== undefined
+                  ? errorProps?.helperText
+                  : ''}
+                error={field.isValid !== undefined
+                  ? errorProps?.error
+                  : false}
+                />
+              );
+               })}
+             </Box>
+                     
               )}
-
+                
+              {/* 3. SELECT METRICS */}
               {index === 2 && (
                 <Box style={{ padding: '15px' }}>
-                  <p >{state.metricsHelperText}</p>
-                  {state.metricChips.map((metricChip) => (
+                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
+                  {state.metricChips.map((metricChip, index) => (
                     <Chip
+                      key={metricChip.id || index}
                       label={metricChip.label}
                       variant="filled"
                       onDelete={() => {
                         metricChip.selected = !metricChip.selected;
-                        setStateWrapper("metricChips", [...state.metricChips])
+                        setStateWrapper("metricChips", [...state.metricChips]);
                       }}
                       onClick={() => {
                         metricChip.selected = !metricChip.selected;
-                        setStateWrapper("metricChips", [...state.metricChips])
+                        setStateWrapper("metricChips", [...state.metricChips]);
                       }}
                       color={metricChip.selected ? 'primary' : 'default'}
                       style={{ margin: '5px' }}
                     />
                   ))}
-
                   <Dropdown
-                    style ={{
+                    style={{
                       marginTop: '20px',
                     }}
                     items={items}
@@ -234,29 +226,26 @@ function Homepage() {
                   />
                 </Box>
               )}
-
+              {/* 4. SUMMARY AND GENERATE REPORT */}
               {index === steps.length - 1 && (
-                <Box style={{ padding: '15px' }}>
-                  <h3>Summary</h3>
-                  <p>
-                    Model URL:{' '}
-                    {state.modelURL ? state.modelURL : 'You have not entered a model URL'}
-                    <br /> <br />
-                    Dataset URL:{' '}
-                    {state.datasetURL
-                      ? state.datasetURL
-                      : 'You have not entered a dataset URL'}
-                    <br /> <br />
-                    Metrics:{' '}
-                    {state.metricChips.filter((metricChip) => metricChip.selected)
-                      .length === 0
+                  <Box style={{ padding: '15px' }}>
+                    <h3>Summary</h3>
+                    <Typography variant="body1">
+                      <strong>Model URL:</strong>{' '}
+                      {state.modelURL || 'You have not entered a model URL'}
+                      <br /> <br />
+                      <strong>Dataset URL:</strong>{' '}
+                      {state.datasetURL || 'You have not entered a dataset URL'}
+                      <br /> <br />
+                      <strong>Metrics:</strong>{' '}
+                      {state.metricChips.filter((metricChip) => metricChip.selected).length === 0
                       ? 'You have not selected any metrics'
                       : state.metricChips
-                          .filter((metricChip) => metricChip.selected)
-                          .map((metricChip) => metricChip.label)
-                          .join(', ')}
-                  </p>
-                </Box>
+                        .filter((metricChip) => metricChip.selected)
+                        .map((metricChip) => metricChip.label)
+                        .join(', ')}
+                    </Typography>
+                  </Box>
               )}
 
               <Box sx={{ mb: 2 }}>
@@ -290,7 +279,6 @@ function Homepage() {
                         handleSubmit();
                       }
                     }}
-                    style={styles.button}
                     sx={{ mt: 1, mr: 1 }}
                   >
                     {' '}
@@ -302,11 +290,10 @@ function Homepage() {
                     onClick={() => {
                       if (index === 0 && !(state.isModelURLValid && state.isDatasetURLValid)) {
                         alert("One or both URLs are invalid. Please provide valid URLs.");
-                        handleReset(); // Optionally reset if invalid
+                        handleReset();
                       } else {
                         handleNext();
                       }}}
-                    style={styles.button}
                     sx={{ mt: 1, mr: 1 }}
                   >
                     {' '}
@@ -318,7 +305,6 @@ function Homepage() {
                   variant="contained"
                   disabled={index === 0}
                   onClick={handleBack}
-                  style={styles.button}
                   sx={[{ mt: 1, mr: 1}, styles.secondaryButton]}
                 >
                   Back

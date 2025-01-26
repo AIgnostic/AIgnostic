@@ -13,7 +13,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Typography from '@mui/material/Typography';
 import ReactMarkdown from 'react-markdown';
 import CodeBox from './components/CodeBox'; // Import your CodeBox component
-import styles from './styles';
+import styles from './home.styles';
 import { Box } from '@mui/material';
 import { AIGNOSTIC } from './constants';
 
