@@ -1,4 +1,19 @@
 import isURL from "validator/lib/isURL";
+import { BACKEND_URL } from "./constants";
+import setState from "react";
+
+type State = {
+    modelURL: string;
+    datasetURL: string;
+    modelAPIKey: string;
+    datasetAPIKey: string;
+    isModelURLValid: boolean;
+    isDatasetURLValid: boolean;
+    activeStep: number;
+    selectedItem: string;
+    metricChips: { label: string; selected: boolean }[];
+    metricsHelperText: string;
+}; 
 
 function checkURL(url: string): boolean {
     if (url === '') {
