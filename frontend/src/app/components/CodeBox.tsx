@@ -4,7 +4,6 @@ import { solarizedlight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button, Paper, Typography } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
 import styles from '../styles';
-import theme from '../theme';
 
 interface CodeBoxProps {
   language: string;

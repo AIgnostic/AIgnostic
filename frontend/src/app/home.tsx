@@ -11,7 +11,6 @@ import {
 import Dropdown from './dropdown';
 import { AIGNOSTIC, HOME } from './constants';
 import styles from './styles';
-import theme from './theme';
 
 const steps = [
   {
