@@ -1,15 +1,3 @@
-type State = {
-  modelURL: string;
-  datasetURL: string;
-  modelAPIKey: string;
-  datasetAPIKey: string;
-  isModelURLValid: boolean;
-  isDatasetURLValid: boolean;
-  activeStep: number;
-  selectedItem: string;
-  metricChips: { label: string; selected: boolean }[];
-  metricsHelperText: string;
-};
 
 const steps = [
     {
@@ -35,6 +23,5 @@ const steps = [
   
   const metrics = ['Accuracy', 'Precision', 'Recall'];
   const BACKEND_URL = 'http://localhost:8000/evaluate';
-  
-export { steps, metrics, BACKEND_URL, State };
 
+  export { steps, metrics, BACKEND_URL };

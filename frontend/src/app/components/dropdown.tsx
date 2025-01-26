@@ -6,7 +6,7 @@ interface DropdownProps {
     label: string;
     value: string;
     onChange: (value: string) => void;
-    style?: React.CSSProperties; 
+    style?: React.CSSProperties; // Add style prop
 }
 
 const Dropdown: React.FC<DropdownProps> = ({ items, label, value, onChange, style }) => {
@@ -15,7 +15,7 @@ const Dropdown: React.FC<DropdownProps> = ({ items, label, value, onChange, styl
     };
 
     return (
-        <FormControl fullWidth style={style}>
+        <FormControl fullWidth style={style}> {/* Apply style prop */}
             <InputLabel>{label}</InputLabel>
             <Select value={value} onChange={handleChange} label={label}>
                 {items.map((item, index) => (

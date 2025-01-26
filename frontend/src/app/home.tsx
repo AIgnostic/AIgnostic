@@ -1,25 +1,22 @@
-import React, { useState } from 'react';
-import checkURL  from './utils';
-// import handleSubmit from './utils';
-// import handleNext from './utils';
-// import handleBack from './utils';
-// import handleReset from './utils';
+import { useState } from 'react';
+import checkURL from './utils';
+import Dropdown from './components/dropdown';
+import { metrics, steps, BACKEND_URL } from './constants';
+import Title from './components/Title';
 import styles from './home.styles';
-import { BACKEND_URL } from './constants';
-import { Box, Button, Chip, TextField } from '@mui/material';
 import {
+  Box, 
+  Button, 
+  Chip, 
+  TextField,
   Stepper,
   Step,
   StepLabel,
   StepContent,
   Typography,
 } from '@mui/material';
-import Dropdown from './dropdown';
-import { steps, metrics } from './constants';
-
 
 function Homepage() {
-
   const [state, setState] = useState({
     modelURL: '',
     datasetURL: '',
@@ -63,13 +60,16 @@ function Homepage() {
     },
   };
   
-
   const setStateWrapper = <K extends keyof typeof state>(key: K, value: typeof state[K]) => {
     setState((prevState) => ({
       ...prevState,
       [key]: value,
     }));
   };
+  const getErrorProps = (isValid: boolean, errorMessage: string) => ({
+    error: !isValid, 
+    helperText: !isValid ? errorMessage : '',
+  });
 
   const handleNext = () => { setStateWrapper("activeStep", state.activeStep + 1) };
 
@@ -85,7 +85,7 @@ function Homepage() {
         "modelAPIKey": state.modelAPIKey,
         "datasetAPIKey": state.datasetAPIKey,
         "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
-          .map((metricChip: any) => (metricChip.label).toLowerCase())
+          .map((metricChip: { label: string; selected: boolean }) => (metricChip.label).toLowerCase())
       };
 
       // send POST request to backend server
@@ -115,7 +115,7 @@ function Homepage() {
             Object.entries(results).map(([metric, value]) => {
               return `  - ${metric}: ${value}`;
             }).join('\n') + "\n";
-
+            
           // Create a Blob and download it as a text file
           const blob = new Blob([textContent], { type: "text/plain" });
           const link = document.createElement("a");
@@ -134,28 +134,13 @@ function Homepage() {
     }
   };
 
-  // Utility function for error handling
-  const getErrorProps = (isValid: boolean, errorMessage: string) => ({
-    error: !isValid, // If invalid, set the error state to true
-    helperText: !isValid ? errorMessage : '', // Provide error message if invalid
-  });
-
   // Placeholder for the dropdown items
   const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
   const [selectedItem, setSelectedItem] = useState('');
 
   return (
     <Box sx={[styles.container]}>
-      <Box style={styles.container}>
-        <Box style={styles.logoContainer}>
-          <h3 style={styles.logoText}>AIgnostic Frontend</h3>
-        </Box>
-
-        <Box style={styles.horizontalContainer}>
-          New to AIgnostic? Read the docs to get started:
-          <Button style={styles.button}>Getting Started</Button>
-        </Box>
-      </Box>
+      <Title />
 
       <Stepper
         activeStep={state.activeStep}
@@ -169,7 +154,8 @@ function Homepage() {
             </StepLabel>
             <StepContent>
               <Typography>{step.description}</Typography>
--
+
+              {/* 1. ENTER MODEL AND DATASET API  URLS CONTENT */}
               {index === 0 && (
                <Box style={{ padding: '15px' }}>
                {(['modelURL', 'datasetURL', 'modelAPIKey', 'datasetAPIKey'] as (keyof typeof getValues)[])
@@ -210,7 +196,8 @@ function Homepage() {
              </Box>
                      
               )}
-
+                
+              {/* 3. SELECT METRICS */}
               {index === 2 && (
                 <Box style={{ padding: '15px' }}>
                   <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
@@ -242,36 +229,25 @@ function Homepage() {
                   />
                 </Box>
               )}
-
+              {/* 4. SUMMARY AND GENERATE REPORT */}
               {index === steps.length - 1 && (
                   <Box style={{ padding: '15px' }}>
                     <h3>Summary</h3>
-                    <p>
-                      Model URL:{' '}
-                      {state.modelURL ? state.modelURL : 'You have not entered a model URL'}
+                    <Typography variant="body1">
+                      <strong>Model URL:</strong>{' '}
+                      {state.modelURL || 'You have not entered a model URL'}
                       <br /> <br />
-                      Dataset URL:{' '}
-                      {state.datasetURL
-                        ? state.datasetURL
-                        : 'You have not entered a dataset URL'}
+                      <strong>Dataset URL:</strong>{' '}
+                      {state.datasetURL || 'You have not entered a dataset URL'}
                       <br /> <br />
-                      Model API Key:{' '}
-                      {state.modelAPIKey ? state.modelAPIKey : 'You have not entered a model API Key'}
-                      <br /> <br />
-                      Dataset API Key:{' '}
-                      {state.datasetAPIKey
-                        ? state.datasetAPIKey
-                        : 'You have not entered a dataset API Key'}
-                      <br /> <br />
-                      Metrics:{' '}
-                      {state.metricChips.filter((metricChip) => metricChip.selected)
-                        .length === 0
-                        ? 'You have not selected any metrics'
-                        : state.metricChips
-                          .filter((metricChip) => metricChip.selected)
-                          .map((metricChip) => metricChip.label)
-                          .join(', ')}
-                    </p>
+                      <strong>Metrics:</strong>{' '}
+                      {state.metricChips.filter((metricChip) => metricChip.selected).length === 0
+                      ? 'You have not selected any metrics'
+                      : state.metricChips
+                        .filter((metricChip) => metricChip.selected)
+                        .map((metricChip) => metricChip.label)
+                        .join(', ')}
+                    </Typography>
                   </Box>
               )}
 
@@ -317,7 +293,7 @@ function Homepage() {
                     onClick={() => {
                       if (index === 0 && !(state.isModelURLValid && state.isDatasetURLValid)) {
                         alert("One or both URLs are invalid. Please provide valid URLs.");
-                        handleReset(); // Optionally reset if invalid
+                        handleReset();
                       } else {
                         handleNext();
                       }
