@@ -27,6 +27,7 @@ function Homepage() {
     activeStep: 0,
     selectedItem: '',
     metricChips: metrics.map((metric) => ({
+      id: metric,
       label: metric,
       selected: true,
     })),
@@ -201,23 +202,23 @@ function Homepage() {
               {index === 2 && (
                 <Box style={{ padding: '15px' }}>
                   <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
-                  {state.metricChips.map((metricChip) => (
+                  {state.metricChips.map((metricChip, index) => (
                     <Chip
+                      key={metricChip.id || index}
                       label={metricChip.label}
                       variant="filled"
                       onDelete={() => {
                         metricChip.selected = !metricChip.selected;
-                        setStateWrapper("metricChips", [...state.metricChips])
+                        setStateWrapper("metricChips", [...state.metricChips]);
                       }}
                       onClick={() => {
                         metricChip.selected = !metricChip.selected;
-                        setStateWrapper("metricChips", [...state.metricChips])
+                        setStateWrapper("metricChips", [...state.metricChips]);
                       }}
                       color={metricChip.selected ? 'primary' : 'default'}
                       style={{ margin: '5px' }}
                     />
                   ))}
-
                   <Dropdown
                     style={{
                       marginTop: '20px',
