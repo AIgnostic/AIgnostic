@@ -1,4 +1,4 @@
-import checkURL from "../app/utils";
+import checkURL from '../app/utils';
 
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {
@@ -15,7 +15,6 @@ describe('checkURL function', () => {
     ];
 
     validUrls.forEach((url) => {
-      console.log(url);
       expect(checkURL(url)).toBe(true);
     });
   });
@@ -35,7 +34,6 @@ describe('checkURL function', () => {
     ];
 
     invalidUrls.forEach((url) => {
-      console.log(url);
       expect(checkURL(url)).toBe(false);
     });
   });

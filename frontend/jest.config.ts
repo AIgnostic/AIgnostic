@@ -1,4 +1,6 @@
-export default {
+import type { Config } from 'jest';
+
+const config = {
   displayName: 'aignostic-frontend',
   preset: '../jest.preset.js',
   transform: {
@@ -6,5 +8,24 @@ export default {
     '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['@nx/react/babel'] }],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  collectCoverage: true,
   coverageDirectory: '../coverage/frontend',
-};
+  coverageReporters: ['clover', 'json', 'lcov', 'text', 'json-summary', 'html'],
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: '../reports/frontend',
+        outputName: './jest-results.xml',
+        ancestorSeparator: ' › ',
+        uniqueOutputName: 'false',
+        suiteNameTemplate: '{filepath}',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
+      },
+    ],
+  ],
+} satisfies Config;
+
+export default config;

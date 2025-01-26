@@ -104,7 +104,6 @@ function Homepage() {
           return response.json();
         })
         .then((data) => {
-          console.log("FRONTEND", data["results"]);
           const results = data["results"]
           // Create the text content for the file
           const textContent = "AIgnostic Report" + "\n" +
@@ -123,9 +122,6 @@ function Homepage() {
           link.href = URL.createObjectURL(blob);
           link.download = "AIgnostic_Report.txt";
           link.click();
-
-
-          console.log("Response from backend:", data);
         })
         .catch((error) => {
           console.error("Error during fetch:", error.message);

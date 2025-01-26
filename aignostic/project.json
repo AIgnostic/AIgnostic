@@ -66,7 +66,13 @@
         "command": "poetry run pytest tests/",
         "cwd": "aignostic"
       },
-      "cache": true
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/tests/**/*.py",
+        "{projectRoot}/aignostic/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{projectRoot}/poetry.lock"
+      ]
     },
     "serve": {
       "executor": "@nxlv/python:run-commands",
@@ -101,6 +107,13 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "poetry run uvicorn main:create_application --reload",
+        "cwd": "aignostic"
+      }
+    },
+    "type-checks": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run mypy .",
         "cwd": "aignostic"
       }
     }
