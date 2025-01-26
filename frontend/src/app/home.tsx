@@ -2,7 +2,7 @@ import { useState } from 'react';
 import checkURL from './utils';
 import Dropdown from './components/dropdown';
 import { metrics, steps, BACKEND_URL } from './constants';
-import Title from './components/Title';
+import Title from './components/title';
 import styles from './home.styles';
 import {
   Box, 
