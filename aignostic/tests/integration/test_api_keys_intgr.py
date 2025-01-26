@@ -1,10 +1,10 @@
 from threading import Thread
 import pytest
 from aignostic.router.api import app
-from tests.dataset_api.unit.mock_server import app as data_app
-from tests.dataset_api.unit.mock_server import MOCK_API_KEY as DATASET_API
-from tests.model_api.model.scikit_mock import app as model_app
-from tests.model_api.model.scikit_mock import MOCK_API_KEY as MODEL_API
+from tests.utils.dataset.mock_server import app as data_app
+from tests.utils.dataset.mock_server import MOCK_API_KEY as DATASET_API
+from tests.utils.model.scikit_mock import app as model_app
+from tests.utils.model.scikit_mock import MOCK_API_KEY as MODEL_API
 import uvicorn
 import time
 from fastapi.testclient import TestClient

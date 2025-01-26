@@ -1,11 +1,10 @@
 from fastapi.testclient import TestClient
 from threading import Thread
 from typing import List
-import pytest
-from mock_server import app as client_mock
-from mock_server import MOCK_API_KEY as dataset_api_key
+from tests.utils.dataset.mock_server import app as client_mock
+from tests.utils.dataset.mock_server import MOCK_API_KEY as dataset_api_key
 from aignostic.dataset.validate_dataset_api import app as server_mock
-from tests.dataset_api.constants import expected_ACS_column_names
+from tests.utils.constants import expected_ACS_column_names
 
 server_mock = TestClient(server_mock)
 client_mock = TestClient(client_mock)

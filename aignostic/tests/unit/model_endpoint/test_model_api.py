@@ -1,11 +1,11 @@
 from fastapi.testclient import TestClient
-from tests.model_api.model.scikit_mock import app as scikit_app
-from tests.model_api.model.scikit_mock import MOCK_API_KEY as scikit_model_key
-from tests.model_api.model.mock import app as mock_app
+from tests.utils.model.scikit_mock import app as scikit_app
+from tests.utils.model.scikit_mock import MOCK_API_KEY as scikit_model_key
+from tests.utils.model.mock import app as mock_app
 import pandas as pd
 from folktables import ACSDataSource, ACSEmployment
 import pickle
-from tests.model_api.model.huggingface_binclassifier import app as huggingface_app
+from tests.utils.model.huggingface_binclassifier import app as huggingface_app
 
 
 client_huggingface = TestClient(huggingface_app)
