@@ -17,9 +17,9 @@ import styles from './styles';
 import { Box } from '@mui/material';
 import { AIGNOSTIC } from './constants';
 
-const markdownFiles = import.meta.glob('./docs/*.md', { query: '?raw', import: 'default', eager: true });
 
 const APIDocs: React.FC = () => {
+  
   
   // Split the markdown into title (h1) and content
   const splitMarkdown = (markdown: unknown) => {
@@ -35,7 +35,8 @@ const APIDocs: React.FC = () => {
     
     return { title, body };
   };
-
+  
+  const markdownFiles = import.meta.glob('./docs/*.md', { query: '?raw', import: 'default', eager: true });
   const mds = Object.values(markdownFiles).map(splitMarkdown);
 
   return (
