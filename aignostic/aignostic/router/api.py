@@ -1,5 +1,5 @@
 from pydantic import BaseModel, HttpUrl
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, FastAPI
 import requests
 import aignostic.metrics.metrics as metrics_lib
 
@@ -8,10 +8,10 @@ api = APIRouter()
 
 
 class DatasetRequest(BaseModel):
-    datasetURL: HttpUrl
-    modelURL: HttpUrl
-    modelAPIKey: str
-    datasetAPIKey: str
+    data_url: HttpUrl
+    model_url: HttpUrl
+    model_api_key: str
+    data_api_key: str
     metrics: list[str]
 
 
@@ -22,10 +22,10 @@ async def generate_metrics_from_info(request: DatasetRequest):
     This function validates, processes, and forwards the data to the controller.
     """
     # Extract data from the validated request
-    datasetURL = request.datasetURL
-    modelURL = request.modelURL
-    datasetAPIKey = request.datasetAPIKey
-    modelAPIKey = request.modelAPIKey
+    datasetURL = request.data_url
+    modelURL = request.model_url
+    datasetAPIKey = request.data_api_key
+    modelAPIKey = request.model_api_key
     metrics = request.metrics
     results = await process_data(datasetURL, modelURL, metrics, datasetAPIKey=datasetAPIKey, modelAPIKey=modelAPIKey)
     return {"message": "Data successfully received", "results": results}
@@ -134,3 +134,7 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey=None):
             raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
         print(f"Error while querying model: {e}")
         HTTPException(status_code=500, detail=f"Error while querying model: {e}")
+
+
+app = FastAPI()
+app.include_router(api)
