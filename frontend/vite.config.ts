@@ -25,6 +25,7 @@ export default defineConfig({
   // worker: {
   //  plugins: [ nxViteTsPaths() ],
   // },
+  assetsInclude: ['**/*.md'],
   build: {
     outDir: '../dist/frontend',
     emptyOutDir: true,

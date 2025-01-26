@@ -24,10 +24,10 @@ const CodeBox: React.FC<CodeBoxProps> = ({ language, codeSnippet }) => {
     };
 
     return (
-        <div style={{ position: 'relative', width: "60%" }}>
+        <div style={{ position: 'relative', justifyContent: 'center', width: '100%', alignItems: 'center' }}>
 
             {/* Code Block with Syntax Highlighting */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', width: '60%' }}>
                 <SyntaxHighlighter language={language} style={solarizedlight}>
                     {codeSnippet}
                 </SyntaxHighlighter>

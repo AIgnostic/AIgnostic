@@ -11,6 +11,7 @@ import {
 import Dropdown from './dropdown';
 import { AIGNOSTIC, HOME } from './constants';
 import styles from './styles';
+import theme from './theme';
 
 const steps = [
   {
@@ -135,6 +136,7 @@ function Homepage() {
           New to {AIGNOSTIC}? Read the docs to get started:
           <Button 
             style={styles.button}
+            variant="contained"
             onClick={() => {
               window.open(`${HOME}/api-docs`, '_blank', 'noopener,noreferrer');
             }}
@@ -204,7 +206,7 @@ function Homepage() {
 
               {index === 2 && (
                 <Box style={{ padding: '15px' }}>
-                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
+                  <p >{state.metricsHelperText}</p>
                   {state.metricChips.map((metricChip) => (
                     <Chip
                       label={metricChip.label}
@@ -314,10 +316,11 @@ function Homepage() {
                 )}
 
                 <Button
+                  variant="contained"
                   disabled={index === 0}
                   onClick={handleBack}
                   style={styles.button}
-                  sx={{ mt: 1, mr: 1 }}
+                  sx={{ mt: 1, mr: 1, background: theme.palette.background.paper, color: "#333" }}
                 >
                   Back
                 </Button>

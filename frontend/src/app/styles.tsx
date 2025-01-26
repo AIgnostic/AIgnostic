@@ -6,7 +6,6 @@ const styles = {
       justifyContent: 'center' as const,
       height: '100%',
       fontFamily: 'Arial, sans-serif',
-      backgroundColor: '#f5f5f5',
       width: '100%',
       paddingTop: '20px',
     },
@@ -19,7 +18,6 @@ const styles = {
     logoText: {
       fontSize: '36px',
       fontWeight: 'bold' as const,
-      color: '#333',
       fontFamily: 'serif',
     },
     formContainer: {
@@ -35,8 +33,6 @@ const styles = {
     button: {
       padding: '10px 20px',
       fontSize: '16px',
-      backgroundColor: '#333',
-      color: '#fff',
       border: 'none',
       borderRadius: '4px',
       cursor: 'pointer' as const,
@@ -45,7 +41,10 @@ const styles = {
     accordion: {
         display: 'flex', 
         flexDirection: 'column', 
-        alignItems: 'center' 
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '80%',
+        margin: '10px',
     },
 
 };
