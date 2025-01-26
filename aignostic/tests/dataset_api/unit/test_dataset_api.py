@@ -1,11 +1,11 @@
 from fastapi.testclient import TestClient
 from typing import List
-# import pytest
+import pytest
 from mock_server import app as client_mock  # type: ignore
 from aignostic.dataset.validate_dataset_api import app as datasetapi_mock
 # from tests.dataset_api.constants import expected_ACS_column_names
 # import uvicorn
-# from threading import Thread
+from threading import Thread
 
 server_mock = TestClient(datasetapi_mock)
 client_mock = TestClient(client_mock)

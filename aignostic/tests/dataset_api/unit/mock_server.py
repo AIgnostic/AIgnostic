@@ -1,15 +1,16 @@
 
 from folktables import ACSDataSource, ACSEmployment
-from fastapi import FastAPI, Body, Depends, HTTPException
+from fastapi import FastAPI, Body, Depends
 from fastapi.responses import JSONResponse
-from fastapi.security import APIKeyHeader
 import pandas as pd
 import numpy as np
 from aignostic.pydantic_models.data_models import df_to_JSON
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from utils import get_dataset_api_key
+
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 app = FastAPI()
 
 data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
