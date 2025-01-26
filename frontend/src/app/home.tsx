@@ -26,7 +26,7 @@ const steps = [
   {
     label: 'Select Metrics',
     description: `Select the metrics you want to analyze your model with. 
-       These will be used to quantify your compliance score with your selected metrics.`,
+      These will be used to quantify your compliance score with your selected metrics.`,
   },
   {
     label: 'Summary and Generate Report',
@@ -181,7 +181,7 @@ function Homepage() {
                         ? 'Invalid URL format - please enter a valid URL'
                         : ''
                     }
-                 
+                
                   />
                   <TextField
                     type="text"
@@ -320,7 +320,7 @@ function Homepage() {
                   disabled={index === 0}
                   onClick={handleBack}
                   style={styles.button}
-                  sx={{ mt: 1, mr: 1, background: theme.palette.background.paper, color: "#333" }}
+                  sx={[{ mt: 1, mr: 1}, styles.secondaryButton]}
                 >
                   Back
                 </Button>

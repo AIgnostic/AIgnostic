@@ -2,48 +2,48 @@ import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
     palette: {
-      primary: {
+    primary: {
         main: '#29438a',
-      },
-      secondary: {
-        main: '#56a3a6',
-      },
-      error: {
+    },
+    secondary: {
+        main: '#efe6dd',
+    },
+    error: {
         main: '#d32f2f',
-      },
-      warning: {
+    },
+    warning: {
         main: '#ffa000',
-      },
-      info: {
+    },
+    info: {
         main: '#0288d1',
-      },
-      success: {
+    },
+    success: {
         main: '#388e3c',
-      },
-      background: {
+    },
+    background: {
         default: '#efe6dd',
         paper: '#efe6dd',
-      },
-      text: {
+    },
+    text: {
         primary: '#333',
         secondary: '#000',
-      },
+    },
     },
     typography: {
-      fontFamily: 'Roboto, Arial, sans-serif', // Set global font family
-      h1: {
+    fontFamily: 'Roboto, Arial, sans-serif', // Set global font family
+    h1: {
         fontSize: '2rem',
         color: '#333', // Customize color for h1
-      },
-      h2: {
+    },
+    h2: {
         fontSize: '1.5rem',
         color: '#333', // Customize color for h2
-      },
-      body1: {
+    },
+    body1: {
         fontSize: '1rem',
         color: '#333', // Customize color for body1
-      },
     },
-  });
+    },
+});
 
 export default theme;

@@ -1,5 +1,8 @@
 # How do I create a Model API for the model I wish to evaluate?
 
+The Model API takes in `{features : List[List], labels: List[List], groups: List}`
+and should return a List of labels 
+
 ```python
 @app.post("/predict")
 def predict(dataset: DataSet) -> DataSet:
