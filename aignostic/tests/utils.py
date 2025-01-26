@@ -5,6 +5,7 @@ api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 MOCK_MODEL_API_KEY = "scikit-mock-test-key"
 MOCK_DATASET_API_KEY = "dataset-api-key"
 
+
 def extract_api_key(api_key: str):
     print(api_key)
     if api_key is not None and api_key.startswith('Bearer '):
@@ -22,6 +23,7 @@ def get_model_api_key(api_key: str = Depends(api_key_header)):
     elif api_key == MOCK_MODEL_API_KEY:
         return api_key
     raise HTTPException(status_code=401, detail=f"Unauthorised Access: Invalid API Key - {api_key}")
+
 
 def get_dataset_api_key(api_key: str = Depends(api_key_header)):
     """

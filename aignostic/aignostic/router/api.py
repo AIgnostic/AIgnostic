@@ -29,7 +29,6 @@ async def generate_metrics_from_info(request: DatasetRequest):
     modelAPIKey = request.modelAPIKey
     metrics = request.metrics
 
-
     results = await process_data(datasetURL, modelURL, metrics, datasetAPIKey=datasetAPIKey, modelAPIKey=modelAPIKey)
     print("Got results")
 
@@ -64,7 +63,7 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     feature, true_label = [rows[0][:-1]], [rows[0][-1]]
     prediction = await query_model(
         modelURL,
-        {   
+        {
             "column_names": data["column_names"][:-1],
             "rows": feature
         },
@@ -72,7 +71,6 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     )
     predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
     metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
-    
     return metrics_results
 
 
