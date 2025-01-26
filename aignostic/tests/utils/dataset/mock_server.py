@@ -1,41 +1,24 @@
 
 from folktables import ACSDataSource, ACSEmployment
-from fastapi import FastAPI, Body, Depends, HTTPException
+from fastapi import FastAPI, Body, Depends
 from fastapi.responses import JSONResponse
-from fastapi.security import APIKeyHeader
+from tests.utils.api_utils import get_dataset_api_key
+from aignostic.pydantic_models.data_models import df_to_JSON
 import pandas as pd
 import numpy as np
-from aignostic.pydantic_models.data_models import df_to_JSON
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 app = FastAPI()
 
-MOCK_API_KEY = "dataset-api-key"
-api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
 
 acs_data = data_source.get_data(states=["AL"], download=True)
 features, label, group = ACSEmployment.df_to_pandas(acs_data)
 
 
-def extract_api_key(api_key: str):
-    if api_key.startswith('Bearer '):
-        return api_key.split(' ')[1]
-    return None
-
-
-def get_api_key(api_key: str = Depends(api_key_header)):
-    """
-    Check if the API key is valid
-    """
-    api_key = extract_api_key(api_key)
-    if not api_key:
-        raise HTTPException(status_code=403, detail="Forbidden Request: API Key not in expected format")
-    elif api_key == MOCK_API_KEY:
-        return api_key
-    raise HTTPException(status_code=401, detail=f"Unauthorised Access: Invalid API Key - {api_key}")
-
-
-@app.get('/fetch-datapoints', dependencies=[Depends(get_api_key)])
+@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)])
 async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     """
     Given a list of indices, fetch the data at each index and convert into
@@ -48,7 +31,6 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
         JSONResponse: A JSON response containing the random datapoints.
     """
     try:
-        print("retriving data")
         acs_datapoints = pd.concat([features.iloc[indices], label.iloc[indices]], axis=1)
         acs_datapoints = acs_datapoints.replace({
             pd.NA: None,
@@ -56,10 +38,8 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
             float('inf'): None,
             float('-inf'): None
         })
-
         return JSONResponse(content=df_to_JSON(acs_datapoints), status_code=200)
     except Exception as e:
-        print(e)
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
@@ -74,8 +54,7 @@ async def get_invalid_data():
             "column_names": "This is not a list as expected",
             "rows": []
         },
-        status_code=200
-    )
+        status_code=200)
 
 
 if __name__ == "__main__":

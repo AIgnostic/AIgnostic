@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from tests.utils.model.scikit_mock import app as scikit_app
-from tests.utils.model.scikit_mock import MOCK_API_KEY as scikit_model_key
+from tests.utils.api_utils import MOCK_MODEL_API_KEY
 from tests.utils.model.mock import app as mock_app
 import pandas as pd
 from folktables import ACSDataSource, ACSEmployment
@@ -47,13 +47,14 @@ def test_valid_data_scikit_folktables():
     features, _, _ = ACSEmployment.df_to_numpy(acs_data)
 
     # Test the response is not empty given a non-empty input
+    print(MOCK_MODEL_API_KEY)
     response = client_scikit.post(
         "/predict",
         json={
             "column_names": acs_data.columns.tolist(),
             "rows": features.tolist()
         },
-        headers={"Authorization": f"Bearer {scikit_model_key}"}
+        headers={"Authorization": f"Bearer {MOCK_MODEL_API_KEY}"}
     )
     assert response.status_code == 200, response.text
 

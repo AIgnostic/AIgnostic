@@ -27,7 +27,9 @@ async def generate_metrics_from_info(request: DatasetRequest):
     datasetAPIKey = request.data_api_key
     modelAPIKey = request.model_api_key
     metrics = request.metrics
-    results = await process_data(datasetURL, modelURL, metrics, datasetAPIKey=datasetAPIKey, modelAPIKey=modelAPIKey)
+
+    results = await process_data(datasetURL, modelURL, metrics, datasetAPIKey, modelAPIKey)
+
     return {"message": "Data successfully received", "results": results}
 
 
@@ -36,8 +38,7 @@ def info():
     return {"message": "Pushed at 21/01/2025 07:32"}
 
 
-async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str],
-                       datasetAPIKey=None, modelAPIKey=None):
+async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str], datasetAPIKey, modelAPIKey):
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Passes to data endpoint and fetch data
@@ -46,33 +47,31 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
 
     Params:
     - datasetURL : API URL of the dataset
-    - modelURL : API URL of the dataset
+    - modelURL : API URL of the model
     - metrics: list of metrics that should be applied
     """
     # fetch data from datasetURL
-    data: dict = await fetch_data(datasetURL, datasetAPIKey=datasetAPIKey)
-    print(data)
+    data: dict = await fetch_data(datasetURL, datasetAPIKey)
 
     print("Fetched Data")
     # strip the label from the datapoint
-    try:
-        rows = data["rows"]
-        feature, true_label = [rows[0][:-1]], [rows[0][-1]]
-        prediction = await query_model(modelURL, {
+    rows = data["rows"]
+    feature, true_label = [rows[0][:-1]], [rows[0][-1]]
+    prediction = await query_model(
+        modelURL,
+        {
             "column_names": data["column_names"][:-1],
-            "rows": feature},
-            modelAPIKey=modelAPIKey
-        )
-        predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
-        metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
-    except Exception as e:
-        print(f"Error while processing data: {e}")
-        raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
+            "rows": feature
+        },
+        modelAPIKey
+    )
+    predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
+    metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
 
     return metrics_results
 
 
-async def fetch_data(dataURL: HttpUrl, datasetAPIKey=None) -> dict:
+async def fetch_data(dataURL: HttpUrl, datasetAPIKey) -> dict:
     """
     Helper function to fetch data from the dataset API
 
@@ -81,7 +80,10 @@ async def fetch_data(dataURL: HttpUrl, datasetAPIKey=None) -> dict:
     """
     try:
         # Send a GET request to the dataset API
-        response = requests.get(dataURL, headers={"Authorization": f"Bearer {datasetAPIKey}"})
+        if datasetAPIKey is None:
+            response = requests.get(dataURL)
+        else:
+            response = requests.get(dataURL, headers={"Authorization": f"Bearer {datasetAPIKey}"})
 
         # Check if the request was successful
         response.raise_for_status()
@@ -92,22 +94,14 @@ async def fetch_data(dataURL: HttpUrl, datasetAPIKey=None) -> dict:
         # Return the data
         return data
     except requests.exceptions.RequestException as e:
-        print(response.headers)
-        print(response.text)
-        print(response.url)
-        print(response._content)
         if response.status_code == 401:
             raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
         raise HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
     except Exception as e:
-        print(response.headers)
-        print(response.text)
-        print(response.url)
-        print(response._content)
-        HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
+        raise HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
 
 
-async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey=None):
+async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
     """
     Helper function to query the model API
 
@@ -119,7 +113,10 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey=None):
     try:
         # Send a POST request to the dataset API
         # TODO: Verify whether this should be get or post request
-        response = requests.post(url=modelURL, json=data, headers={"Authorization": f"Bearer {modelAPIKey}"})
+        if modelAPIKey is None:
+            response = requests.post(url=modelURL, json=data)
+        else:
+            response = requests.post(url=modelURL, json=data, headers={"Authorization": f"Bearer {modelAPIKey}"})
 
         # Check if the request was successful
         response.raise_for_status()
@@ -129,11 +126,13 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey=None):
 
         # Return the data
         return data
-    except Exception as e:
+
+    except requests.exceptions.RequestException as e:
         if response.status_code == 401:
             raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
-        print(f"Error while querying model: {e}")
-        HTTPException(status_code=500, detail=f"Error while querying model: {e}")
+        raise HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error while querying model: {e}")
 
 
 app = FastAPI()

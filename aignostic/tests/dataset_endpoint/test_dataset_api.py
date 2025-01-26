@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from threading import Thread
 from typing import List
 from tests.utils.dataset.mock_server import app as client_mock
-from tests.utils.dataset.mock_server import MOCK_API_KEY as dataset_api_key
+from tests.utils.api_utils import MOCK_DATASET_API_KEY
 from aignostic.dataset.validate_dataset_api import app as server_mock
 from tests.utils.constants import expected_ACS_column_names
 
@@ -17,7 +17,8 @@ invalid_url = local_server + "/invalid-url"
 
 # Client tests
 def test_client_returns_data():
-    response = client_mock.get("/fetch-datapoints", headers={f"Authorization": f"Bearer {dataset_api_key}"})
+    print(MOCK_DATASET_API_KEY)
+    response = client_mock.get("/fetch-datapoints", headers={f"Authorization": f"Bearer {MOCK_DATASET_API_KEY}"})
     assert response.status_code == 200
     assert response.json() != {}
 
