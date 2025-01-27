@@ -33,6 +33,8 @@ async def generate_metrics_from_info(request: DatasetRequest):
     return {"message": "Data successfully received", "results": results}
 
 
+# Sanity check endpoint
+# This for checking time of last deployment
 @api.get("/")
 def info():
     return {"message": "Pushed at 21/01/2025 07:32"}
@@ -53,7 +55,6 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     # fetch data from datasetURL
     data: dict = await fetch_data(datasetURL, datasetAPIKey)
 
-    print("Fetched Data")
     # strip the label from the datapoint
     rows = data["rows"]
     feature, true_label = [rows[0][:-1]], [rows[0][-1]]
