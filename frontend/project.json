@@ -10,6 +10,21 @@
       "options": {
         "base": "/AIgnostic/"
       }
+    },
+    "test": {
+      "options": {
+        "codeCoverage": true,
+        "config": "jest.config.ts",
+        "coverage": true
+      },
+      "outputs": [
+        "{workspaceRoot}/coverage/frontend",
+        "{workspaceRoot}/reports/frontend"
+      ],
+      "inputs": [
+        "{projectRoot}/src/**/*.*(ts|tsx)",
+        "{projectRoot}/jest.config.ts"
+      ]
     }
   }
 }
