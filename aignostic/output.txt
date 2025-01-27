@@ -1,1 +1,0 @@
-{"predictions":[[{"label":"POSITIVE","score":0.9970186948776245}]]}

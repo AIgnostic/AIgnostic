@@ -12,10 +12,3 @@ def predict(input: ModelInput) -> ModelResponse:
     NOTE: this is a mock implementation and is left blank on purpose
     """
     return ModelResponse(predictions=input.labels)
-
-
-"""
-TODO: (Low Priority) Extend to batch querying
-or single datapoint querying for convenience
-(e.g. if dataset is very large)
-"""

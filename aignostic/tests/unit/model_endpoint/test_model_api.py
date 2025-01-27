@@ -81,8 +81,6 @@ def test_valid_data_huggingface():
         "features": [["Hello World"]],
         "labels": [["Positive"]],
         "group_ids": []})
-    with open('output.txt', 'w') as f:
-        f.write(response.text)
     assert response.status_code == 200
 
 
