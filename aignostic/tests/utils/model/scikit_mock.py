@@ -1,16 +1,18 @@
-from fastapi import FastAPI
-import numpy as np
-from sklearn.pipeline import Pipeline
-import pickle
+from fastapi import FastAPI, Depends
 from aignostic.pydantic_models.data_models import DataSet
+from sklearn.pipeline import Pipeline
+from tests.utils.api_utils import get_model_api_key
+import numpy as np
+import pickle
+import sys
 import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+
 app = FastAPI()
-
-
 model: Pipeline = pickle.load(open(os.path.join(os.path.dirname(__file__), '../../../scikit_model.sav'), 'rb'))
 
 
-@app.post("/predict")
+@app.post("/predict", dependencies=[Depends(get_model_api_key)])
 def predict(dataset: DataSet) -> DataSet:
     """
     Given a dataset, predict the expected outputs for the model

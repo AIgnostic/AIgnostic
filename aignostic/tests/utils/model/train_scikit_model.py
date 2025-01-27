@@ -1,9 +1,9 @@
-from folktables import ACSDataSource, ACSEmployment
+from folktables import ACSDataSource, ACSEmployment  # type: ignore
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline, Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression  # type: ignore
+from sklearn.model_selection import train_test_split  # type: ignore
+from sklearn.pipeline import make_pipeline, Pipeline  # type: ignore
+from sklearn.preprocessing import StandardScaler  # type: ignore
 import pickle
 
 """
