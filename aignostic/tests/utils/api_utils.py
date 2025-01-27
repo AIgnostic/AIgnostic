@@ -2,12 +2,12 @@ from fastapi import Depends, HTTPException
 from fastapi.security import APIKeyHeader
 
 api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
+
 MOCK_MODEL_API_KEY = "scikit-mock-test-key"
 MOCK_DATASET_API_KEY = "dataset-api-key"
 
 
 def extract_api_key(api_key: str):
-    print(api_key)
     if api_key is not None and api_key.startswith('Bearer '):
         return api_key.split(' ')[1]
     return None

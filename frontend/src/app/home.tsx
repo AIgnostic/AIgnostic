@@ -81,10 +81,10 @@ function Homepage() {
   const handleSubmit = () => {
     if (state.modelURL && state.datasetURL) {
       const user_info = {
-        "modelURL": state.modelURL,
-        "datasetURL": state.datasetURL,
-        "modelAPIKey": state.modelAPIKey,
-        "datasetAPIKey": state.datasetAPIKey,
+        "model_url": state.modelURL,
+        "data_url": state.datasetURL,
+        "model_api_key": state.modelAPIKey,
+        "data_api_key": state.datasetAPIKey,
         "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
           .map((metricChip: { label: string; selected: boolean }) => (metricChip.label).toLowerCase())
       };
@@ -108,8 +108,8 @@ function Homepage() {
           // Create the text content for the file
           const textContent = "AIgnostic Report" + "\n" +
             "===================" + "\n" +
-            `Model API URL: ${user_info.modelURL}` + "\n" +
-            `Dataset API URL: ${user_info.datasetURL}` + "\n" + "\n" +
+            `Model API URL: ${user_info.model_url}` + "\n" +
+            `Dataset API URL: ${user_info.data_url}` + "\n" + "\n" +
 
             "Metrics Results:" + "\n" +
             Object.entries(results).map(([metric, value]) => {

@@ -1,6 +1,5 @@
 from pydantic import BaseModel, HttpUrl
-from fastapi import APIRouter
-from fastapi.exceptions import HTTPException
+from fastapi import APIRouter, HTTPException
 import requests
 import aignostic.metrics.metrics as metrics_lib
 
@@ -9,10 +8,10 @@ api = APIRouter()
 
 
 class DatasetRequest(BaseModel):
-    datasetURL: HttpUrl
-    modelURL: HttpUrl
-    modelAPIKey: str
-    datasetAPIKey: str
+    data_url: HttpUrl
+    model_url: HttpUrl
+    model_api_key: str
+    data_api_key: str
     metrics: list[str]
 
 
@@ -23,14 +22,13 @@ async def generate_metrics_from_info(request: DatasetRequest):
     This function validates, processes, and forwards the data to the controller.
     """
     # Extract data from the validated request
-    datasetURL = request.datasetURL
-    modelURL = request.modelURL
-    datasetAPIKey = request.datasetAPIKey
-    modelAPIKey = request.modelAPIKey
+    data_url = request.data_url
+    model_url = request.model_url
+    data_api_key = request.data_api_key
+    model_api_key = request.model_api_key
     metrics = request.metrics
 
-    results = await process_data(datasetURL, modelURL, metrics, datasetAPIKey=datasetAPIKey, modelAPIKey=modelAPIKey)
-    print("Got results")
+    results = await process_data(data_url, model_url, metrics, data_api_key, model_api_key)
 
     return {"message": "Data successfully received", "results": results}
 
@@ -56,7 +54,6 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     """
     # fetch data from datasetURL
     data: dict = await fetch_data(datasetURL, datasetAPIKey)
-    print(data)
 
     # strip the label from the datapoint
     rows = data["rows"]
@@ -129,6 +126,7 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
 
         # Return the data
         return data
+
     except requests.exceptions.RequestException as e:
         if response.status_code == 401:
             raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")

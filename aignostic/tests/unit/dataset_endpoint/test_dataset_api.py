@@ -1,13 +1,10 @@
 from fastapi.testclient import TestClient
 from typing import List
-import pytest
-from mock_server import app as client_mock  # type: ignore
-from aignostic.dataset.validate_dataset_api import app as datasetapi_mock
-# from tests.dataset_api.constants import expected_ACS_column_names
-# import uvicorn
-from threading import Thread
+from tests.utils.dataset.mock_server import app as client_mock
+from tests.utils.api_utils import MOCK_DATASET_API_KEY
+from aignostic.dataset.validate_dataset_api import app as server_mock
 
-server_mock = TestClient(datasetapi_mock)
+server_mock = TestClient(server_mock)
 client_mock = TestClient(client_mock)
 
 local_server = "http://127.0.0.1:5000"
@@ -18,7 +15,8 @@ invalid_url = local_server + "/invalid-url"
 
 # Client tests
 def test_client_returns_data():
-    response = client_mock.get("/fetch-datapoints")
+    print(MOCK_DATASET_API_KEY)
+    response = client_mock.get("/fetch-datapoints", headers={"Authorization": f"Bearer {MOCK_DATASET_API_KEY}"})
     assert response.status_code == 200
     assert response.json() != {}
 
@@ -29,22 +27,22 @@ def test_client_returns_invalid_data_correctly():
     assert not isinstance(response.json()["column_names"], List)
 
 
-# Server tests
-@pytest.fixture(scope="module")
-def start_mock_server():
-    import uvicorn
-    config = uvicorn.Config(app=client_mock, host="127.0.0.1", port=5000)
-    server = uvicorn.Server(config)
+# # Server tests
+# @pytest.fixture(scope="module")
+# def start_mock_server():
+#     import uvicorn
+#     config = uvicorn.Config(app=client_mock, host="127.0.0.1", port=5000)
+#     server = uvicorn.Server(config)
 
-    def run_mock_server():
-        nonlocal server
-        server.run()
+#     def run_mock_server():
+#         nonlocal server
+#         server.run()
 
-    thread = Thread(target=run_mock_server)
-    thread.start()
-    yield
-    server.should_exit = True
-    thread.join()
+#     thread = Thread(target=run_mock_server)
+#     thread.start()
+#     yield
+#     server.should_exit = True
+#     thread.join()
 
 
 # def test_server_validates_client_dataset_correctly_given_valid_url(start_mock_server):

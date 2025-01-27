@@ -1,13 +1,11 @@
-from fastapi import FastAPI, Depends  # , HTTPException
-# from fastapi.security import APIKeyHeader
-import numpy as np
-from sklearn.pipeline import Pipeline
-import pickle
+from fastapi import FastAPI, Depends
 from aignostic.pydantic_models.data_models import DataSet
+from sklearn.pipeline import Pipeline
+from tests.utils.api_utils import get_model_api_key
+import numpy as np
+import pickle
 import sys
 import os
-from utils import get_model_api_key
-
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 app = FastAPI()
