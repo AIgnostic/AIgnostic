@@ -7,6 +7,8 @@ exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 addopts = "--cov --cov-report html:'../coverage/aignostic/html' --cov-report xml:'../coverage/aignostic/coverage.xml' --html='../reports/aignostic/unittests/html/index.html' --junitxml='../reports/aignostic/unittests/junit.xml'"
 
 [tool.poetry]
@@ -29,6 +31,9 @@ fastapi = { extras = ["standard"], version = "^0.115.6" }
 pandas = "^2.2.3"
 types-requests = "^2.32.0.20241016"
 pandas-stubs = "^2.2.3.241126"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.2"
+update = "^0.0.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.3.1"
