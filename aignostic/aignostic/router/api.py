@@ -68,7 +68,6 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     )
     predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
     metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
-
     return metrics_results
 
 
