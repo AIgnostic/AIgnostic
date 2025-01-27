@@ -1,10 +1,12 @@
 from fastapi.testclient import TestClient
-from tests.model_api.model.scikit_mock import app as scikit_app
-from tests.model_api.model.mock import app as mock_app
+from tests.utils.model.scikit_mock import app as scikit_app
+from tests.utils.api_utils import MOCK_MODEL_API_KEY
+from tests.utils.model.mock import app as mock_app
 import pandas as pd
 from folktables import ACSDataSource, ACSEmployment
 import pickle
-from tests.model_api.model.huggingface_binclassifier import app as huggingface_app
+from tests.utils.model.huggingface_binclassifier import app as huggingface_app
+import pytest
 
 
 huggingface_mock = TestClient(huggingface_app)
@@ -31,12 +33,17 @@ def test_mock_returns_empty():
 def test_empty_data_scikit():
     # post empty pandas dataframe
     response = scikit_mock.post("/predict", json={
-        "features": [[]],  # Empty list for no columns
-        "labels": [[]],  # Empty list for no rows
+        "features": [],  # Empty list for no columns
+        "labels": [],  # Empty list for no rows
         "group_ids": []  # Empty list for no group IDs
-    })
+    }, headers={"Authorization": f"Bearer {MOCK_MODEL_API_KEY}"})
     assert response.status_code == 200, response.text
-    assert response.json() == {"predictions": [[]]}, "Empty values not returned given empty input"
+    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
+
+
+@pytest.mark.skip(reason="Test to be implemented")
+def test_singleton_data_scikit():
+    pass
 
 
 def test_valid_data_scikit_folktables():
@@ -54,7 +61,8 @@ def test_valid_data_scikit_folktables():
             "features": features.tolist(),
             "labels": [labels.tolist()],
             "group_ids": groups.tolist()
-        }
+        },
+        headers={"Authorization": f"Bearer {MOCK_MODEL_API_KEY}"}
     )
     assert response.status_code == 200, response.text
 
@@ -69,7 +77,10 @@ def test_valid_data_scikit_folktables():
 
 def test_valid_data_huggingface():
     # post a valid text
-    response = huggingface_mock.post("/predict", json={"features": [["Hello World"]], "labels": [["Positive"]], "group_ids": []})
+    response = huggingface_mock.post("/predict", json={
+        "features": [["Hello World"]],
+        "labels": [["Positive"]],
+        "group_ids": []})
     with open('output.txt', 'w') as f:
         f.write(response.text)
     assert response.status_code == 200
@@ -91,7 +102,7 @@ def test_multiple_inputs():
     """
     input = {"features": [["Hello world"], ["Hello world"], ["Pizza is unhealthy"]],
              "labels": [["Positive"], ["Positive"], ["Positive"]],
-             "group_ids":[1, 2, 3]
+             "group_ids": [1, 2, 3]
              }
     response = huggingface_mock.post("/predict", json=input)
     assert response.status_code == 200, response.text

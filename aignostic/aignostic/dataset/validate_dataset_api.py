@@ -25,8 +25,7 @@ def fetch_data(url: str) -> dict:
 
 def parse_dataset(data: dict) -> ModelInput:
     try:
-        dataset = ModelInput(column_names=data.get("column_names", []),
-                          rows=data.get("rows", []))
+        dataset = ModelInput(column_names=data.get("column_names", []), rows=data.get("rows", []))
     except Exception as e:
         raise ValueError(f"Unable to parse data into DataFrame: {str(e)}")
 

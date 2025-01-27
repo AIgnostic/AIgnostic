@@ -1,6 +1,6 @@
 import aignostic.pydantic_models.data_models as data_models
 import numpy as np
-from tests.model_api.model.mock import app as mock_app
+from tests.utils.model.mock import app as mock_app
 from fastapi.testclient import TestClient
 import pandas as pd
 import pytest
@@ -8,7 +8,7 @@ import pytest
 mock_client: TestClient = TestClient(mock_app)
 
 
-@pytest.mark.skip(reason="No longer supported/required functionality")
+@pytest.mark.skip(reason="Functionality no longer required/supported - test pending deletion review")
 def test_conversion_from_numpy():
     """
     Test conversion from numpy array to pydantic model
@@ -20,7 +20,7 @@ def test_conversion_from_numpy():
     assert response.status_code == 200, response.text
 
 
-@pytest.mark.skip(reason="No longer supported/required functionality")
+@pytest.mark.skip(reason="Functionality no longer required/supported - test pending deletion review")
 def test_conversion_from_pandas():
     """
     Test conversion from pandas dataframe to pydantic model
@@ -32,7 +32,7 @@ def test_conversion_from_pandas():
     assert response.status_code == 200, response.text
 
 
-@pytest.mark.skip(reason="No longer supported/required functionality")
+@pytest.mark.skip(reason="Functionality no longer required/supported - test pending deletion review")
 def test_conversion_from_csv():
     """
     Test conversion from csv to pydantic model

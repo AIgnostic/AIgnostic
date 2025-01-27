@@ -1,7 +1,5 @@
 from pydantic import BaseModel
 from typing import List
-import numpy as np
-import pandas as pd
 
 
 # TODO: Implement in validate_dataset_api.py endpoint
@@ -28,7 +26,6 @@ class ModelInput(BaseModel):
     labels: List[List]
     group_ids: List[int]
 
-    
 
 class ModelResponse(BaseModel):
     """
