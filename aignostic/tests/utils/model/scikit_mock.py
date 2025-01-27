@@ -30,4 +30,4 @@ TODO: (Low Priority) Extend to batch querying / single datapoint querying for co
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host='127.0.0.1', port=5001)
+    uvicorn.run(app, host="127.0.0.1", port=5001)

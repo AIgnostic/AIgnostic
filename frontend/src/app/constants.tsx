@@ -1,3 +1,5 @@
+const AIGNOSTIC = "AIgnostic";
+const HOME = "/AIgnostic";
 
 const steps = [
     {
@@ -24,4 +26,4 @@ const steps = [
   const metrics = ['Accuracy', 'Precision', 'Recall'];
   const BACKEND_URL = 'http://localhost:8000/evaluate';
 
-  export { steps, metrics, BACKEND_URL };
+  export { steps, metrics, BACKEND_URL, AIGNOSTIC, HOME };

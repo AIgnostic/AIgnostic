@@ -1,14 +1,25 @@
 {
   "compilerOptions": {
-    "jsx": "react-jsx",
     "allowJs": false,
-    "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
+    "types": [
+      "vite/client"
+    ],
+    "module": "ESNext",
+    "target": "ESNext", 
+    "moduleResolution": "node",
     "strict": true,
-    "types": ["vite/client"]
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "composite": true,
+    "declaration": true,
   },
   "files": [],
-  "include": [],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "custom.d.ts"
+  ],
   "references": [
     {
       "path": "./tsconfig.app.json"
