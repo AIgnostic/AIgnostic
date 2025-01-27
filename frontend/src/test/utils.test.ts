@@ -31,6 +31,7 @@ describe('checkURL function', () => {
       'http://example#.com', // Invalid character in domain
       'ftp://.example.com', // Domain starts with a dot
       'http://%20example.com', // Invalid percent-encoded space
+      '', // Empty string
     ];
 
     invalidUrls.forEach((url) => {
