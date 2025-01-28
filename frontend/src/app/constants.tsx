@@ -8,6 +8,10 @@ const steps = [
                     For more information about creating the APIs, see the documentation - click 'Getting Started'.`,
     },
     {
+      label: 'Select Model Type',
+      description: `Select the type of model you are using.`,
+    },
+    {
       label: 'Select Legislation',
       description: `Select the legislations that you want to comply with.`,
     },
@@ -21,9 +25,13 @@ const steps = [
       description: `Check that you are happy with your selections and generate your compliance report.
                     Report generation may take some time.`,
     },
+
   ];
+  
   
   const metrics = ['Accuracy', 'Precision', 'Recall'];
   const BACKEND_URL = 'http://localhost:8000/evaluate';
 
-  export { steps, metrics, BACKEND_URL, AIGNOSTIC, HOME };
+  const modelTypes = ['Classification', 'Regression'];
+
+  export { steps, metrics, BACKEND_URL, AIGNOSTIC, HOME, modelTypes};
