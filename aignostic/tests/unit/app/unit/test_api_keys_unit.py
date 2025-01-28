@@ -3,7 +3,6 @@ from tests.utils.dataset.mock_server import app as data_app
 from tests.utils.model.scikit_mock import app as sk_model_app
 from tests.utils.model.huggingface_binclassifier import app as hf_model_app
 from tests.utils.api_utils import MOCK_DATASET_API_KEY, MOCK_MODEL_API_KEY
-import pytest
 
 data_client = TestClient(data_app)
 sk_model_client = TestClient(sk_model_app)
