@@ -2,7 +2,7 @@ from threading import Thread
 import pytest
 from aignostic.router.api import api
 from tests.utils.dataset.mock_server import app as data_app
-from tests.utils.model.scikit_mock import app as model_app
+from tests.utils.model.scikit_mock import app as sk_model_app
 from tests.utils.api_utils import MOCK_DATASET_API_KEY, MOCK_MODEL_API_KEY
 import uvicorn
 import time
@@ -19,7 +19,7 @@ metrics = ["accuracy", "precision", "recall"]
 @pytest.fixture(scope="module")
 def run_servers():
     data_config = uvicorn.Config(app=data_app, host="127.0.0.1", port=3333)
-    model_config = uvicorn.Config(app=model_app, host="127.0.0.1", port=3334)
+    model_config = uvicorn.Config(app=sk_model_app, host="127.0.0.1", port=3334)
     app_config = uvicorn.Config(app=app_client, host="127.0.0.1", port=3335)
     data_server = uvicorn.Server(data_config)
     model_server = uvicorn.Server(model_config)

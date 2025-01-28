@@ -27,24 +27,16 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
         JSONResponse: A JSON response containing the random datapoints.
     """
     try:
-        filtered_features = features.iloc[indices].replace({
+        filter_fn = lambda x: x.iloc[indices].replace({
             pd.NA: None,
             np.nan: None,
             float('inf'): None,
             float('-inf'): None
             })
-        filtered_labels = label.iloc[indices].replace({
-            pd.NA: None,
-            np.nan: None,
-            float('inf'): None,
-            float('-inf'): None
-            })
-        filtered_group_ids = group.iloc[indices].replace({
-            pd.NA: None,
-            np.nan: None,
-            float('inf'): None,
-            float('-inf'): None
-            })
+        
+        filtered_features = filter_fn(features)
+        filtered_labels = filter_fn(label)
+        filtered_group_ids = filter_fn(group)
 
         filtered_features = list(list(r) for r in filtered_features.values)
         filtered_labels = [[(bool(r) if isinstance(r, np.bool_) else r for r in row)] for row in filtered_labels.values]
