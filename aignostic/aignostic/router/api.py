@@ -60,15 +60,20 @@ async def process_data(dataset_url: HttpUrl, model_url: HttpUrl, metrics: list[s
         features = data["features"]
         labels = data["labels"]
         group_ids = data["group_ids"]
-        predictions = await query_model(
-            model_url,
-            {
-                "features": features,
-                "labels": labels,
-                "group_ids": group_ids
-            },
-            model_api_key
-        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
+    
+    predictions = await query_model(
+        model_url,
+        {
+            "features": features,
+            "labels": labels,
+            "group_ids": group_ids
+        },
+        model_api_key
+    )
+
+    try:
         predicted_labels = predictions["predictions"]
         metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, metrics)
     except Exception as e:
