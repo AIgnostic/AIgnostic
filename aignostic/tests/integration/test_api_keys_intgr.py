@@ -8,6 +8,7 @@ import uvicorn
 import time
 from fastapi.testclient import TestClient
 from fastapi import HTTPException
+from requests.exceptions import HTTPError
 
 app_client = TestClient(api)
 
