@@ -28,7 +28,7 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     """
     try:
         def filter_fn(x):
-            x.iloc[indices].replace({
+            return x.iloc[indices].replace({
                 pd.NA: None,
                 np.nan: None,
                 float('inf'): None,
