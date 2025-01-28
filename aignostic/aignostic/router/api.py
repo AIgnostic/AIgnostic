@@ -40,7 +40,7 @@ def info():
     return {"message": "Pushed at 21/01/2025 07:32"}
 
 
-async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str], datasetAPIKey, modelAPIKey):
+async def process_data(dataset_url: HttpUrl, model_url: HttpUrl, metrics: list[str], dataset_api_key, model_api_key):
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Passes to data endpoint and fetch data
@@ -53,7 +53,7 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     - metrics: list of metrics that should be applied
     """
     # fetch data from datasetURL
-    data: dict = await fetch_data(datasetURL, datasetAPIKey)
+    data: dict = await fetch_data(dataset_url, dataset_api_key)
 
     # strip the label from the datapoint
     try:
@@ -61,13 +61,13 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
         labels = data["labels"]
         group_ids = data["group_ids"]
         predictions = await query_model(
-            modelURL,
+            model_url,
             {
                 "features": features,
                 "labels": labels,
                 "group_ids": group_ids
             },
-            modelAPIKey
+            model_api_key
         )
         predicted_labels = predictions["predictions"]
         metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, metrics)
@@ -77,7 +77,7 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     return metrics_results
 
 
-async def fetch_data(dataURL: HttpUrl, datasetAPIKey) -> dict:
+async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
     """
     Helper function to fetch data from the dataset API
 
@@ -86,10 +86,10 @@ async def fetch_data(dataURL: HttpUrl, datasetAPIKey) -> dict:
     """
     try:
         # Send a GET request to the dataset API
-        if datasetAPIKey is None:
-            response = requests.get(dataURL)
+        if dataset_api_key is None:
+            response = requests.get(data_url)
         else:
-            response = requests.get(dataURL, headers={"Authorization": f"Bearer {datasetAPIKey}"})
+            response = requests.get(data_url, headers={"Authorization": f"Bearer {dataset_api_key}"})
 
         # Check if the request was successful
         response.raise_for_status()

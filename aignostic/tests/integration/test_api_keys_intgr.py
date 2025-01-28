@@ -63,11 +63,25 @@ def test_correct_apis_do_not_err(run_servers):
     assert response.status_code == 200, response
 
 
-@pytest.mark.skip(reason="Error Codes and Messages are yet to be implemented")
+@pytest.mark.skip(reason="Error handling to be implemented")
 def test_incorrect_dataset_api_throws_401():
-    pass
+    response = app_client.post("/evaluate", json={
+        "data_url": data_url,
+        "model_url": model_url,
+        "metrics": metrics,
+        "model_api_key": MOCK_MODEL_API_KEY,
+        "data_api_key": MOCK_DATASET_API_KEY + "1"
+    })
+    assert response.status_code == 401, response
 
 
-@pytest.mark.skip(reason="Error Codes and Messages are yet to be implemented")
+@pytest.mark.skip(reason="Error handling to be implemented")
 def test_incorrect_model_api_throws_401():
-    pass
+    response = app_client.post("/evaluate", json={
+        "data_url": data_url,
+        "model_url": model_url,
+        "metrics": metrics,
+        "model_api_key": MOCK_MODEL_API_KEY + "1",
+        "data_api_key": MOCK_DATASET_API_KEY
+    })
+    assert response.status_code == 401, response
