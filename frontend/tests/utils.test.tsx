@@ -1,4 +1,4 @@
-import checkURL from '../app/utils';
+import checkURL from '../src/app/utils';
 
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {

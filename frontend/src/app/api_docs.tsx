@@ -18,8 +18,12 @@ import { Box } from '@mui/material';
 import { AIGNOSTIC } from './constants';
 
 
-const APIDocs: React.FC = () => {
-  
+type MarkdownFiles = Record<string, string>;
+type APIDocsProps = {
+  getMarkdownFiles: () => MarkdownFiles; // Injectable function to load markdown files
+};
+
+const APIDocs: React.FC<APIDocsProps> = ({ getMarkdownFiles }) => {
   
   // Split the markdown into title (h1) and content
   const splitMarkdown = (markdown: unknown) => {
@@ -36,7 +40,8 @@ const APIDocs: React.FC = () => {
     return { title, body };
   };
   
-  const markdownFiles = import.meta.glob('./docs/*.md', { query: '?raw', import: 'default', eager: true });
+  // const markdownFiles = import.meta.glob('./docs/*.md', { query: '?raw', import: 'default', eager: true });
+  const markdownFiles = getMarkdownFiles();
   const mds = Object.values(markdownFiles).map(splitMarkdown);
 
   return (
