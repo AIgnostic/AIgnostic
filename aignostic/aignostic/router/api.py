@@ -98,7 +98,7 @@ async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
     try:
         # Raise errpr if the request was not successful
         response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
+    except requests.exceptions.HTTPError:
         raise HTTPException(status_code=response.status_code, detail=response.json()["detail"])
 
     try:
@@ -131,7 +131,7 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         raise HTTPException(detail=e.response.json()["detail"], status_code=e.response.status_code)
-    
+
     try:
         # Check if the request was successful
 
