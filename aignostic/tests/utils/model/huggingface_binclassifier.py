@@ -17,8 +17,8 @@ def predict(input: ModelInput) -> ModelResponse:
             if len(text) != 1:
                 raise HTTPException(status_code=400, detail="Input text must be a single string")
             else:
-                results.append(pipe(text[0]))
                 assert isinstance(text, list), "Input text must be encapsulated in a list"
+                results.append(pipe(text[0])) # Get string from singleton list
         # Return the classification result
         return ModelResponse(predictions=results)
     except Exception as e:
