@@ -1,26 +1,33 @@
 from fastapi import FastAPI, Depends
-from aignostic.pydantic_models.data_models import DataSet
+import numpy as np
 from sklearn.pipeline import Pipeline
 from tests.utils.api_utils import get_model_api_key
-import numpy as np
 import pickle
-import sys
+from aignostic.pydantic_models.data_models import ModelInput, ModelResponse
 import os
+from fastapi import HTTPException
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 app = FastAPI()
 model: Pipeline = pickle.load(open(os.path.join(os.path.dirname(__file__), '../../../scikit_model.sav'), 'rb'))
 
 
-@app.post("/predict", dependencies=[Depends(get_model_api_key)])
-def predict(dataset: DataSet) -> DataSet:
+@app.post("/predict", dependencies=[Depends(get_model_api_key)], response_model=ModelResponse)
+def predict(input: ModelInput) -> ModelResponse:
     """
     Given a dataset, predict the expected outputs for the model
     """
-    # Return identical dataframe for now - fill this in with actual test models when trained
-    out: np.ndarray = model.predict(dataset.rows)
-    rows: list[list] = out.tolist() if len(dataset.rows) > 1 else [out.tolist()]
-    return DataSet(column_names=dataset.column_names, rows=rows)
+    try:
+        print(input.features)
+        print(input.labels)
+        print(input.group_ids)
+        if not input.features or input.features == [[]]:
+            return ModelResponse(predictions=input.features)
+        output: np.ndarray = model.predict(input.features).reshape(-1, 1)
+        predictions: list[list] = output.tolist()
+        print(predictions)
+    except Exception as e:
+        return HTTPException(detail=f"Error occured during model prediction: {e}", status_code=500)
+    return ModelResponse(predictions=predictions)
 
 
 """

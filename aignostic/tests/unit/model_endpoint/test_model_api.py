@@ -6,36 +6,44 @@ import pandas as pd
 from folktables import ACSDataSource, ACSEmployment
 import pickle
 from tests.utils.model.huggingface_binclassifier import app as huggingface_app
+import pytest
 
 
-client_huggingface = TestClient(huggingface_app)
-client_scikit = TestClient(scikit_app)
-client_mock = TestClient(mock_app)
+huggingface_mock = TestClient(huggingface_app)
+scikit_mock = TestClient(scikit_app)
+basic_mock = TestClient(mock_app)
 
 
 def test_non_existent_endpoint_throws_error():
-    response = client_scikit.get("/hello")
+    response = scikit_mock.get("/hello")
     assert response.status_code == 404, response.text
 
 
-def test_mock_api_returns_empty():
+def test_mock_returns_empty():
     # post empty pandas dataframe
-    response = client_mock.post("/predict", json={
-        "column_names": [],  # Empty list for no columns
-        "rows": [[]]  # Empty list for no rows
+    response = basic_mock.post("/predict", json={
+        "features": [],  # Empty list for no columns
+        "labels": [],  # Empty list for no rows
+        "group_ids": []  # Empty list for no group IDs
     })
     assert response.status_code == 200, response.text
-    assert response.json() == {"column_names": [], "rows": [[]]}, "Empty values not returned given empty input"
+    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
 
 
 def test_empty_data_scikit():
     # post empty pandas dataframe
-    response = client_mock.post("/predict", json={
-        "column_names": [],  # Empty list for no columns
-        "rows": [[]]  # Empty list for no rows
-    })
+    response = scikit_mock.post("/predict", json={
+        "features": [],  # Empty list for no columns
+        "labels": [],  # Empty list for no rows
+        "group_ids": []  # Empty list for no group IDs
+    }, headers={"Authorization": f"Bearer {MOCK_MODEL_API_KEY}"})
     assert response.status_code == 200, response.text
-    assert response.json() == {"column_names": [], "rows": [[]]}, "Empty values not returned given empty input"
+    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
+
+
+@pytest.mark.skip(reason="Test to be implemented")
+def test_singleton_data_scikit():
+    pass
 
 
 def test_valid_data_scikit_folktables():
@@ -44,15 +52,15 @@ def test_valid_data_scikit_folktables():
     acs_data: pd.DataFrame = data_source.get_data(states=[
         "AL"
     ], download=True)[0:1]
-    features, _, _ = ACSEmployment.df_to_numpy(acs_data)
+    features, labels, groups = ACSEmployment.df_to_numpy(acs_data)
 
     # Test the response is not empty given a non-empty input
-    print(MOCK_MODEL_API_KEY)
-    response = client_scikit.post(
+    response = scikit_mock.post(
         "/predict",
         json={
-            "column_names": acs_data.columns.tolist(),
-            "rows": features.tolist()
+            "features": features.tolist(),
+            "labels": [labels.tolist()],
+            "group_ids": groups.tolist()
         },
         headers={"Authorization": f"Bearer {MOCK_MODEL_API_KEY}"}
     )
@@ -63,16 +71,16 @@ def test_valid_data_scikit_folktables():
     y_hat = model.predict(features)
 
     assert response.json() == {
-        "column_names": acs_data.columns.tolist(),
-        "rows": [y_hat.tolist()]
+        "predictions": [y_hat.tolist()]
     }, "Model output does not match expected output"
 
 
-def test_valid_data_huggingface_empty():
+def test_valid_data_huggingface():
     # post a valid text
-    response = client_huggingface.post("/predict", json={"column_names": [], "rows": [["Hello world"]]})
-    with open('output.txt', 'w') as f:
-        f.write(response.text)
+    response = huggingface_mock.post("/predict", json={
+        "features": [["Hello World"]],
+        "labels": [["Positive"]],
+        "group_ids": []})
     assert response.status_code == 200
 
 
@@ -80,8 +88,8 @@ def test_invalid_inputs_fail():
     """
     Test that invalid inputs fail when /predict is called
     """
-    input = {"column_names": [], "rows": ["Hello world", "Hello world"]}
-    response = client_huggingface.post("/predict", json=input)
+    input = {"features": ["Hello world", "Hello world"], "labels": [["Positive", "Positive"]], "group_ids": []}
+    response = huggingface_mock.post("/predict", json=input)
     assert response.status_code == 422, response.text
 
 
@@ -90,9 +98,11 @@ def test_multiple_inputs():
     Test that multiple inputs are accepted and processed correctly by the pydantic model and
     the HuggingFace model API
     """
-    input = {"column_names": [], "rows": [["Hello world"], ["Hello world"], ["Pizza is unhealthy"]]}
-    response = client_huggingface.post("/predict", json=input)
+    input = {"features": [["Hello world"], ["Hello world"], ["Pizza is unhealthy"]],
+             "labels": [["Positive"], ["Positive"], ["Positive"]],
+             "group_ids": [1, 2, 3]
+             }
+    response = huggingface_mock.post("/predict", json=input)
     assert response.status_code == 200, response.text
     out = response.json()
-    assert len(out["column_names"]) == 1, "Multiple inputs not processed correctly"
-    assert len(out["rows"]) == 3, "Multiple inputs not processed correctly"
+    assert len(out["predictions"]) == 3, "Multiple inputs not processed correctly"

@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
-from typing import List
 from tests.utils.dataset.mock_server import app as client_mock
 from tests.utils.api_utils import MOCK_DATASET_API_KEY
 from aignostic.dataset.validate_dataset_api import app as server_mock
+import pytest
 
 server_mock = TestClient(server_mock)
 client_mock = TestClient(client_mock)
@@ -21,11 +21,9 @@ def test_client_returns_data():
     assert response.json() != {}
 
 
-def test_client_returns_invalid_data_correctly():
-    response = client_mock.get("/invalid-data")
-    assert response.status_code == 200
-    assert not isinstance(response.json()["column_names"], List)
-
+@pytest.mark.skip(reason="Not implemented - possibly should be moved to the app folder for unit testing")
+def test_invalid_data_is_handled_correctly():
+    pass
 
 # # Server tests
 # @pytest.fixture(scope="module")

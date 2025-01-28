@@ -56,18 +56,24 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     data: dict = await fetch_data(datasetURL, datasetAPIKey)
 
     # strip the label from the datapoint
-    rows = data["rows"]
-    feature, true_label = [rows[0][:-1]], [rows[0][-1]]
-    prediction = await query_model(
-        modelURL,
-        {
-            "column_names": data["column_names"][:-1],
-            "rows": feature
-        },
-        modelAPIKey
-    )
-    predicted_labels = [item for sublist in prediction["rows"] for item in sublist]
-    metrics_results = metrics_lib.calculate_metrics(true_label, predicted_labels, metrics)
+    try:
+        features = data["features"]
+        labels = data["labels"]
+        group_ids = data["group_ids"]
+        predictions = await query_model(
+            modelURL,
+            {
+                "features": features,
+                "labels": labels,
+                "group_ids": group_ids
+            },
+            modelAPIKey
+        )
+        predicted_labels = predictions["predictions"]
+        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, metrics)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
+
     return metrics_results
 
 

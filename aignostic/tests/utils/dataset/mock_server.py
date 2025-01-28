@@ -1,14 +1,10 @@
 
 from folktables import ACSDataSource, ACSEmployment
-from fastapi import FastAPI, Body, Depends
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Body, Depends, HTTPException
 from tests.utils.api_utils import get_dataset_api_key
-from aignostic.pydantic_models.data_models import df_to_JSON
+from aignostic.pydantic_models.data_models import ModelInput
 import pandas as pd
 import numpy as np
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 app: FastAPI = FastAPI()
 
@@ -18,7 +14,7 @@ acs_data = data_source.get_data(states=["AL"], download=True)
 features, label, group = ACSEmployment.df_to_pandas(acs_data)
 
 
-@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)])
+@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=ModelInput)
 async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     """
     Given a list of indices, fetch the data at each index and convert into
@@ -31,30 +27,36 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
         JSONResponse: A JSON response containing the random datapoints.
     """
     try:
-        acs_datapoints = pd.concat([features.iloc[indices], label.iloc[indices]], axis=1)
-        acs_datapoints = acs_datapoints.replace({
+        filtered_features = features.iloc[indices].replace({
             pd.NA: None,
             np.nan: None,
             float('inf'): None,
             float('-inf'): None
-        })
-        return JSONResponse(content=df_to_JSON(acs_datapoints), status_code=200)
+            })
+        filtered_labels = label.iloc[indices].replace({
+            pd.NA: None,
+            np.nan: None,
+            float('inf'): None,
+            float('-inf'): None
+            })
+        filtered_group_ids = group.iloc[indices].replace({
+            pd.NA: None,
+            np.nan: None,
+            float('inf'): None,
+            float('-inf'): None
+            })
+
+        filtered_features = list(list(r) for r in filtered_features.values)
+        filtered_labels = [[(bool(r) if isinstance(r, np.bool_) else r for r in row)] for row in filtered_labels.values]
+        filtered_group_ids = list(filtered_group_ids.values)
+
+        return ModelInput(
+            features=filtered_features,
+            labels=filtered_labels,
+            group_ids=filtered_group_ids
+        )
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
-
-@app.get('/invalid-data')
-async def get_invalid_data():
-    """
-    Returns an invalid JSON response, which cannot be parsed into our expected
-    Pydantic model.
-    """
-    return JSONResponse(
-        content={
-            "column_names": "This is not a list as expected",
-            "rows": []
-        },
-        status_code=200)
+        return HTTPException(detail=f"error: {e}", status_code=500)
 
 
 if __name__ == "__main__":

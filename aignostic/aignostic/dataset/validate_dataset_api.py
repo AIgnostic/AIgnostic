@@ -1,5 +1,5 @@
 from pydantic import ValidationError
-from aignostic.pydantic_models.data_models import DataSet
+from aignostic.pydantic_models.data_models import ModelInput
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 import requests
@@ -23,10 +23,9 @@ def fetch_data(url: str) -> dict:
         raise ValueError(f"Invalid JSON response: {str(e)}")
 
 
-def parse_dataset(data: dict) -> DataSet:
+def parse_dataset(data: dict) -> ModelInput:
     try:
-        dataset = DataSet(column_names=data.get("column_names", []),
-                          rows=data.get("rows", []))
+        dataset = ModelInput(column_names=data.get("column_names", []), rows=data.get("rows", []))
     except Exception as e:
         raise ValueError(f"Unable to parse data into DataFrame: {str(e)}")
 

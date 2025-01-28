@@ -48,8 +48,6 @@ def run_servers():
 
 
 def test_correct_apis_do_not_err(run_servers):
-    print(MOCK_MODEL_API_KEY)
-    print(MOCK_DATASET_API_KEY)
     response = app_client.post("/evaluate", json={
         "data_url": data_url,
         "model_url": model_url,
