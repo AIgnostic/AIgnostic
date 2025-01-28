@@ -237,10 +237,10 @@ Metrics Results:
 The Dataset API should expose a "/fetch-datapoints" GET endpoint.
 
 An important assumption that our metrics make is that the data obtained is independent and identically distributes (i.i.d.).
-Therefore please ensure that your dataset is as such, and that it returns a batch of such random samples.
+Therefore please ensure that your dataset is as such, and that it returns a batch of such random samples. The return type of fetch_datapoints is a \`ModelInput\` pydantic model. Since numpy types are not serialisable, you will need to convert them to a serialisable type. e.g. np.bool_ types are converted to python bools in the example below.
 
 \`\`\`python
-@app.get('/fetch-datapoints')
+@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=ModelInput)
 async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     """
     Given a list of indices, fetch the data at each index and convert into
@@ -253,19 +253,36 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
         JSONResponse: A JSON response containing the random datapoints.
     """
     try:
-
-        acs_datapoints = pd.concat([features.iloc[indices], label.iloc[indices]], axis=1)
-        acs_datapoints = acs_datapoints.replace({
+        filtered_features = features.iloc[indices].replace({
             pd.NA: None,
             np.nan: None,
             float('inf'): None,
             float('-inf'): None
-        })
+            })
+        filtered_labels = label.iloc[indices].replace({
+            pd.NA: None,
+            np.nan: None,
+            float('inf'): None,
+            float('-inf'): None
+            })
+        filtered_group_ids = group.iloc[indices].replace({
+            pd.NA: None,
+            np.nan: None,
+            float('inf'): None,
+            float('-inf'): None
+            })
 
-        return JSONResponse(content=df_to_JSON(acs_datapoints), status_code=200)
+        filtered_features = list(list(r) for r in filtered_features.values)
+        filtered_labels = [[(bool(r) if isinstance(r, np.bool_) else r for r in row)] for row in filtered_labels.values]
+        filtered_group_ids = list(filtered_group_ids.values)
+
+        return ModelInput(
+            features=filtered_features,
+            labels=filtered_labels,
+            group_ids=filtered_group_ids
+        )
     except Exception as e:
-        print(e)
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        return HTTPException(detail=f"error: {e}", status_code=500)
 `,vz=`# How do I create a Model API for the model I wish to evaluate?
 
 The Model API takes in \`{features : List[List], labels: List[List], groups: List}\`
