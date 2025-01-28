@@ -36,7 +36,7 @@ function Homepage() {
     })),
     metricsHelperText: '',
     error: false,
-    errorMessage: '',
+    errorMessage: { header: '', text: '' },
   });
 
   const getValues = {
@@ -106,7 +106,9 @@ function Homepage() {
           if (!response.ok) {
             console.log(`HTTP error! status: ${response.status}`);
             setStateWrapper("error", true);
-            setStateWrapper("errorMessage", `HTTP error! status: ${response.status}`);
+            response.json().then((data) => {
+              setStateWrapper("errorMessage", {header:`Error ${response.status}`, text:`${data.detail}`});
+            });
 
             throw new Error(`HTTP error! status: ${response.status}`);
           }
@@ -148,10 +150,13 @@ function Homepage() {
     <Box sx={[styles.container]}>
 
       {/* Display error message if error received from backend response */}
-      {state.error && <ErrorMessage
-        onClose={() => setStateWrapper("error", false)}
-        errorMessage={state.errorMessage}
-      />}
+      {state.error && (
+        <ErrorMessage
+          onClose={() => setStateWrapper("error", false)}
+          errorHeader={state.errorMessage.header}
+          errorMessage={state.errorMessage.text}
+        />
+      )}
 
       <Title />
 
