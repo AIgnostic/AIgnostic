@@ -4,6 +4,8 @@ import Dropdown from './components/dropdown';
 import { metrics, steps, BACKEND_URL } from './constants';
 import Title from './components/title';
 import styles from './home.styles';
+import ErrorMessage from './components/ErrorMessage';
+
 import {
   Box, 
   Button, 
@@ -15,6 +17,7 @@ import {
   StepContent,
   Typography,
 } from '@mui/material';
+import { error } from 'console';
 
 function Homepage() {
   const [state, setState] = useState({
@@ -32,6 +35,8 @@ function Homepage() {
       selected: true,
     })),
     metricsHelperText: '',
+    error: false,
+    errorMessage: '',
   });
 
   const getValues = {
@@ -99,6 +104,10 @@ function Homepage() {
       })
         .then((response) => {
           if (!response.ok) {
+            console.log(`HTTP error! status: ${response.status}`);
+            setStateWrapper("error", true);
+            setStateWrapper("errorMessage", `HTTP error! status: ${response.status}`);
+
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           return response.json();
@@ -137,6 +146,13 @@ function Homepage() {
 
   return (
     <Box sx={[styles.container]}>
+
+      {/* Display error message if error received from backend response */}
+      {state.error && <ErrorMessage
+        onClose={() => setStateWrapper("error", false)}
+        errorMessage={state.errorMessage}
+      />}
+
       <Title />
 
       <Stepper
