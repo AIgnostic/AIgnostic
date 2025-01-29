@@ -1,8 +1,6 @@
 # First stage: build
 FROM python:3.12
 
-
-
 # Metadata
 LABEL org.opencontainers.image.source = "https://github.com/AIgnostic/AIgnostic"
 
