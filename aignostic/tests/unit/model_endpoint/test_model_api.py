@@ -134,7 +134,8 @@ def test_finbert_single_input():
         "group_ids": []
     })
     assert response.status_code == 200, response.text
-    assert response.json()["predictions"][0][0]["label"] == "neutral", f"Single data output is not the expected value"
+    assert response.json()["predictions"][0][0]["label"] == "neutral", "Single data output is not the expected value"
+
 
 def test_finbert_multiple_inputs():
     response = finbert_mock.post("/predict", json={
