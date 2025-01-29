@@ -7,6 +7,7 @@ from tests.utils.api_utils import MOCK_DATASET_API_KEY, MOCK_MODEL_API_KEY
 import uvicorn
 import time
 from fastapi.testclient import TestClient
+from fastapi import HTTPException
 
 app_client = TestClient(api)
 
@@ -63,11 +64,29 @@ def test_correct_apis_do_not_err(run_servers):
     assert response.status_code == 200, response
 
 
-@pytest.mark.skip(reason="Error Codes and Messages are yet to be implemented")
 def test_incorrect_dataset_api_throws_401():
-    pass
+    try:
+        response = app_client.post("/evaluate", json={
+            "data_url": data_url,
+            "model_url": model_url,
+            "metrics": metrics,
+            "model_api_key": MOCK_MODEL_API_KEY,
+            "data_api_key": MOCK_DATASET_API_KEY + "1"
+        })
+        assert False, f"Should have thrown 401, but a response was received instead. Response: {response}"
+    except HTTPException as e:
+        assert e.status_code == 401, e
 
 
-@pytest.mark.skip(reason="Error Codes and Messages are yet to be implemented")
 def test_incorrect_model_api_throws_401():
-    pass
+    try:
+        response = app_client.post("/evaluate", json={
+            "data_url": data_url,
+            "model_url": model_url,
+            "metrics": metrics,
+            "model_api_key": MOCK_MODEL_API_KEY + "1",
+            "data_api_key": MOCK_DATASET_API_KEY
+        })
+        assert False, f"Should have thrown 401, but a response was received instead. Response: {response}"
+    except HTTPException as e:
+        assert e.status_code == 401, e
