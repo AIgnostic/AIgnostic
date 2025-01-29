@@ -40,7 +40,7 @@ def info():
     return {"message": "Pushed at 21/01/2025 07:32"}
 
 
-async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str], datasetAPIKey, modelAPIKey):
+async def process_data(dataset_url: HttpUrl, model_url: HttpUrl, metrics: list[str], dataset_api_key, model_api_key):
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Passes to data endpoint and fetch data
@@ -53,22 +53,27 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     - metrics: list of metrics that should be applied
     """
     # fetch data from datasetURL
-    data: dict = await fetch_data(datasetURL, datasetAPIKey)
+    data: dict = await fetch_data(dataset_url, dataset_api_key)
 
     # strip the label from the datapoint
     try:
         features = data["features"]
         labels = data["labels"]
         group_ids = data["group_ids"]
-        predictions = await query_model(
-            modelURL,
-            {
-                "features": features,
-                "labels": labels,
-                "group_ids": group_ids
-            },
-            modelAPIKey
-        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
+
+    predictions = await query_model(
+        model_url,
+        {
+            "features": features,
+            "labels": labels,
+            "group_ids": group_ids
+        },
+        model_api_key
+    )
+
+    try:
         predicted_labels = predictions["predictions"]
         metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, metrics)
     except Exception as e:
@@ -77,32 +82,31 @@ async def process_data(datasetURL: HttpUrl, modelURL: HttpUrl, metrics: list[str
     return metrics_results
 
 
-async def fetch_data(dataURL: HttpUrl, datasetAPIKey) -> dict:
+async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
     """
     Helper function to fetch data from the dataset API
 
     Params:
     - dataURL : API URL of the dataset
     """
+    # Send a GET request to the dataset API
+    if dataset_api_key is None:
+        response = requests.get(data_url)
+    else:
+        response = requests.get(data_url, headers={"Authorization": f"Bearer {dataset_api_key}"})
+
     try:
-        # Send a GET request to the dataset API
-        if datasetAPIKey is None:
-            response = requests.get(dataURL)
-        else:
-            response = requests.get(dataURL, headers={"Authorization": f"Bearer {datasetAPIKey}"})
-
-        # Check if the request was successful
+        # Raise errpr if the request was not successful
         response.raise_for_status()
+    except requests.exceptions.HTTPError:
+        raise HTTPException(status_code=response.status_code, detail=response.json()["detail"])
 
+    try:
         # Parse the response JSON
         data = response.json()
 
         # Return the data
         return data
-    except requests.exceptions.RequestException as e:
-        if response.status_code == 401:
-            raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
-        raise HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
 
@@ -116,26 +120,25 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
     - data : Data to be passed to the model in JSON format with DataSet pydantic model type
     - modelAPIKey : API key for the model
     """
-    try:
-        # Send a POST request to the dataset API
-        # TODO: Verify whether this should be get or post request
-        if modelAPIKey is None:
-            response = requests.post(url=modelURL, json=data)
-        else:
-            response = requests.post(url=modelURL, json=data, headers={"Authorization": f"Bearer {modelAPIKey}"})
+    # Send a POST request to the dataset API
+    # TODO: Verify whether this should be get or post request
+    if modelAPIKey is None:
+        response = requests.post(url=modelURL, json=data)
+    else:
+        response = requests.post(url=modelURL, json=data, headers={"Authorization": f"Bearer {modelAPIKey}"})
 
-        # Check if the request was successful
+    try:
         response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        raise HTTPException(detail=e.response.json()["detail"], status_code=e.response.status_code)
+
+    try:
+        # Check if the request was successful
 
         # Parse the response JSON
         data = response.json()
 
         # Return the data
         return data
-
-    except requests.exceptions.RequestException as e:
-        if response.status_code == 401:
-            raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
-        raise HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error while querying model: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not parse model response - {e}; response = {response.text}")
