@@ -3,17 +3,51 @@ services:
     build:
       context: .
       dockerfile: ./frontend/Dockerfile
-    ports:
-      - "4200:4200" # Map container port 4200 to host port 4200
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-  backend_api:
-    image: node:20-bullseye
-    ports:
-      - "8000:8000"
+    container_name: frontend
+    image: node:lts
     volumes:
       - .:/app
     working_dir: /app
-    command: npx nx serve aignostic
-
+    command: npx nx serve frontend --host 0.0.0.0
+    ports:
+      - '4200:4200'
+  backend:
+    build:
+      context: .
+      dockerfile: ./aignostic/Dockerfile.dev
+    volumes:
+      - .:/app
+      - venv:/app/aignostic/venv
+    command: npx nx serve aignostic --host 0.0.0.0
+    working_dir: /app
+    ports:
+      - '8000:8000'
+  # Mock server
+  mock_dataset_api:
+    build:
+      context: .
+      dockerfile: ./aignostic/Dockerfile.dev
+      args:
+        DEPGROUP: main,dataset
+    volumes:
+      - .:/app
+      - venv:/app/aignostic/venv
+    command: npx nx mock-dataset aignostic --host 0.0.0.0
+    working_dir: /app
+    ports:
+      - '5000:5000'
+  mock_model_api:
+    build:
+      context: .
+      dockerfile: ./aignostic/Dockerfile.dev
+      args:
+        DEPGROUP: main,model
+    volumes:
+      - .:/app
+      - venv:/app/aignostic/venv
+    command: npx nx mock-model aignostic --host 0.0.0.0
+    working_dir: /app
+    ports:
+      - '5001:5001'
+volumes:
+  venv:

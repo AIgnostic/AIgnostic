@@ -81,7 +81,20 @@
         "cwd": "aignostic"
       }
     },
-
+    "mock-dataset": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python -m tests.utils.dataset.mock_server",
+        "cwd": "aignostic"
+      }
+    },
+    "mock-model": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python -m tests.utils.model.scikit_mock",
+        "cwd": "aignostic"
+      }
+    },
     "container": {
       "executor": "@nx-tools/nx-container:build",
       "options": {
@@ -101,13 +114,6 @@
             "type=raw,value=latest"
           ]
         }
-      }
-    },
-    "serve": {
-      "executor": "@nxlv/python:run-commands",
-      "options": {
-        "command": "poetry run uvicorn main:create_application --reload",
-        "cwd": "aignostic"
       }
     },
     "type-checks": {
