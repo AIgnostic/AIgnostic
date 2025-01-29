@@ -15,11 +15,29 @@ services:
     build:
       context: .
       dockerfile: ./aignostic/Dockerfile.dev
+    image: aignostic/python-services
     volumes:
       - .:/app
     command: npx nx serve aignostic --host 0.0.0.0
     working_dir: /app
     ports:
       - '8000:8000'
+  # Mock server
+  mock_dataset_api:
+    image: aignostic/python-services
+    volumes:
+      - .:/app
+    command: poetry run python -m tests.datasetAPI.unit.mock_server
+    working_dir: /app/aignostic
+    ports:
+      - '5000:5000'
+  mock_model_api:
+    image: aignostic/python-services
+    volumes:
+      - .:/app
+    command: poetry run python -m tests.model_api.model.scikit_mock
+    working_dir: /app/aignostic
+    ports:
+      - '5000:5000'
 # volumes:
 #   venv:
