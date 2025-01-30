@@ -55,6 +55,14 @@ def test_correct_output_passes_strs():
     check_model_response(response, [["0"], ["1"], ["0"], ["1"], ["1"], ["0"]])
 
 
+def test_inconsistent_output_length_mismatch():
+    response = generate_mock_response({"predictions": [[0], [1], [0], [1], [1], [0, 1]]})
+    with pytest.raises(HTTPException) as e:
+        check_model_response(response, [[0], [1], [0], [1], [1], [0]])
+    assert e.value.status_code == 400
+    assert "Inconsistent number of attributes for each datapoint predicted by model" in e.value.detail
+
+
 def test_inconsistent_output_type_mismatch():
     response = generate_mock_response({"predictions": [[0], ["1"], [0], [1], [1], [0]]})
     with pytest.raises(HTTPException) as e:
