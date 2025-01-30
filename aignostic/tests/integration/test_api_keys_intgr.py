@@ -50,11 +50,11 @@ def run_servers():
 
 def test_correct_apis_do_not_err(run_servers):
     response = app_client.post("/evaluate", json={
-        "data_url": data_url,
+        "dataset_url": data_url,
         "model_url": model_url,
         "metrics": metrics,
         "model_api_key": MOCK_MODEL_API_KEY,
-        "data_api_key": MOCK_DATASET_API_KEY
+        "dataset_api_key": MOCK_DATASET_API_KEY
     })
     # Useful debug messages
     print(response.text)

@@ -1,65 +1,37 @@
-from pydantic import ValidationError
+from pydantic import ValidationError, HttpUrl
 from aignostic.pydantic_models.data_models import ModelInput
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException
 import requests
-from urllib.parse import urlparse
 import uvicorn
 
 app = FastAPI()
 
 
-def is_valid_url(url: str) -> bool:
-    parsed = urlparse(url)
-    return bool(parsed.netloc) and bool(parsed.scheme)
-
-
-def fetch_data(url: str) -> dict:
-    response = requests.get(url)
-    response.raise_for_status()
-    try:
-        return response.json()
-    except ValueError as e:
-        raise ValueError(f"Invalid JSON response: {str(e)}")
-
-
-def parse_dataset(data: dict) -> ModelInput:
-    try:
-        dataset = ModelInput(column_names=data.get("column_names", []), rows=data.get("rows", []))
-    except Exception as e:
-        raise ValueError(f"Unable to parse data into DataFrame: {str(e)}")
-
-    if any(len(dataset.column_names) != len(row) for row in dataset.rows):
-        raise ValidationError("Number of column names not equal to the number of elements in one or more rows")
-
-    return dataset
-
-
-@app.get('/validate-dataset')
-async def validate_dataset(url: str = Query(..., description="Dataset URL")):
+@app.get("/fetch-data")
+async def fetch_data(dataset_url: HttpUrl, api_key: str) -> ModelInput:
     """
-    Validate a dataset URL and return the columns and number of rows.
+    Validate a dataset URL and parse the data to be used in the model.
+
+    Params:
+    - dataset_url : HttpUrl - the URL of the dataset
+    - api_key : str - the API key for the dataset
     """
-    if not is_valid_url(url):
-        raise HTTPException(status_code=400, detail="Invalid URL")
-
     try:
-        data = fetch_data(url)
-        dataset = parse_dataset(data)
-        return JSONResponse(content={
-            "message": "Data successfully parsed into DataFrame",
-            "columns": dataset.column_names,
-            "rows": len(dataset.rows)
-        })
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        response = requests.get(dataset_url, headers=headers)
 
-    # TODO: Add logging to exception handling
+        response.raise_for_status()
+
+        data = response.json()
+        return ModelInput(**data)
     except requests.exceptions.RequestException as e:
-        if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 404:
-            raise HTTPException(status_code=404, detail="Resource not found")
-        else:
-            raise HTTPException(status_code=400, detail="Failed to fetch data")
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid data format")
+        if response.status_code == 401:
+            raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
+        raise HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid data format: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
 
 
 if __name__ == "__main__":

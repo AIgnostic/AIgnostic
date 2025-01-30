@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
-from tests.utils.dataset.mock_server import app as client_mock
 from tests.utils.api_utils import MOCK_DATASET_API_KEY
+from tests.utils.dataset.mock_server import app as client_mock
 from aignostic.dataset.validate_dataset_api import app as server_mock
 import pytest
 
