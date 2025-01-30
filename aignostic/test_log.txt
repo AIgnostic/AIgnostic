@@ -1,0 +1,29 @@
+
+tp: 3, fp: 2
+true_labels: [[2], [0], [2], [2], [0], [2], [0], [0]], predicted_labels: [[2]
+ [0]
+ [2]
+ [0]
+ [0]
+ [2]
+ [2]
+ [2]]
+target_class: 2
+
+tp: [[ True]
+ [False]
+ [ True]
+ [False]
+ [False]
+ [ True]
+ [False]
+ [False]]
+
+fp: [[False]
+ [False]
+ [False]
+ [False]
+ [False]
+ [False]
+ [ True]
+ [ True]]

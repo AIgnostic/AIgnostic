@@ -1,6 +1,5 @@
 from pydantic import BaseModel, validator
-from typing import Optional
-import numpy as np
+from typing import Optional, Any
 from aignostic.pydantic_models.utils import nested_list_to_np
 
 
@@ -17,8 +16,9 @@ class CalculateRequest(BaseModel):
     calculation_info: Data required to calculate metrics .e.g. true vs predicted
     """
     metrics: list[str]
-    true_labels: Optional[list[list]]
-    predicted_labels: Optional[list[list]]
+    true_labels: Optional[list[list]] = None
+    predicted_labels: Optional[list[list]] = None
+    target_class: Optional[Any] = None
     
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @validator('true_labels', pre=False, always=True)

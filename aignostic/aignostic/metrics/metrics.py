@@ -52,7 +52,10 @@ class MetricsException(HTTPException):
         )
 
 
-def accuracy(name, info: CalculateRequest):
+def accuracy(name, info: CalculateRequest) -> float:
+    """
+    Calculate the accuracy of the model
+    """
     try:
         return (info.true_labels == info.predicted_labels).mean()
     except Exception as e:
@@ -60,9 +63,41 @@ def accuracy(name, info: CalculateRequest):
         raise MetricsException(name, additional_context=str(e))
 
 
+def class_precision(name, info: CalculateRequest) -> float:
+    """
+    Calculate the precision for a given class
+    """
+    try:
+        target_reshaped = np.full_like(info.true_labels, info.target_class)
+        tp = np.count_nonzero((info.true_labels == target_reshaped) & (info.predicted_labels == target_reshaped))
+        fp = np.count_nonzero((info.true_labels != target_reshaped) & (info.predicted_labels == target_reshaped))
+    except Exception as e:
+        raise MetricsException(name, additional_context=str(e))
+    
+    try:
+        return tp / (tp + fp)
+    except ZeroDivisionError as e:
+        raise MetricsException(name, additional_context=str(e))
+
+
+def macro_precision(name, info: CalculateRequest) -> float:
+    pass
+
+
+def recall_per_class(name, info: CalculateRequest) -> float:
+    pass
+
+
+def macro_recall(name, info: CalculateRequest) -> float:
+    pass
+
+
 metric_to_fn = {
-    "accuracy": accuracy#,
-    # "precision": precision
+    "accuracy": accuracy,
+    "class_precision": class_precision,
+    "macro_precision": macro_precision,
+    "recall_per_class": recall_per_class,
+    "macro_recall": macro_recall
 }
 
 
@@ -76,12 +111,6 @@ def per_class_recall(y_true, y_pred, c):
     tp = ((y_true == c) & (y_pred == c)).sum()
     fn = ((y_true == c) & (y_pred != c)).sum()
     return tp / (tp + fn)
-
-
-def per_class_precision(y_true, y_pred, c):
-    tp = ((y_true == c) & (y_pred == c)).sum()
-    fp = ((y_true != c) & (y_pred == c)).sum()
-    return tp / (tp + fp)
 
 # def precision(y_true, y_pred):
 #     precisions = [per_class_precision(y_true, y_pred, c) for c in np.unique(y_true)]

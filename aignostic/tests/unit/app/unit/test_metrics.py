@@ -9,13 +9,22 @@ metrics_client = TestClient(metrics_app)
 def test_accuracy():
     response = metrics_client.post("/calculate-metrics", json={
         "metrics": ["accuracy"],
-        "true_labels": [[1, 0, 1, 1, 0, 1, 0, 0]],
-        "predicted_labels": [[1, 0, 1, 0, 0, 1, 1, 0]]
+        "true_labels": [[1], [0], [1], [1], [0], [1], [0], [0]],
+        "predicted_labels": [[1], [0], [1], [0], [0], [1], [1], [0]],
     })
-    print(response.json())
-    print(response.text)
     assert response.status_code == 200, response.text
     assert response.json() == {"metric_values": {"accuracy": 0.75}}, response.json()
+
+
+def test_precision():
+    response = metrics_client.post("/calculate-metrics", json={
+        "metrics": ["class_precision"],
+        "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
+        "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
+        "target_class": 2
+    })
+    assert response.status_code == 200, response.text
+    assert response.json() == {"metric_values": {"class_precision": 0.6}}, response.json()
 
 
 @pytest.mark.skip(reason="Files being updated/refactored")
