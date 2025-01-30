@@ -21,14 +21,7 @@ async def generate_metrics_from_info(request: DatasetRequest):
     Frontend will post URLs, metrics, etc., as JSON to this endpoint.
     This function validates, processes, and forwards the data to the controller.
     """
-    # Extract data from the validated request
-    data_url = request.data_url
-    model_url = request.model_url
-    data_api_key = request.data_api_key
-    model_api_key = request.model_api_key
-    metrics = request.metrics
-
-    results = await process_data(data_url, model_url, metrics, data_api_key, model_api_key)
+    results = await process_data(request)
 
     return {"message": "Data successfully received", "results": results}
 
@@ -40,7 +33,7 @@ def info():
     return {"message": "Pushed at 21/01/2025 07:32"}
 
 
-async def process_data(dataset_url: HttpUrl, model_url: HttpUrl, metrics: list[str], dataset_api_key, model_api_key):
+async def process_data(request: DatasetRequest):
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Passes to data endpoint and fetch data
@@ -53,7 +46,7 @@ async def process_data(dataset_url: HttpUrl, model_url: HttpUrl, metrics: list[s
     - metrics: list of metrics that should be applied
     """
     # fetch data from datasetURL
-    data: dict = await fetch_data(dataset_url, dataset_api_key)
+    data: dict = await fetch_data(request.data_url, request.data_api_key)
 
     # strip the label from the datapoint
     try:
@@ -64,18 +57,18 @@ async def process_data(dataset_url: HttpUrl, model_url: HttpUrl, metrics: list[s
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
     predictions = await query_model(
-        model_url,
+        request.model_url,
         {
             "features": features,
             "labels": labels,
             "group_ids": group_ids
         },
-        model_api_key
+        request.model_api_key
     )
 
     try:
         predicted_labels = predictions["predictions"]
-        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, metrics)
+        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, request.metrics)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
@@ -111,7 +104,7 @@ async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
         raise HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
 
 
-async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
+async def query_model(model_url: HttpUrl, data: dict, model_api_key):
     """
     Helper function to query the model API
 
@@ -120,12 +113,11 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
     - data : Data to be passed to the model in JSON format with DataSet pydantic model type
     - modelAPIKey : API key for the model
     """
-    # Send a POST request to the dataset API
-    # TODO: Verify whether this should be get or post request
-    if modelAPIKey is None:
-        response = requests.post(url=modelURL, json=data)
+    # Send a POST request to the model API
+    if model_api_key is None:
+        response = requests.post(url=model_url, json=data)
     else:
-        response = requests.post(url=modelURL, json=data, headers={"Authorization": f"Bearer {modelAPIKey}"})
+        response = requests.post(url=model_url, json=data, headers={"Authorization": f"Bearer {model_api_key}"})
 
     try:
         response.raise_for_status()

@@ -15,4 +15,4 @@ def predict(input: ModelInput, pipe: pipeline) -> ModelResponse:
                 assert isinstance(data, list), "Input text must be encapsulated in a list"
         return ModelResponse(predictions=results)
     except Exception as e:
-        raise HTTPException(detail=f"Error occured during model prediction: {e}", status_code=500)
+        raise HTTPException(detail=f"Error occured during model prediction: {e}", status_code=400)
