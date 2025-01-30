@@ -52,6 +52,18 @@ class MetricsException(HTTPException):
         )
 
 
+def check_valid_input(metric_name, true_labels):
+    """
+    Check if the input is valid for the given metric. Valid fn for precision, recall and F1 scoring
+    """
+    if len(true_labels) == 0:
+        raise MetricsException(metric_name, additional_context="No labels provided - will lead to division by zero")
+    elif len(true_labels[0]) > 1:
+        raise MetricsException(metric_name, additional_context="Multiple attributes provided - cannot calculate precision")
+    elif len(true_labels[0]) == 0:
+        raise MetricsException(metric_name, additional_context="No attributes provided - cannot calculate precision")
+
+
 def accuracy(name, info: CalculateRequest) -> float:
     """
     Calculate the accuracy of the model
@@ -63,7 +75,7 @@ def accuracy(name, info: CalculateRequest) -> float:
         raise MetricsException(name, additional_context=str(e))
 
 
-def calculate_precision(true_labels, predicted_labels, target_class, metric_name=""):
+def _calculate_precision(metric_name, true_labels, predicted_labels, target_class):
     try:
         target_reshaped = np.full_like(true_labels, target_class)
         tp = np.count_nonzero((true_labels == target_reshaped) & (predicted_labels == target_reshaped))
@@ -79,63 +91,60 @@ def class_precision(name, info: CalculateRequest) -> float:
     one attribute of the predictions. Calculating precisions for multiple attributes will raise
     an exception
     """
-    if len(info.true_labels) == 0:
-        raise MetricsException(name, additional_context="No labels provided - will lead to division by zero")
-    elif len(info.true_labels[0]) > 1:
-        raise MetricsException(name, additional_context="Multiple attributes provided - cannot calculate precision")
-    elif len(info.true_labels[0]) == 0:
-        raise MetricsException(name, additional_context="No attributes provided - cannot calculate precision")
-
-    return calculate_precision(info.true_labels, info.predicted_labels, info.target_class, name)
+    check_valid_input(name, info.true_labels)
+    return _calculate_precision(name, info.true_labels, info.predicted_labels, info.target_class)
 
 
 def macro_precision(name, info: CalculateRequest) -> float:
     """
     Calculate the macro precision for all classes
     """
-    if len(info.true_labels) == 0:
-        raise MetricsException(name, additional_context="No labels provided - will lead to division by zero")
-    elif len(info.true_labels[0]) > 1:
-        raise MetricsException(name, additional_context="Multiple attributes provided - cannot calculate precision")
-    elif len(info.true_labels[0]) == 0:
-        raise MetricsException(name, additional_context="No attributes provided - cannot calculate precision")
-
+    check_valid_input(name, info.true_labels)
     return sum(
             [
-                calculate_precision(info.true_labels, info.predicted_labels, c, name)
+                _calculate_precision(name, info.true_labels, info.predicted_labels, c)
                 for c in np.unique(info.true_labels)
             ]
         ) / len(np.unique(info.true_labels))
 
 
-def recall_per_class(name, info: CalculateRequest) -> float:
-    pass
+def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
+    try:
+        target_reshaped = np.full_like(true_labels, target_class)
+        tp = np.count_nonzero((true_labels == target_reshaped) & (predicted_labels == target_reshaped))
+        fn = np.count_nonzero((true_labels == target_reshaped) & (predicted_labels != target_reshaped))
+        return tp / (tp + fn)
+    except Exception as e:
+        raise MetricsException(metric_name, additional_context=str(e))
+    
+
+def class_recall(name, info: CalculateRequest) -> float:
+    """
+    Calculate the recall for a given class. The labels/predictions provided must only be for
+    one attribute of the predictions. Calculating recalls for multiple attributes will raise
+    an exception
+    """
+    check_valid_input(name, info.true_labels)
+    return _calculate_recall(name, info.true_labels, info.predicted_labels, info.target_class)
 
 
 def macro_recall(name, info: CalculateRequest) -> float:
-    pass
+    """
+    Calculate the macro recall for all classes
+    """
+    check_valid_input(name, info.true_labels)
+    return sum(
+            [
+                _calculate_recall(name, info.true_labels, info.predicted_labels, c)
+                for c in np.unique(info.true_labels)
+            ]
+        ) / len(np.unique(info.true_labels))
 
 
 metric_to_fn = {
     "accuracy": accuracy,
     "class_precision": class_precision,
     "precision": macro_precision,
-    "recall_per_class": recall_per_class,
+    "class_recall": class_recall,
     "recall": macro_recall
 }
-
-
-
-def recall(y_true, y_pred):
-    recalls = [per_class_recall(y_true, y_pred, c) for c in np.unique(y_true)]
-    return np.mean(recalls)
-
-
-def per_class_recall(y_true, y_pred, c):
-    tp = ((y_true == c) & (y_pred == c)).sum()
-    fn = ((y_true == c) & (y_pred != c)).sum()
-    return tp / (tp + fn)
-
-# def precision(y_true, y_pred):
-#     precisions = [per_class_precision(y_true, y_pred, c) for c in np.unique(y_true)]
-#     return np.mean(precisions)
