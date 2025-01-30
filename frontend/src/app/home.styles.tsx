@@ -52,6 +52,8 @@ const styles = {
         width: '80%',
         margin: '10px',
         borderRadius: '10px',
+        wordWrap: 'break-word',
+        overflowWrap: "anywhere",
     },
     
     codeBoxTopBar: {
