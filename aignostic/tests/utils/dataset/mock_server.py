@@ -26,6 +26,9 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     Returns:
         JSONResponse: A JSON response containing the random datapoints.
     """
+    if not indices:
+        raise HTTPException(detail="Indices must be provided to query", status_code=500)
+
     try:
         def filter_fn(x):
             return x.iloc[indices].replace({
@@ -40,7 +43,9 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
         filtered_group_ids = filter_fn(group)
 
         filtered_features = list(list(r) for r in filtered_features.values)
-        filtered_labels = [[(bool(r) if isinstance(r, np.bool_) else r for r in row)] for row in filtered_labels.values]
+        filtered_labels = [(bool(r) if isinstance(r, np.bool_) else r for r in row) for row in filtered_labels.values]
+        if len(indices) == 1:
+            filtered_group_ids = [filtered_group_ids]
         filtered_group_ids = list(filtered_group_ids.values)
 
         return ModelInput(
