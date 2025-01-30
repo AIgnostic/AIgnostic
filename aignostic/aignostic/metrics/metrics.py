@@ -45,7 +45,7 @@ class MetricsException(HTTPException):
     def __init__(self, name, additional_context=None):
         detail = f"Error during metric calculation: {name}"
         if additional_context:
-            detail += f"\n{additional_context}"
+            detail += f"; {additional_context}"
         super().__init__(
             status_code=500,
             detail=detail
@@ -63,25 +63,49 @@ def accuracy(name, info: CalculateRequest) -> float:
         raise MetricsException(name, additional_context=str(e))
 
 
+def calculate_precision(true_labels, predicted_labels, target_class, metric_name=""):
+    try:
+        target_reshaped = np.full_like(true_labels, target_class)
+        tp = np.count_nonzero((true_labels == target_reshaped) & (predicted_labels == target_reshaped))
+        fp = np.count_nonzero((true_labels != target_reshaped) & (predicted_labels == target_reshaped))
+        return tp / (tp + fp)
+    except Exception as e:
+        raise MetricsException(metric_name, additional_context=str(e))
+
+
 def class_precision(name, info: CalculateRequest) -> float:
     """
-    Calculate the precision for a given class
+    Calculate the precision for a given class. The labels/predictions provided must only be for
+    one attribute of the predictions. Calculating precisions for multiple attributes will raise
+    an exception
     """
-    try:
-        target_reshaped = np.full_like(info.true_labels, info.target_class)
-        tp = np.count_nonzero((info.true_labels == target_reshaped) & (info.predicted_labels == target_reshaped))
-        fp = np.count_nonzero((info.true_labels != target_reshaped) & (info.predicted_labels == target_reshaped))
-    except Exception as e:
-        raise MetricsException(name, additional_context=str(e))
-    
-    try:
-        return tp / (tp + fp)
-    except ZeroDivisionError as e:
-        raise MetricsException(name, additional_context=str(e))
+    if len(info.true_labels) == 0:
+        raise MetricsException(name, additional_context="No labels provided - will lead to division by zero")
+    elif len(info.true_labels[0]) > 1:
+        raise MetricsException(name, additional_context="Multiple attributes provided - cannot calculate precision")
+    elif len(info.true_labels[0]) == 0:
+        raise MetricsException(name, additional_context="No attributes provided - cannot calculate precision")
+
+    return calculate_precision(info.true_labels, info.predicted_labels, info.target_class, name)
 
 
 def macro_precision(name, info: CalculateRequest) -> float:
-    pass
+    """
+    Calculate the macro precision for all classes
+    """
+    if len(info.true_labels) == 0:
+        raise MetricsException(name, additional_context="No labels provided - will lead to division by zero")
+    elif len(info.true_labels[0]) > 1:
+        raise MetricsException(name, additional_context="Multiple attributes provided - cannot calculate precision")
+    elif len(info.true_labels[0]) == 0:
+        raise MetricsException(name, additional_context="No attributes provided - cannot calculate precision")
+
+    return sum(
+            [
+                calculate_precision(info.true_labels, info.predicted_labels, c, name)
+                for c in np.unique(info.true_labels)
+            ]
+        ) / len(np.unique(info.true_labels))
 
 
 def recall_per_class(name, info: CalculateRequest) -> float:
@@ -95,9 +119,9 @@ def macro_recall(name, info: CalculateRequest) -> float:
 metric_to_fn = {
     "accuracy": accuracy,
     "class_precision": class_precision,
-    "macro_precision": macro_precision,
+    "precision": macro_precision,
     "recall_per_class": recall_per_class,
-    "macro_recall": macro_recall
+    "recall": macro_recall
 }
 
 
