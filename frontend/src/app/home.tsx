@@ -4,6 +4,8 @@ import Dropdown from './components/dropdown';
 import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics } from './constants';
 import Title from './components/title';
 import styles from './home.styles';
+import ErrorMessage from './components/ErrorMessage';
+
 import {
   Box, 
   Button, 
@@ -20,6 +22,7 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material';
+import { error } from 'console';
 
 function Homepage() {
   const [state, setState] = useState({
@@ -38,7 +41,8 @@ function Homepage() {
     })),
     metricsHelperText: '',
     selectedModelType: '',
-
+    error: false,
+    errorMessage: { header: '', text: '' },
   });
 
   const getValues = {
@@ -106,6 +110,12 @@ function Homepage() {
       })
         .then((response) => {
           if (!response.ok) {
+            console.log(`HTTP error! status: ${response.status}`);
+            setStateWrapper("error", true);
+            response.json().then((data) => {
+              setStateWrapper("errorMessage", {header:`Error ${response.status}`, text:`${data.detail}`});
+            });
+
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           return response.json();
@@ -160,6 +170,16 @@ function Homepage() {
 
   return (
     <Box sx={[styles.container]}>
+
+      {/* Display error message if error received from backend response */}
+      {state.error && (
+        <ErrorMessage
+          onClose={() => setStateWrapper("error", false)}
+          errorHeader={state.errorMessage.header}
+          errorMessage={state.errorMessage.text}
+        />
+      )}
+
       <Title />
 
       <Stepper

@@ -26,7 +26,7 @@ def predict(input: ModelInput) -> ModelResponse:
         predictions: list[list] = output.tolist()
         print(predictions)
     except Exception as e:
-        return HTTPException(detail=f"Error occured during model prediction: {e}", status_code=500)
+        raise HTTPException(detail=f"Error occured during model prediction: {e}", status_code=500)
     return ModelResponse(predictions=predictions)
 
 
