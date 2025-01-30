@@ -53,10 +53,10 @@ async def process_data(request: DatasetRequest):
         features = data["features"]
         labels = data["labels"]
         group_ids = data["group_ids"]
-    except KeyError as e:
-        raise HTTPException(status_code=500, detail=f"KeyError occurred during data processing")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error while processing data")
+    except KeyError:
+        raise HTTPException(status_code=500, detail="KeyError occurred during data processing")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error while processing data")
 
     # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
     predictions = await query_model(
