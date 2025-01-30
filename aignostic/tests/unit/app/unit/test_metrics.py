@@ -1,5 +1,4 @@
-import numpy as np
-from aignostic.metrics.metrics import calculate_metrics, metrics_app, MetricsException, check_valid_input
+from aignostic.metrics.metrics import metrics_app, MetricsException, check_valid_input
 from fastapi.testclient import TestClient
 import pytest
 
@@ -79,7 +78,7 @@ def test_macro_recall():
     })
     assert response.status_code == 200, response.text
     assert response.json() == {"metric_values": {"recall": 0.625}}, response.json()
-        
+
 
 def test_multiple_metrics():
     response = metrics_client.post("/calculate-metrics", json={

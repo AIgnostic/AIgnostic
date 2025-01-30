@@ -8,7 +8,6 @@ from aignostic.pydantic_models.metric_models import CalculateRequest, MetricsInf
 """
 
 import numpy as np
-from abc import abstractmethod
 from fastapi import FastAPI, HTTPException
 
 metrics_app = FastAPI()
@@ -21,12 +20,12 @@ task_to_metric_map = {
 
 
 @metrics_app.get("/retrieve-metric-info", response_model=MetricsInfo)
-def retrieve_info() -> MetricsInfo:
+async def retrieve_info() -> MetricsInfo:
     return MetricsInfo(task_to_metric_map=task_to_metric_map)
 
 
 @metrics_app.post("/calculate-metrics")
-def calculate_metrics(info: CalculateRequest):
+async def calculate_metrics(info: CalculateRequest):
     """
     Calculate the metrics for the given y_true and y_pred
 
@@ -57,11 +56,20 @@ def check_valid_input(metric_name, true_labels):
     Check if the input is valid for the given metric. Valid fn for precision, recall and F1 scoring
     """
     if len(true_labels) == 0:
-        raise MetricsException(metric_name, additional_context="No labels provided - will lead to division by zero")
+        raise MetricsException(
+            metric_name,
+            additional_context="No labels provided - will lead to division by zero"
+        )
     elif len(true_labels[0]) > 1:
-        raise MetricsException(metric_name, additional_context="Multiple attributes provided - cannot calculate precision")
+        raise MetricsException(
+            metric_name,
+            additional_context="Multiple attributes provided - cannot calculate precision"
+        )
     elif len(true_labels[0]) == 0:
-        raise MetricsException(metric_name, additional_context="No attributes provided - cannot calculate precision")
+        raise MetricsException(
+            metric_name,
+            additional_context="No attributes provided - cannot calculate precision"
+        )
 
 
 def accuracy(name, info: CalculateRequest) -> float:
@@ -116,7 +124,7 @@ def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
         return tp / (tp + fn)
     except Exception as e:
         raise MetricsException(metric_name, additional_context=str(e))
-    
+
 
 def class_recall(name, info: CalculateRequest) -> float:
     """

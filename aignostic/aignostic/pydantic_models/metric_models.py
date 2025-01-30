@@ -19,15 +19,15 @@ class CalculateRequest(BaseModel):
     true_labels: Optional[list[list]] = None
     predicted_labels: Optional[list[list]] = None
     target_class: Optional[Any] = None
-    
+
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @validator('true_labels', pre=False, always=True)
-    def convert_to_np_arrays(cls, v):
+    def convert_true_to_np_arrays(cls, v):
         return nested_list_to_np(v)
-    
-        # Convert the 'true_labels' and 'predicted_labels' into np.arrays
+
+    # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @validator('predicted_labels', pre=False, always=True)
-    def convert_to_np_arrays(cls, v):
+    def convert_pred_to_np_arrays(cls, v):
         return nested_list_to_np(v)
 
 

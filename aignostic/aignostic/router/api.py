@@ -1,8 +1,8 @@
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
 import requests
-import aignostic.metrics.metrics as metrics_lib
-
+from aignostic.metrics.metrics import calculate_metrics, MetricsException
+from aignostic.pydantic_models.metric_models import CalculateRequest
 
 api = APIRouter()
 
@@ -69,7 +69,14 @@ async def process_data(request: DatasetRequest):
 
     try:
         predicted_labels = predictions["predictions"]
-        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, request.metrics)
+        req = CalculateRequest(
+            metrics=request.metrics,
+            true_labels=labels,
+            predicted_labels=predicted_labels
+        )
+        metrics_results = await calculate_metrics(req)
+    except MetricsException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
