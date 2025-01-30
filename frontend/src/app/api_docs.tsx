@@ -16,22 +16,13 @@ import CodeBox from './components/CodeBox'; // Import your CodeBox component
 import styles from './home.styles';
 import { Box } from '@mui/material';
 import { AIGNOSTIC } from './constants';
+import { MarkdownFiles } from './types';
 
-
-type MarkdownFiles = Record<string, string>;
 type APIDocsProps = {
   getMarkdownFiles: () => MarkdownFiles; // Injectable function to load markdown files
 };
 
-// Dependency injection-friendly function
-const defaultMarkdownLoader = () => {
-  if (import.meta) {
-    return import.meta.glob('./docs/*.md', { query: '?raw', import: 'default', eager: true }) as MarkdownFiles;
-  }
-  return {} as MarkdownFiles;
-};
-
-const APIDocs: React.FC<APIDocsProps> = ({ getMarkdownFiles=defaultMarkdownLoader }) => {
+const APIDocs: React.FC<APIDocsProps> = ({ getMarkdownFiles }) => {
   
   // Split the markdown into title (h1) and content
   const splitMarkdown = (markdown: string) => {

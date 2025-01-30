@@ -2,10 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import APIDocs from '../src/app/api_docs';
 import '@testing-library/jest-dom'
-import CodeBox from '../src/app/components/CodeBox';
 
-
-// Mock the 
 
 jest.mock('@mui/material/Accordion', () => (props) => <div data-testid="mock-accordion" {...props} />);
 jest.mock('@mui/material/AccordionSummary', () => (props) => <div data-testid="mock-accordion-summary" {...props} />);
@@ -14,7 +11,6 @@ jest.mock('@mui/icons-material/ExpandMore', () => () => <div data-testid="mock-e
 jest.mock('react-markdown', () => ({ children, components }: any) => (
   <div data-testid="mock-markdown">{children}</div>
 ));
-// jest.mock('../src/app/components/CodeBox', () => 'mock-code-box');
 jest.mock('../src/app/components/CodeBox', () => ({ language, codeSnippet }: any) => (
   <div data-testid="mock-code-box">{language} - {codeSnippet}</div>
 ));

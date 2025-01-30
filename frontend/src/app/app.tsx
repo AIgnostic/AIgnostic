@@ -7,6 +7,7 @@ import APIDocs from './api_docs';
 import {AIGNOSTIC, HOME} from './constants';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
+import { MarkdownFiles } from './types';
 
 export function App() {
 
@@ -26,13 +27,20 @@ export function App() {
     }
   }, [location]);
 
+  // Dependency injection-friendly function
+  const defaultMarkdownLoader = () => {
+    if (import.meta) {
+      return import.meta.glob('./docs/*.md', { query: '?raw', import: 'default', eager: true }) as MarkdownFiles;
+    }
+    return {} as MarkdownFiles;
+  };
   
   return (
     <div>
       <ThemeProvider theme={theme}>
         <Routes>
           <Route path={`${HOME}/`} element={<Homepage />} />
-          <Route path={`${HOME}/api-docs`} element={<APIDocs />} />
+          <Route path={`${HOME}/api-docs`} element={<APIDocs getMarkdownFiles={defaultMarkdownLoader}/>} />
         </Routes>
       </ThemeProvider>
     </div>
