@@ -156,8 +156,8 @@ function Homepage() {
         selected: true,
       })));
     }
-  
   }
+
   return (
     <Box sx={[styles.container]}>
       <Title />

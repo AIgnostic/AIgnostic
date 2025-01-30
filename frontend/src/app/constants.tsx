@@ -28,10 +28,10 @@ const steps = [
 
   ];
   
-  
-  const generalMetrics = ['Accuracy', 'Precision', 'Recall'];
   const BACKEND_URL = 'http://localhost:8000/evaluate';
 
+  const generalMetrics = ['Accuracy', 'Precision', 'Recall'];
+  
   const modelTypesToMetrics: { [key: string]: string[] } = {
     'Classification': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC'],
     'Regression': ['Mean Absolute Error', 'Mean Squared Error', 'R-squared', 'Root Mean Squared Error'],
