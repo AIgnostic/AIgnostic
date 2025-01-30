@@ -3,51 +3,52 @@ services:
     build:
       context: .
       dockerfile: ./frontend/Dockerfile
-    container_name: frontend
-    image: node:lts
     volumes:
       - .:/app
-    working_dir: /app
     command: npx nx serve frontend --host 0.0.0.0
+    working_dir: /app
     ports:
       - '4200:4200'
   backend:
     build:
       context: .
       dockerfile: ./aignostic/Dockerfile.dev
+    # volumes:
+    #   - /aignostic:/app/aignostic
+    #   - .venv:/app/aignostic/.venv
     volumes:
       - .:/app
-      - venv:/app/aignostic/venv
-    command: npx nx serve aignostic --host 0.0.0.0
+      - .venv:/app/aignostic/.venv
     working_dir: /app
     ports:
       - '8000:8000'
+    command: npx nx serve aignostic --host 0.0.0.0
   # Mock server
-  mock_dataset_api:
-    build:
-      context: .
-      dockerfile: ./aignostic/Dockerfile.dev
-      args:
-        DEPGROUP: main,dataset
-    volumes:
-      - .:/app
-      - venv:/app/aignostic/venv
-    command: npx nx mock-dataset aignostic --host 0.0.0.0
-    working_dir: /app
-    ports:
-      - '5000:5000'
-  mock_model_api:
-    build:
-      context: .
-      dockerfile: ./aignostic/Dockerfile.dev
-      args:
-        DEPGROUP: main,model
-    volumes:
-      - .:/app
-      - venv:/app/aignostic/venv
-    command: npx nx mock-model aignostic --host 0.0.0.0
-    working_dir: /app
-    ports:
-      - '5001:5001'
-volumes:
-  venv:
+#   mock_dataset_api:
+#     build:
+#       context: .
+#       dockerfile: ./aignostic/Dockerfile.dev
+#       args:
+#         DEPGROUP: main,dataset
+#     volumes:
+#       - .:/app
+#       - venv:/app/aignostic/venv
+#     command: npx nx mock-dataset aignostic --host 0.0.0.0
+#     working_dir: /app
+#     ports:
+#       - '5000:5000'
+#   mock_model_api:
+#     build:
+#       context: .
+#       dockerfile: ./aignostic/Dockerfile.dev
+#       args:
+#         DEPGROUP: main,model
+#     volumes:
+#       - .:/app
+#       - venv:/app/aignostic/venv
+#     command: npx nx mock-model aignostic --host 0.0.0.0
+#     working_dir: /app
+#     ports:
+#       - '5001:5001'
+# volumes:
+#   venv:
