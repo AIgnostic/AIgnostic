@@ -1,5 +1,5 @@
-from pydantic import ValidationError, HttpUrl
-from aignostic.pydantic_models.data_models import ModelInput
+from pydantic import ValidationError
+from aignostic.pydantic_models.data_models import ModelInput, FetchDatasetRequest
 from fastapi import FastAPI, HTTPException
 import requests
 import uvicorn
@@ -8,17 +8,16 @@ app = FastAPI()
 
 
 @app.get("/fetch-data")
-async def fetch_data(dataset_url: HttpUrl, api_key: str) -> ModelInput:
+def fetch_dataset(request: FetchDatasetRequest) -> ModelInput:
     """
     Validate a dataset URL and parse the data to be used in the model.
 
     Params:
-    - dataset_url : HttpUrl - the URL of the dataset
-    - api_key : str - the API key for the dataset
+    - request : FetchDatasetRequest - Pydantic model for the request
     """
     try:
-        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
-        response = requests.get(dataset_url, headers=headers)
+        headers = {"Authorization": f"Bearer {request.dataset_api_key}"} if request.dataset_api_key else {}
+        response = requests.get(request.dataset_url, headers=headers)
 
         response.raise_for_status()
 

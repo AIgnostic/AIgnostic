@@ -1,8 +1,8 @@
 import requests
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
-from aignostic.pydantic_models.data_models import ModelInput
-from aignostic.dataset.validate_dataset_api import fetch_data
+from aignostic.pydantic_models.data_models import ModelInput, FetchDatasetRequest
+from aignostic.dataset.validate_dataset_api import fetch_dataset
 from aignostic.metrics.metrics import calculate_metrics
 
 
@@ -11,9 +11,9 @@ api = APIRouter()
 
 class EvaluateModelRequest(BaseModel):
     dataset_url: HttpUrl
+    dataset_api_key: str
     model_url: HttpUrl
     model_api_key: str
-    dataset_api_key: str
     metrics: list[str]
 
 
@@ -23,7 +23,7 @@ class EvaluateModelResponse(BaseModel):
 
 
 @api.post("/evaluate")
-async def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateModelResponse:
+def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateModelResponse:
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Passes to data endpoint and fetch data
@@ -33,11 +33,13 @@ async def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateM
     Params:
     - request : EvaluateModelRequest - Pydantic model for the request
     """
-    data: ModelInput = await fetch_data(request.dataset_url, request.dataset_api_key)
-    predictions: dict = await query_model(request.model_url, request.model_api_key, data)
+    fetch_dataset_request = FetchDatasetRequest(**request.model_dump())
+    data: ModelInput = fetch_dataset(fetch_dataset_request)
+
+    predictions: dict = query_model(request.model_url, request.model_api_key, data)
 
     try:
-        predicted_labels = predictions["predictions"]
+        predicted_labels: list = predictions["predictions"]
 
         results = calculate_metrics(data.labels, predicted_labels, request.metrics)
     except Exception as e:
@@ -46,7 +48,7 @@ async def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateM
     return EvaluateModelResponse(results=results)
 
 
-async def query_model(modelURL: HttpUrl, modelAPIKey: str, data: ModelInput) -> dict:
+def query_model(modelURL: HttpUrl, modelAPIKey: str, data: ModelInput) -> dict:
     """
     Helper function to query the model API
 
@@ -60,9 +62,13 @@ async def query_model(modelURL: HttpUrl, modelAPIKey: str, data: ModelInput) -> 
         response = requests.post(url=modelURL, json=data.model_dump(), headers=headers)
 
         response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=e.response.json()["detail"],
+        )
 
-        data = response.json()
-
-        return data
+    try:
+        return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not parse model response - {e}; response = {response.text}")

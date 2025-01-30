@@ -1,9 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
+
+
+class FetchDatasetRequest(BaseModel):
+    """
+    A model for a request to fetch a dataset
+    """
+    dataset_url: HttpUrl
+    dataset_api_key: str
 
 
 class ModelInput(BaseModel):
     """
-    A model for a dataset to be sent over HTTP by JSON
+    A model for a dataset to be sent to a model
 
     Attributes:
         features: list[list] - the features of the dataset

@@ -8,7 +8,7 @@
 import numpy as np
 
 
-def calculate_metrics(y_true, y_pred, metrics):
+def calculate_metrics(y_true: list, y_pred: list, metrics: list[str]) -> dict:
     """
     Calculate the metrics for the given y_true and y_pred
 
