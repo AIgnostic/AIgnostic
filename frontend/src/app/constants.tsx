@@ -29,9 +29,13 @@ const steps = [
   ];
   
   
-  const metrics = ['Accuracy', 'Precision', 'Recall'];
+  const generalMetrics = ['Accuracy', 'Precision', 'Recall'];
   const BACKEND_URL = 'http://localhost:8000/evaluate';
 
-  const modelTypes = ['Classification', 'Regression'];
+  const modelTypesToMetrics: { [key: string]: string[] } = {
+    'Classification': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC'],
+    'Regression': ['Mean Absolute Error', 'Mean Squared Error', 'R-squared', 'Root Mean Squared Error'],
+    'Binary Classifier': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC', 'Confusion Matrix']
+  };
 
-  export { steps, metrics, BACKEND_URL, AIGNOSTIC, HOME, modelTypes};
+  export { steps, BACKEND_URL, AIGNOSTIC, HOME, modelTypesToMetrics, generalMetrics};

@@ -20,7 +20,10 @@ def calculate_metrics(y_true, y_pred, metrics):
     try:
         results = {}
         for metric in metrics:
-            results[metric] = globals()[metric](np.array(y_true), np.array(y_pred))
+            if metric in globals():
+                results[metric] = globals()[metric](np.array(y_true), np.array(y_pred))
+            else:
+                results[metric] = 1  # Placeholder value for remaining metrics.
 
         return results
     except Exception as e:

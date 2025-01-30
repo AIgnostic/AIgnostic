@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import checkURL from './utils';
 import Dropdown from './components/dropdown';
-import { metrics, steps, BACKEND_URL, modelTypes } from './constants';
+import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics } from './constants';
 import Title from './components/title';
 import styles from './home.styles';
 import {
@@ -31,7 +31,7 @@ function Homepage() {
     isDatasetURLValid: true,
     activeStep: 0,
     selectedItem: '',
-    metricChips: metrics.map((metric) => ({
+    metricChips: generalMetrics.map((metric) => ({
       id: metric,
       label: metric,
       selected: true,
@@ -143,19 +143,20 @@ function Homepage() {
   const [selectedItem, setSelectedItem] = useState('');
 
   function handleModelTypeChange(value: string) {
-    if (value === 'Classification') {
-      setStateWrapper("metricChips", metrics.map((metric) => ({
+    if (value in modelTypesToMetrics) {
+      setStateWrapper("metricChips", modelTypesToMetrics[value].map((metric) => ({
         id: metric,
         label: metric,
         selected: true,
       })));
     } else {
-      setStateWrapper("metricChips", metrics.map((metric) => ({
+      setStateWrapper("metricChips", generalMetrics.map((metric) => ({
         id: metric,
         label: metric,
-        selected: metric === 'Accuracy',
+        selected: true,
       })));
     }
+  
   }
   return (
     <Box sx={[styles.container]}>
@@ -218,30 +219,29 @@ function Homepage() {
               {/* 2. SELECT MODEL TYPE */}
               {index === 1 && (
                 <Box style={{ padding: '15px' }}>
-                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
-
-                  {/* Radio Button Group for Model Selection */}
-                  <FormControl component="fieldset">
-                    <FormLabel component="legend">Select Model Type</FormLabel>
-                    <RadioGroup
-                      value={state.selectedModelType}
-                      onChange={
-                        (event) => {
-                          handleModelTypeChange(event.target.value);
-                          setStateWrapper("selectedModelType", event.target.value)
-                        }}
-                    >
-                      {modelTypes.map((modelType) => (
-                        <FormControlLabel
-                          key={modelType}
-                          value={modelType}
-                          control={<Radio color="primary" />}
-                          label={modelType}
-                        />
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                </Box>
+                <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
+              
+                {/* Radio Button Group for Model Selection */}
+                <FormControl component="fieldset">
+                  <FormLabel component="legend">Select Model Type</FormLabel>
+                  <RadioGroup
+                    value={state.selectedModelType}
+                    onChange={(event) => {
+                      handleModelTypeChange(event.target.value);
+                      setStateWrapper("selectedModelType", event.target.value);
+                    }}
+                  >
+                    {Object.keys(modelTypesToMetrics).map((modelType) => (
+                      <FormControlLabel
+                        key={modelType}
+                        value={modelType}
+                        control={<Radio color="primary" />}
+                        label={modelType}
+                      />
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+              </Box>
               )}
 
                 
