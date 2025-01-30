@@ -1,3 +1,5 @@
+from aignostic.pydantic_models.metric_models import CalculateRequest, MetricsInfo, MetricValues
+
 """
     This module contains the implementation of various metrics
     For now this is a placeholder for the metrics implementation
@@ -7,7 +9,7 @@
 
 import numpy as np
 from abc import abstractmethod
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 metrics_app = FastAPI()
 
@@ -17,14 +19,14 @@ task_to_metric_map = {
     "regression": []
 }
 
-@metrics_app.get("/retrieve-metric-info")
-def retrieve_info():
-    
-    pass
+
+@metrics_app.get("/retrieve-metric-info", response_model=MetricsInfo)
+def retrieve_info() -> MetricsInfo:
+    return MetricsInfo(task_to_metric_map=task_to_metric_map)
 
 
-@metrics_app.get("/calculate-metrics")
-def calculate_metrics(y_true, y_pred, metrics):
+@metrics_app.post("/calculate-metrics")
+def calculate_metrics(info: CalculateRequest):
     """
     Calculate the metrics for the given y_true and y_pred
 
@@ -33,66 +35,36 @@ def calculate_metrics(y_true, y_pred, metrics):
         y_pred: list of predicted labels
         metrics: list of metric functions e.g. "accuracy", "precision"
     """
+    results = {}
+    for metric in info.metrics:
+        results[metric] = metric_to_fn[metric](metric, info)
+    return MetricValues(metric_values=results)
+
+
+class MetricsException(HTTPException):
+    def __init__(self, name, additional_context=None):
+        detail = f"Error during metric calculation: {name}"
+        if additional_context:
+            detail += f"\n{additional_context}"
+        super().__init__(
+            status_code=500,
+            detail=detail
+        )
+
+
+def accuracy(name, info: CalculateRequest):
     try:
-        results = {}
-        for metric in metrics:
-            results[metric] = globals()[metric](np.array(y_true), np.array(y_pred))
-
-        return results
+        return (info.true_labels == info.predicted_labels).mean()
     except Exception as e:
-        print("Error while calculating metrics:", e)
-        return None
+        # Catch exceptions generally for now rather than specific ones
+        raise MetricsException(name, additional_context=str(e))
 
 
-class Metric():
-    def __init__(self, name, method):
-        self.name = name
-        self.method = method
-        self.value = None
-    
-    @abstractmethod
-    def calculate(self, *args, **kwargs):
-        pass
+metric_to_fn = {
+    "accuracy": accuracy#,
+    # "precision": precision
+}
 
-
-class BinaryClassificationMetric(Metric):
-    def __init__(self, name, calculate_fn):
-        super().__init__(name)
-        self.calculate_fn = calculate_fn
-        self.value = None
-    
-    @abstractmethod
-    def calculate(self, y_true, y_pred):
-        """
-        Calculate the metric for the given y_true and y_pred
-        @param y_true: list of true labels
-        @param y_pred: list of predicted labels
-        """
-        self.value = self.calculate_fn(y_true, y_pred)
-        return self.value
-
-
-accuracy = BinaryClassificationMetric(
-    "accuracy",
-    lambda y_true, y_pred: (y_true == y_pred).mean()
-)    
-
-
-precision = BinaryClassificationMetric(
-    "precision",
-    lambda y_true, y_pred: per_class_precision(y_true, y_pred, 1)
-)
-
-
-
-
-def accuracy(y_true, y_pred):
-    return (y_true == y_pred).mean()
-
-
-def precision(y_true, y_pred):
-    precisions = [per_class_precision(y_true, y_pred, c) for c in np.unique(y_true)]
-    return np.mean(precisions)
 
 
 def recall(y_true, y_pred):
@@ -110,3 +82,7 @@ def per_class_precision(y_true, y_pred, c):
     tp = ((y_true == c) & (y_pred == c)).sum()
     fp = ((y_true != c) & (y_pred == c)).sum()
     return tp / (tp + fp)
+
+# def precision(y_true, y_pred):
+#     precisions = [per_class_precision(y_true, y_pred, c) for c in np.unique(y_true)]
+#     return np.mean(precisions)

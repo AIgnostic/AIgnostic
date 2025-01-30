@@ -1,4 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+from typing import Optional
+import numpy as np
+from aignostic.pydantic_models.utils import nested_list_to_np
+
 
 class MetricsInfo(BaseModel):
     """
@@ -7,11 +11,24 @@ class MetricsInfo(BaseModel):
     tasks_to_metric_map: dict[str, list]
 
 
-class MetricRequest(BaseModel):
+class CalculateRequest(BaseModel):
     """
-    Format to send metrics info request
+    task_type: Type of task for which metric is calculated
+    calculation_info: Data required to calculate metrics .e.g. true vs predicted
     """
-    task_type: str
+    metrics: list[str]
+    true_labels: Optional[list[list]]
+    predicted_labels: Optional[list[list]]
+    
+    # Convert the 'true_labels' and 'predicted_labels' into np.arrays
+    @validator('true_labels', pre=False, always=True)
+    def convert_to_np_arrays(cls, v):
+        return nested_list_to_np(v)
+    
+        # Convert the 'true_labels' and 'predicted_labels' into np.arrays
+    @validator('predicted_labels', pre=False, always=True)
+    def convert_to_np_arrays(cls, v):
+        return nested_list_to_np(v)
 
 
 class MetricValues(BaseModel):
