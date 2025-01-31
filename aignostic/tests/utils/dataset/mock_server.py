@@ -63,6 +63,7 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
 async def invalid_data_format():
     return {"features": [[1, 2], [3, 4, 5]], "labels": [[1, 2], [3, 4]], "group_ids": [1, 2]}
 
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=5000)

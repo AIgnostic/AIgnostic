@@ -73,11 +73,11 @@ const styles = {
     },
     errorMessageContainer: {
         '& .MuiPaper-root': {
-        borderRadius: '10px',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-        padding: '20px',
-        minWidth: '300px',
-        backgroundColor: theme.palette.secondary.main,
+            borderRadius: '10px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+            padding: '20px',
+            minWidth: '300px',
+            backgroundColor: theme.palette.secondary.main,
         },
     }
 

@@ -5,9 +5,7 @@ from aignostic.pydantic_models.data_models import ModelInput, FetchDatasetReques
 from aignostic.dataset.validate_dataset_api import fetch_dataset
 from aignostic.metrics.metrics import calculate_metrics
 
-
 api = APIRouter()
-
 
 class EvaluateModelRequest(BaseModel):
     dataset_url: HttpUrl
@@ -15,7 +13,6 @@ class EvaluateModelRequest(BaseModel):
     model_url: HttpUrl
     model_api_key: str
     metrics: list[str]
-
 
 class EvaluateModelResponse(BaseModel):
     message: str = "Data successfully received"
@@ -68,7 +65,74 @@ def query_model(modelURL: HttpUrl, modelAPIKey: str, data: ModelInput) -> dict:
             detail=e.response.json()["detail"],
         )
 
+    check_model_response(response, data["labels"])
+
     try:
         return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not parse model response - {e}; response = {response.text}")
+
+
+# TODO: Write a doc explaining error messages and what checking is/isn't supported
+def check_model_response(response, labels):
+    """
+    PRE: response is received from a deserialised pydantic model and labels and types
+    have been enforced according to ModelOutput.
+    ASSUME: Labels are always correct / have already been validated previously
+
+    Helper function to check the response from the model API and ensure validity compared to data
+
+    Checks are ordered in terms of complexity and computational cost, with the most
+    computationally expensive towards the end.
+
+    Params:
+    - response : Response object from the model API
+    """
+    predictions = response.json()["predictions"]
+    if len(predictions) != len(labels):
+        raise HTTPException(
+            detail="Number of model outputs does not match expected number of labels",
+            status_code=400
+        )
+
+    if len(labels) >= 0:
+        if len(predictions[0]) != len(labels[0]):
+            raise HTTPException(
+                detail="Number of attributes predicted by model does not match number of target attributes",
+                status_code=400
+            )
+
+        for col_index in range(len(labels[0])):
+            if not isinstance(predictions[0][col_index], type(labels[0][col_index])):
+                raise HTTPException(
+                    detail="Model output type does not match target attribute type",
+                    status_code=400
+                )
+    """
+    TODO: Evaluate if this check is necessary -> O(n) complexity where n is number
+    of datapoints.
+    (As opposed to O(1) complexity or O(d) complexity for above checks)
+    """
+    num_attributes = len(labels[0])
+    for row in predictions[1:]:
+        if len(row) != num_attributes:
+            raise HTTPException(
+                detail="Inconsistent number of attributes for each datapoint predicted by model",
+                status_code=400
+            )
+
+    """
+    TODO: Evaluate if this check is necessary -> O(n*d) complexity where n is number
+    of datapoints in batch and d is number of attributes being predicted.
+    (As opposed to O(1) complexity or O(d) complexity for above checks)
+    """
+    for col_index in range(len(predictions[0])):
+        col_type = type(labels[0][col_index])
+        for row_index in range(len(predictions)):
+            if not isinstance(predictions[row_index][col_index], col_type):
+                raise HTTPException(
+                    detail="All columns for an output label should be of the same type",
+                    status_code=400
+                )
+
+    return

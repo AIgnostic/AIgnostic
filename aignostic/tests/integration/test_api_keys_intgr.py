@@ -29,7 +29,9 @@ def run_servers():
     def start_server(server):
         server.run()
 
-    threads = [Thread(target=start_server, args=(server,)) for server in [data_server, model_server, app_server]]
+    threads = [Thread(target=start_server, args=(server,), daemon=True)
+               for server in [data_server, model_server, app_server]]
+
     for thread in threads:
         thread.start()
 

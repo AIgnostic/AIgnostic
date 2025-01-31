@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Depends
 import numpy as np
 from sklearn.pipeline import Pipeline
-from tests.utils.api_utils import get_model_api_key
 import pickle
+from tests.utils.api_utils import get_model_api_key
 from aignostic.pydantic_models.data_models import ModelInput, ModelResponse
 import os
 from fastapi import HTTPException
