@@ -115,7 +115,8 @@ describe('API Calls', () => {
   });
   
 
-  test('handleSubmit success scenario', async () => {
+  it('downloads a report on successful response from handleSubmit', async () => {
+    // Mock a successful response from the API
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue({ results: { metric1: 0.8, metric2: 0.9 } }),
@@ -135,6 +136,9 @@ describe('API Calls', () => {
     fireEvent.click(screen.getAllByText('Next')[2]);
     fireEvent.click(screen.getByText('Generate Report'));
   
+    // Check that API call was made
+    // That a clickable link was created (creates a download link)
+    // And that the link was clicked (i.e. the report was downloaded)
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(expect.any(String), expect.any(Object));
       expect(global.URL.createObjectURL).toHaveBeenCalled();
@@ -142,7 +146,7 @@ describe('API Calls', () => {
     });
   });
 
-  test('handleSubmit failure scenario', async () => {
+  it('displays an error message upon failure response from API call', async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 500,

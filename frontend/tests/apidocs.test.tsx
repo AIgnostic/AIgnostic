@@ -8,7 +8,7 @@ jest.mock('@mui/material/Accordion', () => (props) => <div data-testid="mock-acc
 jest.mock('@mui/material/AccordionSummary', () => (props) => <div data-testid="mock-accordion-summary" {...props} />);
 jest.mock('@mui/material/AccordionDetails', () => (props) => <div data-testid="mock-accordion-details" {...props} />);
 jest.mock('@mui/icons-material/ExpandMore', () => () => <div data-testid="mock-expand-more-icon" />);
-jest.mock('react-markdown', () => ({ children, components }: any) => (
+jest.mock('react-markdown', () => ({ children }: any) => (
   <div data-testid="mock-markdown">{children}</div>
 ));
 jest.mock('../src/app/components/CodeBox', () => ({ language, codeSnippet }: any) => (
@@ -31,7 +31,7 @@ describe('APIDocs', () => {
     'file3.md': 'No title\nJust content',
   });
 
-  it('renders correctly with markdown files', () => {
+  it('correctly renders Markdown titles', () => {
     render(<APIDocs getMarkdownFiles={mockGetMarkdownFiles} />);
 
     expect(screen.getByText('MockAIGNOSTIC | API Documentation')).toBeInTheDocument();
@@ -40,7 +40,7 @@ describe('APIDocs', () => {
     expect(screen.getByText('No title found')).toBeInTheDocument();
   });
 
-  it('renders markdown content correctly', () => {
+  it('correctly renders Markdown text content', () => {
     render(<APIDocs getMarkdownFiles={mockGetMarkdownFiles} />);
 
     const markdowns = screen.getAllByTestId('mock-markdown');
@@ -50,7 +50,7 @@ describe('APIDocs', () => {
     expect(markdowns[2].textContent).toBe('No title\nJust content');
   });
 
-  it('handles empty markdown files', () => {
+  it('correctly handles empty markdown files (i.e. nothing rendered nothing displayed)', () => {
     const emptyMockGetMarkdownFiles = () => ({});
     render(<APIDocs getMarkdownFiles={emptyMockGetMarkdownFiles} />);
 
@@ -58,7 +58,10 @@ describe('APIDocs', () => {
     expect(screen.queryByTestId('mock-markdown')).not.toBeInTheDocument();
   });
 
-  it('renders the accordion components', () => {
+  // TODO: Add tests for the CodeBox component
+  // i.e. it ('correctly renders Markdown code ', () => { ... });
+
+  it('renders the accordion components i.e. wrapper, summary and details', () => {
     render(<APIDocs getMarkdownFiles={mockGetMarkdownFiles} />);
 
     expect(screen.getAllByTestId('mock-accordion')).toHaveLength(3);
