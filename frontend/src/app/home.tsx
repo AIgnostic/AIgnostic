@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import checkURL from './utils';
+import { checkURL, generateReportText } from './utils';
 import Dropdown from './components/dropdown';
 import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics } from './constants';
 import Title from './components/title';
-import styles from './home.styles';
+import { styles } from './home.styles';
 import ErrorMessage from './components/ErrorMessage';
-import jsPDF from 'jspdf';
 import {
   Box, 
   Button, 
@@ -43,63 +42,7 @@ function Homepage() {
     error: false,
     errorMessage: { header: '', text: '' },
   });
-
-function generateReportText(user_info: any, results: any, legislation_quotes: any, llm_model_summary: any) {
-    const doc = new jsPDF();
-    let y = 20; // Initial y position
-
-    // **Title**
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("AIgnostic Report", 105, y, { align: "center" });
-    y += 10;
-
-    // **Helper function to add sections with bold headers**
-    function addSection(title: string, content: string | string[], isBullet = false) {
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text(title, 10, y);
-        y += 6;
-        doc.setFont("helvetica", "normal");
-
-        if (Array.isArray(content)) {
-            content.forEach((line) => {
-                const wrappedText = doc.splitTextToSize(isBullet ? `• ${line}` : line, 180);
-                doc.text(wrappedText, 15, y);
-                y += wrappedText.length * 6;
-            });
-        } else {
-            const wrappedText = doc.splitTextToSize(content, 180);
-            doc.text(wrappedText, 15, y);
-            y += wrappedText.length * 6;
-        }
-
-        y += 4; // Extra spacing
-    }
-
-    // **Model & Dataset URLs**
-    addSection("Model API URL:", user_info.model_url);
-    addSection("Dataset API URL:", user_info.data_url);
-
-    // **Metrics Results**
-    addSection(
-        "Metrics Results:",
-        Object.entries(results).map(([metric, value]) => `${metric}: ${value}`),
-        true
-    );
-
-    // **Legislation Quotes**
-    addSection(
-        "List of Legislation Quotes:",
-        legislation_quotes.length === 0 ? ["No legislation quotes found"] : legislation_quotes,
-        true
-    );
-
-    // **LLM Model Summary**
-    addSection("LLM Model Summary:", llm_model_summary);
-
-    return doc;
-  }
+  
 
     
   const getValues = {
@@ -156,8 +99,8 @@ function generateReportText(user_info: any, results: any, legislation_quotes: an
         "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
           .map((metricChip: { label: string; selected: boolean }) => (metricChip.label).toLowerCase())
       };
-
-      // send POST request to backend server
+  
+      // Send POST request to backend server
       fetch(BACKEND_URL, {
         method: 'POST',
         headers: {
@@ -170,20 +113,18 @@ function generateReportText(user_info: any, results: any, legislation_quotes: an
             console.log(`HTTP error! status: ${response.status}`);
             setStateWrapper("error", true);
             response.json().then((data) => {
-              setStateWrapper("errorMessage", {header:`Error ${response.status}`, text:`${data.detail}`});
+              setStateWrapper("errorMessage", { header: `Error ${response.status}`, text: `${data.detail}` });
             });
-
+  
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           return response.json();
         })
         .then((data) => {
           const results = data["results"];
-          const legislation_quotes = data["legislation_quotes"] || [];
-          const llm_summary = data["llm_summary"];  
-          const doc = generateReportText(user_info, results, legislation_quotes, llm_summary);
+          const doc = generateReportText(results);
           doc.save('AIgnostic_Report.pdf');
-      })
+        })
         .catch((error) => {
           console.error("Error during fetch:", error.message);
         });
