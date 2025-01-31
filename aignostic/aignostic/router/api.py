@@ -2,9 +2,16 @@ from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
 import requests
 import aignostic.metrics.metrics as metrics_lib
+import pika 
+import json
 
+
+RABBIT_MQ_HOST = 'localhost'
 
 api = APIRouter()
+connection = pika.BlockingConnection(pika.ConnectionParameters(RABBIT_MQ_HOST))
+channel = connection.channel()
+channel.queue_declare(queue='job_queue')
 
 
 class DatasetRequest(BaseModel):
@@ -36,44 +43,52 @@ def info():
 async def process_data(request: DatasetRequest):
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
-    - Passes to data endpoint and fetch data
-    - Process the data in preparation for passing to the model
-    - Pass to the model, and get the predicitons
-
+    - Dispatches jobs to job_queue
+    - Workers will handle the jobs and return the results
     Params:
     - datasetURL : API URL of the dataset
     - modelURL : API URL of the model
     - metrics: list of metrics that should be applied
     """
+
+    # Dispatch job to the model
+    try :
+
+        dispatch_job(10, request.metrics)
+
+    # TODO: Move this logic to workers
     # fetch data from datasetURL
-    data: dict = await fetch_data(request.data_url, request.data_api_key)
+    # data: dict = await fetch_data(request.data_url, request.data_api_key)
 
-    # strip the label from the datapoint
-    try:
-        features = data["features"]
-        labels = data["labels"]
-        group_ids = data["group_ids"]
-    except KeyError:
-        raise HTTPException(status_code=500, detail="KeyError occurred during data processing")
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error while processing data")
+    # # strip the label from the datapoint
+    # try:
+    #     features = data["features"]
+    #     labels = data["labels"]
+    #     group_ids = data["group_ids"]
+    # except KeyError:
+    #     raise HTTPException(status_code=500, detail="KeyError occurred during data processing")
+    # except Exception:
+    #     raise HTTPException(status_code=500, detail="Error while processing data")
 
-    # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
-    predictions = await query_model(
-        request.model_url,
-        {
-            "features": features,
-            "labels": labels,
-            "group_ids": group_ids
-        },
-        request.model_api_key
-    )
+    # # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
 
-    try:
-        predicted_labels = predictions["predictions"]
-        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, request.metrics)
+    # # predictions = await query_model(
+    #     request.model_url,
+    #     {
+    #         "features": features,
+    #         "labels": labels,
+    #         "group_ids": group_ids
+    #     },
+    #     request.model_api_key
+    # )
+
+    # try:
+    #     predicted_labels = predictions["predictions"]
+    #     metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, request.metrics)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
+
+    metrics_results = "LOLLLL"
 
     return metrics_results
 
@@ -204,3 +219,17 @@ def check_model_response(response, labels):
                 )
 
     return
+
+
+def dispatch_job(batch_size: int, metric: list[str]):
+    """
+    Function to dispatch a job to the model
+    """
+    job_json = {
+        "batch_size": batch_size,
+        "metric": metric
+    }
+    message = json.dumps(job_json)
+    channel.basic_publish(exchange='', routing_key='job_queue', body=message)
+
+

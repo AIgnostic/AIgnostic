@@ -1,19 +1,38 @@
 services:
-  frontend:
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: ./frontend/Dockerfile
+  #   ports:
+  #     - "4200:4200" # Map container port 4200 to host port 4200
+  #   volumes:
+  #     - ./frontend/src:/app/src
+  #     - ./frontend/public:/app/public
+  # backend_api:
+  #   image: node:20-bullseye
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - .:/app
+  #   working_dir: /app
+  #   command: npx nx serve aignostic
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+  worker:
     build:
       context: .
-      dockerfile: ./frontend/Dockerfile
-    ports:
-      - "4200:4200" # Map container port 4200 to host port 4200
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-  backend_api:
-    image: node:20-bullseye
-    ports:
-      - "8000:8000"
+      dockerfile: ./aignostic/Dockerfile.worker
     volumes:
       - .:/app
-    working_dir: /app
-    command: npx nx serve aignostic
+    working_dir: /app/aignostic
+    command: "python test_consumer.py && echo 'Worker is running'"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    deploy:
+      replicas: 10
 
