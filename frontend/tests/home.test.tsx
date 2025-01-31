@@ -4,7 +4,7 @@ import Homepage from '../src/app/home';
 import { steps } from '../src/app/constants';
 import '@testing-library/jest-dom';
 import checkURL from '../src/app/utils';
-
+import { modelTypesToMetrics, generalMetrics } from '../src/app/constants';
 
 
 describe('Stepper Navigation', () => {
@@ -173,3 +173,70 @@ describe('API Calls', () => {
     
   });
 });
+describe('Model Type Selection', () => {
+  it('should update metricChips based on selected model type', () => {
+    render(<Homepage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
+
+    fireEvent.click(screen.getByLabelText('Classification')); // Assuming 'Model Type 1' is a valid model type
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    const expectedMetrics = modelTypesToMetrics['Classification'];
+    console.log(expectedMetrics)
+    expectedMetrics.forEach((metric) => {
+      expect(screen.getByText(metric)).toBeInTheDocument();
+    });
+  });
+
+  it('should reset metricChips to generalMetrics if selected model type is not in modelTypesToMetrics', () => {
+    render(<Homepage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    fireEvent.click(screen.getAllByText('Next')[0]);
+
+    generalMetrics.forEach((metric) => {
+      expect(screen.getByText(metric)).toBeInTheDocument();
+    });
+  });
+});
+describe('Model Type Selection', () => {
+  it('should update metricChips based on selected model type', () => {
+    render(<Homepage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
+
+    fireEvent.click(screen.getByLabelText('Classification')); // Assuming 'Classification' is a valid model type
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    const expectedMetrics = modelTypesToMetrics['Classification'];
+    expectedMetrics.forEach((metric) => {
+      expect(screen.getByText(metric)).toBeInTheDocument();
+    });
+  });
+
+  it('should reset metricChips to generalMetrics if selected model type is not in modelTypesToMetrics', () => {
+    render(<Homepage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    fireEvent.click(screen.getAllByText('Next')[0]);
+
+    generalMetrics.forEach((metric) => {
+      expect(screen.getByText(metric)).toBeInTheDocument();
+    });
+  });
+
+  it('should update selectedModelType state on radio button change', () => {
+    render(<Homepage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
+
+    const radio = screen.getByLabelText('Classification');
+    fireEvent.click(radio);
+
+    expect(radio).toBeChecked();
+  });
+});
+

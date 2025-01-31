@@ -240,7 +240,6 @@ function Homepage() {
                 <Box style={{ padding: '15px' }}>
                 <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
               
-                {/* Radio Button Group for Model Selection */}
                 <FormControl component="fieldset">
                   <FormLabel component="legend">Select Model Type</FormLabel>
                   <RadioGroup

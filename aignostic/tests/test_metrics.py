@@ -2,6 +2,16 @@ import numpy as np
 from aignostic.metrics.metrics import calculate_metrics
 
 
+def test_placeholder():
+    y_true = np.array([1, 0, 1, 1, 0, 1, 0, 0])
+    y_pred = np.array([1, 0, 1, 0, 0, 1, 1, 0])
+
+    metrics = ["F1-score", "explainability", "ROI score"]
+    results = calculate_metrics(y_true, y_pred, metrics)
+    assert "F1-score" in results and results["F1-score"] == 1
+    assert "explainability" in results and results["explainability"] == 1
+    assert "ROI score" in results and results["ROI score"] == 1
+    
 def test_calculate_metrics():
     """
         Test calculate_metrics calls all metrics
