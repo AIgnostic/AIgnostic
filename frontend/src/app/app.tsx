@@ -1,12 +1,12 @@
 // Uncomment this line to use CSS modules
 // import styles from './app.module.css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import Homepage from './home';
-import APIDocs from './api_docs';
-import {AIGNOSTIC, HOME} from './constants';
+import { AIGNOSTIC, HOME } from './constants';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
+import Homepage from './home';
+import APIDocs from './api_docs';
 import { MarkdownFiles } from './types';
 
 export function App() {

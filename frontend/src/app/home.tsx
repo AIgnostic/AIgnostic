@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import checkURL from './utils';
 import Dropdown from './components/dropdown';
-import { metrics, steps, BACKEND_URL } from './constants';
+import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics } from './constants';
 import Title from './components/title';
 import styles from './home.styles';
 import ErrorMessage from './components/ErrorMessage';
@@ -16,6 +16,11 @@ import {
   StepLabel,
   StepContent,
   Typography,
+  FormControl,
+  RadioGroup,
+  FormLabel,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 
 function Homepage() {
@@ -28,12 +33,13 @@ function Homepage() {
     isDatasetURLValid: true,
     activeStep: 0,
     selectedItem: '',
-    metricChips: metrics.map((metric) => ({
+    metricChips: generalMetrics.map((metric) => ({
       id: metric,
       label: metric,
       selected: true,
     })),
     metricsHelperText: '',
+    selectedModelType: '',
     error: false,
     errorMessage: { header: '', text: '' },
   });
@@ -145,6 +151,22 @@ function Homepage() {
   const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
   const [selectedItem, setSelectedItem] = useState('');
 
+  function handleModelTypeChange(value: string) {
+    if (value in modelTypesToMetrics) {
+      setStateWrapper("metricChips", modelTypesToMetrics[value].map((metric) => ({
+        id: metric,
+        label: metric,
+        selected: true,
+      })));
+    } else {
+      setStateWrapper("metricChips", generalMetrics.map((metric) => ({
+        id: metric,
+        label: metric,
+        selected: true,
+      })));
+    }
+  }
+
   return (
     <Box sx={[styles.container]}>
 
@@ -213,9 +235,36 @@ function Homepage() {
              </Box>
                      
               )}
+              {/* 2. SELECT MODEL TYPE */}
+              {index === 1 && (
+                <Box style={{ padding: '15px' }}>
+                <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
+              
+                <FormControl component="fieldset">
+                  <FormLabel component="legend">Select Model Type</FormLabel>
+                  <RadioGroup
+                    value={state.selectedModelType}
+                    onChange={(event) => {
+                      handleModelTypeChange(event.target.value);
+                      setStateWrapper("selectedModelType", event.target.value);
+                    }}
+                  >
+                    {Object.keys(modelTypesToMetrics).map((modelType) => (
+                      <FormControlLabel
+                        key={modelType}
+                        value={modelType}
+                        control={<Radio color="primary" />}
+                        label={modelType}
+                      />
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+              </Box>
+              )}
+
                 
               {/* 3. SELECT METRICS */}
-              {index === 2 && (
+              {index === 3 && (
                 <Box style={{ padding: '15px' }}>
                   <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
                   {state.metricChips.map((metricChip, index) => (
@@ -230,7 +279,7 @@ function Homepage() {
                       onClick={() => {
                         metricChip.selected = !metricChip.selected;
                         setStateWrapper("metricChips", [...state.metricChips]);
-                      }}
+                      }} 
                       color={metricChip.selected ? 'primary' : 'default'}
                       style={{ margin: '5px' }}
                     />
