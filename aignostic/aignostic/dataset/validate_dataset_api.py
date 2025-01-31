@@ -7,7 +7,32 @@ import uvicorn
 app = FastAPI()
 
 
-@app.get("/fetch-data")
+def validate_dataset_format(data_to_validate: dict) -> ModelInput:
+    try:
+        data = ModelInput(**data_to_validate)
+    except ValidationError as e:
+        raise ValueError(f"Data format is invalid: {e}")
+
+    features, labels, group_ids = data.features, data.labels, data.group_ids
+
+    # Validate all lists have the same length
+    if not (len(features) == len(labels) == len(group_ids)):
+        raise ValueError("Features, labels, and group_ids must have the same number of rows.")
+
+    # Validate inner list consistency in a single loop
+    feature_length = len(features[0]) if features else 0
+    label_length = len(labels[0]) if labels else 0
+
+    for f_row, l_row in zip(features, labels):
+        if len(f_row) != feature_length:
+            raise ValueError("All feature rows must have the same number of elements.")
+        if len(l_row) != label_length:
+            raise ValueError("All label rows must have the same number of elements.")
+
+    return data
+
+
+@app.post("/fetch-data")
 def fetch_dataset(request: FetchDatasetRequest) -> ModelInput:
     """
     Validate a dataset URL and parse the data to be used in the model.
@@ -22,15 +47,17 @@ def fetch_dataset(request: FetchDatasetRequest) -> ModelInput:
         response.raise_for_status()
 
         data = response.json()
-        return ModelInput(**data)
+        return validate_dataset_format(data)
     except requests.exceptions.RequestException as e:
         if response.status_code == 401:
             raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
-        raise HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid data format: {e}")
+        elif response.status_code == 404:
+            raise HTTPException(status_code=404, detail="Data not found")
+        raise HTTPException(status_code=response.status_code, detail=f"Error while fetching data: {e}")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Error while validating data: {e}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
+        raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
 
 if __name__ == "__main__":
