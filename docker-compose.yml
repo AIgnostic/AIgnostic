@@ -5,8 +5,7 @@ services:
       dockerfile: ./frontend/Dockerfile
     volumes:
       - .:/app
-    command: npx nx serve frontend --host 0.0.0.0
-    working_dir: /app
+    command: npx nx serve frontend --host 0.0.0.0 --verbose
     ports:
       - '4200:4200'
   backend:
@@ -19,24 +18,23 @@ services:
     volumes:
       - .:/app
       - .venv:/app/aignostic/.venv
-    working_dir: /app
     ports:
       - '8000:8000'
-    command: npx nx serve aignostic --host 0.0.0.0
+    command: npx nx serve aignostic --host 0.0.0.0 --verbose
   # Mock server
-#   mock_dataset_api:
-#     build:
-#       context: .
-#       dockerfile: ./aignostic/Dockerfile.dev
-#       args:
-#         DEPGROUP: main,dataset
-#     volumes:
-#       - .:/app
-#       - venv:/app/aignostic/venv
-#     command: npx nx mock-dataset aignostic --host 0.0.0.0
-#     working_dir: /app
-#     ports:
-#       - '5000:5000'
+  # mock_dataset_api:
+  #   build:
+  #     context: .
+  #     dockerfile: ./aignostic/Dockerfile.dev
+  #     args:
+  #       DEPGROUP: main,dataset
+  #   volumes:
+  #     - .:/app
+  #     - .venv:/app/aignostic/.venv
+  #   command: npx nx mock-dataset aignostic --host 0.0.0.0
+  #   working_dir: /app
+  #   ports:
+  #     - '5000:5000'
 #   mock_model_api:
 #     build:
 #       context: .
