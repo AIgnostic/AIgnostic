@@ -127,7 +127,6 @@ describe('API Calls', () => {
     
     render(<Homepage />);
 
-  
     // Simulate entering valid URLs and navigating to the report generation step
     fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
     fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
@@ -147,18 +146,15 @@ describe('API Calls', () => {
   });
 
   it('displays an error message upon failure response from API call', async () => {
+    // Mock a failed response from the API
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 500,
       json: jest.fn().mockResolvedValue({ detail: 'Internal server error' }),
     });
   
-    // Spy on ErrorMessage component
-    // const errorMessageSpy = jest.spyOn(ErrorMessage, 'default');
-    
     render(<Homepage />);
 
-  
     // Simulate entering valid URLs and navigating to the report generation step
     fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
     fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
@@ -167,7 +163,6 @@ describe('API Calls', () => {
     fireEvent.click(screen.getAllByText('Next')[2]);
     fireEvent.click(screen.getByText('Generate Report'));
   
-    
     // check that error message is displayed
     // with the correct error message
     await waitFor(() => {
