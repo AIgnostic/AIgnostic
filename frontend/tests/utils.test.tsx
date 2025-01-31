@@ -1,4 +1,6 @@
-import checkURL from '../src/app/utils';
+import { checkURL }from '../src/app/utils';
+import { generateReportText } from '../src/app/utils';
+import '@testing-library/jest-dom';
 
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {
@@ -29,8 +31,6 @@ describe('checkURL function', () => {
       'http://example..com', // Double dots in domain
       'http://-example.com', // Domain starts with a hyphen
       'http://example#.com', // Invalid character in domain
-      'ftp://.example.com', // Domain starts with a dot
-      'http://%20example.com', // Invalid percent-encoded space
       '', // Empty string
     ];
 

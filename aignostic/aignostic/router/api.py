@@ -23,7 +23,10 @@ async def generate_metrics_from_info(request: DatasetRequest):
     """
     results = await process_data(request)
 
-    return {"message": "Data successfully received", "results": results}
+    return {
+        "message": "Data successfully received",
+        "results": results,
+    }
 
 
 # Sanity check endpoint
@@ -72,10 +75,19 @@ async def process_data(request: DatasetRequest):
     try:
         predicted_labels = predictions["predictions"]
         metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, request.metrics)
+        results = []
+        for metric, value in metrics_results.items():
+            results.append(
+                {
+                    "metric": metric,
+                    "result": value,
+                    "legislation_results": ["Legislation placeholder for metric: " + metric],
+                    "llm_model_summary": ["LLM holder for metric: " + metric]
+                }
+            )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
-
-    return metrics_results
+    return (results)
 
 
 async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:

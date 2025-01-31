@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import checkURL from './utils';
+import { checkURL, generateReportText } from './utils';
 import Dropdown from './components/dropdown';
 import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics } from './constants';
 import Title from './components/title';
-import styles from './home.styles';
+import { styles } from './home.styles';
 import ErrorMessage from './components/ErrorMessage';
-
 import {
   Box, 
   Button, 
@@ -43,7 +42,9 @@ function Homepage() {
     error: false,
     errorMessage: { header: '', text: '' },
   });
+  
 
+    
   const getValues = {
     modelURL: {
       label: "Model API URL",
@@ -98,8 +99,8 @@ function Homepage() {
         "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
           .map((metricChip: { label: string; selected: boolean }) => (metricChip.label).toLowerCase())
       };
-
-      // send POST request to backend server
+  
+      // Send POST request to backend server
       fetch(BACKEND_URL, {
         method: 'POST',
         headers: {
@@ -112,32 +113,17 @@ function Homepage() {
             console.log(`HTTP error! status: ${response.status}`);
             setStateWrapper("error", true);
             response.json().then((data) => {
-              setStateWrapper("errorMessage", {header:`Error ${response.status}`, text:`${data.detail}`});
+              setStateWrapper("errorMessage", { header: `Error ${response.status}`, text: `${data.detail}` });
             });
-
+  
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           return response.json();
         })
         .then((data) => {
-          const results = data["results"]
-          // Create the text content for the file
-          const textContent = "AIgnostic Report" + "\n" +
-            "===================" + "\n" +
-            `Model API URL: ${user_info.model_url}` + "\n" +
-            `Dataset API URL: ${user_info.data_url}` + "\n" + "\n" +
-
-            "Metrics Results:" + "\n" +
-            Object.entries(results).map(([metric, value]) => {
-              return `  - ${metric}: ${value}`;
-            }).join('\n') + "\n";
-            
-          // Create a Blob and download it as a text file
-          const blob = new Blob([textContent], { type: "text/plain" });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = "AIgnostic_Report.txt";
-          link.click();
+          const results = data["results"];
+          const doc = generateReportText(results);
+          doc.save('AIgnostic_Report.pdf');
         })
         .catch((error) => {
           console.error("Error during fetch:", error.message);

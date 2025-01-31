@@ -15,10 +15,14 @@ jest.mock('../src/app/components/CodeBox', () => ({ language, codeSnippet }: any
   <div data-testid="mock-code-box">{language} - {codeSnippet}</div>
 ));
 jest.mock('../src/app/home.styles', () => ({
-  container: {},
-  accordion: {},
-  logoText: {},
+  styles: {
+    container: {},
+    accordion: {},
+    logoText: {},
+  },
+  reportStyles: {},
 }));
+
 jest.mock('../src/app/constants', () => ({
   AIGNOSTIC: 'MockAIGNOSTIC',
 }));

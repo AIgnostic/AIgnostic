@@ -83,4 +83,12 @@ const styles = {
 
 };
 
-export default styles;
+const reportStyles = {
+    title: { font: "helvetica", style: "bold", size: 24 },
+    sectionHeader: { font: "helvetica", style: "bold", size: 16 },
+    subHeader: { font: "helvetica", style: "bold", size: 14 },
+    normalText: { font: "helvetica", style: "normal", size: 12 },
+    bulletText: { font: "helvetica", style: "normal", size: 14 }
+};
+
+export { styles, reportStyles};

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Button } from '@mui/material';
-import styles from '../home.styles';
+import { styles } from '../home.styles';
 import { HOME } from '../constants';
 
 

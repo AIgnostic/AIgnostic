@@ -3,7 +3,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { solarizedlight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button, Paper, Typography } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
-import styles from '../home.styles';
+import { styles } from '../home.styles';
 
 interface CodeBoxProps {
   language: string;
