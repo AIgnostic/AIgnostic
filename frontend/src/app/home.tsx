@@ -45,27 +45,63 @@ function Homepage() {
   });
 
   function generateReportText(user_info: any, results: any, legislation_quotes: any, llm_model_summary: any) {
-        return `AIgnostic Report
-    ===================
-    Model API URL: ${user_info.model_url}
-    Dataset API URL: ${user_info.data_url}
-    
-    Metrics Results:
-    ${Object.entries(results).map(([metric, value]) => `  - ${metric}: ${value}`).join('\n')}
-    
-    List of Legislation Quotes:
-    ${legislation_quotes.length === 0
-      ? "No legislation quotes found"
-      : legislation_quotes.map((quote: string) => `  - ${quote}`).join('\n')
+    const doc = new jsPDF();
+    let y = 20; // Initial y position
+
+    // **Title**
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("AIgnostic Report", 105, y, { align: "center" });
+    y += 10;
+
+    // **Helper function to add sections with bold headers**
+    function addSection(title: string, content: string | string[], isBullet = false) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(title, 10, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
+
+        if (Array.isArray(content)) {
+            content.forEach((line) => {
+                const wrappedText = doc.splitTextToSize(isBullet ? `• ${line}` : line, 180);
+                doc.text(wrappedText, 15, y);
+                y += wrappedText.length * 6;
+            });
+        } else {
+            const wrappedText = doc.splitTextToSize(content, 180);
+            doc.text(wrappedText, 15, y);
+            y += wrappedText.length * 6;
+        }
+
+        y += 4; // Extra spacing
     }
 
-    LLM Model Summary:
-    ${llm_model_summary}
-    `;
+    // **Model & Dataset URLs**
+    addSection("Model API URL:", user_info.model_url);
+    addSection("Dataset API URL:", user_info.data_url);
+
+    // **Metrics Results**
+    addSection(
+        "Metrics Results:",
+        Object.entries(results).map(([metric, value]) => `${metric}: ${value}`),
+        true
+    );
+
+    // **Legislation Quotes**
+    addSection(
+        "List of Legislation Quotes:",
+        legislation_quotes.length === 0 ? ["No legislation quotes found"] : legislation_quotes,
+        true
+    );
+
+    // **LLM Model Summary**
+    addSection("LLM Model Summary:", llm_model_summary);
+
+    return doc;
+  }
 
     
-    
-    }
   const getValues = {
     modelURL: {
       label: "Model API URL",
@@ -144,13 +180,8 @@ function Homepage() {
         .then((data) => {
           const results = data["results"];
           const legislation_quotes = data["legislation_quotes"] || [];
-          const llm_summary = data["llm_summary"];
-          const textContent = generateReportText(user_info, results, legislation_quotes, llm_summary);
-          const doc = new jsPDF();
-          const lines = textContent.split('\n');
-          lines.forEach((line, index) => {
-          doc.text(line, 10, 10 + (index * 10));
-          });
+          const llm_summary = data["llm_summary"];  
+          const doc = generateReportText(user_info, results, legislation_quotes, llm_summary);
           doc.save('AIgnostic_Report.pdf');
       })
         .catch((error) => {
