@@ -5,7 +5,7 @@ import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics } from './const
 import Title from './components/title';
 import styles from './home.styles';
 import ErrorMessage from './components/ErrorMessage';
-
+import jsPDF from 'jspdf';
 import {
   Box, 
   Button, 
@@ -132,12 +132,12 @@ function Homepage() {
               return `  - ${metric}: ${value}`;
             }).join('\n') + "\n";
             
-          // Create a Blob and download it as a text file
-          const blob = new Blob([textContent], { type: "text/plain" });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = "AIgnostic_Report.txt";
-          link.click();
+            const doc = new jsPDF();
+            const lines = textContent.split('\n');
+            lines.forEach((line, index) => {
+            doc.text(line, 10, 10 + (index * 10));
+            });
+            doc.save('AIgnostic_Report.pdf');
         })
         .catch((error) => {
           console.error("Error during fetch:", error.message);
