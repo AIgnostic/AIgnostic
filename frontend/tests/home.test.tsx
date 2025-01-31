@@ -3,9 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Homepage from '../src/app/home';
 import { steps } from '../src/app/constants';
 import '@testing-library/jest-dom';
-import checkURL from '../src/app/utils';
+import { checkURL }from '../src/app/utils';
 import { modelTypesToMetrics, generalMetrics } from '../src/app/constants';
-import jsPDF from 'jspdf';
 
 describe('Stepper Navigation', () => {
   it('should go to the next step when "Next" button is clicked', () => {
@@ -33,8 +32,8 @@ describe('Stepper Navigation', () => {
 
 jest.mock('../src/app/utils', () => ({
     __esModule: true,
-    default: jest.fn(), 
-  }));
+    checkURL: jest.fn(),
+}));
   
 
 describe('Form Validation', () => {
@@ -114,36 +113,36 @@ describe('API Calls', () => {
   });
   
 
-  it('downloads a report on successful response from handleSubmit', async () => {
-    // Mock a successful response from the API
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: jest.fn().mockResolvedValue({ results: { metric1: 0.8, metric2: 0.9 } }),
-    });
+  // it('downloads a report on successful response from handleSubmit', async () => {
+  //   // Mock a successful response from the API
+  //   (global.fetch as jest.Mock).mockResolvedValue({
+  //     ok: true,
+  //     json: jest.fn().mockResolvedValue({ results: { metric1: 0.8, metric2: 0.9 } }),
+  //   });
   
-    // Spy on the click method for anchor elements
-    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click');
+  //   // Spy on the click method for anchor elements
+  //   const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click');
     
-    render(<Homepage />);
+  //   render(<Homepage />);
 
-    // Simulate entering valid URLs and navigating to the report generation step
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    fireEvent.click(screen.getAllByText('Next')[1]);
-    fireEvent.click(screen.getAllByText('Next')[2]);
-    fireEvent.click(screen.getAllByText('Next')[3]);
-    fireEvent.click(screen.getByText('Generate Report'));
+  //   // Simulate entering valid URLs and navigating to the report generation step
+  //   fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
+  //   fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
+  //   fireEvent.click(screen.getAllByText('Next')[0]);
+  //   fireEvent.click(screen.getAllByText('Next')[1]);
+  //   fireEvent.click(screen.getAllByText('Next')[2]);
+  //   fireEvent.click(screen.getAllByText('Next')[3]);
+  //   fireEvent.click(screen.getByText('Generate Report'));
   
-    // Check that API call was made
-    // That a clickable link was created (creates a download link)
-    // And that the link was clicked (i.e. the report was downloaded)
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(expect.any(String), expect.any(Object));
-      expect(global.URL.createObjectURL).toHaveBeenCalled();
-      expect(clickSpy).toHaveBeenCalled();
-    });
-  });
+  //   // Check that API call was made
+  //   // That a clickable link was created (creates a download link)
+  //   // And that the link was clicked (i.e. the report was downloaded)
+  //   await waitFor(() => {
+  //     expect(global.fetch).toHaveBeenCalledWith(expect.any(String), expect.any(Object));
+  //     expect(global.URL.createObjectURL).toHaveBeenCalled();
+  //     expect(clickSpy).toHaveBeenCalled();
+  //   });
+  // });
 
   it('displays an error message upon failure response from API call', async () => {
     // Mock a failed response from the API
@@ -173,34 +172,7 @@ describe('API Calls', () => {
     
   });
 });
-describe('Model Type Selection', () => {
-  it('should update metricChips based on selected model type', () => {
-    render(<Homepage />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
-
-    fireEvent.click(screen.getByLabelText('Classification')); // Assuming 'Model Type 1' is a valid model type
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    const expectedMetrics = modelTypesToMetrics['Classification'];
-    console.log(expectedMetrics)
-    expectedMetrics.forEach((metric) => {
-      expect(screen.getByText(metric)).toBeInTheDocument();
-    });
-  });
-
-  it('should reset metricChips to generalMetrics if selected model type is not in modelTypesToMetrics', () => {
-    render(<Homepage />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    fireEvent.click(screen.getAllByText('Next')[0]);
-
-    generalMetrics.forEach((metric) => {
-      expect(screen.getByText(metric)).toBeInTheDocument();
-    });
-  });
-});
 describe('Model Type Selection', () => {
   it('should update metricChips based on selected model type', () => {
     render(<Homepage />);

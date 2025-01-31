@@ -78,12 +78,12 @@ async def process_data(request: DatasetRequest):
         results = []
         for metric, value in metrics_results.items():
             results.append(
-            {
-                "metric": metric, 
-                "result": value,
-                "legislation_results": ["Legislation placeholder for metric: " + metric],
-                "llm_model_summary": ["LLM holder for metric: " + metric]
-            }
+                {
+                    "metric": metric,
+                    "result": value,
+                    "legislation_results": ["Legislation placeholder for metric: " + metric],
+                    "llm_model_summary": ["LLM holder for metric: " + metric]
+                }
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
