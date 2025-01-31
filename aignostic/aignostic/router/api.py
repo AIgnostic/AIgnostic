@@ -1,39 +1,28 @@
+import requests
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
-import requests
-import aignostic.metrics.metrics as metrics_lib
-
+from aignostic.pydantic_models.data_models import ModelInput, FetchDatasetRequest
+from aignostic.dataset.validate_dataset_api import fetch_dataset
+from aignostic.metrics.metrics import calculate_metrics
 
 api = APIRouter()
 
 
-class DatasetRequest(BaseModel):
-    data_url: HttpUrl
+class EvaluateModelRequest(BaseModel):
+    dataset_url: HttpUrl
+    dataset_api_key: str
     model_url: HttpUrl
     model_api_key: str
-    data_api_key: str
     metrics: list[str]
 
 
+class EvaluateModelResponse(BaseModel):
+    message: str = "Data successfully received"
+    results: dict
+
+
 @api.post("/evaluate")
-async def generate_metrics_from_info(request: DatasetRequest):
-    """
-    Frontend will post URLs, metrics, etc., as JSON to this endpoint.
-    This function validates, processes, and forwards the data to the controller.
-    """
-    results = await process_data(request)
-
-    return {"message": "Data successfully received", "results": results}
-
-
-# Sanity check endpoint
-# This for checking time of last deployment
-@api.get("/")
-def info():
-    return {"message": "Pushed at 21/01/2025 07:32"}
-
-
-async def process_data(request: DatasetRequest):
+def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateModelResponse:
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Passes to data endpoint and fetch data
@@ -41,73 +30,24 @@ async def process_data(request: DatasetRequest):
     - Pass to the model, and get the predicitons
 
     Params:
-    - datasetURL : API URL of the dataset
-    - modelURL : API URL of the model
-    - metrics: list of metrics that should be applied
+    - request : EvaluateModelRequest - Pydantic model for the request
     """
-    # fetch data from datasetURL
-    data: dict = await fetch_data(request.data_url, request.data_api_key)
+    fetch_dataset_request = FetchDatasetRequest(**request.model_dump())
+    data: ModelInput = fetch_dataset(fetch_dataset_request)
 
-    # strip the label from the datapoint
-    try:
-        features = data["features"]
-        labels = data["labels"]
-        group_ids = data["group_ids"]
-    except KeyError:
-        raise HTTPException(status_code=500, detail="KeyError occurred during data processing")
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error while processing data")
-
-    # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
-    predictions = await query_model(
-        request.model_url,
-        {
-            "features": features,
-            "labels": labels,
-            "group_ids": group_ids
-        },
-        request.model_api_key
-    )
+    predictions: dict = query_model(request.model_url, request.model_api_key, data)
 
     try:
-        predicted_labels = predictions["predictions"]
-        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, request.metrics)
+        predicted_labels: list = predictions["predictions"]
+
+        results = calculate_metrics(data.labels, predicted_labels, request.metrics)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
-    return metrics_results
+    return EvaluateModelResponse(results=results)
 
 
-async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
-    """
-    Helper function to fetch data from the dataset API
-
-    Params:
-    - dataURL : API URL of the dataset
-    """
-    # Send a GET request to the dataset API
-    if dataset_api_key is None:
-        response = requests.get(data_url)
-    else:
-        response = requests.get(data_url, headers={"Authorization": f"Bearer {dataset_api_key}"})
-
-    try:
-        # Raise errpr if the request was not successful
-        response.raise_for_status()
-    except requests.exceptions.HTTPError:
-        raise HTTPException(status_code=response.status_code, detail=response.json()["detail"])
-
-    try:
-        # Parse the response JSON
-        data = response.json()
-
-        # Return the data
-        return data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
-
-
-async def query_model(model_url: HttpUrl, data: dict, model_api_key):
+def query_model(model_url: HttpUrl, model_api_key: str, data: ModelInput) -> dict:
     """
     Helper function to query the model API
 
@@ -116,27 +56,21 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
     - data : Data to be passed to the model in JSON format with DataSet pydantic model type
     - modelAPIKey : API key for the model
     """
-    # Send a POST request to the model API
-    if model_api_key is None:
-        response = requests.post(url=model_url, json=data)
-    else:
-        response = requests.post(url=model_url, json=data, headers={"Authorization": f"Bearer {model_api_key}"})
-
     try:
+        headers = {"Authorization": f"Bearer {model_api_key}"} if model_api_key else {}
+        response = requests.post(url=model_url, json=data.model_dump(), headers=headers)
+
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        raise HTTPException(detail=e.response.json()["detail"], status_code=e.response.status_code)
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=e.response.json()["detail"],
+        )
 
-    check_model_response(response, data["labels"])
+    check_model_response(response, data.labels)
 
     try:
-        # Check if the request was successful
-
-        # Parse the response JSON
-        data = response.json()
-
-        # Return the data
-        return data
+        return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not parse model response - {e}; response = {response.text}")
 

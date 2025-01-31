@@ -22,7 +22,7 @@ def get_model_api_key(api_key: str = Depends(api_key_header)):
         raise HTTPException(status_code=403, detail="Forbidden Request: API Key not in expected format")
     elif api_key == MOCK_MODEL_API_KEY:
         return api_key
-    raise HTTPException(status_code=401, detail=f"Unauthorised Access: Invalid API Key - {api_key}")
+    raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
 
 
 def get_dataset_api_key(api_key: str = Depends(api_key_header)):
@@ -34,4 +34,4 @@ def get_dataset_api_key(api_key: str = Depends(api_key_header)):
         raise HTTPException(status_code=403, detail="Forbidden Request: API Key not in expected format")
     elif api_key == MOCK_DATASET_API_KEY:
         return api_key
-    raise HTTPException(status_code=401, detail=f"Unauthorised Access: Invalid API Key - {api_key}")
+    raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
