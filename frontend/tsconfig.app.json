@@ -25,6 +25,7 @@
     "src/**/*.jsx",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "custom.d.ts"
+    "custom.d.ts",
+    "tests/utils.test.tsx"
   ]
 }

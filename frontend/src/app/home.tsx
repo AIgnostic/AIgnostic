@@ -17,7 +17,6 @@ import {
   StepContent,
   Typography,
 } from '@mui/material';
-import { error } from 'console';
 
 function Homepage() {
   const [state, setState] = useState({
