@@ -1,4 +1,4 @@
-from aignostic.metrics.metrics import metrics_app, MetricsException, check_valid_input
+from aignostic.metrics.metrics import metrics_app, MetricsException, is_valid_for_per_class_metrics
 from fastapi.testclient import TestClient
 import pytest
 
@@ -17,7 +17,7 @@ def test_accuracy():
 
 def test_multi_attribute_validity_check_fails():
     with pytest.raises(MetricsException) as e:
-        check_valid_input(
+        is_valid_for_per_class_metrics(
             "class_precision",
             [[2, 3], [0, 3], [2, 3], [2, 3], [0, 3], [2, 3], [0, 3], [0, 3]]
         )
@@ -28,7 +28,7 @@ def test_multi_attribute_validity_check_fails():
 
 def test_no_input_validity_check_fails():
     with pytest.raises(MetricsException) as e:
-        check_valid_input(
+        is_valid_for_per_class_metrics(
             "class_precision",
             []
         )

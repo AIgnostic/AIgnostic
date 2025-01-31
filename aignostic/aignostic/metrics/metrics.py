@@ -21,18 +21,25 @@ task_to_metric_map = {
 
 @metrics_app.get("/retrieve-metric-info", response_model=MetricsInfo)
 async def retrieve_info() -> MetricsInfo:
+    """
+    Retrieve information about the types of tasks expected / supported by the library
+    as well as all the metrics that can be calculated for each task type.
+
+    :return: MetricsInfo - contains the mapping from task type to metrics
+    """
     return MetricsInfo(task_to_metric_map=task_to_metric_map)
 
 
-@metrics_app.post("/calculate-metrics")
-async def calculate_metrics(info: CalculateRequest):
+@metrics_app.post("/calculate-metrics", response_model=MetricValues)
+async def calculate_metrics(info: CalculateRequest) -> MetricValues:
     """
-    Calculate the metrics for the given y_true and y_pred
+    calculate_metrics, given a request for calculation of certain metrics and information
+    necessary for calculation, attempt to calculate and return the metrics and their scores
+    for the given model and dataset.
 
-    Params:
-        y_true: list of true labels
-        y_pred: list of predicted labels
-        metrics: list of metric functions e.g. "accuracy", "precision"
+    :param info: CalculateRequest - contains list of metrics to be calculated and additional
+    data required for calculation of these metrics.
+    :return: MetricValues - contains the calculated metrics and their scores
     """
     results = {}
     for metric in info.metrics:
@@ -51,7 +58,7 @@ class MetricsException(HTTPException):
         )
 
 
-def check_valid_input(metric_name, true_labels):
+def is_valid_for_per_class_metrics(metric_name, true_labels):
     """
     Check if the input is valid for the given metric. Valid fn for precision, recall and F1 scoring
     """
@@ -99,7 +106,7 @@ def class_precision(name, info: CalculateRequest) -> float:
     one attribute of the predictions. Calculating precisions for multiple attributes will raise
     an exception
     """
-    check_valid_input(name, info.true_labels)
+    is_valid_for_per_class_metrics(name, info.true_labels)
     return _calculate_precision(name, info.true_labels, info.predicted_labels, info.target_class)
 
 
@@ -107,7 +114,7 @@ def macro_precision(name, info: CalculateRequest) -> float:
     """
     Calculate the macro precision for all classes
     """
-    check_valid_input(name, info.true_labels)
+    is_valid_for_per_class_metrics(name, info.true_labels)
     return sum(
             [
                 _calculate_precision(name, info.true_labels, info.predicted_labels, c)
@@ -132,7 +139,7 @@ def class_recall(name, info: CalculateRequest) -> float:
     one attribute of the predictions. Calculating recalls for multiple attributes will raise
     an exception
     """
-    check_valid_input(name, info.true_labels)
+    is_valid_for_per_class_metrics(name, info.true_labels)
     return _calculate_recall(name, info.true_labels, info.predicted_labels, info.target_class)
 
 
@@ -140,7 +147,7 @@ def macro_recall(name, info: CalculateRequest) -> float:
     """
     Calculate the macro recall for all classes
     """
-    check_valid_input(name, info.true_labels)
+    is_valid_for_per_class_metrics(name, info.true_labels)
     return sum(
             [
                 _calculate_recall(name, info.true_labels, info.predicted_labels, c)
