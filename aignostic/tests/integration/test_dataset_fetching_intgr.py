@@ -55,7 +55,9 @@ def test_server_returns_400_error_given_invalid_data_format(run_servers):
     )
     response = app_client.post("/fetch-data", json=fetch_dataset_request.model_dump(mode="json"))
     assert response.status_code == 400
-    assert response.json() == {"detail": "Error while validating data: All feature rows must have the same number of elements."}
+    assert response.json() == {
+        "detail": "Error while validating data: All feature rows must have the same number of elements."
+    }
 
 
 def test_non_existent_endpoint_throws_404(run_servers):

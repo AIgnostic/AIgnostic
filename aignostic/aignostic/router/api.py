@@ -7,12 +7,14 @@ from aignostic.metrics.metrics import calculate_metrics
 
 api = APIRouter()
 
+
 class EvaluateModelRequest(BaseModel):
     dataset_url: HttpUrl
     dataset_api_key: str
     model_url: HttpUrl
     model_api_key: str
     metrics: list[str]
+
 
 class EvaluateModelResponse(BaseModel):
     message: str = "Data successfully received"
@@ -45,7 +47,7 @@ def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateModelRe
     return EvaluateModelResponse(results=results)
 
 
-def query_model(modelURL: HttpUrl, modelAPIKey: str, data: ModelInput) -> dict:
+def query_model(model_url: HttpUrl, model_api_key: str, data: ModelInput) -> dict:
     """
     Helper function to query the model API
 
@@ -55,8 +57,8 @@ def query_model(modelURL: HttpUrl, modelAPIKey: str, data: ModelInput) -> dict:
     - modelAPIKey : API key for the model
     """
     try:
-        headers = {"Authorization": f"Bearer {modelAPIKey}"} if modelAPIKey else {}
-        response = requests.post(url=modelURL, json=data.model_dump(), headers=headers)
+        headers = {"Authorization": f"Bearer {model_api_key}"} if model_api_key else {}
+        response = requests.post(url=model_url, json=data.model_dump(), headers=headers)
 
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
@@ -65,7 +67,7 @@ def query_model(modelURL: HttpUrl, modelAPIKey: str, data: ModelInput) -> dict:
             detail=e.response.json()["detail"],
         )
 
-    check_model_response(response, data["labels"])
+    check_model_response(response, data.labels)
 
     try:
         return response.json()

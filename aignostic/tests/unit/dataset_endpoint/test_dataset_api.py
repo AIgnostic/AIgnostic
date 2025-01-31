@@ -3,7 +3,6 @@ from tests.utils.api_utils import MOCK_DATASET_API_KEY
 from tests.utils.dataset.mock_server import app as client_mock
 from aignostic.dataset.validate_dataset_api import validate_dataset_format, app as server_app
 from aignostic.pydantic_models.data_models import ModelInput
-from pydantic import ValidationError
 import pytest
 
 server_app = TestClient(server_app)
@@ -49,6 +48,7 @@ def test_fetch_datapoints_given_n_of_50_returns_correctly():
     # Check that the features are unique
     assert len(set(tuple(row) for row in data["features"])) == 50
 
+
 # Test validation function
 def test_valid_dataset():
     valid_data = {
@@ -59,6 +59,7 @@ def test_valid_dataset():
     result = validate_dataset_format(valid_data)
     assert isinstance(result, ModelInput)
 
+
 def test_mismatched_list_lengths():
     invalid_data = {
         "features": [[1, 2, 3], [4, 5, 6]],
@@ -67,6 +68,7 @@ def test_mismatched_list_lengths():
     }
     with pytest.raises(ValueError, match="Features, labels, and group_ids must have the same number of rows"):
         validate_dataset_format(invalid_data)
+
 
 def test_inconsistent_feature_row_lengths():
     invalid_data = {
@@ -77,6 +79,7 @@ def test_inconsistent_feature_row_lengths():
     with pytest.raises(ValueError, match="All feature rows must have the same number of elements"):
         validate_dataset_format(invalid_data)
 
+
 def test_inconsistent_label_row_lengths():
     invalid_data = {
         "features": [[1, 2, 3], [4, 5, 6]],
@@ -85,6 +88,7 @@ def test_inconsistent_label_row_lengths():
     }
     with pytest.raises(ValueError, match="All label rows must have the same number of elements"):
         validate_dataset_format(invalid_data)
+
 
 def test_empty_dataset():
     empty_data = {
@@ -95,10 +99,12 @@ def test_empty_dataset():
     result = validate_dataset_format(empty_data)
     assert isinstance(result, ModelInput)
 
+
 def test_invalid_data_type():
     invalid_data = "invalid_string"
     with pytest.raises(TypeError):  # Pydantic should fail here
         validate_dataset_format(invalid_data)
+
 
 def test_invalid_model_structure():
     invalid_data = {
