@@ -15,7 +15,7 @@ describe('Stepper Navigation', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
-    expect(screen.getByText(steps[1].label)).toBeInTheDocument();
+    expect(screen.getByText(steps[1].description)).toBeInTheDocument();
   });
 
   it('should go to the previous step when "Back" button is clicked', () => {
@@ -72,9 +72,8 @@ describe('Form Validation', () => {
   
     fireEvent.click(screen.getByText('Next'));
   
-    await screen.findByText(/Select the legislations that you want to comply with./i); // This ensures that the step is rendered
-  
-    expect(screen.getByText(/Select the legislations that you want to comply with./i)).toBeInTheDocument();
+    await screen.findByText(/Select the type of model you are using./i); 
+    expect(screen.getByText(/Select the type of model you are using./i)).toBeInTheDocument();
   });
 });
 
@@ -133,6 +132,7 @@ describe('API Calls', () => {
     fireEvent.click(screen.getAllByText('Next')[0]);
     fireEvent.click(screen.getAllByText('Next')[1]);
     fireEvent.click(screen.getAllByText('Next')[2]);
+    fireEvent.click(screen.getAllByText('Next')[3]);
     fireEvent.click(screen.getByText('Generate Report'));
   
     // Check that API call was made
@@ -161,6 +161,7 @@ describe('API Calls', () => {
     fireEvent.click(screen.getAllByText('Next')[0]);
     fireEvent.click(screen.getAllByText('Next')[1]);
     fireEvent.click(screen.getAllByText('Next')[2]);
+    fireEvent.click(screen.getAllByText('Next')[3]);
     fireEvent.click(screen.getByText('Generate Report'));
   
     // check that error message is displayed
