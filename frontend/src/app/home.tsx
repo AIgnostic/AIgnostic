@@ -44,7 +44,7 @@ function Homepage() {
     errorMessage: { header: '', text: '' },
   });
 
-  function generateReportText(user_info: any, results: any, legislation_quotes: any, llm_model_summary: any) {
+function generateReportText(user_info: any, results: any, legislation_quotes: any, llm_model_summary: any) {
     const doc = new jsPDF();
     let y = 20; // Initial y position
 
