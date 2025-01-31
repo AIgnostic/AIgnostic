@@ -11,7 +11,8 @@ def test_placeholder():
     assert "F1-score" in results and results["F1-score"] == 1
     assert "explainability" in results and results["explainability"] == 1
     assert "ROI score" in results and results["ROI score"] == 1
-    
+
+
 def test_calculate_metrics():
     """
         Test calculate_metrics calls all metrics
