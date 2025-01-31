@@ -21,9 +21,14 @@ async def generate_metrics_from_info(request: DatasetRequest):
     Frontend will post URLs, metrics, etc., as JSON to this endpoint.
     This function validates, processes, and forwards the data to the controller.
     """
-    results = await process_data(request)
+    results, legislation, llm_summary = await process_data(request)
 
-    return {"message": "Data successfully received", "results": results}
+    return {
+        "message": "Data successfully received",
+        "results": results,
+        "legislation": legislation,
+        "llm_summary": llm_summary
+    }
 
 
 # Sanity check endpoint
@@ -74,8 +79,9 @@ async def process_data(request: DatasetRequest):
         metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, request.metrics)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
-
-    return metrics_results
+    legislation_results = "Legislation Placeholder"
+    llm_results = "LLM Text Placeholder"
+    return (metrics_results, legislation_results, llm_results)
 
 
 async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:

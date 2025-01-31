@@ -44,6 +44,28 @@ function Homepage() {
     errorMessage: { header: '', text: '' },
   });
 
+  function generateReportText(user_info: any, results: any, legislation_quotes: any, llm_model_summary: any) {
+        return `AIgnostic Report
+    ===================
+    Model API URL: ${user_info.model_url}
+    Dataset API URL: ${user_info.data_url}
+    
+    Metrics Results:
+    ${Object.entries(results).map(([metric, value]) => `  - ${metric}: ${value}`).join('\n')}
+    
+    List of Legislation Quotes:
+    ${legislation_quotes.length === 0
+      ? "No legislation quotes found"
+      : legislation_quotes.map((quote: string) => `  - ${quote}`).join('\n')
+    }
+
+    LLM Model Summary:
+    ${llm_model_summary}
+    `;
+
+    
+    
+    }
   const getValues = {
     modelURL: {
       label: "Model API URL",
@@ -120,25 +142,17 @@ function Homepage() {
           return response.json();
         })
         .then((data) => {
-          const results = data["results"]
-          // Create the text content for the file
-          const textContent = "AIgnostic Report" + "\n" +
-            "===================" + "\n" +
-            `Model API URL: ${user_info.model_url}` + "\n" +
-            `Dataset API URL: ${user_info.data_url}` + "\n" + "\n" +
-
-            "Metrics Results:" + "\n" +
-            Object.entries(results).map(([metric, value]) => {
-              return `  - ${metric}: ${value}`;
-            }).join('\n') + "\n";
-            
-            const doc = new jsPDF();
-            const lines = textContent.split('\n');
-            lines.forEach((line, index) => {
-            doc.text(line, 10, 10 + (index * 10));
-            });
-            doc.save('AIgnostic_Report.pdf');
-        })
+          const results = data["results"];
+          const legislation_quotes = data["legislation_quotes"] || [];
+          const llm_summary = data["llm_summary"];
+          const textContent = generateReportText(user_info, results, legislation_quotes, llm_summary);
+          const doc = new jsPDF();
+          const lines = textContent.split('\n');
+          lines.forEach((line, index) => {
+          doc.text(line, 10, 10 + (index * 10));
+          });
+          doc.save('AIgnostic_Report.pdf');
+      })
         .catch((error) => {
           console.error("Error during fetch:", error.message);
         });
