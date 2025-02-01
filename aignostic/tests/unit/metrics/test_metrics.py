@@ -100,40 +100,18 @@ def test_multiple_metrics():
         }
     }, response.json()
 
+
 def test_disparate_impact():
-    # Sample data
-    data = {
-        'label': [1, 0, 1, 1, 0, 1, 0, 0],
-        'protected_attr': [1, 0, 1, 1, 0, 1, 0, 0]  # 1 = unprivileged, 0 = privileged
-    }
-    predicted_data = {
-        'label': [1, 0, 1, 0, 0, 1, 1, 0],  # Predicted labels
-        'protected_attr': [1, 0, 1, 1, 0, 1, 0, 0]
-    }
+    response = metrics_client.post("/calculate-metrics", json={
+    "metrics": ["disparate_impact"],
+    "true_labels": [[1], [0], [1], [1], [0], [1], [0], [0]],
+    "predicted_labels": [[1], [0], [1], [0], [0], [1], [1], [0]],
+    "privileged_groups": [{"protected_attr": 1}],
+    "unprivileged_groups": [{"protected_attr": 0}],
+    "protected_attr": [0, 1, 0, 0, 1, 0, 1, 1]
 
-    # Convert to BinaryLabelDataset
-    dataset = BinaryLabelDataset(
-        favorable_label=1,
-        unfavorable_label=0,
-        df=pd.DataFrame(data),
-        label_names=['label'],
-        protected_attribute_names=['protected_attr']
-    )
+})
 
-    classified_dataset = BinaryLabelDataset(
-        favorable_label=1,
-        unfavorable_label=0,
-        df=pd.DataFrame(predicted_data),
-        label_names=['label'],
-        protected_attribute_names=['protected_attr']
-    )
-
-    # Define privileged and unprivileged groups
-    privileged_groups = [{'protected_attr': 0}]
-    unprivileged_groups = [{'protected_attr': 1}]
-
-    # Compute metrics
-    metric = ClassificationMetric(dataset, classified_dataset, unprivileged_groups, privileged_groups)
-    disparate_impact_value = metric.disparate_impact()
-
-    print(f"Disparate Impact: {disparate_impact_value}")
+    assert response.status_code == 200, response.text
+    assert "disparate_impact" in response.json()["metric_values"], response.json()
+    assert response.json()["metric_values"]["disparate_impact"] == 3.0, response.json()

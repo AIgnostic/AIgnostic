@@ -10,6 +10,8 @@ from aignostic.pydantic_models.metric_models import CalculateRequest, MetricsInf
 import numpy as np
 from fastapi import FastAPI, HTTPException
 from aif360.metrics import ClassificationMetric
+from aif360.datasets import BinaryLabelDataset
+import pandas as pd
 
 metrics_app = FastAPI()
 
@@ -163,16 +165,30 @@ def macro_recall(name, info: CalculateRequest) -> float:
 
 def disparate_impact(name, info: CalculateRequest) -> float:
     """
-    Calculate the disparate impact of the model
+    Calculate the disparate impact of the model.
     """
     try:
-        # Calculate the disparate impact
-        print("Disparate Impact Metric Result:")
-        print(ClassificationMetric(info.true_labels, info.predicted_labels).disparate_impact())
-        print("Finished outputting")
-        return 0
+        true_labels = np.array(info.true_labels).flatten()
+        predicted_labels = np.array(info.predicted_labels).flatten()
+
+        if not hasattr(info, "protected_attr") or info.protected_attr is None:
+            raise ValueError("protected_attr is missing from the request.")
+
+        protected_attrs = np.array(info.protected_attr).flatten()
+        df_true = pd.DataFrame({'label': true_labels,'protected_attr': protected_attrs})
+        df_pred = pd.DataFrame({'label': predicted_labels,'protected_attr': protected_attrs})
+
+        # Create BinaryLabelDataset
+        dataset = BinaryLabelDataset(df=df_true, label_names=['label'], protected_attribute_names=['protected_attr'])
+        classified_dataset = BinaryLabelDataset(df=df_pred, label_names=['label'], protected_attribute_names=['protected_attr'])
+
+        # Compute disparate impact
+        metric = ClassificationMetric(dataset, classified_dataset, 
+                                      privileged_groups=info.privileged_groups,
+                                      unprivileged_groups=info.unprivileged_groups)
+        return metric.disparate_impact()
+
     except Exception as e:
-        # Catch exceptions generally for now rather than specific ones
         raise MetricsException(name, additional_context=str(e))
 
 # def equal_opportunity_difference(name, info: CalculateRequest) -> float:
