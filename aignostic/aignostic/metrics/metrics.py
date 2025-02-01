@@ -9,11 +9,14 @@ from aignostic.pydantic_models.metric_models import CalculateRequest, MetricsInf
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
+from aif360.metrics import ClassificationMetric
 
 metrics_app = FastAPI()
 
 task_to_metric_map = {
-    "binary_classification": [],
+    "binary_classification": [
+        "disparate_impact"
+    ],
     "multi_class_classification": [],
     "regression": []
 }
@@ -158,11 +161,110 @@ def macro_recall(name, info: CalculateRequest) -> float:
             ]
         ) / len(np.unique(info.true_labels))
 
+def disparate_impact(name, info: CalculateRequest) -> float:
+    """
+    Calculate the disparate impact of the model
+    """
+    try:
+        # Calculate the disparate impact
+        print("Disparate Impact Metric Result:")
+        print(ClassificationMetric(info.true_labels, info.predicted_labels).disparate_impact())
+        print("Finished outputting")
+        return 0
+    except Exception as e:
+        # Catch exceptions generally for now rather than specific ones
+        raise MetricsException(name, additional_context=str(e))
+
+# def equal_opportunity_difference(name, info: CalculateRequest) -> float:
+#     """
+#     Calculate the equal opportunity difference of the model
+#     """
+#     try:
+#         # Calculate the equal opportunity difference
+#         return 0
+#     except Exception as e:
+#         # Catch exceptions generally for now rather than specific ones
+#         raise MetricsException(name, additional_context=str(e))
+
+# def equalized_odds_difference(name, info: CalculateRequest) -> float:
+#     """
+#     Calculate the equalized odds difference of the model
+#     """
+#     try:
+#         # Calculate the equalized odds difference
+#         return 0
+#     except Exception as e:
+#         # Catch exceptions generally for now rather than specific ones
+#         raise MetricsException(name, additional_context=str(e))
+
+# def false_negative_rate_difference(name, info: CalculateRequest) -> float:
+#     """
+#     Calculate the false negative rate difference of the model
+#     """
+#     try:
+#         # Calculate the false negative rate difference
+#         return 0
+#     except Exception as e:
+#         # Catch exceptions generally for now rather than specific ones
+#         raise MetricsException(name, additional_context=str(e))
+
+# def negative_predictive_value(name, info: CalculateRequest) -> float:
+#     """
+#     Calculate the negative predictive value of the model
+#     """
+#     try:
+#         # Calculate the negative predictive value
+#         return 0
+#     except Exception as e:
+#         # Catch exceptions generally for now rather than specific ones
+#         raise MetricsException(name, additional_context=str(e))
+    
+# def positive_predictive_value(name, info: CalculateRequest) -> float:
+#     """
+#     Calculate the positive predictive value of the model
+#     """
+#     try:
+#         # Calculate the positive predictive value
+#         return 0
+#     except Exception as e:
+#         # Catch exceptions generally for now rather than specific ones
+#         raise MetricsException(name, additional_context=str(e))
+    
+# def statistical_parity_difference(name, info: CalculateRequest) -> float:
+#     """
+#     Calculate the statistical parity difference of the model
+#     """
+#     try:
+#         # Calculate the statistical parity difference
+#         return 0
+#     except Exception as e:
+#         # Catch exceptions generally for now rather than specific ones
+#         raise MetricsException(name, additional_context=str(e))
+
+# def true_positive_rate_difference(name, info: CalculateRequest) -> float:
+#     """
+#     Calculate the true positive rate difference of the model
+#     """
+#     try:
+#         # Calculate the true positive rate difference
+#         return 0
+#     except Exception as e:
+#         # Catch exceptions generally for now rather than specific ones
+#         raise MetricsException(name, additional_context=str(e))
 
 metric_to_fn = {
     "accuracy": accuracy,
     "class_precision": class_precision,
     "precision": macro_precision,
     "class_recall": class_recall,
-    "recall": macro_recall
+    "recall": macro_recall,
+    # AIF360 Fairnes metrics
+    "disparate_impact": disparate_impact,
+    # "equal_opportunity_difference": equal_opportunity_difference,
+    # "equalized_odds_difference": equalized_odds_difference,
+    # "false_negative_rate_difference": false_negative_rate_difference,
+    # "negative_predictive_value": negative_predictive_value,
+    # "positive_predictive_value": positive_predictive_value,
+    # "statistical_parity_difference": statistical_parity_difference,
+    # "true_positive_rate_difference": true_positive_rate_difference
 }

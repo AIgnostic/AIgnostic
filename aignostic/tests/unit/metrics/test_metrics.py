@@ -1,6 +1,10 @@
 from aignostic.metrics.metrics import metrics_app, MetricsException, is_valid_for_per_class_metrics
+from aif360.datasets import BinaryLabelDataset
+from aif360.metrics import ClassificationMetric
 from fastapi.testclient import TestClient
 import pytest
+import numpy as np
+import pandas as pd
 
 metrics_client = TestClient(metrics_app)
 
@@ -95,3 +99,41 @@ def test_multiple_metrics():
             "class_recall": 0.75
         }
     }, response.json()
+
+def test_disparate_impact():
+    # Sample data
+    data = {
+        'label': [1, 0, 1, 1, 0, 1, 0, 0],
+        'protected_attr': [1, 0, 1, 1, 0, 1, 0, 0]  # 1 = unprivileged, 0 = privileged
+    }
+    predicted_data = {
+        'label': [1, 0, 1, 0, 0, 1, 1, 0],  # Predicted labels
+        'protected_attr': [1, 0, 1, 1, 0, 1, 0, 0]
+    }
+
+    # Convert to BinaryLabelDataset
+    dataset = BinaryLabelDataset(
+        favorable_label=1,
+        unfavorable_label=0,
+        df=pd.DataFrame(data),
+        label_names=['label'],
+        protected_attribute_names=['protected_attr']
+    )
+
+    classified_dataset = BinaryLabelDataset(
+        favorable_label=1,
+        unfavorable_label=0,
+        df=pd.DataFrame(predicted_data),
+        label_names=['label'],
+        protected_attribute_names=['protected_attr']
+    )
+
+    # Define privileged and unprivileged groups
+    privileged_groups = [{'protected_attr': 0}]
+    unprivileged_groups = [{'protected_attr': 1}]
+
+    # Compute metrics
+    metric = ClassificationMetric(dataset, classified_dataset, unprivileged_groups, privileged_groups)
+    disparate_impact_value = metric.disparate_impact()
+
+    print(f"Disparate Impact: {disparate_impact_value}")
