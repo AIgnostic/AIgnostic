@@ -24,7 +24,7 @@ function applyStyle(doc: jsPDF, style: any) {
     doc.setFontSize(style.size);
 }
 
-function generateReportText(results: any) {
+function generateReportText(results: any) : jsPDF {
     const doc = new jsPDF();
     let y = 20;
 
@@ -68,4 +68,4 @@ function generateReportText(results: any) {
     return doc;
 }
 
-export {checkURL, generateReportText };
+export {checkURL, generateReportText, applyStyle };

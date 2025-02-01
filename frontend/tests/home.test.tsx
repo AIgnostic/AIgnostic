@@ -5,6 +5,7 @@ import { steps } from '../src/app/constants';
 import '@testing-library/jest-dom';
 import { checkURL }from '../src/app/utils';
 import { modelTypesToMetrics, generalMetrics } from '../src/app/constants';
+import  jsPDF  from 'jspdf';
 
 describe('Stepper Navigation', () => {
   it('should go to the next step when "Next" button is clicked', () => {
@@ -33,6 +34,7 @@ describe('Stepper Navigation', () => {
 jest.mock('../src/app/utils', () => ({
     __esModule: true,
     checkURL: jest.fn(),
+    generateReportText: jest.fn(),
 }));
   
 
