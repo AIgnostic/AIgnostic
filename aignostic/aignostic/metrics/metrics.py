@@ -9,6 +9,7 @@ from aignostic.pydantic_models.metric_models import CalculateRequest, MetricsInf
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
+import math
 from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
 import pandas as pd
@@ -17,7 +18,10 @@ metrics_app = FastAPI()
 
 task_to_metric_map = {
     "binary_classification": [
-        "disparate_impact"
+        "disparate_impact",
+        "equal_opportunity_difference",
+        "equalized_odd_difference", 
+        "false_negative_rate_difference",
     ],
     "multi_class_classification": [],
     "regression": []
@@ -163,26 +167,29 @@ def macro_recall(name, info: CalculateRequest) -> float:
             ]
         ) / len(np.unique(info.true_labels))
 
+def _prepare_datasets(info: CalculateRequest):
+    true_labels = np.array(info.true_labels).flatten()
+    predicted_labels = np.array(info.predicted_labels).flatten()
+
+    if not hasattr(info, "protected_attr") or info.protected_attr is None:
+        raise ValueError("protected_attr is missing from the request.")
+
+    protected_attrs = np.array(info.protected_attr).flatten()
+    df_true = pd.DataFrame({'label': true_labels, 'protected_attr': protected_attrs})
+    df_pred = pd.DataFrame({'label': predicted_labels, 'protected_attr': protected_attrs})
+
+    dataset = BinaryLabelDataset(df=df_true, label_names=['label'], protected_attribute_names=['protected_attr'])
+    classified_dataset = BinaryLabelDataset(df=df_pred, label_names=['label'], protected_attribute_names=['protected_attr'])
+
+    return dataset, classified_dataset
+
+
 def disparate_impact(name, info: CalculateRequest) -> float:
     """
     Calculate the disparate impact of the model.
     """
     try:
-        true_labels = np.array(info.true_labels).flatten()
-        predicted_labels = np.array(info.predicted_labels).flatten()
-
-        if not hasattr(info, "protected_attr") or info.protected_attr is None:
-            raise ValueError("protected_attr is missing from the request.")
-
-        protected_attrs = np.array(info.protected_attr).flatten()
-        df_true = pd.DataFrame({'label': true_labels,'protected_attr': protected_attrs})
-        df_pred = pd.DataFrame({'label': predicted_labels,'protected_attr': protected_attrs})
-
-        # Create BinaryLabelDataset
-        dataset = BinaryLabelDataset(df=df_true, label_names=['label'], protected_attribute_names=['protected_attr'])
-        classified_dataset = BinaryLabelDataset(df=df_pred, label_names=['label'], protected_attribute_names=['protected_attr'])
-
-        # Compute disparate impact
+        dataset, classified_dataset = _prepare_datasets(info)
         metric = ClassificationMetric(dataset, classified_dataset, 
                                       privileged_groups=info.privileged_groups,
                                       unprivileged_groups=info.unprivileged_groups)
@@ -191,38 +198,50 @@ def disparate_impact(name, info: CalculateRequest) -> float:
     except Exception as e:
         raise MetricsException(name, additional_context=str(e))
 
-# def equal_opportunity_difference(name, info: CalculateRequest) -> float:
-#     """
-#     Calculate the equal opportunity difference of the model
-#     """
-#     try:
-#         # Calculate the equal opportunity difference
-#         return 0
-#     except Exception as e:
-#         # Catch exceptions generally for now rather than specific ones
-#         raise MetricsException(name, additional_context=str(e))
 
-# def equalized_odds_difference(name, info: CalculateRequest) -> float:
-#     """
-#     Calculate the equalized odds difference of the model
-#     """
-#     try:
-#         # Calculate the equalized odds difference
-#         return 0
-#     except Exception as e:
-#         # Catch exceptions generally for now rather than specific ones
-#         raise MetricsException(name, additional_context=str(e))
+def equal_opportunity_difference(name, info: CalculateRequest) -> float:
+    """
+    Calculate the equalized odds difference of the model
+    """
+    try:
+        dataset, classified_dataset = _prepare_datasets(info)
+        metric = ClassificationMetric(dataset, classified_dataset, 
+                                      privileged_groups=info.privileged_groups,
+                                      unprivileged_groups=info.unprivileged_groups)
+        eod_value = metric.equal_opportunity_difference()
+        return eod_value
 
-# def false_negative_rate_difference(name, info: CalculateRequest) -> float:
-#     """
-#     Calculate the false negative rate difference of the model
-#     """
-#     try:
-#         # Calculate the false negative rate difference
-#         return 0
-#     except Exception as e:
-#         # Catch exceptions generally for now rather than specific ones
-#         raise MetricsException(name, additional_context=str(e))
+    except Exception as e:
+        raise MetricsException(name, additional_context=str(e))
+
+
+def equalized_odds_difference(name, info: CalculateRequest) -> float:
+    """
+    Calculate the equalized odds difference of the model
+    """
+    try:
+        dataset, classified_dataset = _prepare_datasets(info)
+        metric = ClassificationMetric(dataset, classified_dataset, 
+                                      privileged_groups=info.privileged_groups,
+                                      unprivileged_groups=info.unprivileged_groups)
+        return metric.equalized_odds_difference()
+
+    except Exception as e:
+        raise MetricsException(name, additional_context=str(e))
+
+
+def false_negative_rate_difference(name, info: CalculateRequest) -> float:
+    """
+    Calculate the false negative rate difference of the model
+    """
+    try:
+        dataset, classified_dataset = _prepare_datasets(info)
+        metric = ClassificationMetric(dataset, classified_dataset,
+                                      privileged_groups=info.privileged_groups,
+                                      unprivileged_groups=info.unprivileged_groups)
+        return metric.false_negative_rate_difference()
+    except Exception as e:
+        raise MetricsException(name, additional_context=str(e))
 
 # def negative_predictive_value(name, info: CalculateRequest) -> float:
 #     """
@@ -276,9 +295,9 @@ metric_to_fn = {
     "recall": macro_recall,
     # AIF360 Fairnes metrics
     "disparate_impact": disparate_impact,
-    # "equal_opportunity_difference": equal_opportunity_difference,
-    # "equalized_odds_difference": equalized_odds_difference,
-    # "false_negative_rate_difference": false_negative_rate_difference,
+    "equal_opportunity_difference": equal_opportunity_difference,
+    "equalized_odds_difference": equalized_odds_difference,
+    "false_negative_rate_difference": false_negative_rate_difference,
     # "negative_predictive_value": negative_predictive_value,
     # "positive_predictive_value": positive_predictive_value,
     # "statistical_parity_difference": statistical_parity_difference,
