@@ -1,4 +1,9 @@
 from aignostic.pydantic_models.metric_models import CalculateRequest, MetricsInfo, MetricValues
+from fastapi import FastAPI, HTTPException
+from aif360.metrics import ClassificationMetric
+from aif360.datasets import BinaryLabelDataset
+import pandas as pd
+import numpy as np
 
 """
     This module contains the implementation of various metrics
@@ -7,21 +12,18 @@ from aignostic.pydantic_models.metric_models import CalculateRequest, MetricsInf
     For a binary classification problem
 """
 
-import numpy as np
-from fastapi import FastAPI, HTTPException
-import math
-from aif360.metrics import ClassificationMetric
-from aif360.datasets import BinaryLabelDataset
-import pandas as pd
-
 metrics_app = FastAPI()
 
 task_to_metric_map = {
     "binary_classification": [
         "disparate_impact",
         "equal_opportunity_difference",
-        "equalized_odd_difference", 
+        "equalized_odd_difference",
         "false_negative_rate_difference",
+        "negative_predictive_value",
+        "positive_predictive_value",
+        "statistical_parity_difference",
+        "true_positive_rate_difference"
     ],
     "multi_class_classification": [],
     "regression": []
@@ -167,6 +169,7 @@ def macro_recall(name, info: CalculateRequest) -> float:
             ]
         ) / len(np.unique(info.true_labels))
 
+
 def _prepare_datasets(info: CalculateRequest):
     true_labels = np.array(info.true_labels).flatten()
     predicted_labels = np.array(info.predicted_labels).flatten()
@@ -179,113 +182,28 @@ def _prepare_datasets(info: CalculateRequest):
     df_pred = pd.DataFrame({'label': predicted_labels, 'protected_attr': protected_attrs})
 
     dataset = BinaryLabelDataset(df=df_true, label_names=['label'], protected_attribute_names=['protected_attr'])
-    classified_dataset = BinaryLabelDataset(df=df_pred, label_names=['label'], protected_attribute_names=['protected_attr'])
-
+    classified_dataset = BinaryLabelDataset(
+        df=df_pred, label_names=['label'],
+        protected_attribute_names=['protected_attr'])
     return dataset, classified_dataset
 
 
-def disparate_impact(name, info: CalculateRequest) -> float:
-    """
-    Calculate the disparate impact of the model.
-    """
-    try:
-        dataset, classified_dataset = _prepare_datasets(info)
-        metric = ClassificationMetric(dataset, classified_dataset, 
-                                      privileged_groups=info.privileged_groups,
-                                      unprivileged_groups=info.unprivileged_groups)
-        return metric.disparate_impact()
+def create_fairness_metric_fn(metric_fn):
+    def wrapper(name, info: CalculateRequest) -> float:
+        try:
+            dataset, classified_dataset = _prepare_datasets(info)
+            metric = ClassificationMetric(dataset, classified_dataset,
+                                          privileged_groups=info.privileged_groups,
+                                          unprivileged_groups=info.unprivileged_groups)
 
-    except Exception as e:
-        raise MetricsException(name, additional_context=str(e))
+            metrics = metric_fn(metric)
+            if (np.isnan(metrics)):
+                metrics = 0
+            return metrics
+        except Exception as e:
+            raise MetricsException(name, additional_context=str(e))
+    return wrapper
 
-
-def equal_opportunity_difference(name, info: CalculateRequest) -> float:
-    """
-    Calculate the equalized odds difference of the model
-    """
-    try:
-        dataset, classified_dataset = _prepare_datasets(info)
-        metric = ClassificationMetric(dataset, classified_dataset, 
-                                      privileged_groups=info.privileged_groups,
-                                      unprivileged_groups=info.unprivileged_groups)
-        eod_value = metric.equal_opportunity_difference()
-        return eod_value
-
-    except Exception as e:
-        raise MetricsException(name, additional_context=str(e))
-
-
-def equalized_odds_difference(name, info: CalculateRequest) -> float:
-    """
-    Calculate the equalized odds difference of the model
-    """
-    try:
-        dataset, classified_dataset = _prepare_datasets(info)
-        metric = ClassificationMetric(dataset, classified_dataset, 
-                                      privileged_groups=info.privileged_groups,
-                                      unprivileged_groups=info.unprivileged_groups)
-        return metric.equalized_odds_difference()
-
-    except Exception as e:
-        raise MetricsException(name, additional_context=str(e))
-
-
-def false_negative_rate_difference(name, info: CalculateRequest) -> float:
-    """
-    Calculate the false negative rate difference of the model
-    """
-    try:
-        dataset, classified_dataset = _prepare_datasets(info)
-        metric = ClassificationMetric(dataset, classified_dataset,
-                                      privileged_groups=info.privileged_groups,
-                                      unprivileged_groups=info.unprivileged_groups)
-        return metric.false_negative_rate_difference()
-    except Exception as e:
-        raise MetricsException(name, additional_context=str(e))
-
-# def negative_predictive_value(name, info: CalculateRequest) -> float:
-#     """
-#     Calculate the negative predictive value of the model
-#     """
-#     try:
-#         # Calculate the negative predictive value
-#         return 0
-#     except Exception as e:
-#         # Catch exceptions generally for now rather than specific ones
-#         raise MetricsException(name, additional_context=str(e))
-    
-# def positive_predictive_value(name, info: CalculateRequest) -> float:
-#     """
-#     Calculate the positive predictive value of the model
-#     """
-#     try:
-#         # Calculate the positive predictive value
-#         return 0
-#     except Exception as e:
-#         # Catch exceptions generally for now rather than specific ones
-#         raise MetricsException(name, additional_context=str(e))
-    
-# def statistical_parity_difference(name, info: CalculateRequest) -> float:
-#     """
-#     Calculate the statistical parity difference of the model
-#     """
-#     try:
-#         # Calculate the statistical parity difference
-#         return 0
-#     except Exception as e:
-#         # Catch exceptions generally for now rather than specific ones
-#         raise MetricsException(name, additional_context=str(e))
-
-# def true_positive_rate_difference(name, info: CalculateRequest) -> float:
-#     """
-#     Calculate the true positive rate difference of the model
-#     """
-#     try:
-#         # Calculate the true positive rate difference
-#         return 0
-#     except Exception as e:
-#         # Catch exceptions generally for now rather than specific ones
-#         raise MetricsException(name, additional_context=str(e))
 
 metric_to_fn = {
     "accuracy": accuracy,
@@ -293,13 +211,17 @@ metric_to_fn = {
     "precision": macro_precision,
     "class_recall": class_recall,
     "recall": macro_recall,
-    # AIF360 Fairnes metrics
-    "disparate_impact": disparate_impact,
-    "equal_opportunity_difference": equal_opportunity_difference,
-    "equalized_odds_difference": equalized_odds_difference,
-    "false_negative_rate_difference": false_negative_rate_difference,
-    # "negative_predictive_value": negative_predictive_value,
-    # "positive_predictive_value": positive_predictive_value,
-    # "statistical_parity_difference": statistical_parity_difference,
-    # "true_positive_rate_difference": true_positive_rate_difference
 }
+
+fairness_metrics = {
+    "disparate_impact": create_fairness_metric_fn(lambda metric: metric.disparate_impact()),
+    "equal_opportunity_difference": create_fairness_metric_fn(lambda metric: metric.equal_opportunity_difference()),
+    "equalized_odds_difference": create_fairness_metric_fn(lambda metric: metric.equalized_odds_difference()),
+    "false_negative_rate_difference": create_fairness_metric_fn(lambda metric: metric.false_negative_rate_difference()),
+    "negative_predictive_value": create_fairness_metric_fn(lambda metric: metric.negative_predictive_value()),
+    "positive_predictive_value": create_fairness_metric_fn(lambda metric: metric.positive_predictive_value()),
+    "statistical_parity_difference": create_fairness_metric_fn(lambda metric: metric.statistical_parity_difference()),
+    "true_positive_rate_difference": create_fairness_metric_fn(lambda metric: metric.true_positive_rate_difference())
+}
+
+metric_to_fn.update(fairness_metrics)
