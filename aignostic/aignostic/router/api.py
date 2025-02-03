@@ -2,6 +2,7 @@ import requests
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
 from aignostic.pydantic_models.data_models import ModelInput, FetchDatasetRequest
+from aignostic.pydantic_models.metric_models import CalculateRequest
 from aignostic.dataset.validate_dataset_api import fetch_dataset
 from aignostic.metrics.metrics import calculate_metrics
 
@@ -18,11 +19,11 @@ class EvaluateModelRequest(BaseModel):
 
 class EvaluateModelResponse(BaseModel):
     message: str = "Data successfully received"
-    results: dict
+    results: list[dict]
 
 
 @api.post("/evaluate")
-def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateModelResponse:
+async def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateModelResponse:
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Passes to data endpoint and fetch data
@@ -39,8 +40,22 @@ def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateModelRe
 
     try:
         predicted_labels: list = predictions["predictions"]
-
-        results = calculate_metrics(data.labels, predicted_labels, request.metrics)
+        req = CalculateRequest(
+            metrics=request.metrics,
+            true_labels=data.labels,
+            predicted_labels=predicted_labels
+        )
+        metrics_map = await calculate_metrics(req)
+        results = []
+        for metric, value in metrics_map:
+            results.append(
+                {
+                    "metric": metric,
+                    "result": value,
+                    "legislation_results": ["Legislation placeholder for metric: " + metric],
+                    "llm_model_summary": ["LLM holder for metric: " + metric]
+                }
+            )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
@@ -57,7 +72,7 @@ def query_model(model_url: HttpUrl, model_api_key: str, data: ModelInput) -> dic
     - modelAPIKey : API key for the model
     """
     headers = {"Authorization": f"Bearer {model_api_key}"} if model_api_key else {}
-   
+
     try:
         response = requests.post(url=model_url, json=data.model_dump(), headers=headers)
         response.raise_for_status()
@@ -136,5 +151,3 @@ def check_model_response(response, labels):
                     detail="All columns for an output label should be of the same type",
                     status_code=400
                 )
-
-    return

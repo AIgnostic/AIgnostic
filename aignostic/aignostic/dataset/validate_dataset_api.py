@@ -41,7 +41,7 @@ def fetch_dataset(request: FetchDatasetRequest) -> ModelInput:
     - request : FetchDatasetRequest - Pydantic model for the request
     """
     headers = {"Authorization": f"Bearer {request.dataset_api_key}"} if request.dataset_api_key else {}
-    
+
     try:
         response = requests.get(request.dataset_url, headers=headers)
 
@@ -55,7 +55,7 @@ def fetch_dataset(request: FetchDatasetRequest) -> ModelInput:
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
-    
+
     try:
         return validate_dataset_format(data)
     except ValueError as e:

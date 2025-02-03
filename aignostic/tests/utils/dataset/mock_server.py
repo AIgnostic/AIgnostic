@@ -14,15 +14,6 @@ acs_data = data_source.get_data(states=["AL"], download=True)
 features, labels, groups = ACSEmployment.df_to_pandas(acs_data)
 
 
-def filter_fn(x, indices):
-    return x.iloc[indices].replace({
-        pd.NA: None,
-        np.nan: None,
-        float('inf'): None,
-        float('-inf'): None
-    })
-
-
 @app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=ModelInput)
 async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
     """
@@ -40,6 +31,14 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
     dataset_size = len(features)
 
     random_indices = np.random.choice(dataset_size, num_datapoints, replace=False)
+
+    def filter_fn(x, indices):
+        return x.iloc[indices].replace({
+            pd.NA: None,
+            np.nan: None,
+            float('inf'): None,
+            float('-inf'): None
+        })
 
     try:
         filtered_features = filter_fn(features, random_indices)
