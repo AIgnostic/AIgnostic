@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import theme from '../theme';
-import styles from '../home.styles';
+import { styles }from '../home.styles';
 
 interface ErrorPopupProps {
     errorHeader?: string;
