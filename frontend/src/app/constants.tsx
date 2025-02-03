@@ -35,7 +35,8 @@ const steps = [
   const modelTypesToMetrics: { [key: string]: string[] } = {
     'Classification': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC'],
     'Regression': ['Mean Absolute Error', 'Mean Squared Error', 'R-squared', 'Root Mean Squared Error'],
-    'Binary Classifier': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC', 'Confusion Matrix']
+    'Binary Classifier': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC', 'Confusion Matrix'],
+    'General (Accuracy, Precision, Recall)': generalMetrics,
   };
 
   export { steps, BACKEND_URL, AIGNOSTIC, HOME, modelTypesToMetrics, generalMetrics};

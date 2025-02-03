@@ -42,9 +42,8 @@ function Homepage() {
     error: false,
     errorMessage: { header: '', text: '' },
   });
-  
 
-    
+
   const getValues = {
     modelURL: {
       label: "Model API URL",
@@ -145,11 +144,7 @@ function Homepage() {
         selected: true,
       })));
     } else {
-      setStateWrapper("metricChips", generalMetrics.map((metric) => ({
-        id: metric,
-        label: metric,
-        selected: true,
-      })));
+
     }
   }
 
@@ -275,7 +270,7 @@ function Homepage() {
                       marginTop: '20px',
                     }}
                     items={items}
-                    label="Select target label(s)"
+                    label="Select other metrics"
                     value={selectedItem}
                     onChange={(value: string) => setSelectedItem(value)}
                   />
@@ -346,9 +341,15 @@ function Homepage() {
                       if (index === 0 && !(state.isModelURLValid && state.isDatasetURLValid)) {
                         alert("One or both URLs are invalid. Please provide valid URLs.");
                         handleReset();
+                      } else if (index === 1 && state.selectedModelType === '') {
+                        alert("Please select a model type.");
                       } else {
                         handleNext();
                       }}}
+                    disabled = {
+                      (index === 0 && !(state.isModelURLValid && state.isDatasetURLValid)) ||
+                      (index === 1 && state.selectedModelType === '')
+                    }
                     sx={{ mt: 1, mr: 1 }}
                   >
                     {' '}
