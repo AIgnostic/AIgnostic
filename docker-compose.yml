@@ -21,6 +21,7 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+      
   worker:
     build:
       context: .
@@ -31,8 +32,19 @@ services:
     command: "python test_consumer.py && echo 'Worker is running'"
     environment:
       - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      - rabbitmq
+
     deploy:
       replicas: 10
+
+  test_producer:
+    build:
+      context: .
+      dockerfile: ./aignostic/Dockerfile.worker
+    volumes:
+      - .:/app
+    working_dir: /app/aignostic
+    command: "python test_producer.py && echo 'Producer is running'"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    
 
