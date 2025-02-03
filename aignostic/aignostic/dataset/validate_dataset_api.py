@@ -40,24 +40,26 @@ def fetch_dataset(request: FetchDatasetRequest) -> ModelInput:
     Params:
     - request : FetchDatasetRequest - Pydantic model for the request
     """
+    headers = {"Authorization": f"Bearer {request.dataset_api_key}"} if request.dataset_api_key else {}
+    
     try:
-        headers = {"Authorization": f"Bearer {request.dataset_api_key}"} if request.dataset_api_key else {}
         response = requests.get(request.dataset_url, headers=headers)
 
         response.raise_for_status()
 
         data = response.json()
-        return validate_dataset_format(data)
-    except requests.exceptions.RequestException as e:
-        if response.status_code == 401:
-            raise HTTPException(status_code=401, detail="Unauthorized access: Please check your API Key")
-        elif response.status_code == 404:
-            raise HTTPException(status_code=404, detail="Data not found")
-        raise HTTPException(status_code=response.status_code, detail=f"Error while fetching data: {e}")
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Error while validating data: {e}")
+    except requests.exceptions.HTTPError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=e.response.json()["detail"],
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
+    
+    try:
+        return validate_dataset_format(data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Error while validating data: {e}")
 
 
 if __name__ == "__main__":

@@ -56,10 +56,10 @@ def query_model(model_url: HttpUrl, model_api_key: str, data: ModelInput) -> dic
     - data : Data to be passed to the model in JSON format with DataSet pydantic model type
     - modelAPIKey : API key for the model
     """
+    headers = {"Authorization": f"Bearer {model_api_key}"} if model_api_key else {}
+   
     try:
-        headers = {"Authorization": f"Bearer {model_api_key}"} if model_api_key else {}
         response = requests.post(url=model_url, json=data.model_dump(), headers=headers)
-
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         raise HTTPException(
