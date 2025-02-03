@@ -67,4 +67,4 @@ def test_non_existent_endpoint_throws_404(run_servers):
     )
     response = app_client.post("/fetch-data", json=fetch_dataset_request.model_dump(mode="json"))
     assert response.status_code == 404
-    assert response.json() == {"detail": "Data not found"}
+    assert response.json() == {"detail": "Not Found"}
