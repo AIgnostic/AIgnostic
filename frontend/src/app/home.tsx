@@ -92,9 +92,9 @@ function Homepage() {
     if (state.modelURL && state.datasetURL) {
       const user_info = {
         "model_url": state.modelURL,
-        "data_url": state.datasetURL,
+        "dataset_url": state.datasetURL,
         "model_api_key": state.modelAPIKey,
-        "data_api_key": state.datasetAPIKey,
+        "dataset_api_key": state.datasetAPIKey,
         "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
           .map((metricChip: { label: string; selected: boolean }) => (metricChip.label).toLowerCase())
       };
