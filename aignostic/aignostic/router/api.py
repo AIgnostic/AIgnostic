@@ -81,13 +81,17 @@ async def process_data(request: DatasetRequest):
         )
         metrics_results = await calculate_metrics(req)
         results = []
-        for metric, value in metrics_results:
+        print("Metric Results")
+        print(metrics_results)
+        for metric, value in metrics_results.metric_values.items():
+            print(f"Metric: {metric}")
+            print(f"Value: {value}")
             results.append(
                 {
                     "metric": metric,
                     "result": value,
-                    "legislation_results": ["Legislation placeholder for metric: " + metric],
-                    "llm_model_summary": ["LLM holder for metric: " + metric]
+                    "legislation_results": ["Legislation placeholder for metric " + metric],
+                    "llm_model_summary": ["LLM holder for metric " + metric]
                 }
             )
     except MetricsException as e:

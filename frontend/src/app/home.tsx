@@ -136,17 +136,6 @@ function Homepage() {
   const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
   const [selectedItem, setSelectedItem] = useState('');
 
-  function handleModelTypeChange(value: string) {
-    if (value in modelTypesToMetrics) {
-      setStateWrapper("metricChips", modelTypesToMetrics[value].map((metric) => ({
-        id: metric,
-        label: metric,
-        selected: true,
-      })));
-    } else {
-
-    }
-  }
 
   return (
     <Box sx={[styles.container]}>
@@ -226,7 +215,11 @@ function Homepage() {
                   <RadioGroup
                     value={state.selectedModelType}
                     onChange={(event) => {
-                      handleModelTypeChange(event.target.value);
+                      setStateWrapper("metricChips", modelTypesToMetrics[event.target.value].map((metric) => ({
+                        id: metric,
+                        label: metric,
+                        selected: true,
+                      })));
                       setStateWrapper("selectedModelType", event.target.value);
                     }}
                   >
@@ -347,7 +340,8 @@ function Homepage() {
                         handleNext();
                       }}}
                     disabled = {
-                      (index === 0 && !(state.isModelURLValid && state.isDatasetURLValid)) ||
+                      (index === 0 && (!(state.isModelURLValid && state.isDatasetURLValid) ||
+                      (state.modelURL === '' || state.datasetURL === ''))) || 
                       (index === 1 && state.selectedModelType === '')
                     }
                     sx={{ mt: 1, mr: 1 }}

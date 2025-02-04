@@ -43,7 +43,10 @@ async def calculate_metrics(info: CalculateRequest) -> MetricValues:
     """
     results = {}
     for metric in info.metrics:
-        results[metric] = metric_to_fn[metric](metric, info)
+        if metric not in metric_to_fn.keys():
+            results[metric] = 1
+        else:
+            results[metric] = metric_to_fn[metric](metric, info)
     return MetricValues(metric_values=results)
 
 
