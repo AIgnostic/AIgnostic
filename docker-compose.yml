@@ -8,16 +8,18 @@ services:
     volumes:
       - .:/app
     working_dir: /app
-    command: npx nx serve frontend --host 0.0.0.0
+    command: npx nx serve frontend --host 0.0.0.0 --verbose
     ports:
       - '4200:4200'
+    environment:
+      NX_DAEMON: false
   backend:
     build:
       context: .
       dockerfile: ./aignostic/Dockerfile.dev
     volumes:
       - .:/app
-      - venv:/app/aignostic/venv
+      # - venv:/app/aignostic/venv
     command: npx nx serve aignostic --host 0.0.0.0
     working_dir: /app
     ports:
@@ -31,7 +33,7 @@ services:
         DEPGROUP: main,dataset
     volumes:
       - .:/app
-      - venv:/app/aignostic/venv
+      # - venv:/app/aignostic/venv
     command: npx nx mock-dataset aignostic --host 0.0.0.0
     working_dir: /app
     ports:
@@ -44,10 +46,8 @@ services:
         DEPGROUP: main,model
     volumes:
       - .:/app
-      - venv:/app/aignostic/venv
+      # - venv:/app/aignostic/venv
     command: npx nx mock-model aignostic --host 0.0.0.0
     working_dir: /app
     ports:
       - '5001:5001'
-volumes:
-  venv:

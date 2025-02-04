@@ -84,14 +84,14 @@
     "mock-dataset": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry run python -m tests.utils.dataset.mock_server",
+        "command": "python3 -m tests.utils.dataset.mock_server",
         "cwd": "aignostic"
       }
     },
     "mock-model": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry run python -m tests.utils.model.scikit_mock",
+        "command": "python3 -m tests.utils.model.scikit_mock",
         "cwd": "aignostic"
       }
     },
