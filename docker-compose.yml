@@ -18,8 +18,9 @@ services:
     volumes:
       - .:/app
       # - venv:/app/aignostic/venv
-    command: npx nx serve aignostic --host 0.0.0.0
-    working_dir: /app
+    command: npx nx serve-docker aignostic 
+
+    working_dir: /app/aignostic
     ports:
       - '8000:8000'
   # Mock server

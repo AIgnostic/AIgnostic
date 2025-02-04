@@ -25,9 +25,7 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": [
-        "{projectRoot}/dist"
-      ],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "outputPath": "aignostic/dist",
         "publish": false,
@@ -48,9 +46,7 @@
     },
     "lint": {
       "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/aignostic/pylint.txt"
-      ],
+      "outputs": ["{workspaceRoot}/reports/aignostic/pylint.txt"],
       "options": {
         "outputFile": "reports/aignostic/pylint.txt"
       },
@@ -77,7 +73,14 @@
     "serve": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry run uvicorn main:create_application --reload",
+        "command": "poetry run python main.py",
+        "cwd": "aignostic"
+      }
+    },
+    "serve-docker": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "uvicorn main:app --host 0.0.0.0 --reload",
         "cwd": "aignostic"
       }
     },
@@ -101,9 +104,7 @@
         "context": "{workspaceRoot}",
         "file": "{workspaceRoot}/aignostic/Dockerfile",
         "metadata": {
-          "images": [
-            "ghcr.io/aignostic/aignostic"
-          ],
+          "images": ["ghcr.io/aignostic/aignostic"],
           "load": true,
           "tags": [
             "type=schedule",

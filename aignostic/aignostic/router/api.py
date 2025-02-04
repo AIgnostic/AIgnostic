@@ -2,7 +2,7 @@ from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
 import requests
 import aignostic.metrics.metrics as metrics_lib
-
+import uvicorn
 
 api = APIRouter()
 
@@ -139,3 +139,4 @@ async def query_model(modelURL: HttpUrl, data: dict, modelAPIKey):
         raise HTTPException(status_code=400, detail=f"Error while fetching data: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while querying model: {e}")
+

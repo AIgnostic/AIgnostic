@@ -36,8 +36,12 @@ COPY ./aignostic /app/aignostic
 # Turn off venv creation so that we do not get conflicts between 
 # local venv mounted in at dev & system packages.
 RUN poetry config virtualenvs.create false
-RUN mkdir /venv
+RUN mkdir -p /venv
 RUN poetry config virtualenvs.path /venv
+
+EXPOSE 8000
+EXPOSE 5000
+EXPOSE 5001
 
 # Run poetry install via nx
 # Below must be set to tell poetry's pip to install to global pckages scope
