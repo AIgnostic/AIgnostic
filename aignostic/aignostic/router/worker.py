@@ -61,12 +61,10 @@ def process_job(job: Job):
     try:
         predicted_labels = predictions["predictions"]
         metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, job.metrics)
+        return metrics_results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
-    metrics_results = "LOLLLL"
-
-    return metrics_results
 
 
 
