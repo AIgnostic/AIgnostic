@@ -45,7 +45,6 @@ async def generate_metrics_from_info(request: ModelEvaluationRequest) -> ModelEv
             true_labels=data.labels,
             predicted_labels=predicted_labels
         )
-        
         metrics_map = await calculate_metrics(req)
         results = []
         for metric, value in metrics_map.metric_values.items():
