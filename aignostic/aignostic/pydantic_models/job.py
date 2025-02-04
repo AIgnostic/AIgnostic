@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class Job(BaseModel):
     """
     Job pydantic model represents the request body when sending a request

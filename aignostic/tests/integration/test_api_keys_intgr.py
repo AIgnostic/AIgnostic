@@ -25,12 +25,14 @@ def run_servers():
     data_server = uvicorn.Server(data_config)
     model_server = uvicorn.Server(model_config)
     app_server = uvicorn.Server(app_config)
+    worker_config = uvicorn.Config(app=sk_model_app, host="127.0.0.1", port=3336)
+    worker_server = uvicorn.Server(worker_config)
 
     def start_server(server):
         server.run()
 
     threads = [Thread(target=start_server, args=(server,), daemon=True)
-               for server in [data_server, model_server, app_server]]
+               for server in [data_server, model_server, app_server, worker_server]]
 
     for thread in threads:
         thread.start()
@@ -39,12 +41,14 @@ def run_servers():
     assert data_server.started
     assert model_server.started
     assert app_server.started
+    assert worker_server.started
 
     yield
 
     data_server.should_exit = True
     model_server.should_exit = True
     app_server.should_exit = True
+    worker_server.should_exit = True
 
     for thread in threads:
         thread.join()

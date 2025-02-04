@@ -6,7 +6,7 @@ Each worker:
 - Fetches the model from the model URL
 - Computes the metrics
 - Puts the results on a results queue
-''' 
+'''
 
 import requests
 from fastapi import HTTPException
@@ -16,6 +16,7 @@ from aignostic.router.connection_constants import channel, JOB_QUEUE
 from aignostic.pydantic_models.job import Job
 import json
 from typing import Optional
+
 
 def fetch_job() -> Optional[Job]:
     """
@@ -30,8 +31,8 @@ def fetch_job() -> Optional[Job]:
             raise HTTPException(status_code=400, detail=f"Invalid job format: {e}")
     return None
 
-def process_job(job: Job):
 
+def process_job(job: Job):
 
     # fetch data from datasetURL
     data: dict = await fetch_data(job.data_url, job.data_api_key)
@@ -64,8 +65,6 @@ def process_job(job: Job):
         return metrics_results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
-
-
 
 
 async def query_model(model_url: HttpUrl, data: dict, model_api_key):
@@ -202,5 +201,3 @@ if __name__ == "__main__":
         if job:
             job = json.loads(job)
             process_job(job)
-
-        

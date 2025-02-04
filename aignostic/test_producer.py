@@ -2,6 +2,7 @@ import pika
 import time
 import os
 
+
 def connect_to_rabbitmq():
     host = os.environ.get("RABBITMQ_HOST", "localhost")
     for i in range(10):  # Retry up to 10 times
@@ -14,6 +15,7 @@ def connect_to_rabbitmq():
             print(f"Connection failed. Retrying {i+1}/10...")
             time.sleep(3)
     raise Exception("Could not connect to RabbitMQ after multiple attempts.")
+
 
 connection = connect_to_rabbitmq()
 channel = connection.channel()

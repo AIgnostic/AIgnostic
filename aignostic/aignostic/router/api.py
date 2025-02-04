@@ -1,8 +1,8 @@
 from pydantic import BaseModel, HttpUrl
-from fastapi import HTTPException
-import json
+from fastapi import HTTPException, FastAPI
 from aignostic.router.connection_constants import channel, JOB_QUEUE
 from aignostic.pydantic_models.job import Job
+
 
 class ClientRequest(BaseModel):
     data_url: HttpUrl
@@ -10,6 +10,11 @@ class ClientRequest(BaseModel):
     model_api_key: str
     data_api_key: str
     metrics: list[str]
+
+
+api = FastAPI()  # is this defined alr??
+
+BATCH_SIZE = 10
 
 
 @api.post("/evaluate")
@@ -45,13 +50,18 @@ async def process_data(request: ClientRequest):
     """
 
     # Dispatch job to the model
-    try :
-        dispatch_job(10, request.metrics, request.data_url, request.model_url, request.data_api_key, request.model_api_key)
-
+    try:
+        dispatch_job(batch_size=BATCH_SIZE,
+                     metrics=request.metrics,
+                     data_url=request.data_url,
+                     model_url=request.model_url,
+                     data_api_key=request.data_api_key,
+                     model_api_key=request.model_api_key)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error dispatching jobs - {e}")
 
-def dispatch_job(batch_size: int, metrics: list[str], data_url: str, model_url: str, 
+
+def dispatch_job(batch_size: int, metrics: list[str], data_url: str, model_url: str,
                  data_api_key: str, model_api_key: str):
     """
     Function to dispatch a job to the model queue using the Job schema
@@ -69,10 +79,10 @@ def dispatch_job(batch_size: int, metrics: list[str], data_url: str, model_url: 
 
         # Serialize the validated job object to JSON
         message = job.model_dump_json()
-        
+
         # Publish the job message to the queue
         channel.basic_publish(exchange='', routing_key=JOB_QUEUE, body=message)
         print("Job successfully dispatched.")
-    
+
     except ValueError as e:
         print(f"Error creating job: {e}")
