@@ -9,7 +9,7 @@ from aignostic.metrics.metrics import calculate_metrics
 api = APIRouter()
 
 
-class EvaluateModelRequest(BaseModel):
+class ModelEvaluationRequest(BaseModel):
     dataset_url: HttpUrl
     dataset_api_key: str
     model_url: HttpUrl
@@ -17,13 +17,13 @@ class EvaluateModelRequest(BaseModel):
     metrics: list[str]
 
 
-class EvaluateModelResponse(BaseModel):
+class ModelEvaluationResponse(BaseModel):
     message: str = "Data successfully received"
     results: list[dict]
 
 
 @api.post("/evaluate")
-async def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateModelResponse:
+async def generate_metrics_from_info(request: ModelEvaluationRequest) -> ModelEvaluationResponse:
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Passes to data endpoint and fetch data
@@ -59,7 +59,7 @@ async def generate_metrics_from_info(request: EvaluateModelRequest) -> EvaluateM
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
-    return EvaluateModelResponse(results=results)
+    return ModelEvaluationResponse(results=results)
 
 
 def query_model(model_url: HttpUrl, model_api_key: str, data: ModelInput) -> dict:
