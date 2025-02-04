@@ -12,23 +12,29 @@ import requests
 from fastapi import HTTPException
 from pydantic.networks import HttpUrl
 from aignostic.metrics import metrics as metrics_lib
-from aignostic.router.connection_constants import channel
+from aignostic.router.connection_constants import channel, JOB_QUEUE
+from aignostic.pydantic_models.job import Job
 import json
+from typing import Optional
 
-def fetch_job():
+def fetch_job() -> Optional[Job]:
     """
     Function to fetch a job from the job queue
     """
-    method_frame, header_frame, body = channel.basic_get(queue='job_queue')
+    method_frame, header_frame, body = channel.basic_get(queue=JOB_QUEUE)
     if method_frame:
-        return body
+        job_data = json.loads(body)
+        try:
+            return Job(**job_data)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid job format: {e}")
     return None
 
-def process_job(batch_size, metrics, data_url, model_url, data_api_key, model_api_key):
+def process_job(job: Job):
 
 
     # fetch data from datasetURL
-    data: dict = await fetch_data(data_url, data_api_key)
+    data: dict = await fetch_data(job.data_url, job.data_api_key)
 
     # strip the label from the datapoint
     try:
@@ -43,18 +49,18 @@ def process_job(batch_size, metrics, data_url, model_url, data_api_key, model_ap
     # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
 
     predictions = await query_model(
-        model_url,
+        job.model_url,
         {
             "features": features,
             "labels": labels,
             "group_ids": group_ids
         },
-        model_api_key
+        job.model_api_key
     )
 
     try:
         predicted_labels = predictions["predictions"]
-        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, metrics)
+        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, job.metrics)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
@@ -197,12 +203,6 @@ if __name__ == "__main__":
         job = fetch_job()
         if job:
             job = json.loads(job)
-            batch_size = job["batch_size"]
-            metrics = job["metrics"]
-            data_url = job["data_url"]
-            model_url = job["model_url"]
-            data_api_key = job["data_api_key"]
-            model_api_key = job["model_api_key"]
-            process_job(batch_size, metrics, data_url, model_url, data_api_key, model_api_key)
+            process_job(job)
 
         
