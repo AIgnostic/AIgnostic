@@ -47,6 +47,7 @@ async def calculate_metrics(info: CalculateRequest) -> MetricValues:
             results[metric] = 1
         else:
             results[metric] = metric_to_fn[metric](metric, info)
+            
     return MetricValues(metric_values=results)
 
 
