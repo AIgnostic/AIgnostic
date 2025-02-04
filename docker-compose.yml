@@ -7,8 +7,8 @@ services:
     image: node:lts
     volumes:
       - .:/app
-    working_dir: /app
-    command: npx nx serve frontend --host 0.0.0.0 --verbose
+    working_dir: /app/frontend
+    command: npx vite serve --host 0.0.0.0
     ports:
       - '4200:4200'
     environment:
