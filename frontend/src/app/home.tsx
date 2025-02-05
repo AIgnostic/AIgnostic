@@ -93,9 +93,9 @@ function Homepage() {
     if (state.modelURL && state.datasetURL) {
       const user_info = {
         "model_url": state.modelURL,
-        "data_url": state.datasetURL,
+        "dataset_url": state.datasetURL,
         "model_api_key": state.modelAPIKey,
-        "data_api_key": state.datasetAPIKey,
+        "dataset_api_key": state.datasetAPIKey,
         "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
           .map((metricChip: { label: string; selected: boolean }) => (metricChip.label).toLowerCase())
       };
@@ -225,7 +225,11 @@ function Homepage() {
                   <RadioGroup
                     value={state.selectedModelType}
                     onChange={(event) => {
-                      handleModelTypeChange(event.target.value);
+                      setStateWrapper("metricChips", modelTypesToMetrics[event.target.value].map((metric) => ({
+                        id: metric,
+                        label: metric,
+                        selected: true,
+                      })));
                       setStateWrapper("selectedModelType", event.target.value);
                     }}
                   >
@@ -350,7 +354,8 @@ function Homepage() {
                       }
                     }}
                     disabled = {
-                      (index === 0 && !(state.isModelURLValid && state.isDatasetURLValid)) ||
+                      (index === 0 && (!(state.isModelURLValid && state.isDatasetURLValid) ||
+                      (state.modelURL === '' || state.datasetURL === ''))) || 
                       (index === 1 && state.selectedModelType === '')
                     }
                     sx={{ mt: 1, mr: 1 }}
