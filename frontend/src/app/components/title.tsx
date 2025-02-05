@@ -16,7 +16,7 @@ const Title = () => (
         variant='contained' 
         sx={{ml:"10px"}}
         onClick={() => {
-          window.open(`${HOME}/api-docs`, '_blank', 'noopener,noreferrer');
+          window.location.href = `${HOME}/api-docs`;
         }}
         >Getting Started</Button>
     </Box>

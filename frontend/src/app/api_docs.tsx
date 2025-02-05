@@ -16,7 +16,7 @@ import CodeBox from './components/CodeBox'; // Import your CodeBox component
 import { styles } from './home.styles';
 import { Box } from '@mui/material';
 import { AIGNOSTIC } from './constants';
-import { MarkdownFiles } from './types';
+import { MarkdownFiles, BackButton } from './types';
 
 type APIDocsProps = {
   getMarkdownFiles: () => MarkdownFiles; // Injectable function to load markdown files
@@ -42,7 +42,7 @@ const APIDocs: React.FC<APIDocsProps> = ({ getMarkdownFiles }) => {
   return (
     <div style={styles.container}>
       <Box style={styles.container}>
-        <h3 style={styles.logoText}>{AIGNOSTIC} | API Documentation</h3>
+        <h3 style={styles.logoText}>{AIGNOSTIC} | API Documentation | <BackButton/></h3>
       </Box>
 
 
