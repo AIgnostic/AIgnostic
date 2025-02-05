@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { checkURL, generateReportText } from './utils';
 import Dropdown from './components/dropdown';
-import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics } from './constants';
+import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics, activeStepToInputConditions } from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
 import ErrorMessage from './components/ErrorMessage';
@@ -21,9 +21,10 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material';
+import { HomepageState } from './types';
 
 function Homepage() {
-  const [state, setState] = useState({
+  const [state, setState] = useState<HomepageState>({
     modelURL: '',
     datasetURL: '',
     modelAPIKey: '',
@@ -143,8 +144,6 @@ function Homepage() {
         label: metric,
         selected: true,
       })));
-    } else {
-
     }
   }
 
@@ -316,7 +315,7 @@ function Homepage() {
                       }
 
                       // check that at least one metric is selected
-                      // if not, jump to step 2
+                      // if not, jump to step 3
                       else if (
                         state.metricChips.filter((metricChip) => metricChip.selected)
                           .length === 0
@@ -338,14 +337,18 @@ function Homepage() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      if (index === 0 && !(state.isModelURLValid && state.isDatasetURLValid)) {
-                        alert("One or both URLs are invalid. Please provide valid URLs.");
-                        handleReset();
-                      } else if (index === 1 && state.selectedModelType === '') {
-                        alert("Please select a model type.");
-                      } else {
+                      // TODO: For each index in activeStepToInputConditions check it holds
+                      let raised = false
+                      for (const [step, condition] of Object.entries(activeStepToInputConditions)) {
+                        if (parseInt(step) === index && !condition.pred(state)) {
+                          alert(condition.error_msg);
+                          raised = true
+                        }
+                      }
+                      if (!raised) {
                         handleNext();
-                      }}}
+                      }
+                    }}
                     disabled = {
                       (index === 0 && !(state.isModelURLValid && state.isDatasetURLValid)) ||
                       (index === 1 && state.selectedModelType === '')
