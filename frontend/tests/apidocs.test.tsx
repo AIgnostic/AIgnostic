@@ -28,8 +28,6 @@ jest.mock('../src/app/constants', () => ({
   AIGNOSTIC: 'MockAIGNOSTIC',
 }));
 
-jest.mock()
-
 describe('APIDocs', () => {
 
   const mockGetMarkdownFiles = (): Record<string, string> => ({
@@ -41,7 +39,7 @@ describe('APIDocs', () => {
   it('correctly renders Markdown titles', () => {
     render(<MemoryRouter><APIDocs getMarkdownFiles={mockGetMarkdownFiles} /></MemoryRouter>);
 
-    expect(screen.getByText('MockAIGNOSTIC | API Documentation')).toBeInTheDocument();
+    expect(screen.getByText('MockAIGNOSTIC | API Documentation |')).toBeInTheDocument();
     expect(screen.getByText('Title 1')).toBeInTheDocument();
     expect(screen.getByText('Title 2')).toBeInTheDocument();
     expect(screen.getByText('No title found')).toBeInTheDocument();
@@ -61,7 +59,7 @@ describe('APIDocs', () => {
     const emptyMockGetMarkdownFiles = () => ({});
     render(<MemoryRouter><APIDocs getMarkdownFiles={emptyMockGetMarkdownFiles} /></MemoryRouter>);
 
-    expect(screen.getByText('MockAIGNOSTIC | API Documentation')).toBeInTheDocument();
+    expect(screen.getByText('MockAIGNOSTIC | API Documentation |')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-markdown')).not.toBeInTheDocument();
   });
 
