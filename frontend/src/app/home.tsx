@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { checkURL, generateReportText } from './utils';
-import Dropdown from './components/dropdown';
 import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics, activeStepToInputConditions } from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
@@ -267,15 +266,6 @@ function Homepage() {
                       style={{ margin: '5px' }}
                     />
                   ))}
-                  <Dropdown
-                    style={{
-                      marginTop: '20px',
-                    }}
-                    items={items}
-                    label="Select other metrics"
-                    value={selectedItem}
-                    onChange={(value: string) => setSelectedItem(value)}
-                  />
                 </Box>
               )}
 

@@ -1,8 +1,6 @@
 import isURL from "validator/lib/isURL";
 import jsPDF from "jspdf";
 import { reportStyles } from "./home.styles";
-import { Button } from "@mui/material";
-import { useNavigate } from 'react-router-dom';
 
 function checkURL(url: string): boolean {
     if (url === '') {
