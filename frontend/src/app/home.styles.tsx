@@ -64,7 +64,31 @@ const styles = {
         borderBottom: '1px solid #e0e0e0',
         borderRadius: '10px 10px 0 0',
     },
+    errorMessageHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '18px',
+        fontWeight: 'bold',
+    },
+    errorMessageContainer: {
+        '& .MuiPaper-root': {
+            borderRadius: '10px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+            padding: '20px',
+            minWidth: '300px',
+            backgroundColor: theme.palette.secondary.main,
+        },
+    }
 
 };
 
-export default styles;
+const reportStyles = {
+    title: { font: "helvetica", style: "bold", size: 24 },
+    sectionHeader: { font: "helvetica", style: "bold", size: 16 },
+    subHeader: { font: "helvetica", style: "bold", size: 14 },
+    normalText: { font: "helvetica", style: "normal", size: 12 },
+    bulletText: { font: "helvetica", style: "normal", size: 14 }
+};
+
+export { styles, reportStyles};

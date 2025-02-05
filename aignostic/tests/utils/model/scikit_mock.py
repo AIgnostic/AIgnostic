@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Depends
 import numpy as np
 from sklearn.pipeline import Pipeline
-from tests.utils.api_utils import get_model_api_key
 import pickle
+from tests.utils.api_utils import get_model_api_key
 from aignostic.pydantic_models.data_models import ModelInput, ModelResponse
 import os
 from fastapi import HTTPException
@@ -40,7 +40,7 @@ def predict(input: ModelInput) -> ModelResponse:
         predictions: list[list] = output.tolist()
         print(predictions)
     except Exception as e:
-        return HTTPException(detail=f"Error occured during model prediction: {e}", status_code=500)
+        raise HTTPException(detail=f"Error occured during model prediction: {e}", status_code=500)
     return ModelResponse(predictions=predictions)
 
 

@@ -6,12 +6,13 @@ import pandas as pd
 from folktables import ACSDataSource, ACSEmployment
 import pickle
 from tests.utils.model.huggingface_binclassifier import app as huggingface_app
+from tests.utils.model.finbert import app as finbert_app
 import pytest
-
 
 huggingface_mock = TestClient(huggingface_app)
 scikit_mock = TestClient(scikit_app)
 basic_mock = TestClient(mock_app)
+finbert_mock = TestClient(finbert_app)
 
 
 def test_non_existent_endpoint_throws_error():
@@ -31,7 +32,6 @@ def test_mock_returns_empty():
 
 
 def test_empty_data_scikit():
-    # post empty pandas dataframe
     response = scikit_mock.post("/predict", json={
         "features": [],  # Empty list for no columns
         "labels": [],  # Empty list for no rows
@@ -84,7 +84,7 @@ def test_valid_data_huggingface():
     assert response.status_code == 200
 
 
-def test_invalid_inputs_fail():
+def test_invalid_inputs_fail_hf_binclassifier():
     """
     Test that invalid inputs fail when /predict is called
     """
@@ -93,7 +93,7 @@ def test_invalid_inputs_fail():
     assert response.status_code == 422, response.text
 
 
-def test_multiple_inputs():
+def test_multiple_inputs_hf_binclassifier():
     """
     Test that multiple inputs are accepted and processed correctly by the pydantic model and
     the HuggingFace model API
@@ -106,3 +106,53 @@ def test_multiple_inputs():
     assert response.status_code == 200, response.text
     out = response.json()
     assert len(out["predictions"]) == 3, "Multiple inputs not processed correctly"
+
+
+def test_empty_input_finbert():
+    response = finbert_mock.post("/predict", json={
+        "features": [],  # Empty list for no columns
+        "labels": [],  # Empty list for no rows
+        "group_ids": []  # Empty list for no group IDs
+    })
+    assert response.status_code == 200, response.text
+    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
+
+
+def test_invalid_input_finbert():
+    response = finbert_mock.post("/predict", json={
+        "features": ["Hello world", "Hello world"],
+        "labels": ["Positive", "Positive"],
+        "group_ids": []
+    })
+    assert response.status_code == 422, response.text
+
+
+def test_finbert_single_input():
+    response = finbert_mock.post("/predict", json={
+        "features": [["Hello world"]],
+        "labels": [["neutral"]],
+        "group_ids": []
+    })
+    assert response.status_code == 200, response.text
+    assert response.json()["predictions"][0][0]["label"] == "neutral", "Single data output is not the expected value"
+
+
+def test_finbert_multiple_inputs():
+    response = finbert_mock.post("/predict", json={
+        "features": [
+            ["Tech stocks are bearish with investors fearing a burst in the AI bubble"],
+            ["The stock market is bullish with investors optimistic about the future"],
+            ["The market will be the same tomorrow as it was the same yesterday"]
+        ],
+        "labels": [
+            ["negative"],
+            ["positive"],
+            ["neutral"]
+        ],
+        "group_ids": []
+    })
+    assert response.status_code == 200, response.text
+    assert len(response.json()["predictions"]) == 3, "Incorrect number of outputs produced given number of inputs"
+    assert response.json()["predictions"][0][0]["label"] == "negative", "First input not classified as negative"
+    assert response.json()["predictions"][1][0]["label"] == "positive", "Second input not classified as positive"
+    assert response.json()["predictions"][2][0]["label"] == "neutral", "Third input not classified as neutral"

@@ -46,9 +46,10 @@ pytest-html = "4.1.1"
 pytest-httpserver = "^1.1.0"                                      # Dev
 httpx = "^0.28.1"                                                 # Dev
 transformers = "^4.48.0"                                          # Dev
-torch = { version = "^2.5.1", source = "pytorch-gpu-src" }        # Dev
-torchvision = { version = "^0.20.1", source = "pytorch-gpu-src" } # Dev
-torchaudio = { version = "^2.5.1", source = "pytorch-gpu-src" }   # Dev
+torch = "^2.5.1"
+torchvision = "^0.20.1"
+torchaudio = "^2.5.1"
+
 
 
 # Deps for mock dataset server

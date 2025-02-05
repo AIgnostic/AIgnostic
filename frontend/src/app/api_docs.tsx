@@ -13,19 +13,19 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Typography from '@mui/material/Typography';
 import ReactMarkdown from 'react-markdown';
 import CodeBox from './components/CodeBox'; // Import your CodeBox component
-import styles from './home.styles';
+import { styles } from './home.styles';
 import { Box } from '@mui/material';
 import { AIGNOSTIC } from './constants';
+import { MarkdownFiles } from './types';
 
+type APIDocsProps = {
+  getMarkdownFiles: () => MarkdownFiles; // Injectable function to load markdown files
+};
 
-const APIDocs: React.FC = () => {
-  
+const APIDocs: React.FC<APIDocsProps> = ({ getMarkdownFiles }) => {
   
   // Split the markdown into title (h1) and content
-  const splitMarkdown = (markdown: unknown) => {
-    if (typeof markdown !== 'string') {
-        return { title: 'Error', body: 'Invalid markdown content' };
-    }
+  const splitMarkdown = (markdown: string) => {
     // Find the first h1 to use as the title
     const h1Match = markdown.match(/^# (.*?)\n/);
     const title = h1Match ? h1Match[1] : 'No title found';
@@ -36,7 +36,7 @@ const APIDocs: React.FC = () => {
     return { title, body };
   };
   
-  const markdownFiles = import.meta.glob('./docs/*.md', { query: '?raw', import: 'default', eager: true });
+  const markdownFiles = getMarkdownFiles();
   const mds = Object.values(markdownFiles).map(splitMarkdown);
 
   return (
@@ -51,19 +51,21 @@ const APIDocs: React.FC = () => {
           <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls={`panel${index}-content`} id={`panel${index}-header`}>
             <h1 style={{fontSize:"20px"}}>{md.title}</h1>
           </AccordionSummary>
-          <AccordionDetails>
-            <ReactMarkdown
-              children={md.body}
-              components={{
-                  p: ({node, inline, className, children}: {node?: any, inline?: boolean, className?: string, children?: React.ReactNode}) => (
-                    <Typography variant="body1">{children}</Typography>
-                  ),  // Map p to Typography component
-                  
-                  code: ({node, inline, className, children}: {node?: any, inline?: boolean, className?: string, children?: React.ReactNode}) => (
-                    <CodeBox language="python" codeSnippet={String(children)} />
-                  ),  // Map code to CodeBox component
-              }}
-            />
+          <AccordionDetails style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+            <Box style={{width: '80%', overflowWrap: "anywhere"}}>
+              <ReactMarkdown
+                children={md.body}
+                components={{
+                    p: ({node, inline, className, children}: {node?: any, inline?: boolean, className?: string, children?: React.ReactNode}) => (
+                      <Typography variant="body1">{children}</Typography>
+                    ),  // Map p to Typography component
+                    
+                    code: ({node, inline, className, children}: {node?: any, inline?: boolean, className?: string, children?: React.ReactNode}) => (
+                      <CodeBox language="python" codeSnippet={String(children)} />
+                    ),  // Map code to CodeBox component
+                }}
+              />
+            </Box>
           </AccordionDetails>
         </Accordion>
       ))}

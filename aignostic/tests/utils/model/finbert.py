@@ -4,9 +4,7 @@ from aignostic.pydantic_models.data_models import ModelInput, ModelResponse
 from tests.utils.model.hf_utils import predict as text_classification_predict
 
 app = FastAPI()
-
-# utilising hugging face high-level pipeline for sentiment analysis
-pipe = pipeline("text-classification", model="siebert/sentiment-roberta-large-english")
+pipe = pipeline("text-classification", model="ProsusAI/finbert")
 
 
 @app.post("/predict", response_model=ModelResponse)
