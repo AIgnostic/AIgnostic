@@ -11,6 +11,11 @@ app = FastAPI()
 model: Pipeline = pickle.load(open(os.path.join(os.path.dirname(__file__), '../../../scikit_model.sav'), 'rb'))
 
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the model API!"}
+
+
 @app.post("/predict", dependencies=[Depends(get_model_api_key)], response_model=ModelResponse)
 def predict(input: ModelInput) -> ModelResponse:
     """

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { checkURL, generateReportText } from './utils';
 import Dropdown from './components/dropdown';
-import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics } from './constants';
+import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics, RESULTS_URL } from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
 import ErrorMessage from './components/ErrorMessage';
@@ -89,50 +89,80 @@ function Homepage() {
 
   const handleReset = () => { setStateWrapper("activeStep", 0); };
 
-  const handleSubmit = () => {
-    if (state.modelURL && state.datasetURL) {
-      const user_info = {
-        "model_url": state.modelURL,
-        "data_url": state.datasetURL,
-        "model_api_key": state.modelAPIKey,
-        "data_api_key": state.datasetAPIKey,
-        "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
-          .map((metricChip: { label: string; selected: boolean }) => (metricChip.label).toLowerCase())
+  const handleSubmit = async () => {
+    if (!state.modelURL || !state.datasetURL) {
+      console.log('Please fill in both text inputs.');
+      return;
+    }
+  
+    const user_info = {
+      "model_url": state.modelURL,
+      "data_url": state.datasetURL,
+      "model_api_key": state.modelAPIKey,
+      "data_api_key": state.datasetAPIKey,
+      "metrics": state.metricChips
+        .filter((metricChip) => metricChip.selected)
+        .map((metricChip) => metricChip.label.toLowerCase())
+    };
+  
+    try {
+      // Send POST request to backend server
+      const postResponse = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user_info),
+      });
+  
+      if (postResponse.status !== 202) {
+        const errorData = await postResponse.json();
+        console.error(`Error: ${postResponse.status}`, errorData.detail);
+        setStateWrapper("error", true);
+        setStateWrapper("errorMessage", { header: `Error ${postResponse.status}`, text: errorData.detail });
+        return;
+      }
+  
+      console.log("Job accepted. Polling for results...");
+  
+      // Polling function for results
+      const pollResults = async () => {
+        try {
+          const getResponse = await fetch(RESULTS_URL, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          });
+  
+          if (getResponse.status === 204) {
+            console.log("Still processing... polling again.");
+            setTimeout(pollResults, 2000); // Poll again in 2 seconds
+          } else if (getResponse.status === 200) {
+            const data = await getResponse.json();
+            const results = data["results"];
+            console.log("Results received:", results);
+            const doc = generateReportText(results);
+            doc.save('AIgnostic_Report.pdf');
+          } else {
+            const errorData = await getResponse.json();
+            console.error(`Error: ${getResponse.status}`, errorData.detail);
+            setStateWrapper("error", true);
+            setStateWrapper("errorMessage", { header: `Error ${getResponse.status}`, text: errorData.detail });
+          }
+        } catch (error: any) {
+          console.error("Error during polling:", error.message);
+          setStateWrapper("error", true);
+          setStateWrapper("errorMessage", { header: "Polling Error", text: error.message });
+        }
       };
   
-      // Send POST request to backend server
-      fetch(BACKEND_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(user_info),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            console.log(`HTTP error! status: ${response.status}`);
-            setStateWrapper("error", true);
-            response.json().then((data) => {
-              setStateWrapper("errorMessage", { header: `Error ${response.status}`, text: `${data.detail}` });
-            });
+      // Start polling
+      pollResults();
   
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          const results = data["results"];
-          const doc = generateReportText(results);
-          doc.save('AIgnostic_Report.pdf');
-        })
-        .catch((error) => {
-          console.error("Error during fetch:", error.message);
-        });
-    } else {
-      console.log('Please fill in both text inputs.');
+    } catch (error: any) {
+      console.error("Error during fetch:", error.message);
+      setStateWrapper("error", true);
+      setStateWrapper("errorMessage", { header: "Submission Error", text: error.message });
     }
   };
-
+  
   // Placeholder for the dropdown items
   const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
   const [selectedItem, setSelectedItem] = useState('');

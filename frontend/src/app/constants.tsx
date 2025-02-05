@@ -29,6 +29,7 @@ const steps = [
   ];
   
   const BACKEND_URL = 'http://localhost:8000/evaluate';
+  const RESULTS_URL = 'http://localhost:5002/results';
 
   const generalMetrics = ['Accuracy', 'Precision', 'Recall'];
   
@@ -38,4 +39,4 @@ const steps = [
     'Binary Classifier': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC', 'Confusion Matrix']
   };
 
-  export { steps, BACKEND_URL, AIGNOSTIC, HOME, modelTypesToMetrics, generalMetrics};
+  export { steps, BACKEND_URL, RESULTS_URL, AIGNOSTIC, HOME, modelTypesToMetrics, generalMetrics};

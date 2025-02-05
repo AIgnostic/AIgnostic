@@ -12,27 +12,42 @@ import requests
 from fastapi import HTTPException
 from pydantic.networks import HttpUrl
 from aignostic.metrics import metrics as metrics_lib
-from aignostic.router.connection_constants import channel, JOB_QUEUE
+from aignostic.router.connection_constants import channel, JOB_QUEUE, RESULT_QUEUE
 from aignostic.pydantic_models.job import Job
 import json
 from typing import Optional
+import asyncio
+from aignostic.pydantic_models.metric_models import CalculateRequest, MetricValues
 
 
 def fetch_job() -> Optional[Job]:
     """
     Function to fetch a job from the job queue
     """
-    method_frame, header_frame, body = channel.basic_get(queue=JOB_QUEUE)
+    method_frame, header_frame, body = channel.basic_get(queue=JOB_QUEUE, auto_ack=True)
     if method_frame:
         job_data = json.loads(body)
+        print(f"Received job: {job_data}")
         try:
+            print("Unpacking job data")
             return Job(**job_data)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=f"Invalid job format: {e}")
     return None
 
 
-def process_job(job: Job):
+def queue_result(result: MetricValues):
+    """
+    Function to queue the results of a job
+    """
+    channel.basic_publish(
+        exchange='',
+        routing_key=RESULT_QUEUE,
+        body=json.dumps(dict(result))
+    )
+
+
+async def process_job(job: Job):
 
     # fetch data from datasetURL
     data: dict = await fetch_data(job.data_url, job.data_api_key)
@@ -61,7 +76,16 @@ def process_job(job: Job):
 
     try:
         predicted_labels = predictions["predictions"]
-        metrics_results = metrics_lib.calculate_metrics(labels, predicted_labels, job.metrics)
+
+        # Construct CalculateRequest
+        metrics_request = CalculateRequest(
+            metrics=job.metrics,
+            true_labels=labels,
+            predicted_labels=predicted_labels
+        )
+        metrics_results = await metrics_lib.calculate_metrics(metrics_request)
+        print(f"Metrics request: {metrics_results}")
+        queue_result(metrics_results)
         return metrics_results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
@@ -197,7 +221,9 @@ async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
 
 if __name__ == "__main__":
     while True:
-        job = fetch_job()
-        if job:
-            job = json.loads(job)
-            process_job(job)
+        try:
+            job: Job = fetch_job()
+            if job:
+                asyncio.run(process_job(job))
+        except Exception as e:
+            print(f"Error processing job: {e}")
