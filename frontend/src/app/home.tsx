@@ -245,7 +245,6 @@ function Homepage() {
                 </FormControl>
               </Box>
               )}
-
                 
               {/* 3. SELECT METRICS */}
               {index === 3 && (
@@ -279,6 +278,7 @@ function Homepage() {
                   />
                 </Box>
               )}
+
               {/* 4. SUMMARY AND GENERATE REPORT */}
               {index === steps.length - 1 && (
                   <Box style={{ padding: '15px' }}>

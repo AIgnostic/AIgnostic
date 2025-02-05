@@ -1,6 +1,8 @@
 import isURL from "validator/lib/isURL";
 import jsPDF from "jspdf";
 import { reportStyles } from "./home.styles";
+import { Button } from "@mui/material";
+import { useNavigate } from 'react-router-dom';
 
 function checkURL(url: string): boolean {
     if (url === '') {
@@ -17,7 +19,6 @@ function checkURL(url: string): boolean {
         return false; // If an error is thrown, the URL is invalid
     }
 }
-
 
 function applyStyle(doc: jsPDF, style: any) {
     doc.setFont(style.font, style.style);
