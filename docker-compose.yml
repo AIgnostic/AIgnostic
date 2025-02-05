@@ -1,5 +1,6 @@
 services:
   frontend:
+
     build:
       context: .
       dockerfile: ./frontend/Dockerfile
@@ -7,24 +8,30 @@ services:
     image: node:lts
     volumes:
       - .:/app
+      - venv:/app/aignostic/.venv
     working_dir: /app/frontend
     command: npx nx serve frontend --host 0.0.0.0
     ports:
       - '4200:4200'
+    networks:
+      - aignostic_network
   backend:
+    container_name: backend
     build:
       context: .
       dockerfile: ./aignostic/Dockerfile.dev
     volumes:
       - .:/app
-      # - venv:/app/aignostic/venv
-    command: npx nx serve-docker aignostic 
-
+      - venv:/app/aignostic/.venv
+    command: poetry run uvicorn main:app --host 0.0.0.0 --reload
     working_dir: /app/aignostic
     ports:
       - '8000:8000'
+    networks:
+      - aignostic_network
   # Mock server
   mock_dataset_api:
+    container_name: mock-dataset-api
     build:
       context: .
       dockerfile: ./aignostic/Dockerfile.dev
@@ -32,12 +39,15 @@ services:
         DEPGROUP: main,dataset
     volumes:
       - .:/app
-      # - venv:/app/aignostic/venv
-    command: npx nx mock-dataset aignostic --host 0.0.0.0
-    working_dir: /app
+      - venv:/app/aignostic/.venv
+    command: poetry run python3 -m tests.utils.dataset.mock_server --host 0.0.0.0 --reload
+    working_dir: /app/aignostic
     ports:
       - '5000:5000'
+    networks:
+      - aignostic_network
   mock_model_api:
+    container_name: mock-model-api
     build:
       context: .
       dockerfile: ./aignostic/Dockerfile.dev
@@ -45,8 +55,14 @@ services:
         DEPGROUP: main,model
     volumes:
       - .:/app
-      # - venv:/app/aignostic/venv
-    command: npx nx mock-model aignostic --host 0.0.0.0
-    working_dir: /app
+      - venv:/app/aignostic/.venv
+    command: poetry run python3 -m tests.utils.model.scikit_mock --host 0.0.0.0 --reload
+    working_dir: /app/aignostic
     ports:
       - '5001:5001'
+    networks:
+      - aignostic_network
+volumes:
+  venv:
+networks:
+  aignostic_network:
