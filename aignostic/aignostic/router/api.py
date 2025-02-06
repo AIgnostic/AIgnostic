@@ -8,16 +8,16 @@ from fastapi.responses import JSONResponse
 api = APIRouter()
 
 
-class DatasetRequest(BaseModel):
-    data_url: HttpUrl
+class ModelEvaluationRequest(BaseModel):
+    dataset_url: HttpUrl
+    dataset_api_key: str
     model_url: HttpUrl
     model_api_key: str
-    data_api_key: str
     metrics: list[str]
 
 
 @api.post("/evaluate")
-async def generate_metrics_from_info(request: DatasetRequest):
+async def generate_metrics_from_info(request: ModelEvaluationRequest):
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Dispatches jobs to job_queue
@@ -30,9 +30,9 @@ async def generate_metrics_from_info(request: DatasetRequest):
     try:
         dispatch_job(batch_size=10,
                      metric=request.metrics,
-                     data_url=request.data_url,
+                     data_url=request.dataset_url,
                      model_url=request.model_url,
-                     data_api_key=request.data_api_key,
+                     data_api_key=request.dataset_api_key,
                      model_api_key=request.model_api_key)
         return JSONResponse({"message": "Creating and dispatching jobs"}, status_code=202)
     except Exception as e:

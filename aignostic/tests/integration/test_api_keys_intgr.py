@@ -12,7 +12,7 @@ from fastapi import HTTPException
 app_client = TestClient(api)
 
 
-data_url = "http://127.0.0.1:3333/fetch-datapoints"
+dataset_url = "http://127.0.0.1:3333/fetch-datapoints"
 model_url = "http://127.0.0.1:3334/predict"
 metrics = ["accuracy", "precision", "recall"]
 
@@ -56,11 +56,11 @@ def run_servers():
 
 def test_correct_apis_do_not_err(run_servers):
     response = app_client.post("/evaluate", json={
-        "data_url": data_url,
+        "dataset_url": dataset_url,
         "model_url": model_url,
         "metrics": metrics,
         "model_api_key": MOCK_MODEL_API_KEY,
-        "data_api_key": MOCK_DATASET_API_KEY
+        "dataset_api_key": MOCK_DATASET_API_KEY
     })
     # Useful debug messages
     print(response.text)
@@ -73,11 +73,11 @@ def test_correct_apis_do_not_err(run_servers):
 def test_incorrect_dataset_api_throws_401():
     try:
         response = app_client.post("/evaluate", json={
-            "data_url": data_url,
+            "dataset_url": dataset_url,
             "model_url": model_url,
             "metrics": metrics,
             "model_api_key": MOCK_MODEL_API_KEY,
-            "data_api_key": MOCK_DATASET_API_KEY + "1"
+            "dataset_api_key": MOCK_DATASET_API_KEY + "1"
         })
         assert False, f"Should have thrown 401, but a response was received instead. Response: {response}"
     except HTTPException as e:
@@ -87,11 +87,11 @@ def test_incorrect_dataset_api_throws_401():
 def test_incorrect_model_api_throws_401():
     try:
         response = app_client.post("/evaluate", json={
-            "data_url": data_url,
+            "dataset_url": dataset_url,
             "model_url": model_url,
             "metrics": metrics,
             "model_api_key": MOCK_MODEL_API_KEY + "1",
-            "data_api_key": MOCK_DATASET_API_KEY
+            "dataset_api_key": MOCK_DATASET_API_KEY
         })
         assert False, f"Should have thrown 401, but a response was received instead. Response: {response}"
     except HTTPException as e:

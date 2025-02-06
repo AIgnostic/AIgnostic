@@ -18,7 +18,6 @@ function checkURL(url: string): boolean {
     }
 }
 
-
 function applyStyle(doc: jsPDF, style: any) {
     doc.setFont(style.font, style.style);
     doc.setFontSize(style.size);

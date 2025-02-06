@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from aignostic.router.connection_constants import channel, RESULT_QUEUE
 import json
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 
 aggregator_app = FastAPI()
@@ -28,6 +29,11 @@ aggregator_app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class MetricsAggregatedResponse(BaseModel):
+    message: str = "Data successfully received"
+    results: list[dict]
 
 
 def fetch_result_from_queue():
@@ -50,22 +56,18 @@ def fetch_result_from_queue():
                 "llm_model_summary":  ["Placeholder"]
             })
 
-        result_response = {}
-        result_response["results"] = results
-        print(f"Returning result: {result_response}")
-
-        return result_response
+        return results
     return None
 
 
 @aggregator_app.get("/results")
-async def get_results():
+async def get_results() -> MetricsAggregatedResponse:
     """
     Endpoint to retrieve the results of the metrics calculation
     """
     result = fetch_result_from_queue()
     if result:
-        return result
+        return MetricsAggregatedResponse(results=result)
     return JSONResponse(content={"message": "No results available"}, status_code=204)
 
 if __name__ == "__main__":

@@ -1,1 +1,0 @@
-export type MarkdownFiles = Record<string, string>;
