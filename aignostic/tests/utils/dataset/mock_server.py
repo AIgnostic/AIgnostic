@@ -22,9 +22,9 @@ acs_data = data_source.get_data(states=["AL"], download=True)
 features, labels, groups = ACSEmployment.df_to_pandas(acs_data)
 
 
-@app.get('/')
-def read_root():
-    return {"message": "Welcome to the dataset API!"}
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to the mock server!"}
 
 
 @app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=ModelInput)
