@@ -1,6 +1,6 @@
 """Hello unit test module."""
 
-from models.hello import hello
+from common.hello import hello
 
 
 def test_hello():
