@@ -18,7 +18,6 @@ from aignostic.router.connection_constants import channel, RESULT_QUEUE
 import json
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import time
 
 aggregator_app = FastAPI()
 # Add CORS middleware
