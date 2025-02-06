@@ -5,8 +5,17 @@ from tests.utils.api_utils import get_dataset_api_key
 from aignostic.pydantic_models.data_models import ModelInput
 import pandas as pd
 import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
 
 app: FastAPI = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 data_source = ACSDataSource(survey_year="2018", horizon="1-Year", survey="person")
 acs_data = data_source.get_data(states=["AL"], download=True)
@@ -69,4 +78,4 @@ async def invalid_data_format():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=5000)
+    uvicorn.run(app, host="0.0.0.0", port=5000)

@@ -3,6 +3,10 @@ import jsPDF from "jspdf";
 import { reportStyles } from "./home.styles";
 
 function checkURL(url: string): boolean {
+
+    if (url === 'http://mock-dataset-api:5000/fetch-datapoints' || url === 'http://mock-model-api:5001/predict') {
+        return true; 
+    }
     if (url === '') {
         return false;
     }
@@ -16,7 +20,7 @@ function checkURL(url: string): boolean {
         console.log(e + url)
         return false; // If an error is thrown, the URL is invalid
     }
-}
+};
 
 function applyStyle(doc: jsPDF, style: any) {
     doc.setFont(style.font, style.style);

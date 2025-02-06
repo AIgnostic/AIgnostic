@@ -9,6 +9,7 @@ from aignostic.router.api import api as api_router
 origins = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
+    "http://host.docker.internal:4200"
 ]
 
 

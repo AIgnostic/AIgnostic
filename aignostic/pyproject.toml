@@ -35,6 +35,7 @@ pytest = "^8.3.4"
 pytest-asyncio = "^0.25.2"
 update = "^0.0.1"
 pika = "^1.3.2"
+requests = "^2.32.3"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.3.1"
@@ -43,8 +44,6 @@ pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
 pytest-cov = "6.0.0"
 pytest-html = "4.1.1"
-folktables = "^0.0.12"                                            # DEV
-scikit-learn = "^1.6.1"                                           # DEV
 pytest-httpserver = "^1.1.0"                                      # Dev
 httpx = "^0.28.1"                                                 # Dev
 transformers = "^4.48.0"                                          # Dev
@@ -53,6 +52,14 @@ torchvision = "^0.20.1"
 torchaudio = "^2.5.1"
 
 
+
+# Deps for mock dataset server
+[tool.poetry.group.dataset.dependencies]
+folktables = "^0.0.12"
+
+# Deps for mock model server
+[tool.poetry.group.model.dependencies]
+scikit-learn = "^1.6.1"
 
 [[tool.poetry.source]]
 name = "pytorch-gpu-src"
