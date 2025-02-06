@@ -12,10 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-suggests --no-install-reco
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 RUN apt-get install -y --no-install-suggests --no-install-recommends nodejs pipx
 RUN pipx ensurepath
-ENV PATH="/root/.local/bin:${PATH}"
-
 RUN pipx install poetry
 
+ENV PATH="/root/.local/bin:${PATH}"
 # Copy the application monorepo to the container
 COPY ./package.json /app
 COPY ./nx.json /app
