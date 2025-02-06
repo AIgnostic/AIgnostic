@@ -159,6 +159,51 @@ def macro_recall(name, info: CalculateRequest) -> float:
         ) / len(np.unique(info.true_labels))
 
 
+# def finite_difference_gradient(f, x, h=1e-5):
+#     """Computes gradient using central difference."""
+#     grad = np.zeros_like(x)
+#     for i in range(len(x)):
+#         x_forward = x.copy()
+#         x_backward = x.copy()
+#         x_forward[i] += h
+#         x_backward[i] -= h
+#         grad[i] = (f(x_forward) - f(x_backward)) / (2 * h)
+#     return grad
+
+
+def finite_difference_gradient(name, info: CalculateRequest, h=1e-5) -> np.ndarray:
+    """
+    Compute the finite difference approximation of the gradient for given data.
+    
+    :param name: Name of the metric (for exception handling).
+    :param info: CalculateRequest object containing input data.
+    :param h: Step size for numerical differentiation.
+    :return: Gradient matrix of shape (num_samples, num_features).
+    """
+    try:
+        X = np.array(info.features)  # Assuming features are provided in `info`
+        num_samples, num_features = X.shape
+        gradients = np.zeros_like(X)
+
+        for i in range(num_features):
+            X_forward = X.copy()
+            X_backward = X.copy()
+            X_forward[:, i] += h
+            X_backward[:, i] -= h
+            
+            # Compute the function values (assuming the metric function is applied row-wise)
+            f_forward = np.apply_along_axis(info.metric_function, 1, X_forward)
+            f_backward = np.apply_along_axis(info.metric_function, 1, X_backward)
+
+            # Compute gradient using central difference
+            gradients[:, i] = (f_forward - f_backward) / (2 * h)
+
+        return gradients
+
+    except Exception as e:
+        raise MetricsException(name, additional_context=str(e))
+
+
 metric_to_fn = {
     "accuracy": accuracy,
     "class_precision": class_precision,
