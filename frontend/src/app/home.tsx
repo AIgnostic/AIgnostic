@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { checkURL, generateReportText } from './utils';
-import { steps, BACKEND_URL, RESULTS_URL, modelTypesToMetrics, generalMetrics, activeStepToInputConditions } from './constants';
+import {
+  steps,
+  BACKEND_URL,
+  RESULTS_URL,
+  modelTypesToMetrics,
+  generalMetrics,
+  activeStepToInputConditions,
+} from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
 import ErrorMessage from './components/ErrorMessage';
@@ -42,7 +49,6 @@ function Homepage() {
     error: false,
     errorMessage: { header: '', text: '' },
   });
-
 
   const getValues = {
     modelURL: {
@@ -102,17 +108,17 @@ function Homepage() {
       console.log('Please fill in both text inputs.');
       return;
     }
-  
+
     const user_info = {
-      "dataset_url": state.datasetURL,
-      "dataset_api_key": state.datasetAPIKey,
-      "model_url": state.modelURL,
-      "model_api_key": state.modelAPIKey,
-      "metrics": state.metricChips
+      dataset_url: state.datasetURL,
+      dataset_api_key: state.datasetAPIKey,
+      model_url: state.modelURL,
+      model_api_key: state.modelAPIKey,
+      metrics: state.metricChips
         .filter((metricChip) => metricChip.selected)
-        .map((metricChip) => metricChip.label.toLowerCase())
+        .map((metricChip) => metricChip.label.toLowerCase()),
     };
-  
+
     try {
       // Send POST request to backend server
       const postResponse = await fetch(BACKEND_URL, {
@@ -120,17 +126,20 @@ function Homepage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(user_info),
       });
-  
+
       if (postResponse.status !== 202) {
         const errorData = await postResponse.json();
         console.error(`Error: ${postResponse.status}`, errorData.detail);
-        setStateWrapper("error", true);
-        setStateWrapper("errorMessage", { header: `Error ${postResponse.status}`, text: errorData.detail });
+        setStateWrapper('error', true);
+        setStateWrapper('errorMessage', {
+          header: `Error ${postResponse.status}`,
+          text: errorData.detail,
+        });
         return;
       }
-  
-      console.log("Job accepted. Polling for results...");
-  
+
+      console.log('Job accepted. Polling for results...');
+
       // Polling function for results
       const pollResults = async () => {
         try {
@@ -138,61 +147,70 @@ function Homepage() {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
           });
-          console.log(getResponse);
-  
+
           if (getResponse.status === 204) {
-            console.log("Still processing... polling again.");
+            console.log('Still processing... polling again.');
             setTimeout(pollResults, 2000); // Poll again in 2 seconds
           } else if (getResponse.status === 200) {
             const data = await getResponse.json();
-            const results = data["results"];
-            console.log("Results received:", results);
+            const results = data['results'];
+            console.log('Results received:', results);
             const doc = generateReportText(results);
             doc.save('AIgnostic_Report.pdf');
           } else {
             const errorData = await getResponse.json();
             console.error(`Error: ${getResponse.status}`, errorData.detail);
-            setStateWrapper("error", true);
-            setStateWrapper("errorMessage", { header: `Error ${getResponse.status}`, text: errorData.detail });
+            setStateWrapper('error', true);
+            setStateWrapper('errorMessage', {
+              header: `Error ${getResponse.status}`,
+              text: errorData.detail,
+            });
           }
         } catch (error: any) {
-          console.error("Error during polling:", error.message);
-          setStateWrapper("error", true);
-          setStateWrapper("errorMessage", { header: "Polling Error", text: error.message });
+          console.error('Error during polling:', error.message);
+          setStateWrapper('error', true);
+          setStateWrapper('errorMessage', {
+            header: 'Polling Error',
+            text: error.message,
+          });
         }
       };
-  
+
       // Start polling
       pollResults();
-  
     } catch (error: any) {
-      console.error("Error during fetch:", error.message);
-      setStateWrapper("error", true);
-      setStateWrapper("errorMessage", { header: "Submission Error", text: error.message });
+      console.error('Error during fetch:', error.message);
+      setStateWrapper('error', true);
+      setStateWrapper('errorMessage', {
+        header: 'Submission Error',
+        text: error.message,
+      });
     }
   };
-  
+
   // Placeholder for the dropdown items
   const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
   const [selectedItem, setSelectedItem] = useState('');
 
   function handleModelTypeChange(value: string) {
     if (value in modelTypesToMetrics) {
-      setStateWrapper("metricChips", modelTypesToMetrics[value].map((metric) => ({
-        id: metric,
-        label: metric,
-        selected: true,
-      })));
+      setStateWrapper(
+        'metricChips',
+        modelTypesToMetrics[value].map((metric) => ({
+          id: metric,
+          label: metric,
+          selected: true,
+        }))
+      );
     }
   }
 
   return (
     <Box sx={[styles.container]}>
-
       {/* Display error message if error received from backend response */}
       {state.error && (
         <ErrorMessage
-          onClose={() => setStateWrapper("error", false)}
+          onClose={() => setStateWrapper('error', false)}
           errorHeader={state.errorMessage.header}
           errorMessage={state.errorMessage.text}
         />
@@ -268,34 +286,42 @@ function Homepage() {
               {/* 2. SELECT MODEL TYPE */}
               {index === 1 && (
                 <Box style={{ padding: '15px' }}>
-                <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
-              
-                <FormControl component="fieldset">
-                  <FormLabel component="legend">Select Model Type</FormLabel>
-                  <RadioGroup
-                    value={state.selectedModelType}
-                    onChange={(event) => {
-                      setStateWrapper("metricChips", modelTypesToMetrics[event.target.value].map((metric) => ({
-                        id: metric,
-                        label: metric,
-                        selected: true,
-                      })));
-                      setStateWrapper("selectedModelType", event.target.value);
-                    }}
-                  >
-                    {Object.keys(modelTypesToMetrics).map((modelType) => (
-                      <FormControlLabel
-                        key={modelType}
-                        value={modelType}
-                        control={<Radio color="primary" />}
-                        label={modelType}
-                      />
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-              </Box>
+                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
+
+                  <FormControl component="fieldset">
+                    <FormLabel component="legend">Select Model Type</FormLabel>
+                    <RadioGroup
+                      value={state.selectedModelType}
+                      onChange={(event) => {
+                        setStateWrapper(
+                          'metricChips',
+                          modelTypesToMetrics[event.target.value].map(
+                            (metric) => ({
+                              id: metric,
+                              label: metric,
+                              selected: true,
+                            })
+                          )
+                        );
+                        setStateWrapper(
+                          'selectedModelType',
+                          event.target.value
+                        );
+                      }}
+                    >
+                      {Object.keys(modelTypesToMetrics).map((modelType) => (
+                        <FormControlLabel
+                          key={modelType}
+                          value={modelType}
+                          control={<Radio color="primary" />}
+                          label={modelType}
+                        />
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                </Box>
               )}
-                
+
               {/* 3. SELECT METRICS */}
               {index === 3 && (
                 <Box style={{ padding: '15px' }}>
@@ -311,8 +337,8 @@ function Homepage() {
                       }}
                       onClick={() => {
                         metricChip.selected = !metricChip.selected;
-                        setStateWrapper("metricChips", [...state.metricChips]);
-                      }} 
+                        setStateWrapper('metricChips', [...state.metricChips]);
+                      }}
                       color={metricChip.selected ? 'primary' : 'default'}
                       style={{ margin: '5px' }}
                     />
@@ -389,20 +415,27 @@ function Homepage() {
                     variant="contained"
                     onClick={() => {
                       // TODO: For each index in activeStepToInputConditions check it holds
-                      let raised = false
-                      for (const [step, condition] of Object.entries(activeStepToInputConditions)) {
-                        if (parseInt(step) === index && !condition.pred(state)) {
+                      let raised = false;
+                      for (const [step, condition] of Object.entries(
+                        activeStepToInputConditions
+                      )) {
+                        if (
+                          parseInt(step) === index &&
+                          !condition.pred(state)
+                        ) {
                           alert(condition.error_msg);
-                          raised = true
+                          raised = true;
                         }
                       }
                       if (!raised) {
                         handleNext();
                       }
                     }}
-                    disabled = {
-                      (index === 0 && (!(state.isModelURLValid && state.isDatasetURLValid) ||
-                      (state.modelURL === '' || state.datasetURL === ''))) || 
+                    disabled={
+                      (index === 0 &&
+                        (!(state.isModelURLValid && state.isDatasetURLValid) ||
+                          state.modelURL === '' ||
+                          state.datasetURL === '')) ||
                       (index === 1 && state.selectedModelType === '')
                     }
                     sx={{ mt: 1, mr: 1 }}
