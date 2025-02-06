@@ -138,6 +138,7 @@ function Homepage() {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
           });
+          console.log(getResponse);
   
           if (getResponse.status === 204) {
             console.log("Still processing... polling again.");
