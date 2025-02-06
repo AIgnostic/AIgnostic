@@ -8,9 +8,10 @@ RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 JOB_QUEUE = 'job_queue'
 RESULT_QUEUE = 'result_queue'
 
+
 def connect_to_rabbitmq():
     for i in range(10):  # Retry up to 10 times
-        host = RABBIT_MQ_HOST   
+        host = RABBIT_MQ_HOST
         print(f"Connecting to RabbitMQ at {host}")
         try:
             connection = pika.BlockingConnection(
@@ -28,10 +29,6 @@ connection = connect_to_rabbitmq()
 print("Connection established to RabbitMQ")
 channel = connection.channel()
 
-
-
 api = APIRouter()
 channel.queue_declare(queue='job_queue', durable=True)
 channel.queue_declare(queue='result_queue', durable=True)
-
-

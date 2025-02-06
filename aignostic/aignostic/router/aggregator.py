@@ -13,7 +13,6 @@ between the router and aggregator, allowing for real-time updates.
 """
 
 from fastapi import FastAPI, Response
-from fastapi.responses import JSONResponse
 from aignostic.router.connection_constants import channel, RESULT_QUEUE
 import json
 from fastapi.middleware.cors import CORSMiddleware
@@ -50,7 +49,7 @@ def fetch_result_from_queue():
         results = []
         if "error" in result_data:
             results.append({
-            "error": result_data["error"]
+                "error": result_data["error"]
             })
         else:
             for metric, value in result_data["metric_values"].items():
@@ -75,6 +74,7 @@ def get_results() -> MetricsAggregatedResponse:
     if result:
         return MetricsAggregatedResponse(results=result)
     return Response(status_code=204)
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -46,6 +46,7 @@ def queue_result(result: MetricValues):
         body=json.dumps(dict(result))
     )
 
+
 def queue_error(error: str):
     """
     Function to queue an error message
@@ -55,6 +56,7 @@ def queue_error(error: str):
         routing_key=RESULT_QUEUE,
         body=json.dumps({"error": error})
     )
+
 
 async def process_job(job: Job):
 
