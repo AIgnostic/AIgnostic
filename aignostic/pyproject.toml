@@ -60,14 +60,6 @@ folktables = "^0.0.12"
 [tool.poetry.group.model.dependencies]
 scikit-learn = "^1.6.1"
 
-# Deps for mock dataset server
-[tool.poetry.group.dataset.dependencies]
-folktables = "^0.0.12"
-
-# Deps for mock model server
-[tool.poetry.group.model.dependencies]
-scikit-learn = "^1.6.1"
-
 [[tool.poetry.source]]
 name = "pytorch-gpu-src"
 url = "https://download.pytorch.org/whl/cu124"
