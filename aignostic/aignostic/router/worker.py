@@ -47,6 +47,17 @@ def queue_result(result: MetricValues):
     )
 
 
+def queue_error(error: str):
+    """
+    Function to queue an error message
+    """
+    channel.basic_publish(
+        exchange='',
+        routing_key=RESULT_QUEUE,
+        body=json.dumps({"error": error})
+    )
+
+
 async def process_job(job: Job):
 
     # fetch data from datasetURL
@@ -76,6 +87,10 @@ async def process_job(job: Job):
 
     try:
         predicted_labels = predictions["predictions"]
+
+        print(f"Predicted labels: {predicted_labels}")
+        print(f"True labels: {labels}")
+        print(f"Metrics to compute: {job.metrics}")
 
         # Construct CalculateRequest
         metrics_request = CalculateRequest(
@@ -227,3 +242,4 @@ if __name__ == "__main__":
                 asyncio.run(process_job(job))
         except Exception as e:
             print(f"Error processing job: {e}")
+            queue_error(str(e))

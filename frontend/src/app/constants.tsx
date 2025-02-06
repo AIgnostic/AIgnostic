@@ -32,6 +32,7 @@ const steps = [
   
   const BACKEND_URL = 'http://localhost:8000/evaluate';
   const RESULTS_URL = 'http://localhost:5002/results';
+  // const RESULTS_URL = 'http://aggregator-ms:5002/results';
 
   const generalMetrics = ['Accuracy', 'Precision', 'Recall'];
   
