@@ -1,0 +1,36 @@
+[tool.coverage.run]
+branch = true
+source = [ "aggregator" ]
+
+[tool.coverage.report]
+exclude_lines = ['if TYPE_CHECKING:']
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report html:'../coverage/aggregator/html' --cov-report xml:'../coverage/aggregator/coverage.xml' --html='../reports/aggregator/unittests/html/index.html' --junitxml='../reports/aggregator/unittests/junit.xml'"
+
+[tool.poetry]
+name = "aggregator"
+version = "1.0.0"
+description = "Aggregates results and produces a report"
+authors = [ ]
+license = 'Proprietary'
+readme = 'README.md'
+
+  [[tool.poetry.packages]]
+  include = "aggregator"
+
+  [tool.poetry.dependencies]
+  python = ">=3.12,<3.13"
+
+  [tool.poetry.group.dev.dependencies]
+  autopep8 = "2.3.1"
+  flake8 = "7.1.1"
+  pytest = "8.3.4"
+  pytest-sugar = "1.0.0"
+  pytest-cov = "6.0.0"
+  pytest-html = "4.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

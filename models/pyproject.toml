@@ -1,0 +1,36 @@
+[tool.coverage.run]
+branch = true
+source = [ "models" ]
+
+[tool.coverage.report]
+exclude_lines = ['if TYPE_CHECKING:']
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report html:'../coverage/models/html' --cov-report xml:'../coverage/models/coverage.xml' --html='../reports/models/unittests/html/index.html' --junitxml='../reports/models/unittests/junit.xml'"
+
+[tool.poetry]
+name = "models"
+version = "1.0.0"
+description = "Pydantic models shared by everything"
+authors = [ ]
+license = 'Proprietary'
+readme = 'README.md'
+
+  [[tool.poetry.packages]]
+  include = "models"
+
+  [tool.poetry.dependencies]
+  python = ">=3.12,<3.13"
+
+  [tool.poetry.group.dev.dependencies]
+  autopep8 = "2.3.1"
+  flake8 = "7.1.1"
+  pytest = "8.3.4"
+  pytest-sugar = "1.0.0"
+  pytest-cov = "6.0.0"
+  pytest-html = "4.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
