@@ -5,12 +5,25 @@ import { steps } from '../src/app/constants';
 import '@testing-library/jest-dom';
 import { checkURL }from '../src/app/utils';
 import { modelTypesToMetrics, generalMetrics } from '../src/app/constants';
-import  jsPDF  from 'jspdf';
 
 describe('Stepper Navigation', () => {
+
+  it ('should disable Next state if no API URLs inputted', () => {
+    render(<Homepage />);
+    const nextButton = screen.getAllByRole('button', { name: /Next/i })[0];
+    expect(nextButton).toBeDisabled();
+    })
+
+  it ('should disable Next state if one of the API URLs are not inputted', () => {
+    render(<Homepage />);
+    fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
+    const nextButton = screen.getAllByRole('button', { name: /Next/i })[0];
+    expect(nextButton).toBeDisabled();
+    })
   it('should go to the next step when "Next" button is clicked', () => {
     render(<Homepage />);
-    
+    fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
+    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
     expect(screen.getByText(steps[0].label)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Next/i }));
@@ -160,6 +173,8 @@ describe('API Calls', () => {
     fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
     fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
     fireEvent.click(screen.getAllByText('Next')[0]);
+    const radio = screen.getByLabelText('Classification');
+    fireEvent.click(radio);
     fireEvent.click(screen.getAllByText('Next')[1]);
     fireEvent.click(screen.getAllByText('Next')[2]);
     fireEvent.click(screen.getAllByText('Next')[3]);
@@ -178,10 +193,10 @@ describe('API Calls', () => {
 describe('Model Type Selection', () => {
   it('should update metricChips based on selected model type', () => {
     render(<Homepage />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
-
-    fireEvent.click(screen.getByLabelText('Classification')); // Assuming 'Classification' is a valid model type
+    fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
+    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+    fireEvent.click(screen.getByLabelText('Classification'));
     fireEvent.click(screen.getAllByText('Next')[0]);
     fireEvent.click(screen.getAllByText('Next')[0]);
     const expectedMetrics = modelTypesToMetrics['Classification'];
@@ -192,8 +207,9 @@ describe('Model Type Selection', () => {
 
   it('should reset metricChips to generalMetrics if selected model type is not in modelTypesToMetrics', () => {
     render(<Homepage />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
+    fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
+    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
     fireEvent.click(screen.getAllByText('Next')[0]);
     fireEvent.click(screen.getAllByText('Next')[0]);
 
@@ -204,12 +220,23 @@ describe('Model Type Selection', () => {
 
   it('should update selectedModelType state on radio button change', () => {
     render(<Homepage />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Next/i })); // Navigate to model type selection step
-
+    fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
+    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /Next/i })); 
     const radio = screen.getByLabelText('Classification');
     fireEvent.click(radio);
 
     expect(radio).toBeChecked();
   });
+
+  it ('should disable Next state on radio button if not selected', () => {
+    render(<Homepage />);
+    fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
+    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
+    fireEvent.click(screen.getAllByText('Next')[0]);
+
+    const nextButton = screen.getAllByRole('button', { name: /Next/i })[1];
+
+    expect(nextButton).toBeDisabled();
+    })
 });

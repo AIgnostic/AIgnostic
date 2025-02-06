@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { checkURL, generateReportText } from './utils';
-import Dropdown from './components/dropdown';
-import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics } from './constants';
+import { steps, BACKEND_URL, modelTypesToMetrics, generalMetrics, activeStepToInputConditions } from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
 import ErrorMessage from './components/ErrorMessage';
@@ -21,9 +20,10 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material';
+import { HomepageState } from './types';
 
 function Homepage() {
-  const [state, setState] = useState({
+  const [state, setState] = useState<HomepageState>({
     modelURL: '',
     datasetURL: '',
     modelAPIKey: '',
@@ -42,9 +42,8 @@ function Homepage() {
     error: false,
     errorMessage: { header: '', text: '' },
   });
-  
 
-    
+
   const getValues = {
     modelURL: {
       label: 'Model API URL',
@@ -101,15 +100,12 @@ function Homepage() {
   const handleSubmit = () => {
     if (state.modelURL && state.datasetURL) {
       const user_info = {
-        model_url: state.modelURL,
-        data_url: state.datasetURL,
-        model_api_key: state.modelAPIKey,
-        data_api_key: state.datasetAPIKey,
-        metrics: state.metricChips
-          .filter((metricChip) => metricChip.selected)
-          .map((metricChip: { label: string; selected: boolean }) =>
-            metricChip.label.toLowerCase()
-          ),
+        "model_url": state.modelURL,
+        "dataset_url": state.datasetURL,
+        "model_api_key": state.modelAPIKey,
+        "dataset_api_key": state.datasetAPIKey,
+        "metrics": state.metricChips.filter((metricChip) => metricChip.selected)
+          .map((metricChip: { label: string; selected: boolean }) => (metricChip.label).toLowerCase())
       };
   
       // Send POST request to backend server
@@ -152,12 +148,6 @@ function Homepage() {
   function handleModelTypeChange(value: string) {
     if (value in modelTypesToMetrics) {
       setStateWrapper("metricChips", modelTypesToMetrics[value].map((metric) => ({
-        id: metric,
-        label: metric,
-        selected: true,
-      })));
-    } else {
-      setStateWrapper("metricChips", generalMetrics.map((metric) => ({
         id: metric,
         label: metric,
         selected: true,
@@ -254,7 +244,11 @@ function Homepage() {
                   <RadioGroup
                     value={state.selectedModelType}
                     onChange={(event) => {
-                      handleModelTypeChange(event.target.value);
+                      setStateWrapper("metricChips", modelTypesToMetrics[event.target.value].map((metric) => ({
+                        id: metric,
+                        label: metric,
+                        selected: true,
+                      })));
                       setStateWrapper("selectedModelType", event.target.value);
                     }}
                   >
@@ -270,7 +264,6 @@ function Homepage() {
                 </FormControl>
               </Box>
               )}
-
                 
               {/* 3. SELECT METRICS */}
               {index === 3 && (
@@ -293,17 +286,9 @@ function Homepage() {
                       style={{ margin: '5px' }}
                     />
                   ))}
-                  <Dropdown
-                    style={{
-                      marginTop: '20px',
-                    }}
-                    items={items}
-                    label="Select target label(s)"
-                    value={selectedItem}
-                    onChange={(value: string) => setSelectedItem(value)}
-                  />
                 </Box>
               )}
+
               {/* 4. SUMMARY AND GENERATE REPORT */}
               {index === steps.length - 1 && (
                 <Box style={{ padding: '15px' }}>
@@ -346,7 +331,7 @@ function Homepage() {
                       }
 
                       // check that at least one metric is selected
-                      // if not, jump to step 2
+                      // if not, jump to step 3
                       else if (
                         state.metricChips.filter(
                           (metricChip) => metricChip.selected
@@ -372,18 +357,23 @@ function Homepage() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      if (
-                        index === 0 &&
-                        !(state.isModelURLValid && state.isDatasetURLValid)
-                      ) {
-                        alert(
-                          'One or both URLs are invalid. Please provide valid URLs.'
-                        );
-                        handleReset();
-                      } else {
+                      // TODO: For each index in activeStepToInputConditions check it holds
+                      let raised = false
+                      for (const [step, condition] of Object.entries(activeStepToInputConditions)) {
+                        if (parseInt(step) === index && !condition.pred(state)) {
+                          alert(condition.error_msg);
+                          raised = true
+                        }
+                      }
+                      if (!raised) {
                         handleNext();
                       }
                     }}
+                    disabled = {
+                      (index === 0 && (!(state.isModelURLValid && state.isDatasetURLValid) ||
+                      (state.modelURL === '' || state.datasetURL === ''))) || 
+                      (index === 1 && state.selectedModelType === '')
+                    }
                     sx={{ mt: 1, mr: 1 }}
                   >
                     {' '}

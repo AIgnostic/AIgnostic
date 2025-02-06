@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import APIDocs from '../src/app/api_docs';
+import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom'
 
 
@@ -36,16 +37,16 @@ describe('APIDocs', () => {
   });
 
   it('correctly renders Markdown titles', () => {
-    render(<APIDocs getMarkdownFiles={mockGetMarkdownFiles} />);
+    render(<MemoryRouter><APIDocs getMarkdownFiles={mockGetMarkdownFiles} /></MemoryRouter>);
 
-    expect(screen.getByText('MockAIGNOSTIC | API Documentation')).toBeInTheDocument();
+    expect(screen.getByText('MockAIGNOSTIC | API Documentation |')).toBeInTheDocument();
     expect(screen.getByText('Title 1')).toBeInTheDocument();
     expect(screen.getByText('Title 2')).toBeInTheDocument();
     expect(screen.getByText('No title found')).toBeInTheDocument();
   });
 
   it('correctly renders Markdown text content', () => {
-    render(<APIDocs getMarkdownFiles={mockGetMarkdownFiles} />);
+    render(<MemoryRouter><APIDocs getMarkdownFiles={mockGetMarkdownFiles} /></MemoryRouter>);
 
     const markdowns = screen.getAllByTestId('mock-markdown');
     expect(markdowns).toHaveLength(3);
@@ -56,9 +57,9 @@ describe('APIDocs', () => {
 
   it('correctly handles empty markdown files (i.e. nothing rendered nothing displayed)', () => {
     const emptyMockGetMarkdownFiles = () => ({});
-    render(<APIDocs getMarkdownFiles={emptyMockGetMarkdownFiles} />);
+    render(<MemoryRouter><APIDocs getMarkdownFiles={emptyMockGetMarkdownFiles} /></MemoryRouter>);
 
-    expect(screen.getByText('MockAIGNOSTIC | API Documentation')).toBeInTheDocument();
+    expect(screen.getByText('MockAIGNOSTIC | API Documentation |')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-markdown')).not.toBeInTheDocument();
   });
 
@@ -66,7 +67,7 @@ describe('APIDocs', () => {
   // i.e. it ('correctly renders Markdown code ', () => { ... });
 
   it('renders the accordion components i.e. wrapper, summary and details', () => {
-    render(<APIDocs getMarkdownFiles={mockGetMarkdownFiles} />);
+    render(<MemoryRouter><APIDocs getMarkdownFiles={mockGetMarkdownFiles} /></MemoryRouter>);
 
     expect(screen.getAllByTestId('mock-accordion')).toHaveLength(3);
     expect(screen.getAllByTestId('mock-accordion-summary')).toHaveLength(3);

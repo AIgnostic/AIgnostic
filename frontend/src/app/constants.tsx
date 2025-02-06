@@ -1,3 +1,5 @@
+import { ConditionAlertFailure, HomepageState } from "./types";
+
 const AIGNOSTIC = "AIgnostic";
 const HOME = "/AIgnostic";
 
@@ -35,7 +37,30 @@ const steps = [
   const modelTypesToMetrics: { [key: string]: string[] } = {
     'Classification': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC'],
     'Regression': ['Mean Absolute Error', 'Mean Squared Error', 'R-squared', 'Root Mean Squared Error'],
-    'Binary Classifier': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC', 'Confusion Matrix']
+    'Binary Classifier': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC', 'Confusion Matrix'],
+    'General (Accuracy, Precision, Recall)': generalMetrics,
   };
 
-  export { steps, BACKEND_URL, AIGNOSTIC, HOME, modelTypesToMetrics, generalMetrics};
+  /*
+  These conditions indicate the requirements for the user to proceed the next step
+  i.e. we can only proceed to the next step if the given conditions are met
+  
+  This is a map from the step number to the requirements at that stage. If the number does not
+  exist in the map, then proceeding to the next step is default behaviour.
+  */
+  const activeStepToInputConditions: { [key: number]: ConditionAlertFailure } = {
+    0: {
+      pred: (state: HomepageState) => state.isDatasetURLValid && state.isModelURLValid,
+      error_msg: "One or both URLs are invalid. Please provide valid URLs."
+    },
+    1: {
+      pred: (state: HomepageState) => state.selectedModelType !== '',
+      error_msg: "Please select a model type."
+    },
+    3: {
+      pred: (state: HomepageState) => state.metricChips.length > 0,
+      error_msg: "Please select at least one metric."
+    }
+  };
+
+  export { steps, BACKEND_URL, AIGNOSTIC, HOME, modelTypesToMetrics, generalMetrics, activeStepToInputConditions};
