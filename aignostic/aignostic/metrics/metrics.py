@@ -98,7 +98,8 @@ def _calculate_precision(metric_name, true_labels, predicted_labels, target_clas
         target_reshaped = np.full_like(true_labels, target_class)
         tp = np.count_nonzero((true_labels == target_reshaped) & (predicted_labels == target_reshaped))
         fp = np.count_nonzero((true_labels != target_reshaped) & (predicted_labels == target_reshaped))
-        return tp / (tp + fp)
+        print(f"TP: {tp}, FP: {fp}")
+        return tp / (tp + fp) if (tp + fp) != 0 else 0 
     except Exception as e:
         raise MetricsException(metric_name, additional_context=str(e))
 
@@ -131,7 +132,8 @@ def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
         target_reshaped = np.full_like(true_labels, target_class)
         tp = np.count_nonzero((true_labels == target_reshaped) & (predicted_labels == target_reshaped))
         fn = np.count_nonzero((true_labels == target_reshaped) & (predicted_labels != target_reshaped))
-        return tp / (tp + fn)
+        print(f"TP: {tp}, FN: {fn}")
+        return tp / (tp + fn) if (tp + fn) != 0 else 0
     except Exception as e:
         raise MetricsException(metric_name, additional_context=str(e))
 
