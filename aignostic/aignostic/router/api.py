@@ -87,7 +87,7 @@ def query_model(model_url: HttpUrl, model_api_key: str, data: ModelInput) -> dic
     try:
         return response.json()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Could not parse model response - {e}; response = {response.text}")
+        raise HTTPException(status_code=500, detail=f"Error while querying model: {e}")
 
 
 # TODO: Write a doc explaining error messages and what checking is/isn't supported
