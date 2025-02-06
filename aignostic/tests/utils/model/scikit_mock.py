@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -18,7 +19,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 model: Pipeline = pickle.load(open(os.path.join(os.path.dirname(__file__), '../../../scikit_model.sav'), 'rb'))
+
 
 @app.get("/")
 def read_root():

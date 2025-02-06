@@ -1,9 +1,6 @@
 import requests
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, HTTPException
-import requests
-import aignostic.metrics.metrics as metrics_lib
-import uvicorn
 from aignostic.pydantic_models.data_models import ModelInput, FetchDatasetRequest
 from aignostic.pydantic_models.metric_models import CalculateRequest
 from aignostic.dataset.validate_dataset_api import fetch_dataset
