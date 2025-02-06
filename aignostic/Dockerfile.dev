@@ -1,5 +1,51 @@
-FROM node:20-bullseye
+# First stage: build
+FROM python:3.12
 
-RUN curl -sSL https://install.python-poetry.org | python3 -
-ENV PATH="/root/.local/bin:$PATH"
+# ARG to provide dependency group to install
+ARG DEPGROUP=main
+
+# Metadata
+LABEL org.opencontainers.image.source="https://github.com/AIgnostic/AIgnostic"
+
+# Install Node and pipx & poetry
+RUN apt-get update && apt-get install -y --no-install-suggests --no-install-recommends curl
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+RUN apt-get install -y --no-install-suggests --no-install-recommends nodejs pipx
+
+
+# Run pipx and so on
+RUN pipx ensurepath
+RUN pipx install poetry
+
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Set the working directory in the container
 WORKDIR /app
+
+# Copy the application monorepo to the container
+COPY ./package.json /app
+COPY ./nx.json /app
+COPY ./package-lock.json /app
+
+# Run npm ci
+RUN npm ci
+
+COPY ./aignostic /app/aignostic
+
+# set venv
+# Turn off venv creation so that we do not get conflicts between 
+# local venv mounted in at dev & system packages.
+RUN poetry config virtualenvs.create true
+RUN mkdir -p /venv
+RUN poetry config virtualenvs.path /venv
+RUN poetry config virtualenvs.in-project false
+ENV POETRY_VIRTUALENVS_IN_PROJECT=false
+
+# Tell poetry to use python3.12 (otherwise installs to 3.11)
+RUN cd aignostic && poetry env use /usr/local/bin/python3.12
+
+# Run poetry install via nx
+# Below must be set to tell poetry's pip to install to global pckages scope
+# so as not to conflict with local venv mounted in
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+RUN npx nx install aignostic --args=\"--only=$DEPGROUP\"
