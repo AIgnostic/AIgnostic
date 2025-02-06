@@ -2,7 +2,7 @@ import numpy as np
 from aignostic.metrics.metrics import MetricsException
 
 
-def finite_difference_gradient(name, features, model_fn, h=1e-5) -> np.ndarray:
+def finite_difference_gradient(name: str, features: list[list], model_fn: callable, h: float = 1e-5) -> np.ndarray:
     """
     Compute the finite difference approximation of the gradient for given data.
 
@@ -32,5 +32,5 @@ def finite_difference_gradient(name, features, model_fn, h=1e-5) -> np.ndarray:
 
         return gradients
 
-    except Exception as e:
+    except (TypeError, ValueError, AttributeError, IndexError, ZeroDivisionError) as e:
         raise MetricsException(name, additional_context=str(e))
