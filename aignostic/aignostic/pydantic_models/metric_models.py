@@ -26,6 +26,9 @@ class CalculateRequest(BaseModel):
     true_labels: Optional[list[list]] = None
     predicted_labels: Optional[list[list]] = None
     target_class: Optional[Any] = None
+    privileged_groups: Optional[list[dict[str, Any]]] = None
+    unprivileged_groups: Optional[list[dict[str, Any]]] = None
+    protected_attr: Optional[list[int]] = None
 
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @field_validator('true_labels', 'predicted_labels', mode='after')
