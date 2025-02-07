@@ -1,4 +1,8 @@
-from aignostic.metrics.metrics import metrics_app, MetricsException, is_valid_for_per_class_metrics
+from aignostic.metrics.metrics import (
+    metrics_app,
+    MetricsException,
+    is_valid_for_per_class_metrics,
+)
 from fastapi.testclient import TestClient
 import pytest
 
@@ -13,16 +17,19 @@ def json_text(metric_name):
         "predicted_labels": [[1], [0], [0], [0], [1], [0], [1], [0]],
         "privileged_groups": [{"protected_attr": 1}],
         "unprivileged_groups": [{"protected_attr": 0}],
-        "protected_attr": [0, 1, 0, 0, 1, 0, 1, 1]
+        "protected_attr": [0, 1, 0, 0, 1, 0, 1, 1],
     }
 
 
 def test_accuracy():
-    response = metrics_client.post("/calculate-metrics", json={
-        "metrics": ["accuracy"],
-        "true_labels": [[1], [0], [1], [1], [0], [1], [0], [0]],
-        "predicted_labels": [[1], [0], [1], [0], [0], [1], [1], [0]],
-    })
+    response = metrics_client.post(
+        "/calculate-metrics",
+        json={
+            "metrics": ["accuracy"],
+            "true_labels": [[1], [0], [1], [1], [0], [1], [0], [0]],
+            "predicted_labels": [[1], [0], [1], [0], [0], [1], [1], [0]],
+        },
+    )
     assert response.status_code == 200, response.text
     assert response.json() == {"metric_values": {"accuracy": 0.75}}, response.json()
 
@@ -31,7 +38,7 @@ def test_multi_attribute_validity_check_fails():
     with pytest.raises(MetricsException) as e:
         is_valid_for_per_class_metrics(
             "class_precision",
-            [[2, 3], [0, 3], [2, 3], [2, 3], [0, 3], [2, 3], [0, 3], [0, 3]]
+            [[2, 3], [0, 3], [2, 3], [2, 3], [0, 3], [2, 3], [0, 3], [0, 3]],
         )
     assert e.value.status_code == 500
     assert "Error during metric calculation: class_precision" in e.value.detail
@@ -40,77 +47,95 @@ def test_multi_attribute_validity_check_fails():
 
 def test_no_input_validity_check_fails():
     with pytest.raises(MetricsException) as e:
-        is_valid_for_per_class_metrics(
-            "class_precision",
-            []
-        )
+        is_valid_for_per_class_metrics("class_precision", [])
     assert e.value.status_code == 500
     assert "Error during metric calculation: class_precision" in e.value.detail
     assert "No labels provided" in e.value.detail
 
 
 def test_precision():
-    response = metrics_client.post("/calculate-metrics", json={
-        "metrics": ["class_precision"],
-        "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
-        "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
-        "target_class": 2
-    })
+    response = metrics_client.post(
+        "/calculate-metrics",
+        json={
+            "metrics": ["class_precision"],
+            "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
+            "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
+            "target_class": 2,
+        },
+    )
     print(response.json())
     assert response.status_code == 200, response.text
-    assert response.json() == {"metric_values": {"class_precision": 0.6}}, response.json()
+    assert response.json() == {
+        "metric_values": {"class_precision": 0.6}
+    }, response.json()
 
 
 def test_macro_precision():
-    response = metrics_client.post("/calculate-metrics", json={
-        "metrics": ["precision"],
-        "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
-        "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
-    })
+    response = metrics_client.post(
+        "/calculate-metrics",
+        json={
+            "metrics": ["precision"],
+            "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
+            "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
+        },
+    )
     assert response.status_code == 200, response.text
-    assert round(response.json()["metric_values"]["precision"], 7) == 0.6333333, response.json()
+    assert (
+        round(response.json()["metric_values"]["precision"], 7) == 0.6333333
+    ), response.json()
 
 
 def test_recall():
-    response = metrics_client.post("/calculate-metrics", json={
-        "metrics": ["class_recall"],
-        "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
-        "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
-        "target_class": 2
-    })
+    response = metrics_client.post(
+        "/calculate-metrics",
+        json={
+            "metrics": ["class_recall"],
+            "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
+            "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
+            "target_class": 2,
+        },
+    )
     assert response.status_code == 200, response.text
     assert response.json() == {"metric_values": {"class_recall": 0.75}}, response.json()
 
 
 def test_macro_recall():
-    response = metrics_client.post("/calculate-metrics", json={
-        "metrics": ["recall"],
-        "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
-        "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
-    })
+    response = metrics_client.post(
+        "/calculate-metrics",
+        json={
+            "metrics": ["recall"],
+            "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
+            "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
+        },
+    )
     assert response.status_code == 200, response.text
     assert response.json() == {"metric_values": {"recall": 0.625}}, response.json()
 
 
 def test_multiple_metrics():
-    response = metrics_client.post("/calculate-metrics", json={
-        "metrics": ["accuracy", "class_precision", "class_recall"],
-        "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
-        "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
-        "target_class": 2
-    })
+    response = metrics_client.post(
+        "/calculate-metrics",
+        json={
+            "metrics": ["accuracy", "class_precision", "class_recall"],
+            "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
+            "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
+            "target_class": 2,
+        },
+    )
     assert response.status_code == 200, response.text
     assert response.json() == {
         "metric_values": {
             "accuracy": 0.625,
             "class_precision": 0.6,
-            "class_recall": 0.75
+            "class_recall": 0.75,
         }
     }, response.json()
 
 
 def test_disparate_impact():
-    response = metrics_client.post("/calculate-metrics", json=json_text("disparate_impact"))
+    response = metrics_client.post(
+        "/calculate-metrics", json=json_text("disparate_impact")
+    )
 
     assert response.status_code == 200, response.text
     assert "disparate_impact" in response.json()["metric_values"], response.json()
@@ -118,75 +143,120 @@ def test_disparate_impact():
 
 
 def test_equal_opportunity_difference():
-    response = metrics_client.post("/calculate-metrics", json=json_text("equal_opportunity_difference"))
+    response = metrics_client.post(
+        "/calculate-metrics", json=json_text("equal_opportunity_difference")
+    )
 
     assert response.status_code == 200, response.text
-    assert "equal_opportunity_difference" in response.json()["metric_values"], response.json()
-    assert response.json()["metric_values"]["equal_opportunity_difference"] == 0.25, response.json()
+    assert (
+        "equal_opportunity_difference" in response.json()["metric_values"]
+    ), response.json()
+    assert (
+        response.json()["metric_values"]["equal_opportunity_difference"] == 0.25
+    ), response.json()
 
 
 def test_equalized_odds_difference():
-    response = metrics_client.post("/calculate-metrics", json=json_text("equalized_odds_difference"))
+    response = metrics_client.post(
+        "/calculate-metrics", json=json_text("equalized_odds_difference")
+    )
 
     assert response.status_code == 200, response.text
-    assert "equalized_odds_difference" in response.json()["metric_values"], response.json()
-    assert response.json()["metric_values"]["equalized_odds_difference"] == 0.0, response.json()
+    assert (
+        "equalized_odds_difference" in response.json()["metric_values"]
+    ), response.json()
+    assert (
+        response.json()["metric_values"]["equalized_odds_difference"] == 0.0
+    ), response.json()
 
 
 def test_false_negative_rate_difference():
-    response = metrics_client.post("/calculate-metrics", json=json_text("false_negative_rate_difference"))
+    response = metrics_client.post(
+        "/calculate-metrics", json=json_text("false_negative_rate_difference")
+    )
 
     assert response.status_code == 200, response.text
-    assert "false_negative_rate_difference" in response.json()["metric_values"], response.json()
-    assert response.json()["metric_values"]["false_negative_rate_difference"] == -0.25, response.json()
+    assert (
+        "false_negative_rate_difference" in response.json()["metric_values"]
+    ), response.json()
+    assert (
+        response.json()["metric_values"]["false_negative_rate_difference"] == -0.25
+    ), response.json()
 
 
 def test_negative_predictive_value():
-    response = metrics_client.post("/calculate-metrics", json=json_text("negative_predictive_value"))
+    response = metrics_client.post(
+        "/calculate-metrics", json=json_text("negative_predictive_value")
+    )
 
     assert response.status_code == 200, response.text
-    assert "negative_predictive_value" in response.json()["metric_values"], response.json()
-    assert response.json()["metric_values"]["negative_predictive_value"] == 0.2, response.json()
+    assert (
+        "negative_predictive_value" in response.json()["metric_values"]
+    ), response.json()
+    assert (
+        response.json()["metric_values"]["negative_predictive_value"] == 0.2
+    ), response.json()
 
 
 def test_positive_predictive_value():
-    response = metrics_client.post("/calculate-metrics", json=json_text("positive_predictive_value"))
+    response = metrics_client.post(
+        "/calculate-metrics", json=json_text("positive_predictive_value")
+    )
 
     assert response.status_code == 200, response.text
-    assert "positive_predictive_value" in response.json()["metric_values"], response.json()
-    assert response.json()["metric_values"]["positive_predictive_value"] == 1/3, response.json()
+    assert (
+        "positive_predictive_value" in response.json()["metric_values"]
+    ), response.json()
+    assert (
+        response.json()["metric_values"]["positive_predictive_value"] == 1 / 3
+    ), response.json()
 
 
 def test_statistical_parity_difference():
-    response = metrics_client.post("/calculate-metrics", json=json_text("statistical_parity_difference"))
+    response = metrics_client.post(
+        "/calculate-metrics", json=json_text("statistical_parity_difference")
+    )
 
     assert response.status_code == 200, response.text
-    assert "statistical_parity_difference" in response.json()["metric_values"], response.json()
-    assert response.json()["metric_values"]["statistical_parity_difference"] == -0.25, response.json()
+    assert (
+        "statistical_parity_difference" in response.json()["metric_values"]
+    ), response.json()
+    assert (
+        response.json()["metric_values"]["statistical_parity_difference"] == -0.25
+    ), response.json()
 
 
 def test_true_positive_rate_difference():
-    response = metrics_client.post("/calculate-metrics", json=json_text("true_positive_rate_difference"))
+    response = metrics_client.post(
+        "/calculate-metrics", json=json_text("true_positive_rate_difference")
+    )
 
     assert response.status_code == 200, response.text
-    assert "true_positive_rate_difference" in response.json()["metric_values"], response.json()
-    assert response.json()["metric_values"]["true_positive_rate_difference"] == 0.25, response.json()
+    assert (
+        "true_positive_rate_difference" in response.json()["metric_values"]
+    ), response.json()
+    assert (
+        response.json()["metric_values"]["true_positive_rate_difference"] == 0.25
+    ), response.json()
 
 
 def test_multiple_binary_classifier_metrics():
-    response = metrics_client.post("/calculate-metrics", json={
-        "metrics": [
-            "disparate_impact",
-            "equal_opportunity_difference",
-            "equalized_odds_difference",
-        ],
-        "true_labels": [[1], [0], [1], [1], [0], [1], [0], [0]],
-        "predicted_labels": [[1], [0], [1], [1], [0], [1], [1], [1]],
-        "privileged_groups": [{"protected_attr": 1}],
-        "unprivileged_groups": [{"protected_attr": 0}],
-        "protected_attr": [0, 1, 0, 0, 1, 0, 1, 1],
-        "target_class": 2
-    })
+    response = metrics_client.post(
+        "/calculate-metrics",
+        json={
+            "metrics": [
+                "disparate_impact",
+                "equal_opportunity_difference",
+                "equalized_odds_difference",
+            ],
+            "true_labels": [[1], [0], [1], [1], [0], [1], [0], [0]],
+            "predicted_labels": [[1], [0], [1], [1], [0], [1], [1], [1]],
+            "privileged_groups": [{"protected_attr": 1}],
+            "unprivileged_groups": [{"protected_attr": 0}],
+            "protected_attr": [0, 1, 0, 0, 1, 0, 1, 1],
+            "target_class": 2,
+        },
+    )
     assert response.status_code == 200, response.text
     expected_metrics = {
         "disparate_impact": 2.0,
@@ -194,4 +264,16 @@ def test_multiple_binary_classifier_metrics():
         "equalized_odds_difference": 0.0,
     }
     for metric, value in expected_metrics.items():
-        assert round(response.json()["metric_values"][metric], 7) == round(value, 7), f"{metric} failed"
+        assert round(response.json()["metric_values"][metric], 7) == round(
+            value, 7
+        ), f"{metric} failed"
+
+
+def test_error_if_no_protected_attrs():
+    req = json_text("disparate_impact")
+    del req["protected_attr"]
+    response = metrics_client.post("/calculate-metrics", json=req)
+
+    assert response.status_code == 500, response.text
+    assert "protected_attr" in response.json()["detail"]
+    assert "missing" in response.json()["detail"]
