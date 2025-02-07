@@ -1,4 +1,3 @@
-from typing import Any, Callable
 from metrics.models import (
     CalculateRequest,
     MetricsInfo,
@@ -6,10 +5,6 @@ from metrics.models import (
 )
 from metrics.metrics import MetricsException, metric_to_fn
 from fastapi import FastAPI, HTTPException
-from aif360.metrics import ClassificationMetric
-from aif360.datasets import BinaryLabelDataset
-import pandas as pd
-import numpy as np
 
 """
     TContains the API endpoints for the metrics service
