@@ -282,6 +282,7 @@ files = []
 develop = true
 
 [package.dependencies]
+pika = "^1.3.2"
 pydantic = "^2.10.6"
 
 [package.source]

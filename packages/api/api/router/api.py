@@ -1,8 +1,9 @@
+from api.router.rabbitmq import get_channel
 from pydantic import BaseModel, HttpUrl
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 import json
-from api.router.connection_constants import channel
 from fastapi.responses import JSONResponse
+from pika.adapters.blocking_connection import BlockingChannel
 
 
 api = APIRouter()
@@ -17,7 +18,9 @@ class ModelEvaluationRequest(BaseModel):
 
 
 @api.post("/evaluate")
-async def generate_metrics_from_info(request: ModelEvaluationRequest):
+async def generate_metrics_from_info(
+    request: ModelEvaluationRequest, channel=Depends(get_channel)
+):
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
     - Dispatches jobs to job_queue
@@ -28,13 +31,18 @@ async def generate_metrics_from_info(request: ModelEvaluationRequest):
     - metrics: list of metrics that should be applied
     """
     try:
-        dispatch_job(batch_size=10,
-                     metric=request.metrics,
-                     data_url=request.dataset_url,
-                     model_url=request.model_url,
-                     data_api_key=request.dataset_api_key,
-                     model_api_key=request.model_api_key)
-        return JSONResponse({"message": "Creating and dispatching jobs"}, status_code=202)
+        dispatch_job(
+            batch_size=10,
+            metric=request.metrics,
+            data_url=request.dataset_url,
+            model_url=request.model_url,
+            data_api_key=request.dataset_api_key,
+            model_api_key=request.model_api_key,
+            channel=channel,
+        )
+        return JSONResponse(
+            {"message": "Creating and dispatching jobs"}, status_code=202
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error dispatching jobs - {e}")
 
@@ -46,12 +54,15 @@ def info():
     return {"message": "Pushed at 21/01/2025 07:32"}
 
 
-def dispatch_job(batch_size: int,
-                 metric: list[str],
-                 data_url: HttpUrl,
-                 model_url: HttpUrl,
-                 data_api_key: str,
-                 model_api_key: str):
+def dispatch_job(
+    batch_size: int,
+    metric: list[str],
+    data_url: HttpUrl,
+    model_url: HttpUrl,
+    data_api_key: str,
+    model_api_key: str,
+    channel: BlockingChannel,
+):
     """
     Function to dispatch a job to the model
     """
@@ -61,7 +72,7 @@ def dispatch_job(batch_size: int,
         "data_url": str(data_url),
         "model_url": str(model_url),
         "data_api_key": data_api_key,
-        "model_api_key": model_api_key
+        "model_api_key": model_api_key,
     }
     message = json.dumps(job_json)
-    channel.basic_publish(exchange='', routing_key='job_queue', body=message)
+    channel.basic_publish(exchange="", routing_key="job_queue", body=message)

@@ -7,7 +7,7 @@ from metrics.metrics import MetricsException, metric_to_fn
 from fastapi import FastAPI, HTTPException
 
 """
-    TContains the API endpoints for the metrics service
+    Contains the API endpoints for the metrics service
 """
 
 metrics_app = FastAPI()
