@@ -1,4 +1,4 @@
-from api.metrics.utils import finite_difference_gradient
+from metrics.utils import finite_difference_gradient
 import numpy as np
 
 
@@ -13,7 +13,7 @@ def test_finite_difference_gradient_approximation():
 
     # quadratic function
     def quad_fn(x):
-        return np.sum(x ** 2)
+        return np.sum(x**2)
 
     sample_data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 

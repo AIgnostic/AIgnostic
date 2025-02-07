@@ -1,8 +1,10 @@
+from metrics.metrics import MetricsException
 import numpy as np
-from api.metrics.metrics import MetricsException
 
 
-def finite_difference_gradient(name: str, features: list[list], model_fn: callable, h: float = 1e-5) -> np.ndarray:
+def finite_difference_gradient(
+    name: str, features: list[list], model_fn: callable, h: float = 1e-5
+) -> np.ndarray:
     """
     Compute the finite difference approximation of the gradient for given data.
 
@@ -13,7 +15,9 @@ def finite_difference_gradient(name: str, features: list[list], model_fn: callab
     :return: Gradient matrix of shape (num_samples, num_features).
     """
     try:
-        X = np.array(features, dtype=np.float64)  # Assuming features are provided in `info`
+        X = np.array(
+            features, dtype=np.float64
+        )  # Assuming features are provided in `info`
         num_samples, num_features = X.shape
         gradients = np.zeros_like(X)
 

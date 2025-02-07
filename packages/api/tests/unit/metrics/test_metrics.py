@@ -1,8 +1,8 @@
 from api.metrics.metrics import (
     metrics_app,
     MetricsException,
-    is_valid_for_per_class_metrics,
 )
+from metrics.metrics import is_valid_for_per_class_metrics
 from fastapi.testclient import TestClient
 import pytest
 

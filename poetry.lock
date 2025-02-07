@@ -89,7 +89,7 @@ name = "api"
 version = "1.0.0"
 description = "AIgnostic Risk Monitoring and Auditing"
 optional = false
-python-versions = ">=3.10,<3.13"
+python-versions = ">=3.12,<3.13"
 groups = ["main"]
 files = []
 develop = true
@@ -97,6 +97,7 @@ develop = true
 [package.dependencies]
 aif360 = "^0.6.1"
 fastapi = {version = "^0.115.6", extras = ["standard"]}
+metrics = {path = "../metrics", develop = true}
 numpy = "^2.2.1"
 pandas = "^2.2.3"
 pandas-stubs = "^2.2.3.241126"
