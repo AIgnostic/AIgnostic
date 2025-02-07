@@ -245,7 +245,8 @@ metric_to_fn = {
     "recall": macro_recall,
     **{
         metric_name: create_fairness_metric_fn(
-            lambda metric: getattr(metric, metric_name)()
+            # name=metric_name needed here otherwise metric_name will be captured by the lambda once
+            lambda metric, name=metric_name: getattr(metric, name)()
         )
         for metric_name in [
             "disparate_impact",
