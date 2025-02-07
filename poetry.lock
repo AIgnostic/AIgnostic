@@ -10,6 +10,9 @@ groups = ["main"]
 files = []
 develop = true
 
+[package.dependencies]
+common = {path = "../common", develop = true}
+
 [package.source]
 type = "directory"
 url = "packages/aggregator"

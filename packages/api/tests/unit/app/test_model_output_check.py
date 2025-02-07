@@ -1,4 +1,4 @@
-from api.router.worker import check_model_response
+from worker.worker import check_model_response
 import pytest
 from fastapi import HTTPException
 from unittest.mock import MagicMock

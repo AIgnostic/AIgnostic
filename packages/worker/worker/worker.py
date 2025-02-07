@@ -1,4 +1,4 @@
-'''
+"""
 This file contains the script that a worker runs to process jobs on the job queue
 Each worker:
 - Fetches a job (containing a batch size and a list of metrics to compute)
@@ -6,18 +6,38 @@ Each worker:
 - Fetches the model from the model URL
 - Computes the metrics
 - Puts the results on a results queue
-'''
+"""
 
+from common.models.job import Job
+from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 import requests
 from fastapi import HTTPException
 from pydantic.networks import HttpUrl
-from api.metrics import metrics as metrics_lib
-from api.router.connection_constants import channel, JOB_QUEUE, RESULT_QUEUE
-from aignostic.pydantic_models.job import Job
+import metrics.metrics as metrics_lib
 import json
 from typing import Optional
 import asyncio
-from api.pydantic_models.metric_models import CalculateRequest, MetricValues
+from common.models import CalculateRequest, MetricValues
+
+from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
+
+from pika.adapters.blocking_connection import BlockingChannel
+
+
+connection = None
+channel: BlockingChannel = None
+
+
+def start_worker():
+    """
+    Function to start the worker
+    """
+    global connection
+    global channel
+
+    connection = connect_to_rabbitmq()
+    channel = connection.channel()
+    init_queues(channel)
 
 
 def fetch_job() -> Optional[Job]:
@@ -41,9 +61,7 @@ def queue_result(result: MetricValues):
     Function to queue the results of a job
     """
     channel.basic_publish(
-        exchange='',
-        routing_key=RESULT_QUEUE,
-        body=json.dumps(dict(result))
+        exchange="", routing_key=RESULT_QUEUE, body=json.dumps(dict(result))
     )
 
 
@@ -52,9 +70,7 @@ def queue_error(error: str):
     Function to queue an error message
     """
     channel.basic_publish(
-        exchange='',
-        routing_key=RESULT_QUEUE,
-        body=json.dumps({"error": error})
+        exchange="", routing_key=RESULT_QUEUE, body=json.dumps({"error": error})
     )
 
 
@@ -69,7 +85,9 @@ async def process_job(job: Job):
         labels = data["labels"]
         group_ids = data["group_ids"]
     except KeyError:
-        raise HTTPException(status_code=500, detail="KeyError occurred during data processing")
+        raise HTTPException(
+            status_code=500, detail="KeyError occurred during data processing"
+        )
     except Exception:
         raise HTTPException(status_code=500, detail="Error while processing data")
 
@@ -77,12 +95,8 @@ async def process_job(job: Job):
 
     predictions = await query_model(
         job.model_url,
-        {
-            "features": features,
-            "labels": labels,
-            "group_ids": group_ids
-        },
-        job.model_api_key
+        {"features": features, "labels": labels, "group_ids": group_ids},
+        job.model_api_key,
     )
 
     try:
@@ -94,9 +108,7 @@ async def process_job(job: Job):
 
         # Construct CalculateRequest
         metrics_request = CalculateRequest(
-            metrics=job.metrics,
-            true_labels=labels,
-            predicted_labels=predicted_labels
+            metrics=job.metrics, true_labels=labels, predicted_labels=predicted_labels
         )
         metrics_results = await metrics_lib.calculate_metrics(metrics_request)
         print(f"Metrics request: {metrics_results}")
@@ -119,12 +131,18 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
     if model_api_key is None:
         response = requests.post(url=model_url, json=data)
     else:
-        response = requests.post(url=model_url, json=data, headers={"Authorization": f"Bearer {model_api_key}"})
+        response = requests.post(
+            url=model_url,
+            json=data,
+            headers={"Authorization": f"Bearer {model_api_key}"},
+        )
 
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        raise HTTPException(detail=e.response.json()["detail"], status_code=e.response.status_code)
+        raise HTTPException(
+            detail=e.response.json()["detail"], status_code=e.response.status_code
+        )
 
     check_model_response(response, data["labels"])
 
@@ -137,7 +155,10 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
         # Return the data
         return data
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Could not parse model response - {e}; response = {response.text}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not parse model response - {e}; response = {response.text}",
+        )
 
 
 # TODO: Write a doc explaining error messages and what checking is/isn't supported
@@ -159,21 +180,21 @@ def check_model_response(response, labels):
     if len(predictions) != len(labels):
         raise HTTPException(
             detail="Number of model outputs does not match expected number of labels",
-            status_code=400
+            status_code=400,
         )
 
     if len(labels) >= 0:
         if len(predictions[0]) != len(labels[0]):
             raise HTTPException(
                 detail="Number of attributes predicted by model does not match number of target attributes",
-                status_code=400
+                status_code=400,
             )
 
         for col_index in range(len(labels[0])):
             if not isinstance(predictions[0][col_index], type(labels[0][col_index])):
                 raise HTTPException(
                     detail="Model output type does not match target attribute type",
-                    status_code=400
+                    status_code=400,
                 )
     """
     TODO: Evaluate if this check is necessary -> O(n) complexity where n is number
@@ -185,7 +206,7 @@ def check_model_response(response, labels):
         if len(row) != num_attributes:
             raise HTTPException(
                 detail="Inconsistent number of attributes for each datapoint predicted by model",
-                status_code=400
+                status_code=400,
             )
 
     """
@@ -199,7 +220,7 @@ def check_model_response(response, labels):
             if not isinstance(predictions[row_index][col_index], col_type):
                 raise HTTPException(
                     detail="All columns for an output label should be of the same type",
-                    status_code=400
+                    status_code=400,
                 )
 
     return
@@ -216,13 +237,17 @@ async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
     if dataset_api_key is None:
         response = requests.get(data_url)
     else:
-        response = requests.get(data_url, headers={"Authorization": f"Bearer {dataset_api_key}"})
+        response = requests.get(
+            data_url, headers={"Authorization": f"Bearer {dataset_api_key}"}
+        )
 
     try:
         # Raise errpr if the request was not successful
         response.raise_for_status()
     except requests.exceptions.HTTPError:
-        raise HTTPException(status_code=response.status_code, detail=response.json()["detail"])
+        raise HTTPException(
+            status_code=response.status_code, detail=response.json()["detail"]
+        )
 
     try:
         # Parse the response JSON
@@ -235,6 +260,7 @@ async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
 
 
 if __name__ == "__main__":
+    start_worker()
     while True:
         try:
             job: Job = fetch_job()
