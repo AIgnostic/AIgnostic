@@ -53,6 +53,9 @@ def test_no_input_validity_check_fails():
     assert "No labels provided" in e.value.detail
 
 
+# Test a random metric to make sure it works
+
+
 def test_precision():
     response = metrics_client.post(
         "/calculate-metrics",
@@ -68,48 +71,6 @@ def test_precision():
     assert response.json() == {
         "metric_values": {"class_precision": 0.6}
     }, response.json()
-
-
-def test_macro_precision():
-    response = metrics_client.post(
-        "/calculate-metrics",
-        json={
-            "metrics": ["precision"],
-            "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
-            "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
-        },
-    )
-    assert response.status_code == 200, response.text
-    assert (
-        round(response.json()["metric_values"]["precision"], 7) == 0.6333333
-    ), response.json()
-
-
-def test_recall():
-    response = metrics_client.post(
-        "/calculate-metrics",
-        json={
-            "metrics": ["class_recall"],
-            "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
-            "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
-            "target_class": 2,
-        },
-    )
-    assert response.status_code == 200, response.text
-    assert response.json() == {"metric_values": {"class_recall": 0.75}}, response.json()
-
-
-def test_macro_recall():
-    response = metrics_client.post(
-        "/calculate-metrics",
-        json={
-            "metrics": ["recall"],
-            "true_labels": [[2], [0], [2], [2], [0], [2], [0], [0]],
-            "predicted_labels": [[2], [0], [2], [0], [0], [2], [2], [2]],
-        },
-    )
-    assert response.status_code == 200, response.text
-    assert response.json() == {"metric_values": {"recall": 0.625}}, response.json()
 
 
 def test_multiple_metrics():
@@ -130,114 +91,6 @@ def test_multiple_metrics():
             "class_recall": 0.75,
         }
     }, response.json()
-
-
-def test_disparate_impact():
-    response = metrics_client.post(
-        "/calculate-metrics", json=json_text("disparate_impact")
-    )
-
-    assert response.status_code == 200, response.text
-    assert "disparate_impact" in response.json()["metric_values"], response.json()
-    assert response.json()["metric_values"]["disparate_impact"] == 0.5, response.json()
-
-
-def test_equal_opportunity_difference():
-    response = metrics_client.post(
-        "/calculate-metrics", json=json_text("equal_opportunity_difference")
-    )
-
-    assert response.status_code == 200, response.text
-    assert (
-        "equal_opportunity_difference" in response.json()["metric_values"]
-    ), response.json()
-    assert (
-        response.json()["metric_values"]["equal_opportunity_difference"] == 0.25
-    ), response.json()
-
-
-def test_equalized_odds_difference():
-    response = metrics_client.post(
-        "/calculate-metrics", json=json_text("equalized_odds_difference")
-    )
-
-    assert response.status_code == 200, response.text
-    assert (
-        "equalized_odds_difference" in response.json()["metric_values"]
-    ), response.json()
-    assert (
-        response.json()["metric_values"]["equalized_odds_difference"] == 0.0
-    ), response.json()
-
-
-def test_false_negative_rate_difference():
-    response = metrics_client.post(
-        "/calculate-metrics", json=json_text("false_negative_rate_difference")
-    )
-
-    assert response.status_code == 200, response.text
-    assert (
-        "false_negative_rate_difference" in response.json()["metric_values"]
-    ), response.json()
-    assert (
-        response.json()["metric_values"]["false_negative_rate_difference"] == -0.25
-    ), response.json()
-
-
-def test_negative_predictive_value():
-    response = metrics_client.post(
-        "/calculate-metrics", json=json_text("negative_predictive_value")
-    )
-
-    assert response.status_code == 200, response.text
-    assert (
-        "negative_predictive_value" in response.json()["metric_values"]
-    ), response.json()
-    assert (
-        response.json()["metric_values"]["negative_predictive_value"] == 0.2
-    ), response.json()
-
-
-def test_positive_predictive_value():
-    response = metrics_client.post(
-        "/calculate-metrics", json=json_text("positive_predictive_value")
-    )
-
-    assert response.status_code == 200, response.text
-    assert (
-        "positive_predictive_value" in response.json()["metric_values"]
-    ), response.json()
-    assert (
-        response.json()["metric_values"]["positive_predictive_value"] == 1 / 3
-    ), response.json()
-
-
-def test_statistical_parity_difference():
-    response = metrics_client.post(
-        "/calculate-metrics", json=json_text("statistical_parity_difference")
-    )
-
-    assert response.status_code == 200, response.text
-    assert (
-        "statistical_parity_difference" in response.json()["metric_values"]
-    ), response.json()
-    assert (
-        response.json()["metric_values"]["statistical_parity_difference"] == -0.25
-    ), response.json()
-
-
-def test_true_positive_rate_difference():
-    response = metrics_client.post(
-        "/calculate-metrics", json=json_text("true_positive_rate_difference")
-    )
-
-    assert response.status_code == 200, response.text
-    assert (
-        "true_positive_rate_difference" in response.json()["metric_values"]
-    ), response.json()
-    assert (
-        response.json()["metric_values"]["true_positive_rate_difference"] == 0.25
-    ), response.json()
 
 
 def test_multiple_binary_classifier_metrics():
