@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_validator
 from typing import Optional, Any
-from api.pydantic_models.utils import nested_list_to_np
+from common.utils import nested_list_to_np
 
 
 class MetricsInfo(BaseModel):

@@ -1,9 +1,9 @@
 [tool.coverage.run]
 branch = true
-source = [ "metrics" ]
+source = ["metrics"]
 
 [tool.coverage.report]
-exclude_lines = [ "if TYPE_CHECKING:" ]
+exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
 [tool.pytest.ini_options]
@@ -13,17 +13,22 @@ addopts = "--cov --cov-report html:'../../coverage/metrics/html' --cov-report xm
 name = "metrics"
 version = "1.0.0"
 description = "All the metrics we need to evaluate things"
-authors = [ ]
+authors = []
 license = "Proprietary"
 readme = "README.md"
-group = { }
+group = {}
 
-  [[tool.poetry.packages]]
-  include = "metrics"
+[[tool.poetry.packages]]
+include = "metrics"
 
-  [tool.poetry.dependencies]
-  python = ">=3.12,<3.13"
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+aif360 = "^0.6.1"
+
+[tool.poetry.dependencies.common]
+path = "../common"
+develop = true
 
 [build-system]
-requires = [ "poetry-core" ]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

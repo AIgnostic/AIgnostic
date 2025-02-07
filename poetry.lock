@@ -280,6 +280,9 @@ groups = ["main"]
 files = []
 develop = true
 
+[package.dependencies]
+pydantic = "^2.10.6"
+
 [package.source]
 type = "directory"
 url = "packages/common"
@@ -1073,6 +1076,10 @@ python-versions = ">=3.12,<3.13"
 groups = ["main"]
 files = []
 develop = true
+
+[package.dependencies]
+aif360 = "^0.6.1"
+common = {path = "../common", develop = true}
 
 [package.source]
 type = "directory"
