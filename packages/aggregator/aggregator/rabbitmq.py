@@ -1,8 +1,9 @@
 import os
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
+from pika.adapters.blocking_connection import BlockingChannel
 
 connection = None
-channel = None
+channel: BlockingChannel = None
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 

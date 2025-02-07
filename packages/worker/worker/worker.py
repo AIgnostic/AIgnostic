@@ -11,7 +11,6 @@ Each worker:
 from common.models.job import Job
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 import requests
-from fastapi import HTTPException
 from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
 import json
@@ -26,6 +25,19 @@ from pika.adapters.blocking_connection import BlockingChannel
 
 connection = None
 channel: BlockingChannel = None
+
+
+class WorkerException(Exception):
+    def __init__(self, detail: str, status_code: int = 500):
+        """Custom exception class for workers
+
+        Args:
+            detail (str): Description of error that occured
+            status_code (int, optional): HTTP status code to report back to the client. Defaults to 500.
+        """
+        self.detail = detail
+        self.status_code = status_code
+        super().__init__(self.detail)
 
 
 def start_worker():
@@ -52,7 +64,7 @@ def fetch_job() -> Optional[Job]:
             print("Unpacking job data")
             return Job(**job_data)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"Invalid job format: {e}")
+            raise WorkerException(f"Invalid job format: {e}", status_code=400)
     return None
 
 
@@ -85,11 +97,9 @@ async def process_job(job: Job):
         labels = data["labels"]
         group_ids = data["group_ids"]
     except KeyError:
-        raise HTTPException(
-            status_code=500, detail="KeyError occurred during data processing"
-        )
+        raise WorkerException("KeyError occurred during data processing")
     except Exception:
-        raise HTTPException(status_code=500, detail="Error while processing data")
+        raise WorkerException("Error while processing data")
 
     # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
 
@@ -115,7 +125,7 @@ async def process_job(job: Job):
         queue_result(metrics_results)
         return metrics_results
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
+        raise WorkerException(f"Error while processing data: {e}")
 
 
 async def query_model(model_url: HttpUrl, data: dict, model_api_key):
@@ -140,7 +150,7 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        raise HTTPException(
+        raise WorkerException(
             detail=e.response.json()["detail"], status_code=e.response.status_code
         )
 
@@ -155,9 +165,8 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
         # Return the data
         return data
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Could not parse model response - {e}; response = {response.text}",
+        raise WorkerException(
+            f"Could not parse model response - {e}; response = {response.text}"
         )
 
 
@@ -178,22 +187,22 @@ def check_model_response(response, labels):
     """
     predictions = response.json()["predictions"]
     if len(predictions) != len(labels):
-        raise HTTPException(
-            detail="Number of model outputs does not match expected number of labels",
+        raise WorkerException(
+            "Number of model outputs does not match expected number of labels",
             status_code=400,
         )
 
     if len(labels) >= 0:
         if len(predictions[0]) != len(labels[0]):
-            raise HTTPException(
-                detail="Number of attributes predicted by model does not match number of target attributes",
+            raise WorkerException(
+                "Number of attributes predicted by model does not match number of target attributes",
                 status_code=400,
             )
 
         for col_index in range(len(labels[0])):
             if not isinstance(predictions[0][col_index], type(labels[0][col_index])):
-                raise HTTPException(
-                    detail="Model output type does not match target attribute type",
+                raise WorkerException(
+                    "Model output type does not match target attribute type",
                     status_code=400,
                 )
     """
@@ -204,8 +213,8 @@ def check_model_response(response, labels):
     num_attributes = len(labels[0])
     for row in predictions[1:]:
         if len(row) != num_attributes:
-            raise HTTPException(
-                detail="Inconsistent number of attributes for each datapoint predicted by model",
+            raise WorkerException(
+                "Inconsistent number of attributes for each datapoint predicted by model",
                 status_code=400,
             )
 
@@ -218,8 +227,8 @@ def check_model_response(response, labels):
         col_type = type(labels[0][col_index])
         for row_index in range(len(predictions)):
             if not isinstance(predictions[row_index][col_index], col_type):
-                raise HTTPException(
-                    detail="All columns for an output label should be of the same type",
+                raise WorkerException(
+                    "All columns for an output label should be of the same type",
                     status_code=400,
                 )
 
@@ -245,8 +254,8 @@ async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
         # Raise errpr if the request was not successful
         response.raise_for_status()
     except requests.exceptions.HTTPError:
-        raise HTTPException(
-            status_code=response.status_code, detail=response.json()["detail"]
+        raise WorkerException(
+            response.json()["detail"], status_code=response.status_code
         )
 
     try:
@@ -256,7 +265,7 @@ async def fetch_data(data_url: HttpUrl, dataset_api_key) -> dict:
         # Return the data
         return data
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error while fetching data: {e}")
+        raise WorkerException(f"Error while fetching data: {e}")
 
 
 if __name__ == "__main__":

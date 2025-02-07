@@ -23,6 +23,12 @@ group = { }
 
   [tool.poetry.dependencies]
   python = ">=3.12,<3.13"
+  requests = "^2.32.3"
+  pydantic = "^2.10.6"
+
+    [tool.poetry.dependencies.common]
+    path = "../common"
+    develop = true
 
 [build-system]
 requires = [ "poetry-core" ]
