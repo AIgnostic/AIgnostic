@@ -8,6 +8,7 @@
 from typing import Any, Callable
 from metrics.models import (
     CalculateRequest,
+    MetricValues,
 )
 from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
@@ -212,3 +213,22 @@ metric_to_fn = {
     },
 }
 """ Mapping of metric names to their corresponding functions"""
+
+
+def calculate_metrics(info: CalculateRequest) -> MetricValues:
+    """
+    calculate_metrics, given a request for calculation of certain metrics and information
+    necessary for calculation, attempt to calculate and return the metrics and their scores
+    for the given model and dataset.
+
+    :param info: CalculateRequest - contains list of metrics to be calculated and additional
+    data required for calculation of these metrics.
+    :return: MetricValues - contains the calculated metrics and their scores
+    """
+    results = {}
+    for metric in info.metrics:
+        if metric not in metric_to_fn.keys():
+            results[metric] = 1
+        else:
+            results[metric] = metric_to_fn[metric](metric, info)
+    return MetricValues(metric_values=results)

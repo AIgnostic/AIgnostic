@@ -8,6 +8,7 @@ from metrics.metrics import (
     macro_recall,
     create_fairness_metric_fn,
     _prepare_datasets,
+    calculate_metrics,
 )
 from metrics.models import CalculateRequest
 import pytest
@@ -191,3 +192,42 @@ def test_error_if_no_protected_attrs():
     with pytest.raises(ValueError) as e:
         _prepare_datasets(info)
     assert "protected_attr is missing" in str(e.value)
+
+
+def test_calculate_metrics():
+    info = CalculateRequest(
+        metrics=["accuracy", "class_precision", "class_recall"],
+        true_labels=[[2], [0], [2], [2], [0], [2], [0], [0]],
+        predicted_labels=[[2], [0], [2], [0], [0], [2], [2], [2]],
+        target_class=2,
+    )
+    results = calculate_metrics(info)
+    expected_results = {
+        "accuracy": 0.625,
+        "class_precision": 0.6,
+        "class_recall": 0.75,
+    }
+    for metric, value in expected_results.items():
+        assert round(results.metric_values[metric], 7) == round(
+            value, 7
+        ), f"{metric} failed"
+
+
+def test_calculate_fairness_metrics():
+    info = CalculateRequest(
+        metrics=["disparate_impact", "equal_opportunity_difference"],
+        true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
+        predicted_labels=[[1], [0], [0], [0], [1], [0], [1], [0]],
+        privileged_groups=[{"protected_attr": 1}],
+        unprivileged_groups=[{"protected_attr": 0}],
+        protected_attr=[0, 1, 0, 0, 1, 0, 1, 1],
+    )
+    results = calculate_metrics(info)
+    expected_results = {
+        "disparate_impact": 0.5,
+        "equal_opportunity_difference": 0.25,
+    }
+    for metric, value in expected_results.items():
+        assert round(results.metric_values[metric], 7) == round(
+            value, 7
+        ), f"{metric} failed"

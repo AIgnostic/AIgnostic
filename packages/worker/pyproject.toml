@@ -25,6 +25,7 @@ include = "worker"
 python = ">=3.12,<3.13"
 requests = "^2.32.3"
 pydantic = "^2.10.6"
+pytest-asyncio = "^0.25.3"
 
 [tool.poetry.dependencies.common]
 path = "../common"

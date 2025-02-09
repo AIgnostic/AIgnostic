@@ -14,7 +14,7 @@ import requests
 from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
 import json
-from typing import Optional
+from typing import Coroutine, Optional
 import asyncio
 from common.models import CalculateRequest, MetricValues
 
@@ -86,7 +86,7 @@ def queue_error(error: str):
     )
 
 
-async def process_job(job: Job):
+async def process_job(job: Job) -> MetricValues:
 
     # fetch data from datasetURL
     data: dict = await fetch_data(job.data_url, job.data_api_key)
@@ -120,7 +120,7 @@ async def process_job(job: Job):
         metrics_request = CalculateRequest(
             metrics=job.metrics, true_labels=labels, predicted_labels=predicted_labels
         )
-        metrics_results = await metrics_lib.calculate_metrics(metrics_request)
+        metrics_results = metrics_lib.calculate_metrics(metrics_request)
         print(f"Metrics request: {metrics_results}")
         queue_result(metrics_results)
         return metrics_results
