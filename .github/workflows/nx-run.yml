@@ -63,7 +63,7 @@ jobs:
 
       - name: Install dependencies using poetry at root
         if: ${{ inputs.run_poetry_install }}
-        run: poetry install
+        run: poetry install -v
       - name: Install per project dev dependencies
         if: ${{ inputs.run_poetry_install }}
         run: poetry run npx nx run-many -t install --all
@@ -99,13 +99,43 @@ jobs:
           title: Jest Coverage Report (frontend)
           coverage-summary-path: ./coverage/frontend/coverage-summary.json
           junitxml-path: ./reports/frontend/jest-results.xml
-      - name: Pytest Coverage Report
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/aignostic/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
+
+      - name: Pytest Coverage Report (aggregator)
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/aggregator/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
         uses: MishaKav/pytest-coverage-comment@main
         with:
-          title: Pytest Coverage Report (aignostic)
-          pytest-xml-coverage-path: ./coverage/aignostic/coverage.xml
-          junitxml-path: ./reports/aignostic/unittests/junit.xml
+          title: Pytest Coverage Report (aggregator)
+          pytest-xml-coverage-path: ./coverage/aggregator/coverage.xml
+          junitxml-path: ./reports/aggregator/unittests/junit.xml
+      - name: Pytest Coverage Report (api)
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/api/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          title: Pytest Coverage Report (api)
+          pytest-xml-coverage-path: ./coverage/api/coverage.xml
+          junitxml-path: ./reports/api/unittests/junit.xml
+      - name: Pytest Coverage Report (common)
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/common/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          title: Pytest Coverage Report (common)
+          pytest-xml-coverage-path: ./coverage/common/coverage.xml
+          junitxml-path: ./reports/common/unittests/junit.xml
+      - name: Pytest Coverage Report (metrics)
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/metrics/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          title: Pytest Coverage Report (metrics)
+          pytest-xml-coverage-path: ./coverage/metrics/coverage.xml
+          junitxml-path: ./reports/metrics/unittests/junit.xml
+      - name: Pytest Coverage Report (worker)
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/worker/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          title: Pytest Coverage Report (worker)
+          pytest-xml-coverage-path: ./coverage/worker/coverage.xml
+          junitxml-path: ./reports/worker/unittests/junit.xml
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         if: (success() || failure()) && contains(inputs.nx_tasks, 'test')
