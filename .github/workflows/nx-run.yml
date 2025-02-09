@@ -63,7 +63,7 @@ jobs:
 
       - name: Install dependencies using poetry
         if: ${{ inputs.run_poetry_install }}
-        run: npx nx run-many --target=install --all
+        run: poetry install -v
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
