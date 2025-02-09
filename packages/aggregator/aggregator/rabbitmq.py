@@ -19,4 +19,4 @@ def fastapi_connect_rabbitmq():
     channel = connection.channel()
     init_queues(channel)
     print("Connection established to RabbitMQ")
-    return channel
+    return (channel, connection)

@@ -12,6 +12,7 @@ Instead of polling an endpoint, there would instead be a socket connection
 between the router and aggregator, allowing for real-time updates.
 """
 
+from contextlib import asynccontextmanager
 from common.rabbitmq.constants import RESULT_QUEUE
 from fastapi import FastAPI, Response
 import json
@@ -20,7 +21,16 @@ from pydantic import BaseModel
 
 from aggregator.rabbitmq import fastapi_connect_rabbitmq, channel
 
-aggregator_app = FastAPI()
+
+@asynccontextmanager
+def connect_rabbit_mq():
+    channel, connection = fastapi_connect_rabbitmq()
+    yield channel
+    channel.close()
+    connection.close()
+
+
+aggregator_app = FastAPI(lifespan=connect_rabbit_mq)
 # Add CORS middleware
 aggregator_app.add_middleware(
     CORSMiddleware,
@@ -29,12 +39,6 @@ aggregator_app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@aggregator_app.on_event("startup")
-def connect_rabbit_mq():
-
-    return fastapi_connect_rabbitmq()
 
 
 class MetricsAggregatedResponse(BaseModel):

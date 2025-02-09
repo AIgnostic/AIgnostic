@@ -9,14 +9,14 @@ const config = {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   collectCoverage: true,
-  coverageDirectory: '../coverage/frontend',
+  coverageDirectory: '../../coverage/frontend',
   coverageReporters: ['clover', 'json', 'lcov', 'text', 'json-summary', 'html'],
   reporters: [
     'default',
     [
       'jest-junit',
       {
-        outputDirectory: '../reports/frontend',
+        outputDirectory: '../../reports/frontend',
         outputName: './jest-results.xml',
         ancestorSeparator: ' › ',
         uniqueOutputName: 'false',
