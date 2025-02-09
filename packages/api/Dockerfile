@@ -20,6 +20,10 @@ COPY ./package.json /app
 COPY ./nx.json /app
 COPY ./package-lock.json /app
 COPY ./packages /app/packages
+COPY ./poetry.lock /app
+COPY ./poetry.toml /app
+COPY ./pyproject.toml /app
+
 
 # Run npm ci
 RUN npm ci
