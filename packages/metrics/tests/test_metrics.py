@@ -12,7 +12,6 @@ from metrics.metrics import (
 )
 from metrics.models import CalculateRequest
 import pytest
-import numpy as np
 
 
 @pytest.mark.parametrize(

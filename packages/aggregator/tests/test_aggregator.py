@@ -1,11 +1,9 @@
 import json
-import pytest
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from aggregator.aggregator import (
     aggregator_app,
     fetch_result_from_queue,
-    MetricsAggregatedResponse,
 )
 
 client = TestClient(aggregator_app)
@@ -18,7 +16,11 @@ def test_fetch_result_from_queue_success(mock_channel):
     mock_body = json.dumps({"metric_values": {"metric1": 100, "metric2": 200}}).encode(
         "utf-8"
     )
-    mock_channel.basic_get.return_value = (mock_method_frame, mock_header_frame, mock_body)
+    mock_channel.basic_get.return_value = (
+        mock_method_frame,
+        mock_header_frame,
+        mock_body,
+    )
 
     result = fetch_result_from_queue()
     expected_result = [
@@ -50,7 +52,11 @@ def test_fetch_result_from_queue_error(mock_channel):
     mock_method_frame = MagicMock()
     mock_header_frame = MagicMock()
     mock_body = json.dumps({"error": "Some error occurred"}).encode("utf-8")
-    mock_channel.basic_get.return_value = (mock_method_frame, mock_header_frame, mock_body)
+    mock_channel.basic_get.return_value = (
+        mock_method_frame,
+        mock_header_frame,
+        mock_body,
+    )
 
     result = fetch_result_from_queue()
     expected_result = [{"error": "Some error occurred"}]

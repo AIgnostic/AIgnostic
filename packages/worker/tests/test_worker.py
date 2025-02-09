@@ -2,8 +2,7 @@ import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from common.models.job import Job
-from common.models import MetricValues, CalculateRequest
-from pika.adapters.blocking_connection import BlockingChannel
+from common.models import MetricValues
 
 
 from worker.worker import (
@@ -12,7 +11,6 @@ from worker.worker import (
     queue_result,
     queue_error,
     process_job,
-    WorkerException,
     fetch_data,
     query_model,
     check_model_response,

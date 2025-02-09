@@ -1,2 +1,2 @@
-from common.models.job import *
-from metrics.models import *
+from common.models.job import *  # noqa
+from metrics.models import *  # noqa

@@ -1,8 +1,5 @@
-import pytest
 import numpy as np
 from common.utils import nested_list_to_np
-
-# FILE: packages/common/tests/test_utils.py
 
 
 def test_nested_list_to_np_with_nested_list():

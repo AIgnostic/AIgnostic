@@ -14,7 +14,7 @@ import requests
 from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
 import json
-from typing import Coroutine, Optional
+from typing import Optional
 import asyncio
 from common.models import CalculateRequest, MetricValues
 

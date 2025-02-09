@@ -3,7 +3,7 @@ from metrics.models import (
     MetricsInfo,
     MetricValues,
 )
-from metrics.metrics import MetricsException, metric_to_fn
+from metrics.metrics import MetricsException
 from metrics.metrics import calculate_metrics as _calculate_metrics
 from fastapi import FastAPI, HTTPException
 
