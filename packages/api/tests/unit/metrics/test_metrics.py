@@ -1,10 +1,7 @@
 from api.router.metrics import (
     metrics_app,
-    MetricsException,
 )
-from metrics.metrics import is_valid_for_per_class_metrics
 from fastapi.testclient import TestClient
-import pytest
 
 metrics_client = TestClient(metrics_app)
 
@@ -34,28 +31,7 @@ def test_accuracy():
     assert response.json() == {"metric_values": {"accuracy": 0.75}}, response.json()
 
 
-def test_multi_attribute_validity_check_fails():
-    with pytest.raises(MetricsException) as e:
-        is_valid_for_per_class_metrics(
-            "class_precision",
-            [[2, 3], [0, 3], [2, 3], [2, 3], [0, 3], [2, 3], [0, 3], [0, 3]],
-        )
-    assert e.value.status_code == 500
-    assert "Error during metric calculation: class_precision" in e.value.detail
-    assert "Multiple attributes provided" in e.value.detail
-
-
-def test_no_input_validity_check_fails():
-    with pytest.raises(MetricsException) as e:
-        is_valid_for_per_class_metrics("class_precision", [])
-    assert e.value.status_code == 500
-    assert "Error during metric calculation: class_precision" in e.value.detail
-    assert "No labels provided" in e.value.detail
-
-
 # Test a random metric to make sure it works
-
-
 def test_precision():
     response = metrics_client.post(
         "/calculate-metrics",

@@ -3,7 +3,7 @@ from api.router.api import dispatch_job
 from common.rabbitmq.constants import JOB_QUEUE
 
 
-@patch("aignostic.router.connection_constants.pika.BlockingConnection")
+@patch("pika.BlockingConnection")
 def test_dispatch_job(mock_connection):
     # Mock the channel object returned by the connection
     mock_channel = MagicMock()
@@ -18,7 +18,15 @@ def test_dispatch_job(mock_connection):
     model_api_key = "model-key"
 
     # Dispatch job
-    dispatch_job(batch_size, metrics, data_url, model_url, data_api_key, model_api_key)
+    dispatch_job(
+        batch_size,
+        metrics,
+        data_url,
+        model_url,
+        data_api_key,
+        model_api_key,
+        channel=mock_channel,
+    )
 
     # Assert that `basic_publish` was called once
     mock_channel.basic_publish.assert_called_once()

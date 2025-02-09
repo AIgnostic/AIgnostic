@@ -78,28 +78,28 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "poetry run python main.py",
-        "cwd": "api"
+        "cwd": "packages/api"
       }
     },
     "serve-docker": {
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "uvicorn main:app --host 0.0.0.0 --reload",
-        "cwd": "api"
+        "cwd": "packages/api"
       }
     },
     "mock-dataset": {
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "python3 -m tests.utils.dataset.mock_server",
-        "cwd": "api"
+        "cwd": "packages/api"
       }
     },
     "mock-model": {
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "python3 -m tests.utils.model.scikit_mock",
-        "cwd": "api"
+        "cwd": "packages/api"
       }
     },
     "container": {
