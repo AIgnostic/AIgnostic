@@ -19,13 +19,13 @@ ENV PATH="/root/.local/bin:${PATH}"
 COPY ./package.json /app
 COPY ./nx.json /app
 COPY ./package-lock.json /app
-COPY ./aignostic /app/aignostic
+COPY ./packages /app/packages
 
 # Run npm ci
 RUN npm ci
 
 # Run poetry install via nx
-RUN npx nx install aignostic --args="--only main"
+RUN poetry install -v --only=main
 
 # Copy venv & application code to new image
 # Second stage: runtime
@@ -35,7 +35,8 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copy only the necessary files from the builder stage
-COPY --from=builder /app/aignostic /app
+COPY --from=builder /app/packages /app
+COPY --from=builder /app/.venv /app/.venv
 
 # Create a non-root user and switch to it
 RUN useradd -m appuser

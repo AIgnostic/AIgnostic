@@ -45,9 +45,6 @@ version = "^0.115.6"
 path = "../metrics"
 develop = true
 
-[tool.poetry.group.dataset.dependencies]
-folktables = "^0.0.12"
-
 [tool.poetry.group.model.dependencies]
 scikit-learn = "^1.6.1"
 
