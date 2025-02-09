@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 from api.router.api import dispatch_job
-from api.router.connection_constants import JOB_QUEUE
+from common.rabbitmq.constants import JOB_QUEUE
 
 
 @patch("aignostic.router.connection_constants.pika.BlockingConnection")
@@ -25,6 +25,6 @@ def test_dispatch_job(mock_connection):
 
     # Extract the call arguments
     call_args = mock_channel.basic_publish.call_args[1]
-    assert call_args['exchange'] == ''
-    assert call_args['routing_key'] == JOB_QUEUE
-    assert call_args['body'] is not None
+    assert call_args["exchange"] == ""
+    assert call_args["routing_key"] == JOB_QUEUE
+    assert call_args["body"] is not None

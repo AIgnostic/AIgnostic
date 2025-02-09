@@ -1,4 +1,4 @@
-from api.metrics.metrics import (
+from api.router.metrics import (
     metrics_app,
     MetricsException,
 )
