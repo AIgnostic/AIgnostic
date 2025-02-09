@@ -53,10 +53,13 @@ scikit-learn = "^1.6.1"
 
 [tool.poetry.group.dev.dependencies]
 transformers = "^4.48.0"
+folktables = "^0.0.12"
+
+[tool.poetry.group.train.dependencies]
 torch = "^2.5.1"
 torchvision = "^0.20.1"
 torchaudio = "^2.5.1"
-folktables = "^0.0.12"
+
 
 [[tool.poetry.source]]
 name = "pytorch-gpu-src"
