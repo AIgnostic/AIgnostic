@@ -61,9 +61,12 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - uses: nrwl/nx-set-shas@v4
 
-      - name: Install dependencies using poetry
+      - name: Install dependencies using poetry at root
         if: ${{ inputs.run_poetry_install }}
-        run: poetry install -v --with=dev
+        run: poetry install
+      - name: Install per project dev dependencies
+        if: ${{ inputs.run_poetry_install }}
+        run: poetry run npx nx run-many -t install --all
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
