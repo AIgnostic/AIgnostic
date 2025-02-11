@@ -1,0 +1,140 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "packages/api/app",
+  "targets": {
+    "lock": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry lock --no-update",
+        "cwd": "packages/api"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nxlv/python:build",
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "options": {
+        "outputPath": "packages/api/dist",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      },
+      "cache": true
+    },
+    "install": {
+      "executor": "@nxlv/python:install",
+      "options": {
+        "silent": false,
+        "args": "",
+        "cacheDir": ".cache/pypoetry",
+        "verbose": false,
+        "debug": false
+      }
+    },
+    "lint": {
+      "executor": "@nxlv/python:flake8",
+      "outputs": [
+        "{workspaceRoot}/reports/api/pylint.txt"
+      ],
+      "options": {
+        "outputFile": "reports/api/pylint.txt"
+      },
+      "cache": true
+    },
+    "test": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/api/unittests",
+        "{workspaceRoot}/coverage/api"
+      ],
+      "options": {
+        "command": "poetry run pytest tests/",
+        "cwd": "packages/api"
+      },
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/tests/**/*.py",
+        "{projectRoot}/api/**/*.py",
+        "{projectRoot}/pyproject.toml",
+        "{projectRoot}/poetry.lock"
+      ]
+    },
+    "serve": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python main.py",
+        "cwd": "packages/api"
+      }
+    },
+    "serve-docker": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "uvicorn main:app --host 0.0.0.0 --reload",
+        "cwd": "packages/api"
+      }
+    },
+    "mock-dataset": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "python3 -m tests.utils.dataset.mock_server",
+        "cwd": "packages/api"
+      }
+    },
+    "mock-model": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "python3 -m tests.utils.model.scikit_mock",
+        "cwd": "packages/api"
+      }
+    },
+    "container": {
+      "executor": "@nx-tools/nx-container:build",
+      "options": {
+        "context": "{workspaceRoot}",
+        "file": "{workspaceRoot}/packages/api/Dockerfile",
+        "metadata": {
+          "images": [
+            "ghcr.io/aignostic/api"
+          ],
+          "load": true,
+          "tags": [
+            "type=schedule",
+            "type=ref,event=branch",
+            "type=ref,event=tag",
+            "type=ref,event=pr",
+            "type=sha,prefix=sha-",
+            "type=raw,value=latest"
+          ]
+        }
+      }
+    },
+    "type-checks": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run mypy .",
+        "cwd": "packages/api"
+      }
+    }
+  },
+  "tags": [],
+  "release": {
+    "version": {
+      "generator": "@nxlv/python:release-version"
+    }
+  }
+}

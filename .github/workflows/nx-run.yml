@@ -61,9 +61,12 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - uses: nrwl/nx-set-shas@v4
 
-      - name: Install dependencies using poetry
+      - name: Install dependencies using poetry at root
         if: ${{ inputs.run_poetry_install }}
-        run: npx nx run-many --target=install --all
+        run: poetry install -v
+      - name: Install per project dev dependencies
+        if: ${{ inputs.run_poetry_install }}
+        run: poetry run npx nx run-many -t install --all
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
@@ -96,13 +99,19 @@ jobs:
           title: Jest Coverage Report (frontend)
           coverage-summary-path: ./coverage/frontend/coverage-summary.json
           junitxml-path: ./reports/frontend/jest-results.xml
-      - name: Pytest Coverage Report
-        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/aignostic/**') != '' # run this step even if previous step failed and nx_tasks includes "test"
+
+      - name: Pytest Coverage Report (all)
+        if: (success() || failure()) && contains(inputs.nx_tasks, 'test') && hashFiles('./coverage/*/coverage.xml') != '' # run this step even if previous step failed and nx_tasks includes "test"
         uses: MishaKav/pytest-coverage-comment@main
         with:
-          title: Pytest Coverage Report (aignostic)
-          pytest-xml-coverage-path: ./coverage/aignostic/coverage.xml
-          junitxml-path: ./reports/aignostic/unittests/junit.xml
+          title: Pytest Coverage Report
+          multiple-files: |
+            Aggregator, ./coverage/aggregator/coverage.xml, ./reports/aggregator/unittests/junit.xml
+            Api, ./coverage/api/coverage.xml, ./reports/api/unittests/junit.xml
+            Common, ./coverage/common/coverage.xml, ./reports/common/unittests/junit.xml
+            Metrics, ./coverage/metrics/coverage.xml, ./reports/metrics/unittests/junit.xml
+            Worker, ./coverage/worker/coverage.xml, ./reports/worker/unittests/junit.xml
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         if: (success() || failure()) && contains(inputs.nx_tasks, 'test')

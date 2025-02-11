@@ -1,0 +1,36 @@
+[tool.coverage.run]
+branch = true
+source = ["worker"]
+
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING:"]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report html:'../../coverage/worker/html' --cov-report xml:'../../coverage/worker/coverage.xml' --html='../../reports/worker/unittests/html/index.html' --junitxml='../../reports/worker/unittests/junit.xml'"
+
+[tool.poetry]
+name = "worker"
+version = "1.0.0"
+description = "Worker for processing jobs for evaluating models"
+authors = []
+license = "Proprietary"
+readme = "README.md"
+group = {}
+
+[[tool.poetry.packages]]
+include = "worker"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+requests = "^2.32.3"
+pydantic = "^2.10.6"
+pytest-asyncio = "^0.25.3"
+
+[tool.poetry.dependencies.common]
+path = "../common"
+develop = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
