@@ -1,3 +1,7 @@
+# Docker image that contains all dependencies accross the entire monorepo (hence the name uber)
+# This way I only need to build one image for docker compose dev use
+# Savings lots of space (vs. an image per continer)
+
 # First stage: build
 FROM python:3.12
 
@@ -5,8 +9,6 @@ FROM python:3.12
 # Dep group to use at root level
 ARG ROOT_DEPGROUP=main
 ARG DEPGROUP=main
-# Package we build the image for
-ARG TARGET_PACKAGE=api
 
 # Set the working directory in the container
 WORKDIR /app
@@ -72,4 +74,6 @@ RUN poetry install -v --only=$ROOT_DEPGROUP
 
 # Then install sub deps
 # Must use poetry run to ensure correct python used
-RUN poetry run npx nx install $TARGET_PACKAGE --args="--only=$DEPGROUP"
+# Do one at a time to avoid conflicts/race conditions on install
+RUN poetry run npx nx run-many --all --target=install --parallel=1 --args="--only=main"
+RUN poetry run npx nx install api --args="--only=main,dataset,model"

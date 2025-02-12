@@ -40,10 +40,8 @@ services:
     container_name: backend
     build:
       context: .
-      dockerfile: ./dockerfiles/Dockerfile.python.dev
-      args:
-        DEPGROUP: main
-        TARGET_PACKAGE: api
+      dockerfile: ./dockerfiles/Dockerfile.python.dev.uber
+    image: aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
@@ -64,12 +62,7 @@ services:
   # Microservices
   worker_ms:
     container_name: worker
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.python.dev
-      args:
-        DEPGROUP: main
-        TARGET_PACKAGE: worker
+    image: aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
@@ -86,12 +79,7 @@ services:
       - rabbitmq
   aggregator_ms:
     container_name: aggregator
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.python.dev
-      args:
-        DEPGROUP: main
-        TARGET_PACKAGE: aggregator
+    image: aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
@@ -115,12 +103,7 @@ services:
 
   mock_dataset_api:
     container_name: mock-dataset-api
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.python.dev
-      args:
-        DEPGROUP: main,dataset
-        TARGET_PACKAGE: api
+    image: aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
@@ -131,12 +114,7 @@ services:
 
   mock_model_api:
     container_name: mock-model-api
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.python.dev
-      args:
-        DEPGROUP: main,model
-        TARGET_PACKAGE: api
+    image: aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
