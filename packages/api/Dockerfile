@@ -17,18 +17,18 @@ RUN pipx install poetry
 ENV PATH="/root/.local/bin:${PATH}"
 # Copy the application monorepo to the container
 COPY ./package.json /app
-COPY ./nx.json /app
 COPY ./package-lock.json /app
+
+# Run npm ci
+RUN npm ci
+
+COPY ./nx.json /app
 COPY ./packages /app/packages
 COPY ./poetry.lock /app
 COPY ./poetry.toml /app
 COPY ./pyproject.toml /app
 
-
-# Run npm ci
-RUN npm ci
-
-# Run poetry install via nx
+# Run poetry install at root
 RUN poetry install -v --only=main
 
 # Copy venv & application code to new image
@@ -39,7 +39,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copy only the necessary files from the builder stage
-COPY --from=builder /app/packages /app
+COPY --from=builder /app/packages /app/packages
 COPY --from=builder /app/.venv /app/.venv
 
 # Create a non-root user and switch to it
@@ -55,4 +55,5 @@ USER appuser
 EXPOSE 8000
 
 # Run the FastAPI server
-CMD ["./.venv/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+WORKDIR /app/packages/api
+CMD ["/app/.venv/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
