@@ -1,4 +1,7 @@
 services:
+  ###
+  # Services
+  ###
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -7,16 +10,19 @@ services:
     networks:
       - aignostic_network
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:15672']
-      interval: 30s
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
       timeout: 10s
       retries: 5
+
+  ###
+  # Frontend services
+  ###
   frontend:
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.frontend
     container_name: frontend
-    image: node:lts
     volumes:
       - .:/app
       - venv:/app/.venv
@@ -25,10 +31,11 @@ services:
       - '4200:4200'
     networks:
       - aignostic_network
-    depends_on:
-      - rabbitmq
-    links:
-      - rabbitmq
+
+  ###
+  # Backend services
+  ###
+  # Api Router
   backend:
     container_name: backend
     build:
@@ -49,10 +56,12 @@ services:
     environment:
       - RABBITMQ_HOST=rabbitmq
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     links:
       - rabbitmq
 
+  # Microservices
   worker_ms:
     container_name: worker
     build:
@@ -71,7 +80,8 @@ services:
     environment:
       - RABBITMQ_HOST=rabbitmq
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     links:
       - rabbitmq
   aggregator_ms:
@@ -94,78 +104,46 @@ services:
     environment:
       - RABBITMQ_HOST=rabbitmq
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     links:
       - rabbitmq
 
-  # Mock server
-  # mock_dataset_api:
-  #   container_name: mock-dataset-api
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfiles/Dockerfile.python.dev
-  #     args:
-  #       DEPGROUP: main,dataset
-  #       TARGET_PACKAGE: api
-  #   volumes:
-  #     - .:/app
-  #     - venv:/app/.venv
-  #   command: poetry run python3 -u -m tests.utils.dataset.mock_server --host 0.0.0.0 --reload
-  #   working_dir: /app/packages/api
-  #   ports:
-  #     - '5000:5000'
-  #   networks:
-  #     - aignostic_network
-  #   environment:
-  #     - RABBITMQ_HOST=rabbitmq
-  # mock_model_api:
-  #   container_name: mock-model-api
-  #   build:
-  #     context: .
-  #     dockerfile: ./dockerfiles/Dockerfile.python.dev
-  #     args:
-  #       DEPGROUP: main,model
-  #       TARGET_PACKAGE: api
-  #   volumes:
-  #     - .:/app
-  #     - venv:/app/.venv
-  #   command: poetry run python3 -u -m tests.utils.model.scikit_mock --host 0.0.0.0 --reload
-  #   working_dir: /app/packages/api
-  #   ports:
-  #     - '5001:5001'
-  #   networks:
-  #     - aignostic_network
-  #   environment:
-  #     - RABBITMQ_HOST=rabbitmq
-  # aggregator_ms:
-  #   container_name: aggregator-ms
-  #   build:
-  #     context: .
-  #     dockerfile: ./aignostic/Dockerfile.dev
-  #   volumes:
-  #     - .:/app
-  #     - venv:/app/aignostic/.venv
-  #   command: poetry run python -u aignostic/router/aggregator.py --host 0.0.0.0 --reload
-  #   working_dir: /app/aignostic
-  #   ports:
-  #     - '5002:5002'
-  #   networks:
-  #     - aignostic_network
-  #   environment:
-  #     - RABBITMQ_HOST=rabbitmq
-  # worker_ms:
-  #   build:
-  #     context: .
-  #     dockerfile: ./aignostic/Dockerfile.dev
-  #   volumes:
-  #     - .:/app
-  #     - venv:/app/aignostic/.venv
-  #   command: poetry run python -u aignostic/router/worker.py --host 0.0.0.0 --reload
-  #   working_dir: /app/aignostic
-  #   networks:
-  #     - aignostic_network
-  #   environment:
-  #     - RABBITMQ_HOST=rabbitmq
+  ####
+  # Mock servers to test against
+  ####
+
+  mock_dataset_api:
+    container_name: mock-dataset-api
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile.python.dev
+      args:
+        DEPGROUP: main,dataset
+        TARGET_PACKAGE: api
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m tests.utils.dataset.mock_server --host 0.0.0.0 --reload
+    working_dir: /app/packages/api
+    ports:
+      - '5000:5000'
+
+  mock_model_api:
+    container_name: mock-model-api
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile.python.dev
+      args:
+        DEPGROUP: main,model
+        TARGET_PACKAGE: api
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m tests.utils.model.scikit_mock --host 0.0.0.0 --reload
+    working_dir: /app/packages/api
+    ports:
+      - '5001:5001'
 
 volumes:
   venv:

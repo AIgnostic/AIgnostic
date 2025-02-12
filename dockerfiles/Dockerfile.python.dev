@@ -28,6 +28,20 @@ RUN pipx install poetry
 
 ENV PATH="/root/.local/bin:${PATH}"
 
+# set venv
+# Turn off venv creation so that we do not get conflicts between 
+# local venv mounted in at dev & system packages.
+RUN poetry config virtualenvs.create false
+RUN mkdir -p /venv
+RUN poetry config virtualenvs.path /venv
+RUN poetry config virtualenvs.in-project false
+ENV POETRY_VIRTUALENVS_IN_PROJECT=false
+
+
+# Below must be set to tell poetry's pip to install to global pckages scope
+# so as not to conflict with local venv mounted in
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
 # Copy the nx level stuff to the container
 COPY ./package.json /app
 COPY ./package-lock.json /app
@@ -41,6 +55,10 @@ COPY ./poetry.lock /app
 COPY ./poetry.toml /app
 COPY ./pyproject.toml /app
 
+# Tell poetry to use python3.12 (otherwise installs to 3.11)
+# Have to do here as needs the TOML file
+RUN poetry env use /usr/local/bin/python3.12
+
 # Other files NX insists on to run
 COPY ./eslint.config.cjs /app
 COPY ./jest.config.ts /app
@@ -48,22 +66,6 @@ COPY ./jest.preset.js /app
 
 # Have to copy everything as any subset may be needed
 COPY ./packages /app/packages
-
-# set venv
-# Turn off venv creation so that we do not get conflicts between 
-# local venv mounted in at dev & system packages.
-RUN poetry config virtualenvs.create false
-RUN mkdir -p /venv
-RUN poetry config virtualenvs.path /venv
-RUN poetry config virtualenvs.in-project false
-ENV POETRY_VIRTUALENVS_IN_PROJECT=false
-
-# Tell poetry to use python3.12 (otherwise installs to 3.11)
-RUN poetry env use /usr/local/bin/python3.12
-
-# Below must be set to tell poetry's pip to install to global pckages scope
-# so as not to conflict with local venv mounted in
-ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
 # Run poetry install from root
 RUN poetry install -v --only=$ROOT_DEPGROUP
