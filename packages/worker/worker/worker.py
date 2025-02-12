@@ -8,6 +8,7 @@ Each worker:
 - Puts the results on a results queue
 """
 
+import os
 from common.models.job import Job
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 import requests
@@ -25,6 +26,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 
 connection = None
 channel: BlockingChannel = None
+RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
 
 class WorkerException(Exception):
@@ -47,7 +49,7 @@ def start_worker():
     global connection
     global channel
 
-    connection = connect_to_rabbitmq()
+    connection = connect_to_rabbitmq(host=RABBIT_MQ_HOST)
     channel = connection.channel()
     init_queues(channel)
 

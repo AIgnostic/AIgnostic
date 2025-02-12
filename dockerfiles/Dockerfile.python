@@ -23,7 +23,7 @@ COPY ./package-lock.json /app
 RUN npm ci
 
 COPY ./nx.json /app
-# Have to copy everything as ay subset may be needed
+# Have to copy everything as any subset may be needed
 COPY ./packages /app/packages
 COPY ./poetry.lock /app
 COPY ./poetry.toml /app

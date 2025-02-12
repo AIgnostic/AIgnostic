@@ -1,0 +1,73 @@
+# First stage: build
+FROM python:3.12
+
+# ARG to provide dependency group to install
+# Dep group to use at root level
+ARG ROOT_DEPGROUP=main
+ARG DEPGROUP=main
+# Package we build the image for
+ARG TARGET_PACKAGE=api
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Metadata
+LABEL org.opencontainers.image.source="https://github.com/AIgnostic/AIgnostic"
+
+# Install Node and pipx & poetry
+RUN apt-get update && apt-get install -y --no-install-suggests --no-install-recommends curl
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+RUN apt-get install -y --no-install-suggests --no-install-recommends nodejs
+
+# Can't use apt to install pipx as it uses python 3.11
+RUN pip install pipx
+
+# Run pipx and so on
+RUN pipx ensurepath
+RUN pipx install poetry
+
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Copy the nx level stuff to the container
+COPY ./package.json /app
+COPY ./package-lock.json /app
+
+# Run npm ci to install nx
+RUN npm ci
+
+# Copy the application monorepo to the container
+COPY ./nx.json /app
+COPY ./poetry.lock /app
+COPY ./poetry.toml /app
+COPY ./pyproject.toml /app
+
+# Other files NX insists on to run
+COPY ./eslint.config.cjs /app
+COPY ./jest.config.ts /app
+COPY ./jest.preset.js /app
+
+# Have to copy everything as any subset may be needed
+COPY ./packages /app/packages
+
+# set venv
+# Turn off venv creation so that we do not get conflicts between 
+# local venv mounted in at dev & system packages.
+RUN poetry config virtualenvs.create false
+RUN mkdir -p /venv
+RUN poetry config virtualenvs.path /venv
+RUN poetry config virtualenvs.in-project false
+ENV POETRY_VIRTUALENVS_IN_PROJECT=false
+
+# Tell poetry to use python3.12 (otherwise installs to 3.11)
+RUN poetry env use /usr/local/bin/python3.12
+
+# Below must be set to tell poetry's pip to install to global pckages scope
+# so as not to conflict with local venv mounted in
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
+# Run poetry install from root
+RUN poetry install -v --only=$ROOT_DEPGROUP
+
+# Then install sub deps
+# Must use poetry run to ensure correct python used
+RUN poetry run npx nx install $TARGET_PACKAGE --args="--only=$DEPGROUP"

@@ -6,105 +6,166 @@ services:
       - '15672:15672'
     networks:
       - aignostic_network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:15672']
+      interval: 30s
+      timeout: 10s
+      retries: 5
   frontend:
     build:
       context: .
-      dockerfile: ./frontend/Dockerfile
+      dockerfile: ./dockerfiles/Dockerfile.frontend
     container_name: frontend
     image: node:lts
     volumes:
       - .:/app
-      - venv:/app/aignostic/.venv
-    working_dir: /app/frontend
+      - venv:/app/.venv
     command: npx nx serve frontend --host 0.0.0.0
     ports:
       - '4200:4200'
     networks:
       - aignostic_network
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
   backend:
     container_name: backend
     build:
       context: .
-      dockerfile: ./aignostic/Dockerfile.dev
+      dockerfile: ./dockerfiles/Dockerfile.python.dev
+      args:
+        DEPGROUP: main
+        TARGET_PACKAGE: api
     volumes:
       - .:/app
-      - venv:/app/aignostic/.venv
-    # command: poetry run uvicorn main:app --host 0.0.0.0 --reload
-    command: poetry run python -u main.py --host 0.0.0.0 --reload
-    working_dir: /app/aignostic
+      - venv:/app/.venv
+    command: poetry run uvicorn main:app --host 0.0.0.0 --reload
+    working_dir: /app/packages/api
     ports:
       - '8000:8000'
     networks:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
 
-  # Mock server
-  mock_dataset_api:
-    container_name: mock-dataset-api
+  worker_ms:
+    container_name: worker
     build:
       context: .
-      dockerfile: ./aignostic/Dockerfile.dev
+      dockerfile: ./dockerfiles/Dockerfile.python.dev
       args:
-        DEPGROUP: main,dataset
+        DEPGROUP: main
+        TARGET_PACKAGE: worker
     volumes:
       - .:/app
-      - venv:/app/aignostic/.venv
-    command: poetry run python3 -u -m tests.utils.dataset.mock_server --host 0.0.0.0 --reload
-    working_dir: /app/aignostic
-    ports:
-      - '5000:5000'
+      - venv:/app/.venv
+    command: poetry run python -m worker.worker
+    working_dir: /app/packages/worker
     networks:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
-  mock_model_api:
-    container_name: mock-model-api
-    build:
-      context: .
-      dockerfile: ./aignostic/Dockerfile.dev
-      args:
-        DEPGROUP: main,model
-    volumes:
-      - .:/app
-      - venv:/app/aignostic/.venv
-    command: poetry run python3 -u -m tests.utils.model.scikit_mock --host 0.0.0.0 --reload
-    working_dir: /app/aignostic
-    ports:
-      - '5001:5001'
-    networks:
-      - aignostic_network
-    environment:
-      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
   aggregator_ms:
-    container_name: aggregator-ms
+    container_name: aggregator
     build:
       context: .
-      dockerfile: ./aignostic/Dockerfile.dev
+      dockerfile: ./dockerfiles/Dockerfile.python.dev
+      args:
+        DEPGROUP: main
+        TARGET_PACKAGE: aggregator
     volumes:
       - .:/app
-      - venv:/app/aignostic/.venv
-    command: poetry run python -u aignostic/router/aggregator.py --host 0.0.0.0 --reload
-    working_dir: /app/aignostic
+      - venv:/app/.venv
+    command: poetry run uvicorn aggregator.aggregator:aggregator_app --host 0.0.0.0 --reload
+    working_dir: /app/packages/aggregator
     ports:
       - '5002:5002'
     networks:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
-  worker_ms:
-    build:
-      context: .
-      dockerfile: ./aignostic/Dockerfile.dev
-    volumes:
-      - .:/app
-      - venv:/app/aignostic/.venv
-    command: poetry run python -u aignostic/router/worker.py --host 0.0.0.0 --reload
-    working_dir: /app/aignostic
-    networks:
-      - aignostic_network
-    environment:
-      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+
+  # Mock server
+  # mock_dataset_api:
+  #   container_name: mock-dataset-api
+  #   build:
+  #     context: .
+  #     dockerfile: ./dockerfiles/Dockerfile.python.dev
+  #     args:
+  #       DEPGROUP: main,dataset
+  #       TARGET_PACKAGE: api
+  #   volumes:
+  #     - .:/app
+  #     - venv:/app/.venv
+  #   command: poetry run python3 -u -m tests.utils.dataset.mock_server --host 0.0.0.0 --reload
+  #   working_dir: /app/packages/api
+  #   ports:
+  #     - '5000:5000'
+  #   networks:
+  #     - aignostic_network
+  #   environment:
+  #     - RABBITMQ_HOST=rabbitmq
+  # mock_model_api:
+  #   container_name: mock-model-api
+  #   build:
+  #     context: .
+  #     dockerfile: ./dockerfiles/Dockerfile.python.dev
+  #     args:
+  #       DEPGROUP: main,model
+  #       TARGET_PACKAGE: api
+  #   volumes:
+  #     - .:/app
+  #     - venv:/app/.venv
+  #   command: poetry run python3 -u -m tests.utils.model.scikit_mock --host 0.0.0.0 --reload
+  #   working_dir: /app/packages/api
+  #   ports:
+  #     - '5001:5001'
+  #   networks:
+  #     - aignostic_network
+  #   environment:
+  #     - RABBITMQ_HOST=rabbitmq
+  # aggregator_ms:
+  #   container_name: aggregator-ms
+  #   build:
+  #     context: .
+  #     dockerfile: ./aignostic/Dockerfile.dev
+  #   volumes:
+  #     - .:/app
+  #     - venv:/app/aignostic/.venv
+  #   command: poetry run python -u aignostic/router/aggregator.py --host 0.0.0.0 --reload
+  #   working_dir: /app/aignostic
+  #   ports:
+  #     - '5002:5002'
+  #   networks:
+  #     - aignostic_network
+  #   environment:
+  #     - RABBITMQ_HOST=rabbitmq
+  # worker_ms:
+  #   build:
+  #     context: .
+  #     dockerfile: ./aignostic/Dockerfile.dev
+  #   volumes:
+  #     - .:/app
+  #     - venv:/app/aignostic/.venv
+  #   command: poetry run python -u aignostic/router/worker.py --host 0.0.0.0 --reload
+  #   working_dir: /app/aignostic
+  #   networks:
+  #     - aignostic_network
+  #   environment:
+  #     - RABBITMQ_HOST=rabbitmq
 
 volumes:
   venv:

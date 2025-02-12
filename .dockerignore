@@ -243,3 +243,5 @@ __pycache__
 .github
 
 
+# Ignore the dockerfiles dir
+dockerfiles
