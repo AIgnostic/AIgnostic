@@ -94,7 +94,7 @@ jobs:
   deploy-tsuru:
     needs:
       - docker-api # if we didn't build a container, don't do this!
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       TSURU_TOKEN: ${{ secrets.IMPAAS_DEPLOY_TOKEN }}
@@ -114,7 +114,7 @@ jobs:
       - build
     # from https://github.com/JamesIves/github-pages-deploy-action
     concurrency: ci-${{ github.ref }} # Recommended if you intend to make multiple deployments in quick succession.
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # From https://github.com/actions/deploy-pages
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
