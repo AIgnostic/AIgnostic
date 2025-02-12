@@ -23,7 +23,7 @@ from aggregator.rabbitmq import fastapi_connect_rabbitmq, channel
 
 
 @asynccontextmanager
-def connect_rabbit_mq():
+async def connect_rabbit_mq(app: FastAPI):
     channel, connection = fastapi_connect_rabbitmq()
     yield channel
     channel.close()
