@@ -49,65 +49,52 @@ jobs:
       artifact_path: 'dist/'
     secrets: inherit
 
-  docker:
-    # Note that build is not a dependency of this job, as this will build the same stuff as the build job anyway
-    # However no point in building if lint or test fails!
+  docker-base:
+    # Build base image first to enable caching
+    uses: ./.github/workflows/docker.yml
     needs:
       - lint
       - test
       - build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      # Setup the tags for the docker image
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          # What the tags mean:
-          # 1. Tag docker image with the branch name
-          # 2. Tag docker image wth the Git tag name if present
-          # 3. Tag docker image with the PR number e.g. pr-1
-          # 4. Tag docker image with the commit SHA
-          # 5. Tag docker image with 'latest' if it's the default branch (main)
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=ref,event=pr
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
-      # Build tags with the tags we setup in the previous step
-      - name: Build and push Docker image
-        id: push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./packages/api/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          # no-cache: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    with:
+      image_tag: 'python-prod-base'
+      build_target: 'python-prod-base'
+    secrets: inherit
+
+  docker-aggregator:
+    # Build base image first to enable caching
+    uses: ./.github/workflows/docker.yml
+    needs:
+      - docker-base
+    with:
+      image_tag: 'aggregator'
+      build_target: 'aggregator'
+    secrets: inherit
+
+  docker-api:
+    # Build base image first to enable caching
+    uses: ./.github/workflows/docker.yml
+    needs:
+      - docker-base
+    with:
+      image_tag: 'api'
+      build_target: 'api'
+    secrets: inherit
+
+  docker-worker:
+    # Build base image first to enable caching
+    uses: ./.github/workflows/docker.yml
+    needs:
+      - docker-base
+    with:
+      image_tag: 'worker'
+      build_target: 'worker'
+    secrets: inherit
+
   deploy-tsuru:
     needs:
-      - docker # if we didn't build a container, don't do this!
-    if: github.ref == 'refs/heads/main'
+      - docker-api # if we didn't build a container, don't do this!
+    # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       TSURU_TOKEN: ${{ secrets.IMPAAS_DEPLOY_TOKEN }}
@@ -119,7 +106,7 @@ jobs:
       - name: Add impaas target
         run: tsuru target add impaas https://impaas.uk -s
       - name: Deploy app
-        run: tsuru app deploy -i ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -a ${{ env.IMPAAS_APP_NAME }}
+        run: tsuru app deploy -i ${{ env.REGISTRY }}/aignostic/api:latest -a ${{ env.IMPAAS_APP_NAME }}
   deploy-gh-pages:
     needs:
       - lint
@@ -127,7 +114,7 @@ jobs:
       - build
     # from https://github.com/JamesIves/github-pages-deploy-action
     concurrency: ci-${{ github.ref }} # Recommended if you intend to make multiple deployments in quick succession.
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # From https://github.com/actions/deploy-pages
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
