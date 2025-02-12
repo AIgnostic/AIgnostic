@@ -27,7 +27,7 @@ export default defineConfig({
   // },
   assetsInclude: ['**/*.md'],
   build: {
-    outDir: '../dist/frontend',
+    outDir: '../../dist/frontend',
     emptyOutDir: true,
     reportCompressedSize: true,
     commonjsOptions: {
