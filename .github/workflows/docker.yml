@@ -63,3 +63,4 @@ jobs:
           # no-cache: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          target: ${{ inputs.build_target }}
