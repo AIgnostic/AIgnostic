@@ -19,7 +19,7 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  nx_run:
+  build_docker:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
