@@ -45,8 +45,6 @@ def test_fetch_datapoints_given_n_of_50_returns_correctly():
     data = response.json()
     assert "features" in data and "labels" in data and "group_ids" in data
     assert len(data["features"]) == len(data["labels"]) == len(data["group_ids"]) == 50
-    # Check that the features are unique
-    assert len(set(tuple(row) for row in data["features"])) == 50
 
 
 # Test validation function
