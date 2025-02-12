@@ -1,6 +1,8 @@
 #!/bin/bash
-images=(aggregator api worker)
-IMG_NAMESPACE=aignostic
+
+# python-prod-base is used to build the rest
+images=(python-prod-base aggregator api worker)
+IMG_NAMESPACE=ghcr.io/aignostic
 
 for target in "${images[@]}"
 do

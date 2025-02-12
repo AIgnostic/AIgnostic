@@ -34,7 +34,7 @@ RUN poetry install -v --only=main
 
 # Copy venv & application code to new image
 # Second stage: runtime
-FROM python:3.12-slim AS production-base
+FROM python:3.12-slim AS python-prod-base
 
 # Set the working directory in the container
 WORKDIR /app
@@ -62,14 +62,17 @@ EXPOSE 8000
 # docker build --target api -t aignostic/api:latest -f ./dockerfiles/Dockerfile.python .
 # docker build --target worker -t aignostic/worker:latest -f ./dockerfiles/Dockerfile.python .
 
-FROM production-base AS api
+# Metadata
+LABEL org.opencontainers.image.source="https://github.com/AIgnostic/AIgnostic"
+
+FROM python-prod-base AS api
 WORKDIR /app/packages/api
 CMD ["/app/.venv/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
-FROM production-base AS aggregator
+FROM python-prod-base AS aggregator
 WORKDIR /app/packages/aggregator
 CMD ["/app/.venv/bin/python", "-m", "uvicorn", "aggregator.aggregator:aggregator_app", "--host", "0.0.0.0", "--port", "8000"]
 
-FROM production-base AS worker
+FROM python-prod-base AS worker
 WORKDIR /app/packages/worker
 CMD ["/app/.venv/bin/python", "-m", "worker.worker"]
