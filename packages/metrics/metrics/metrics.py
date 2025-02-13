@@ -5,7 +5,7 @@
     For a binary classification problem
 """
 
-from typing import Any, Callable
+from typing import Callable
 from metrics.models import (
     CalculateRequest,
     MetricValues,
@@ -138,7 +138,7 @@ def macro_recall(name, info: CalculateRequest) -> float:
 
 def _prepare_datasets(info: CalculateRequest):
     """
-    _prepare_datasets reformats the input data as required by aif360 library for fairness 
+    _prepare_datasets reformats the input data as required by aif360 library for fairness
     metric calculations.
 
     This function takes the true labels, predicted labels, and protected attributes from the
@@ -175,10 +175,10 @@ def create_fairness_metric_fn(metric_fn: Callable[ClassificationMetric, float]) 
     The function in question validates the HTTPRequest input, and generates the function (callable)
     to calculate the fairness metric.
 
-    :param metric_fn: Callable[ClassificationMetric, float] - a function that takes a 
+    :param metric_fn: Callable[ClassificationMetric, float] - a function that takes a
       ClassificationMetric object and returns a metric value of type float (i.e. metric output)
     :return: Callable - a function that takes the name of the metric and information required in
-      calculations. A function is returned for lazy evaluation. 
+      calculations. A function is returned for lazy evaluation.
     """
     def wrapper(name: str, info: CalculateRequest) -> float:
         """
@@ -195,14 +195,16 @@ def create_fairness_metric_fn(metric_fn: Callable[ClassificationMetric, float]) 
             )
 
             metrics = metric_fn(metric)
-            if np.isnan(metrics):
-                raise MetricsException(
-                        name,
-                        additional_context="Output of Metric Calculation is NaN (expected a float)"
-                    )
-            return metrics
+
         except Exception as e:
             raise MetricsException(name, additional_context=str(e))
+
+        if np.isnan(metrics):
+            raise MetricsException(
+                    name,
+                    additional_context="Output of Metric Calculation is NaN (expected a float)",
+                )
+        return metrics
 
     return wrapper
 
@@ -221,7 +223,7 @@ metric_to_fn = {
         for metric_name in [
             "disparate_impact",
             "equal_opportunity_difference",
-            "equalized_odds_difference",
+            # "equalized_odds_difference",
             "false_negative_rate_difference",
             "negative_predictive_value",
             "positive_predictive_value",
