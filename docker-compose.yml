@@ -102,23 +102,23 @@ services:
   ####
 
   mock_dataset_api:
-    container_name: mock-dataset-api
+    container_name: folktables-dataset-api
     image: aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
-    command: poetry run python3 -u -m tests.utils.dataset.mock_server --host 0.0.0.0 --reload
+    command: poetry run uvicorn tests.utils.dataset.mock_server:app --port 5000 --host 0.0.0.0 --reload
     working_dir: /app/packages/api
     ports:
       - '5000:5000'
 
   mock_model_api:
-    container_name: mock-model-api
+    container_name: scikit-mock-model-api
     image: aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
-    command: poetry run python3 -u -m tests.utils.model.scikit_mock --host 0.0.0.0 --reload
+    command: poetry run uvicorn tests.utils.model.scikit_mock:app --port 5001 --host 0.0.0.0 --reload
     working_dir: /app/packages/api
     ports:
       - '5001:5001'
