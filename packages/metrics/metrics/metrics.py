@@ -10,6 +10,7 @@ from metrics.models import (
     CalculateRequest,
     MetricValues,
 )
+from sklearn.metrics import f1_score, roc_auc_score, mean_absolute_error as mae, mean_squared_error as mse, r2_score
 from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
 import pandas as pd
@@ -38,12 +39,12 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
     elif len(true_labels[0]) > 1:
         raise MetricsException(
             metric_name,
-            additional_context="Multiple attributes provided - cannot calculate precision",
+            additional_context=f"Multiple attributes provided - cannot calculate {metric_name}",
         )
     elif len(true_labels[0]) == 0:
         raise MetricsException(
             metric_name,
-            additional_context="No attributes provided - cannot calculate precision",
+            additional_context=f"No attributes provided - cannot calculate {metric_name}",
         )
 
 
@@ -136,6 +137,51 @@ def macro_recall(name, info: CalculateRequest) -> float:
     ) / len(np.unique(info.true_labels))
 
 
+def class_f1(name, info: CalculateRequest) -> float:
+    """
+    Calculate the F1 score for a given class. The labels
+    provided must only be for one attribute of the predictions.
+    """
+    is_valid_for_per_class_metrics(name, info.true_labels)
+    return f1_score(info.true_labels, info.predicted_labels)
+
+
+def macro_f1(name, info: CalculateRequest) -> float:
+    """
+    Calculate the macro F1 score for all classes
+    """
+    is_valid_for_per_class_metrics(name, info.true_labels)
+    return f1_score(info.true_labels, info.predicted_labels, average="macro")
+
+
+def roc_auc(name, info: CalculateRequest) -> float:
+    """
+    Calculate the ROC-AUC score.
+    """
+    return roc_auc_score(info.true_labels, info.predicted_labels)
+
+
+def mean_absolute_error(name, info: CalculateRequest) -> float:
+    """
+    Calculate the Mean Absolute Error (MAE).
+    """
+    return mae(info.true_labels, info.predicted_labels)
+
+
+def mean_squared_error(name, info: CalculateRequest) -> float:
+    """
+    Calculate the Mean Squared Error (MSE).
+    """
+    return mse(info.true_labels, info.predicted_labels)
+
+
+def r_squared(name, info: CalculateRequest) -> float:
+    """
+    Calculate the R-squared score.
+    """
+    return r2_score(info.true_labels, info.predicted_labels)
+
+
 def _prepare_datasets(info: CalculateRequest):
     """
     Prepare the datasets required for fairness metric calculations.
@@ -195,6 +241,12 @@ metric_to_fn = {
     "precision": macro_precision,
     "class_recall": class_recall,
     "recall": macro_recall,
+    "class_f1_score": class_f1,
+    "f1_score": macro_f1,
+    "roc_auc": roc_auc,
+    "mean_absolute_error": mean_absolute_error,
+    "mean_squared_error": mean_squared_error,
+    "r_squared": r_squared,
     **{
         metric_name: create_fairness_metric_fn(
             # name=metric_name needed here otherwise metric_name will be captured by the lambda once

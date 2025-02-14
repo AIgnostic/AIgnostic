@@ -2,7 +2,7 @@ from metrics.utils import finite_difference_gradient
 import numpy as np
 
 
-def test_finite_difference_gradient_approximation():
+def test_finite_difference_gradient_approximation_without_model():
     # constant function
     def const_fn(_):
         return 5
