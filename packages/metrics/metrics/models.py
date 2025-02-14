@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, HttpUrl
 from typing import Optional, Any
 from common.utils import nested_list_to_np
 
@@ -29,10 +29,11 @@ class CalculateRequest(BaseModel):
     privileged_groups: Optional[list[dict[str, Any]]] = None
     unprivileged_groups: Optional[list[dict[str, Any]]] = None
     protected_attr: Optional[list[int]] = None
+    model_endpoint: Optional[HttpUrl] = None
 
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @field_validator('true_labels', 'predicted_labels', 'protected_attr', mode='after')
-    def convert_true_to_np_arrays(cls, v):
+    def convert_to_np_arrays(cls, v):
         return nested_list_to_np(v)
 
 

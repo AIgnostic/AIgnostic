@@ -2,7 +2,7 @@ from metrics.metrics import MetricsException
 import numpy as np
 
 
-def finite_difference_gradient(
+def _finite_difference_gradient(
     name: str, features: list[list], model_fn: callable, h: float = 1e-5
 ) -> np.ndarray:
     """
@@ -38,3 +38,20 @@ def finite_difference_gradient(
 
     except (TypeError, ValueError, AttributeError, IndexError, ZeroDivisionError) as e:
         raise MetricsException(name, additional_context=str(e))
+
+
+def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
+    """
+    Compute adversarial example using FGSM.
+
+    Args :
+        x : Original input sample (d - dimensional array )
+        gradient : Gradient of the loss w . r . t input (d - dimensional array )
+        epsilon : Perturbation magnitude
+
+    Returns :
+        x_adv : Adversarially perturbed input
+    """
+    # Generate adversarial example
+    x_adv = x + epsilon * np.sign(gradient)
+    return x_adv
