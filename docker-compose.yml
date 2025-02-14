@@ -66,7 +66,7 @@ services:
     volumes:
       - .:/app
       - venv:/app/.venv
-    command: poetry run python -m worker.worker
+    command: poetry run python -u -m worker.worker
     working_dir: /app/packages/worker
     networks:
       - aignostic_network
@@ -83,7 +83,8 @@ services:
     volumes:
       - .:/app
       - venv:/app/.venv
-    command: poetry run uvicorn aggregator.aggregator:aggregator_app --host 0.0.0.0 --reload
+    # command: poetry run uvicorn aggregator.aggregator:aggregator_app --host 0.0.0.0 --reload
+    command: poetry run python -u -m aggregator.aggregator
     working_dir: /app/packages/aggregator
     ports:
       - '5002:5002'
@@ -101,25 +102,29 @@ services:
   # Mock servers to test against
   ####
 
-  mock_dataset_api:
+  folktables_dataset_api:
     container_name: folktables-dataset-api
     image: aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
-    command: poetry run uvicorn tests.utils.dataset.mock_server:app --port 5000 --host 0.0.0.0 --reload
+    command: poetry run python3 -u -m tests.utils.dataset.mock_server --host 0.0.0.0 --reload
     working_dir: /app/packages/api
+    networks:
+      - aignostic_network
     ports:
       - '5000:5000'
 
-  mock_model_api:
+  scikit_mock_model_api:
     container_name: scikit-mock-model-api
     image: aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
-    command: poetry run uvicorn tests.utils.model.scikit_mock:app --port 5001 --host 0.0.0.0 --reload
+    command: poetry run python3 -u -m tests.utils.model.scikit_mock --host 0.0.0.0 --reload
     working_dir: /app/packages/api
+    networks:
+      - aignostic_network
     ports:
       - '5001:5001'
 

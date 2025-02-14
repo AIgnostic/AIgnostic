@@ -77,6 +77,7 @@ def queue_result(result: MetricValues):
     channel.basic_publish(
         exchange="", routing_key=RESULT_QUEUE, body=json.dumps(dict(result))
     )
+    print("Result: ", result)
 
 
 def queue_error(error: str):

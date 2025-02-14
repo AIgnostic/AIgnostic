@@ -4,7 +4,7 @@ import { reportStyles } from "./home.styles";
 
 function checkURL(url: string): boolean {
 
-    if (url === 'http://mock-dataset-api:5000/fetch-datapoints' || url === 'http://mock-model-api:5001/predict') {
+    if (url === 'http://folktables-dataset-api:5000/fetch-datapoints' || url === 'http://scikit-mock-model-api:5001/predict') {
         return true; 
     }
     if (url === '') {
