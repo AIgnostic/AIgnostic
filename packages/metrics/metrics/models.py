@@ -31,7 +31,7 @@ class CalculateRequest(BaseModel):
     protected_attr: Optional[list[int]] = None
 
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
-    @field_validator('true_labels', 'predicted_labels', mode='after')
+    @field_validator('true_labels', 'predicted_labels', 'protected_attr', mode='after')
     def convert_true_to_np_arrays(cls, v):
         return nested_list_to_np(v)
 

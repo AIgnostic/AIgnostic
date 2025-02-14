@@ -5,7 +5,7 @@
     For a binary classification problem
 """
 
-from typing import Any, Callable
+from typing import Callable
 from metrics.models import (
     CalculateRequest,
     MetricValues,
@@ -138,22 +138,23 @@ def macro_recall(name, info: CalculateRequest) -> float:
 
 def _prepare_datasets(info: CalculateRequest):
     """
-    Prepare the datasets required for fairness metric calculations.
+    _prepare_datasets reformats the input data as required by aif360 library for fairness
+    metric calculations.
 
     This function takes the true labels, predicted labels, and protected attributes from the
     CalculateRequest object and creates BinaryLabelDataset objects for both the true and predicted
-    labels. These datasets are then used to calculate various fairness metrics.
+    labels (as required by aif360). These datasets are then used to calculate various fairness metrics.
 
     :param info: CalculateRequest - contains the true labels, predicted labels, and protected attributes.
     :return: tuple - a tuple containing the true labels dataset and the predicted labels dataset.
     """
-    true_labels = np.array(info.true_labels).flatten()
-    predicted_labels = np.array(info.predicted_labels).flatten()
+    true_labels = info.true_labels.flatten()
+    predicted_labels = info.predicted_labels.flatten()
 
     if not hasattr(info, "protected_attr") or info.protected_attr is None:
         raise ValueError("protected_attr is missing from the request.")
 
-    protected_attrs = np.array(info.protected_attr).flatten()
+    protected_attrs = info.protected_attr.flatten()
     df_true = pd.DataFrame({"label": true_labels, "protected_attr": protected_attrs})
     df_pred = pd.DataFrame(
         {"label": predicted_labels, "protected_attr": protected_attrs}
@@ -168,8 +169,22 @@ def _prepare_datasets(info: CalculateRequest):
     return dataset, classified_dataset
 
 
-def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], Any]):
-    def wrapper(name: str, info: CalculateRequest) -> Any:
+def create_fairness_metric_fn(metric_fn: Callable[ClassificationMetric, float]) -> Callable:
+    """
+    create_fairness_metric_fn generates the function to calculate a specific fairness metric.
+    The function in question validates the HTTPRequest input, and generates the function (callable)
+    to calculate the fairness metric.
+
+    :param metric_fn: Callable[ClassificationMetric, float] - a function that takes a
+      ClassificationMetric object and returns a metric value of type float (i.e. metric output)
+    :return: Callable - a function that takes the name of the metric and information required in
+      calculations. A function is returned for lazy evaluation.
+    """
+    def wrapper(name: str, info: CalculateRequest) -> float:
+        """
+        :param: name: str - name of the metric being calculated
+        :param: info: CalculateRequest - contains information required to calculate the metric
+        """
         try:
             dataset, classified_dataset = _prepare_datasets(info)
             metric = ClassificationMetric(
@@ -180,11 +195,16 @@ def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], Any]):
             )
 
             metrics = metric_fn(metric)
-            if np.isnan(metrics):
-                metrics = 0
-            return metrics
+
         except Exception as e:
             raise MetricsException(name, additional_context=str(e))
+
+        if np.isnan(metrics):
+            raise MetricsException(
+                    name,
+                    additional_context="Output of Metric Calculation is NaN (expected a float)",
+                )
+        return metrics
 
     return wrapper
 
@@ -203,7 +223,7 @@ metric_to_fn = {
         for metric_name in [
             "disparate_impact",
             "equal_opportunity_difference",
-            "equalized_odds_difference",
+            # "equalized_odds_difference",
             "false_negative_rate_difference",
             "negative_predictive_value",
             "positive_predictive_value",
