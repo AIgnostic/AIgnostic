@@ -1,10 +1,11 @@
 import isURL from "validator/lib/isURL";
 import jsPDF from "jspdf";
 import { reportStyles } from "./home.styles";
+import { MOCK_MODEL_API_URL, MOCK_DATASET_API_URL} from "./constants"
 
 function checkURL(url: string): boolean {
 
-    if (url === 'http://folktables-dataset-api:5000/fetch-datapoints' || url === 'http://scikit-mock-model-api:5001/predict') {
+    if (url === MOCK_MODEL_API_URL || url === MOCK_DATASET_API_URL) {
         return true; 
     }
     if (url === '') {
