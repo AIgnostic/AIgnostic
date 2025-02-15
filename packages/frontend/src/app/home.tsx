@@ -28,6 +28,7 @@ import {
   Radio,
 } from '@mui/material';
 import { HomepageState } from './types';
+import { AIGNOSTIC } from './constants';
 
 function Homepage() {
   const [state, setState] = useState<HomepageState>({
@@ -404,6 +405,9 @@ function Homepage() {
                       else {
                         handleSubmit();
                       }
+
+                      // open dashboard page in new tab
+                      window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
                     }}
                     sx={{ mt: 1, mr: 1 }}
                   >
