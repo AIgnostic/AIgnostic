@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import json
 from fastapi.responses import JSONResponse
 from pika.adapters.blocking_connection import BlockingChannel
+from common.rabbitmq.constants import JOB_QUEUE
 
 
 api = APIRouter()
@@ -75,4 +76,4 @@ def dispatch_job(
         "model_api_key": model_api_key,
     }
     message = json.dumps(job_json)
-    channel.basic_publish(exchange="", routing_key="job_queue", body=message)
+    channel.basic_publish(exchange="", routing_key=JOB_QUEUE, body=message)
