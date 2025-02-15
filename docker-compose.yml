@@ -88,6 +88,7 @@ services:
     working_dir: /app/aignostic
     ports:
       - '5002:5002'
+      - '5005:5005'
     networks:
       - aignostic_network
     environment:

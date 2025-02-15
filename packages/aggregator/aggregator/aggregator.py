@@ -1,96 +1,88 @@
-"""
-This is a (temporary) aggregator microservice implementation
-Currently this service:
-- exposes a /results endpoint to retrieve the results of the metrics calculation
-- when this endpoint is hit, fetches a result from the result queue and returns it
-
-In reality this service would:
-- pick up results from the results queue and aggregate them
-- until all results have been processed and aggregated
-- and then return the aggregated results
-Instead of polling an endpoint, there would instead be a socket connection
-between the router and aggregator, allowing for real-time updates.
-"""
-
-from contextlib import asynccontextmanager
-from common.rabbitmq.constants import RESULT_QUEUE
-from fastapi import FastAPI, Response
+import os
+import asyncio
 import json
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+import websockets
+from fastapi import FastAPI
+from pika.adapters.blocking_connection import BlockingChannel
+from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
+from common.rabbitmq.constants import RESULT_QUEUE, AGGREGATES_QUEUE
 
-from aggregator.rabbitmq import fastapi_connect_rabbitmq, channel
+RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
+connection = None
+channel: BlockingChannel = None
+connected_clients = set()
 
+# Connect to RabbitMQ
+async def connect_to_queue():
+    global connection
+    global channel
+    connection = connect_to_rabbitmq(host=RABBIT_MQ_HOST)
+    channel = connection.channel()
+    init_queues(channel)
 
-@asynccontextmanager
-def connect_rabbit_mq():
-    channel, connection = fastapi_connect_rabbitmq()
-    yield channel
-    channel.close()
-    connection.close()
+    channel.basic_consume(queue=RESULT_QUEUE, on_message_callback=on_result_fetched, auto_ack=True)
 
+    # Start consuming messages in the current event loop
+    print("Waiting for messages...")
+    await asyncio.to_thread(channel.start_consuming)
 
-aggregator_app = FastAPI(lifespan=connect_rabbit_mq)
-# Add CORS middleware
-aggregator_app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Replace "*" with specific origins if needed
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+def on_result_fetched(ch, method, properties, body):
+    result_data = json.loads(body)
+    print(f"Received result: {result_data}")
 
+    # TEMPORARY
+    # Format the data into the format the frontend expects
+    results = []
+    if "error" in result_data:
+        results.append({"error": result_data["error"]})
+    else:
+        for metric, value in result_data["metric_values"].items():
+            results.append(
+                {
+                    "metric": metric,
+                    "result": value,
+                    "legislation_results": ["Placeholder"],
+                    "llm_model_summary": ["Placeholder"],
+                }
+            )
 
-class MetricsAggregatedResponse(BaseModel):
-    message: str = "Data successfully received"
-    results: list[dict]
+    # Send the result to all connected clients
+    asyncio.create_task(async_send_to_clients(json.dumps(results)))
 
+# Function to send data to all WebSocket clients
+async def async_send_to_clients(message):
+    for client in connected_clients:
+        try:
+            await client.send(message)
+            print(f"Sent message to client: {message}")
+        except Exception as e:
+            print(f"Error sending message to client: {e}")
 
-def fetch_result_from_queue():
-    """
-    Function to fetch a result from the result queue
-    """
+# WebSocket handler function
+async def websocket_handler(websocket, path):
+    print("New WebSocket connection")
+    connected_clients.add(websocket)
+    try:
+        while True:
+            await websocket.recv()  # Keep connection alive
+    except websockets.exceptions.ConnectionClosed as e:
+        print(f"WebSocket connection closed: {e}")
+    finally:
+        connected_clients.remove(websocket)
 
-    method_frame, header_frame, body = channel.basic_get(
-        queue=RESULT_QUEUE, auto_ack=True
-    )
-    if method_frame:
-        result_data = json.loads(body)
-        print(f"Received result: {result_data}")
+# Function to start the WebSocket server
+async def start_websocket_server():
+    server = await websockets.serve(websocket_handler, "0.0.0.0", 5005)
+    print("WebSocket server started on ws://0.0.0.0:5005")
+    await server.wait_closed()
 
-        # TEMPORARY
-        # Format the data into the format the frontend expects
-        results = []
-        if "error" in result_data:
-            results.append({"error": result_data["error"]})
-        else:
-            for metric, value in result_data["metric_values"].items():
-                results.append(
-                    {
-                        "metric": metric,
-                        "result": value,
-                        "legislation_results": ["Placeholder"],
-                        "llm_model_summary": ["Placeholder"],
-                    }
-                )
+# Function to start everything
+async def start():
+    # Start RabbitMQ consumer
+    await connect_to_queue()
 
-        return results
-    return None
+    # Start WebSocket server
+    await start_websocket_server()
 
-
-@aggregator_app.get("/results")
-def get_results() -> MetricsAggregatedResponse:
-    """
-    Endpoint to retrieve the results of the metrics calculation
-    """
-    # return MetricsAggregatedResponse(results=[])
-    result = fetch_result_from_queue()
-    if result:
-        return MetricsAggregatedResponse(results=result)
-    return Response(status_code=204)
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(aggregator_app, host="0.0.0.0", port=5002)
+if __name__ == '__main__':
+    asyncio.run(start())
