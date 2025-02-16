@@ -48,6 +48,11 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
         )
 
 
+"""
+    Performance metrics
+"""
+
+
 def accuracy(name, info: CalculateRequest) -> float:
     """
     Calculate the accuracy of the model
@@ -158,6 +163,7 @@ def roc_auc(name, info: CalculateRequest) -> float:
     """
     Calculate the ROC-AUC score.
     """
+    is_valid_for_per_class_metrics(name, info.true_labels)
     return roc_auc_score(info.true_labels, info.predicted_labels)
 
 
@@ -165,6 +171,7 @@ def mean_absolute_error(name, info: CalculateRequest) -> float:
     """
     Calculate the Mean Absolute Error (MAE).
     """
+    is_valid_for_per_class_metrics(name, info.true_labels)
     return mae(info.true_labels, info.predicted_labels)
 
 
@@ -172,6 +179,7 @@ def mean_squared_error(name, info: CalculateRequest) -> float:
     """
     Calculate the Mean Squared Error (MSE).
     """
+    is_valid_for_per_class_metrics(name, info.true_labels)
     return mse(info.true_labels, info.predicted_labels)
 
 
@@ -179,6 +187,7 @@ def r_squared(name, info: CalculateRequest) -> float:
     """
     Calculate the R-squared score.
     """
+    is_valid_for_per_class_metrics(name, info.true_labels)
     return r2_score(info.true_labels, info.predicted_labels)
 
 
@@ -212,6 +221,11 @@ def _prepare_datasets(info: CalculateRequest):
         df=df_pred, label_names=["label"], protected_attribute_names=["protected_attr"]
     )  # predictions
     return dataset, classified_dataset
+
+
+"""
+    Fairness metrics from aif360
+"""
 
 
 def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], Any]):
@@ -253,6 +267,7 @@ metric_to_fn = {
             lambda metric, name=metric_name: getattr(metric, name)()
         )
         for metric_name in [
+            # aif360 fairness metrics
             "disparate_impact",
             "equal_opportunity_difference",
             "equalized_odds_difference",
