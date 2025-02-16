@@ -12,29 +12,51 @@ Instead of polling an endpoint, there would instead be a socket connection
 between the router and aggregator, allowing for real-time updates.
 """
 
-from contextlib import asynccontextmanager
+import os
 from common.rabbitmq.constants import RESULT_QUEUE
 from fastapi import FastAPI, Response
 import json
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
-from aggregator.rabbitmq import fastapi_connect_rabbitmq, channel
-
-
-@asynccontextmanager
-def connect_rabbit_mq():
-    channel, connection = fastapi_connect_rabbitmq()
-    yield channel
-    channel.close()
-    connection.close()
+# from aggregator.rabbitmq import fastapi_connect_rabbitmq, channel
+from pika.adapters.blocking_connection import BlockingChannel
+from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 
 
-aggregator_app = FastAPI(lifespan=connect_rabbit_mq)
+# @asynccontextmanager
+# async def connect_rabbit_mq(app: FastAPI):
+#     channel, connection = fastapi_connect_rabbitmq()
+
+#     state = {"rabbit_channel": channel, "rabbit_connection": connection}
+#     try:
+#         yield state
+#     finally:
+#         channel.close()
+#         connection.close()
+#     # yield channel
+#     # channel.close()
+#     # connection.close()
+
+RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
+connection = None
+channel: BlockingChannel = None
+
+
+# This service will not remain a FastAPI server, but is intended to become a true microservice
+def start_aggregator():
+    global connection
+    global channel
+    connection = connect_to_rabbitmq(host=RABBIT_MQ_HOST)
+    channel = connection.channel()
+    init_queues(channel)
+
+
+# aggregator_app = FastAPI(lifespan=connect_rabbit_mq)
+aggregator_app = FastAPI()
 # Add CORS middleware
 aggregator_app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace "*" with specific origins if needed
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -83,7 +105,6 @@ def get_results() -> MetricsAggregatedResponse:
     """
     Endpoint to retrieve the results of the metrics calculation
     """
-    # return MetricsAggregatedResponse(results=[])
     result = fetch_result_from_queue()
     if result:
         return MetricsAggregatedResponse(results=result)
@@ -92,5 +113,7 @@ def get_results() -> MetricsAggregatedResponse:
 
 if __name__ == "__main__":
     import uvicorn
+    start_aggregator()
 
+    # The aggregator ms will not remain a uvicorn server, so we start the temporary FastAPI server from main instead
     uvicorn.run(aggregator_app, host="0.0.0.0", port=5002)

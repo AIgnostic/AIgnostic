@@ -48,9 +48,13 @@ develop = true
 [tool.poetry.group.model.dependencies]
 scikit-learn = "^1.6.1"
 
+[tool.poetry.group.dataset.dependencies]
+folktables = "^0.0.12"
+
 [tool.poetry.group.dev.dependencies]
 transformers = "^4.48.0"
 folktables = "^0.0.12"
+
 
 [tool.poetry.group.train.dependencies]
 torch = "^2.5.1"
