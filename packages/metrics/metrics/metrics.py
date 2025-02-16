@@ -299,10 +299,9 @@ metric_to_fn = {
             # name=metric_name needed here otherwise metric_name will be captured by the lambda once
             lambda metric, name=metric_name: getattr(metric, name)()
         )
-        for metric_name in [
-            # aif360 fairness metrics
+        for metric_name in [                    # aif360 fairness metrics
             "statistical_parity_difference",    # demographic parity
-            # "equalized_odds_difference",        # doesn't exist
+            # "equalized_odds_difference",      # doesn't exist
             "equal_opportunity_difference",
             "disparate_impact",
             "false_negative_rate_difference",

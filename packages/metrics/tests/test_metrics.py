@@ -159,7 +159,7 @@ def test_metrics(
     [
         ("disparate_impact", 0.5),
         ("equal_opportunity_difference", 0.25),
-        ("equalized_odds_difference", 0.0),
+        # ("equalized_odds_difference", 0.0),
         ("false_negative_rate_difference", -0.25),
         ("negative_predictive_value", 0.2),
         ("positive_predictive_value", 1 / 3),
@@ -206,7 +206,7 @@ def test_multiple_binary_classifier_metrics():
         metrics=[
             "disparate_impact",
             "equal_opportunity_difference",
-            "equalized_odds_difference",
+            # "equalized_odds_difference",
         ],
         true_labels=[[1], [0], [1], [1], [0], [1], [0], [0]],
         predicted_labels=[[1], [0], [1], [1], [0], [1], [1], [1]],
@@ -221,14 +221,14 @@ def test_multiple_binary_classifier_metrics():
         "equal_opportunity_difference": create_fairness_metric_fn(
             lambda metric: metric.equal_opportunity_difference()
         )("equal_opportunity_difference", info),
-        "equalized_odds_difference": create_fairness_metric_fn(
-            lambda metric: metric.equalized_odds_difference()
-        )("equalized_odds_difference", info),
+        # "equalized_odds_difference": create_fairness_metric_fn(
+        #     lambda metric: metric.equalized_odds_difference()
+        # )("equalized_odds_difference", info),
     }
     expected_metrics = {
         "disparate_impact": 2.0,
         "equal_opportunity_difference": 0.0,
-        "equalized_odds_difference": 0.0,
+        # "equalized_odds_difference": 0.0,
     }
     for metric, value in expected_metrics.items():
         assert round(results[metric], 7) == round(
@@ -317,18 +317,18 @@ def test_calculate_fairness_metrics():
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
-def test_calculate_equalized_odds_difference_nonzero():
-    info = CalculateRequest(
-        metrics=["equalized_odds_difference"],
-        true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
-        predicted_labels=[[1], [1], [0], [1], [0], [0], [1], [1]],  # Ensure some variation
-        privileged_groups=[{"protected_attr": 1}],
-        unprivileged_groups=[{"protected_attr": 0}],
-        protected_attr=[0, 1, 0, 1, 1, 0, 1, 0],
-    )
-    results = calculate_metrics(info)
-    expected_results = {"equalized_odds_difference": 0.25}  # Expected to be nonzero
-    for metric, value in expected_results.items():
-        assert round(results.metric_values[metric], 7) == round(
-            value, 7
-        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+# def test_calculate_equalized_odds_difference_nonzero():
+#     info = CalculateRequest(
+#         metrics=["equalized_odds_difference"],
+#         true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
+#         predicted_labels=[[1], [1], [0], [1], [0], [0], [1], [1]],
+#         privileged_groups=[{"protected_attr": 1}],
+#         unprivileged_groups=[{"protected_attr": 0}],
+#         protected_attr=[0, 1, 0, 1, 1, 0, 1, 0],
+#     )
+#     results = calculate_metrics(info)
+#     expected_results = {"equalized_odds_difference": 0.25}
+#     for metric, value in expected_results.items():
+#         assert round(results.metric_values[metric], 7) == round(
+#             value, 7
+#         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
