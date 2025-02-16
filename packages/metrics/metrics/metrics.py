@@ -224,8 +224,40 @@ def _prepare_datasets(info: CalculateRequest):
 
 
 """
-    Fairness metrics from aif360
+    Fairness metrics
 """
+
+
+def equalized_odds_difference(name, info: CalculateRequest) -> tuple:
+    """
+    Compute equalized odds difference from a CalculateRequest.
+
+    Args:
+        request: CalculateRequest object containing true labels, predicted labels, and protected attribute.
+
+    Returns:
+        fpr_diff: Absolute difference in false positive rates across groups.
+        tpr_diff: Absolute difference in true positive rates across groups.
+    """
+
+    is_valid_for_per_class_metrics(name, info.true_labels)
+
+    if info.true_labels is None or info.predicted_labels is None or info.protected_attr is None:
+        raise ValueError("Missing required fields: true_labels, predicted_labels, or protected_attr")
+
+    labels = info.true_labels
+    predictions = info.predicted_labels
+    groups = info.protected_attr
+
+    def rate(cond, pred):
+        return np.mean(pred[cond]) if np.any(cond) else 0.0
+
+    fpr_1 = rate((labels == 0) & (groups == 1), predictions)
+    fpr_0 = rate((labels == 0) & (groups == 0), predictions)
+    tpr_1 = rate((labels == 1) & (groups == 1), predictions)
+    tpr_0 = rate((labels == 1) & (groups == 0), predictions)
+
+    return abs(fpr_1 - fpr_0), abs(tpr_1 - tpr_0)
 
 
 def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], Any]):
@@ -261,6 +293,7 @@ metric_to_fn = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "r_squared": r_squared,
+    "equalized_odds_difference": equalized_odds_difference,
     **{
         metric_name: create_fairness_metric_fn(
             # name=metric_name needed here otherwise metric_name will be captured by the lambda once
@@ -268,13 +301,13 @@ metric_to_fn = {
         )
         for metric_name in [
             # aif360 fairness metrics
-            "disparate_impact",
+            "statistical_parity_difference",    # demographic parity
+            # "equalized_odds_difference",        # doesn't exist
             "equal_opportunity_difference",
-            "equalized_odds_difference",
+            "disparate_impact",
             "false_negative_rate_difference",
             "negative_predictive_value",
             "positive_predictive_value",
-            "statistical_parity_difference",
             "true_positive_rate_difference",
         ]
     },
