@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class __MetricsPackageException(Exception, ABC):
 
     @abstractmethod
@@ -21,7 +22,7 @@ class MetricsException(__MetricsPackageException):
 class ModelQueryException(__MetricsPackageException):
 
     def __init__(self, detail=None, status_code=400):
-        err_msg = f"Error when querying model"
+        err_msg = "Error when querying model"
         if detail:
             err_msg += f": {detail}"
         super().__init__(err_msg, status_code)

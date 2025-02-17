@@ -5,6 +5,7 @@ from sklearn.linear_model import Ridge
 from scipy.spatial.distance import euclidean
 import requests
 
+
 def _finite_difference_gradient(
     name: str, features: list[list], model_fn: callable, h: float = 1e-5
 ) -> np.ndarray:
@@ -59,12 +60,12 @@ def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
     x_adv = x + epsilon * np.sign(gradient)
     return x_adv
 
-    
-def _lime_explanation (x: np.ndarray, info: CalculateRequest, num_samples: int = 50,
-                       kernel_width: float = 0.75) -> np.ndarray:
+
+def _lime_explanation(x: np.ndarray, info: CalculateRequest, num_samples: int = 50,
+                      kernel_width: float = 0.75) -> np.ndarray:
     """
     Compute LIME explanation for a black-box model.
-    
+
     Args:
         x: Input sample (d-dimensional array)
         model: Black-box model (function: R^d -> R)
@@ -80,16 +81,17 @@ def _lime_explanation (x: np.ndarray, info: CalculateRequest, num_samples: int =
 
     # Generate perturbed samples
     perturbed_samples = _fgsm_attack(x, gradients, epsilon=0.1)
-    
+
     # TODO: Query model using endpoints rather than arbitrary callable fn
-    model = lambda x: np.sum(x)
+    def model(x):
+        return np.sum(x)
 
     # Compute model predictions for perturbed samples
     predictions = np.array([model(sample) for sample in perturbed_samples])
-    
+
     # Compute similarity weights using an RBF kernel
     distances = np.array([euclidean(x, sample) for sample in perturbed_samples])
-    weights = np.exp(-distances **2 / (2 * kernel_width **2))
+    weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2))
 
     # Fit a weighted linear regression model
     reg = Ridge(alpha=1.0)
@@ -97,7 +99,7 @@ def _lime_explanation (x: np.ndarray, info: CalculateRequest, num_samples: int =
     return reg.coef_
 
 
-async def _query_model(info: CalculateRequest):
+async def _query_model(inputs: list, info: CalculateRequest):
     """
     Helper function to query the model API
 
@@ -106,6 +108,8 @@ async def _query_model(info: CalculateRequest):
     - data : Data to be passed to the model in JSON format with DataSet pydantic model type
     - modelAPIKey : API key for the model
     """
+    data = inputs
+
     # Send a POST request to the model API
     if info.model_api_key is None:
         response = requests.post(url=info.model_url, json=data)
