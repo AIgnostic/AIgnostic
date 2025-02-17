@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "report-gen"
+version = "1.0.0"
+description = "Microservice for generating reports"
+authors = []
+license = "Proprietary"
+readme = "README.md"
+
+[[tool.poetry.packages]]
+include = "report_gen"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+pydantic = "^2.10.5"
+pandas = "^2.2.3"
+requests = "^2.32.3"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.2"
+uvicorn = "^0.34.0"
+
+[tool.poetry.dependencies.fastapi]
+extras = ["standard"]
+version = "^0.115.6"
+
+[tool.poetry.dependencies.metrics]
+path = "../metrics"
+develop = true
+
+[tool.coverage.run]
+branch = true
+source = ["report_gen"]
+
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING:"]
+show_missing = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "--cov --cov-report html:'../../coverage/report-gen/html' --cov-report xml:'../../coverage/report-gen/coverage.xml' --html='../../reports/report-gen/unittests/html/index.html' --junitxml='../../reports/report-gen/unittests/junit.xml'"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
