@@ -19,12 +19,13 @@ import numpy as np
 
 class MetricsException(Exception):
     detail: str
+    status_code: int = 500
 
     def __init__(self, name, additional_context=None):
         self.detail = f"Error during metric calculation: {name}"
         if additional_context:
             self.detail += f"; {additional_context}"
-        super().__init__(self.detail)
+        super().__init__(self.detail, self.status_code)
 
 
 def is_valid_for_per_class_metrics(metric_name, true_labels):
