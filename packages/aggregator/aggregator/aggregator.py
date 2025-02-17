@@ -31,7 +31,10 @@ class MetricsAggregator():
                 self.metrics[metric]["count"] = new_count  # Update the total count
 
     def get_aggregated_metrics(self):
-        return self.metrics
+        results = {}
+        for metric, data in self.metrics.items():
+            results[metric] = data["value"]
+        return results
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
@@ -63,22 +66,23 @@ def on_result_fetched(ch, method, properties, body):
 
     metrics_aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
 
+    aggregates = metrics_aggregator.get_aggregated_metrics()
     # # Format the data for frontend
-    # results = []
+    results = []
     # if "error" in result_data:
     #     results.append({"error": result_data["error"]})
     # else:
-    #     for metric, value in result_data["metric_values"].items():
-    #         results.append(
-    #             {
-    #                 "metric": metric,
-    #                 "result": value,
-    #                 "legislation_results": ["Placeholder"],
-    #                 "llm_model_summary": ["Placeholder"],
-    #             }
-    #         )
+    for metric, value in aggregates.items():
+        results.append(
+            {
+                "metric": metric,
+                "result": value,
+                "legislation_results": ["Placeholder"],
+                "llm_model_summary": ["Placeholder"],
+            }
+        )
 
-    message = json.dumps(metrics_aggregator.get_aggregated_metrics())
+    message = json.dumps(results)
 
     # If clients exist, send immediately; otherwise, store in the queue
     if connected_clients:
