@@ -10,7 +10,14 @@ from metrics.models import (
     CalculateRequest,
     MetricValues,
 )
-from sklearn.metrics import f1_score, roc_auc_score, mean_absolute_error as mae, mean_squared_error as mse, r2_score
+from metrics.utils import __query_model
+from sklearn.metrics import (
+    f1_score,
+    roc_auc_score,
+    mean_absolute_error as mae,
+    mean_squared_error as mse,
+    r2_score,
+)
 from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
 import pandas as pd
@@ -282,14 +289,14 @@ def equalized_odds_difference(name, info: CalculateRequest) -> float:
         raise MetricsException(name, detail=str(e))
 
 
-def create_fairness_metric_fn(metric_fn: Callable[ClassificationMetric, float]) -> Callable:
+def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], float]) -> Callable:
     """
     create_fairness_metric_fn generates the function to calculate a specific fairness metric.
     The function in question validates the HTTPRequest input, and generates the function (callable)
     to calculate the fairness metric.
 
-    :param metric_fn: Callable[ClassificationMetric, float] - a function that takes a
-      ClassificationMetric object and returns a metric value of type float (i.e. metric output)
+    :param metric_fn: Callable[[ClassificationMetric], float] - a function that takes list of
+      ClassificationMetric objects and returns a metric value of type float (i.e. metric output)
     :return: Callable - a function that takes the name of the metric and information required in
       calculations. A function is returned for lazy evaluation.
     """
@@ -322,6 +329,61 @@ def create_fairness_metric_fn(metric_fn: Callable[ClassificationMetric, float]) 
     return wrapper
 
 
+"""
+    Uncertainty metrics
+"""
+
+
+async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -> float:
+    """
+    Estimate OOD AUROC by comparing in-distribution (ID) and out-of-distribution (OOD)
+    confidence scores.
+
+    Args:
+        info: CalculateRequest object containing input data, confidence scores, model URL, and model API key.
+        num_ood_samples: Number of OOD samples to generate.
+
+    Returns :
+        auroc: Estimated OOD AUROC score.
+    """
+    if info.input_data is None:
+        raise MetricsException(name, detail="Input data is required.")
+
+    if info.confidence_scores is None:
+        raise MetricsException(name, detail="Confidence scores are required.")
+
+    id_data: np.array = np.array(info.input_data)   # In-distribution dataset (N x d array).
+
+    d = id_data.shape[1]                            # Feature dimensionality
+
+    id_scores = info.confidence_scores              # Confidence scores for ID samples
+
+    id_min, id_max = id_data.min(axis=0), id_data.max(axis=0)
+    ood_data = np.random.uniform(id_min, id_max, size=(num_ood_samples, d))
+
+    # Construct dictionary for model input (labels and group_ids are not required)
+    model_input = {
+        "features": ood_data.tolist(),
+        "labels": np.zeros(num_ood_samples).tolist(),
+        "group_ids": np.zeros(num_ood_samples).tolist(),
+    }
+
+    # Call model endpoint to get confidence scores
+    response: dict = await __query_model(model_input, info.model_url, info.model_api_key)
+
+    # Get confidence scores for OOD samples
+    ood_scores = response.get("confidence_scores", None)
+
+    if ood_scores is None:
+        raise MetricsException(name, detail="Model response did not contain confidence scores, which are required.")
+
+    # Construct labels: 1 for ID, 0 for OOD
+    labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])
+    scores = np.concatenate([id_scores, ood_scores])
+
+    return roc_auc_score(labels, scores)
+
+
 metric_to_fn = {
     "accuracy": accuracy,
     "class_precision": class_precision,
@@ -351,6 +413,7 @@ metric_to_fn = {
             "true_positive_rate_difference",
         ]
     },
+    "ood_auroc": ood_auroc,
 }
 """ Mapping of metric names to their corresponding functions"""
 

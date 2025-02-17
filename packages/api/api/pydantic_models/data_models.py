@@ -1,4 +1,5 @@
 from pydantic import BaseModel, HttpUrl
+from typing import Optional
 
 
 class FetchDatasetRequest(BaseModel):
@@ -29,5 +30,7 @@ class ModelResponse(BaseModel):
 
     Attributes:
         predictions: list[list] - the predictions from the model
+        confidence_scores: Optional[list[list]] - the confidence scores from the model (default is None)
     """
     predictions: list[list]
+    confidence_scores: Optional[list[list]] = None

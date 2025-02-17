@@ -13,23 +13,37 @@ class MetricsInfo(BaseModel):
 class CalculateRequest(BaseModel):
     """
     CalculateRequest pydantic model represents the request body when sending a request
-    to calculate metrics. It includes list of metrics to be calculated as well as all relevant
-    data for the task
+    to calculate metrics. It includes a list of metrics to be calculated as well as all relevant
+    data for the task.
 
-    :param metrics: list[str] - list of metrics to be calculated
+    :param metrics: list[str] - List of metrics to be calculated.
+    :param input_data: Optional[list[list]] - 2D list of input data where each nested list
+        corresponds to one row of data.
     :param true_labels: Optional[list[list]] - 2D list of true labels where each nested list
         corresponds to one row of data.
     :param predicted_labels: Optional[list[list]] - 2D list of predicted labels where each
         nested list corresponds to one row of data.
+    :param target_class: Optional[Any] - The target class for which metrics are calculated.
+    :param privileged_groups: Optional[list[dict[str, Any]]] - List of dictionaries representing
+        privileged groups.
+    :param unprivileged_groups: Optional[list[dict[str, Any]]] - List of dictionaries representing
+        unprivileged groups.
+    :param protected_attr: Optional[list[int]] - List of indices representing protected attributes.
+    :param confidence_scores: Optional[list[list]] - 2D list of confidence scores where each nested
+        list corresponds to one row of data.
+    :param model_url: Optional[HttpUrl] - URL of the model endpoint.
+    :param model_api_key: Optional[str] - API key for accessing the model endpoint.
     """
     metrics: list[str]
+    input_data: Optional[list[list]] = None
     true_labels: Optional[list[list]] = None
     predicted_labels: Optional[list[list]] = None
     target_class: Optional[Any] = None
     privileged_groups: Optional[list[dict[str, Any]]] = None
     unprivileged_groups: Optional[list[dict[str, Any]]] = None
     protected_attr: Optional[list[int]] = None
-    model_endpoint: Optional[HttpUrl] = None
+    confidence_scores: Optional[list[list]] = None
+    model_url: Optional[HttpUrl] = None
     model_api_key: Optional[str] = None
 
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays

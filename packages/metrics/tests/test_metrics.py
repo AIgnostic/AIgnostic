@@ -15,6 +15,7 @@ from metrics.metrics import (
     mean_absolute_error,
     mean_squared_error,
     r_squared,
+    # ood_auroc,
 )
 from metrics.models import CalculateRequest
 import pytest
@@ -355,3 +356,8 @@ def test_calculate_equalized_odds_difference_nonzero():
         assert round(results.metric_values[metric], 7) == round(
             value, 7
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+
+
+@pytest.mark.skip(reason="To be implemented")
+def test_calculate_uncertainty_metrics():
+    pass
