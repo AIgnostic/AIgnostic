@@ -2,43 +2,18 @@ import json
 import requests
 from bs4 import BeautifulSoup
 import re
+from .constants import property_to_metrics, property_to_regulations
 
-property_to_regulations = {
-    "adversarial robustness" : ["article 15"],
-    "explainability" : ["article 13", 
-                        "article 14 (4c)"],
-    "fairness" : ["article 10", 
-                  "article 15"], 
-    "uncertainity": ["article 13"],
-    "privacy": ["article 2"],
-    "data minimality": ["article 10"],
-}
 
-property_to_metrics = {
-    "adversarial robustness" : ["fast gradient sign method", 
-                                "projected gradient descent"],
-    "explainability" : ["gradient explanations", 
-                        "LIME", 
-                        "SHAP",
-                        "identified feature importance",
-                        "explanation alignment"],
-    "fairness" : ["equality of opportunity",
-                  "demographic parity"], 
-    "uncertainity": ["OOD",
-                     "AUROC"],
-    "privacy": ["prediction privacy scores"],
-    "data minimality": ["from paper"],
-}
-
-def search_legislation(metric: str) -> dict:
+def search_legislation(metric: str) -> list:
     """
     Searches for relevant legal sections based on a metric.
-    Returns a dictionary with matching articles and descriptions.
+    Returns a list of matching articles.
     """
-    result = {}
+    result = []
     for property, metrics in property_to_metrics.items():
         if metric in metrics:
-            result.update({regulation: "Placeholder" for regulation in property_to_regulations[property]})
+            result.extend(property_to_regulations[property])
             break
 
     return result
@@ -59,6 +34,7 @@ def extract_legislation_text(article: str) -> str:
 
     return article_content.get_text(separator="\n").strip()
 
+
 def parse_legislation_text(article: str, article_content: str) -> dict:
     """
     Parses the raw article content into structured data.
@@ -69,52 +45,58 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
         "description": "",
         "suitable_recitals": []
     }
-
-    # Normalize text and split into lines
-    text_lines = [re.sub(r'\s+', ' ', line.strip()) for line in article_content.split("\n") if line.strip()]
+    text_lines = [re.sub(r'\s+', ' ', line.strip())
+                  for line in article_content.split("\n") if line.strip()]
 
     i = 0
     while i < len(text_lines):
         line = text_lines[i]
 
-        # Extract Article Title (Line after "Art. {article} GDPR")
+        # Extract Article Title
         if line.startswith(f"Art. {article} GDPR") and i + 1 < len(text_lines):
-            data["article_title"] = text_lines[i + 1] 
-            i += 1  
+            data["article_title"] = text_lines[i + 1]
+            i += 1
 
-        # Extract Description (Main body of the article)
-        elif "Suitable Recitals" not in line and not line.startswith("Art.") and "GDPR" not in line:
-            # Ensure the numbering (1., 2., 3., etc.) stays intact
-            data["description"] += line + " "  
+        # Extract Description
+        elif ("Suitable Recitals" not in line and
+              not line.startswith("Art.") and
+              "GDPR" not in line):
+            data["description"] += line + " "
 
         # Extract Suitable Recitals
         elif "Suitable Recitals" in line:
-            i += 1  # Move to next line
-            while i < len(text_lines) and not text_lines[i].startswith("Art."): 
-                match = re.search(r'\b(\d+)\b', text_lines[i])  
+            i += 1
+            while i < len(text_lines) and not text_lines[i].startswith("Art."):
+                match = re.search(r'\b(\d+)\b', text_lines[i])
                 if match:
                     recital_number = match.group(1)
-                    recital_link = f"https://gdpr-info.eu/recitals/no-{recital_number}/"  # Create link
+                    recital_link = (
+                        f"https://gdpr-info.eu/recitals/no-{recital_number}/"
+                    )
                     data["suitable_recitals"].append(recital_link)
                 i += 1
             break
 
         i += 1
 
-    data["description"] = data["description"].strip()  # Final cleanup
+    data["description"] = data["description"].strip()
     return data
-
-
 
 
 def generate_report(metrics_data: dict) -> json:
     """
     Generates a structured JSON report mapping metrics to legal references.
     """
-    pass
+    results ={
+        "extracts": [],
+        "llm insights": []
+    }
+    for metric in metrics_data:
+        legislation = search_legislation(metric)
+        for article in legislation:
+            article_number = article.split()[-1]
+            article_content = extract_legislation_text(article_number)
+            parsed_data = parse_legislation_text(article_number, article_content)
+            results["extracts"].append(parsed_data)
+    return results
 
-# INPUT:
-#"send metric name and score"
-# OUTPUT:
-#returns "extracts" []
-#"llm_insights": []
