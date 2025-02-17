@@ -55,6 +55,6 @@ def test_lime_explanation():
 
 
 @pytest.mark.skip("Not implemented yet")
-def test__query_model():
+def test_query_model():
     # TODO: Implement this test
     pass

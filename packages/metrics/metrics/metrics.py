@@ -10,7 +10,7 @@ from metrics.models import (
     CalculateRequest,
     MetricValues,
 )
-from metrics.utils import __query_model
+from metrics.utils import _query_model
 from sklearn.metrics import (
     f1_score,
     roc_auc_score,
@@ -369,7 +369,7 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     }
 
     # Call model endpoint to get confidence scores
-    response: dict = await __query_model(name, model_input, info.model_url, info.model_api_key)
+    response: dict = await _query_model(model_input, info.model_url, info.model_api_key)
 
     # Get confidence scores for OOD samples
     ood_scores: list[list] = response.get("confidence_scores", None)

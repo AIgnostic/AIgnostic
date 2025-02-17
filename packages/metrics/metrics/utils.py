@@ -1,5 +1,5 @@
 from typing import Optional
-from metrics.exceptions import MetricsException
+from metrics.exceptions import MetricsException, ModelQueryException
 import numpy as np
 from metrics.models import CalculateRequest
 from pydantic import HttpUrl
@@ -46,7 +46,7 @@ def _finite_difference_gradient(
         return gradients
 
     except (TypeError, ValueError, AttributeError, IndexError, ZeroDivisionError) as e:
-        raise MetricsException(name, additional_context=str(e))
+        raise MetricsException(name, detail=str(e))
 
 
 def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
@@ -66,7 +66,7 @@ def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
     return x_adv
 
 
-async def _lime_explanation(name, info: CalculateRequest, num_samples: int = 50,
+async def _lime_explanation(info: CalculateRequest, num_samples: int = 50,
                             kernel_width: float = 0.75) -> np.ndarray:
     """
     Compute LIME explanation for a black-box model.
@@ -97,13 +97,16 @@ async def _lime_explanation(name, info: CalculateRequest, num_samples: int = 50,
     }
 
     # Call model endpoint to get confidence scores
-    response: dict = await __query_model(name, model_input, info.model_url, info.model_api_key)
+    response: dict = await _query_model(model_input, info.model_url, info.model_api_key)
 
     # Compute model predictions for perturbed samples
     predictions = response.get("predictions", None)
 
     if predictions is None:
-        raise MetricsException(name, detail="Model response does not contain predictions")
+        raise ModelQueryException(
+            detail="Model response does not contain predictions",
+            status_code=400
+        )
 
     # Compute similarity weights using an RBF kernel
     distances = np.array([euclidean(x, sample) for sample in perturbed_samples])
@@ -115,7 +118,7 @@ async def _lime_explanation(name, info: CalculateRequest, num_samples: int = 50,
     return reg.coef_
 
 
-async def __query_model(metric_name, data: dict, model_url: HttpUrl,
+async def _query_model(data: dict, model_url: HttpUrl,
                         model_api_key: Optional[str] = None) -> dict:
     """
     Helper function to query the model API
@@ -140,14 +143,15 @@ async def __query_model(metric_name, data: dict, model_url: HttpUrl,
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        raise MetricsException(
-            metric_name=metric_name,
-            detail=e.response.json()["detail"], status_code=e.response.status_code
+        raise ModelQueryException(
+            detail=e.response.json()["detail"],
+            status_code=e.response.status_code
         )
 
     try:
         return response.json()
     except Exception as e:
-        raise MetricsException(
-            detail=f"Could not parse model response - {e}; response = {response.text}"
+        raise ModelQueryException(
+            detail=str(e),
+            status_code=500
         )
