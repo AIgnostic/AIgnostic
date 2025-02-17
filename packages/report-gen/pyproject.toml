@@ -19,6 +19,7 @@ pytest-asyncio = "^0.25.2"
 uvicorn = "^0.34.0"
 langchain = "^0.3.18"
 openai = "^1.63.0"
+bs4 = "^0.0.2"
 
 [tool.poetry.dependencies.fastapi]
 extras = ["standard"]
