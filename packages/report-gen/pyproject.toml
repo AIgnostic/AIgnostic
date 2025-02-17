@@ -28,6 +28,12 @@ version = "^0.115.6"
 path = "../metrics"
 develop = true
 
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
+pytest-html = "^4.1.1"
+
 [tool.coverage.run]
 branch = true
 source = ["report_gen"]
