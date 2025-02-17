@@ -29,6 +29,7 @@ import {
 } from '@mui/material';
 import { HomepageState } from './types';
 import { AIGNOSTIC } from './constants';
+import Dashboard from './dashboard';
 
 function Homepage() {
   const [state, setState] = useState<HomepageState>({
@@ -49,6 +50,7 @@ function Homepage() {
     selectedModelType: '',
     error: false,
     errorMessage: { header: '', text: '' },
+    showDashboard: false,
   });
 
   const getValues = {
@@ -98,6 +100,9 @@ function Homepage() {
 
   const handleBack = () => {
     setStateWrapper('activeStep', state.activeStep - 1);
+    if (state.activeStep === 4) {
+      setStateWrapper('showDashboard', false);
+    }
   };
 
   const handleReset = () => {
@@ -109,6 +114,8 @@ function Homepage() {
       console.log('Please fill in both text inputs.');
       return;
     }
+
+    setStateWrapper('showDashboard', true);
 
     const user_info = {
       dataset_url: state.datasetURL,
@@ -169,11 +176,11 @@ function Homepage() {
           }
         } catch (error: any) {
           console.error('Error during polling:', error.message);
-          setStateWrapper('error', true);
-          setStateWrapper('errorMessage', {
-            header: 'Polling Error',
-            text: error.message,
-          });
+          // setStateWrapper('error', true);
+          // setStateWrapper('errorMessage', {
+          //   header: 'Polling Error',
+          //   text: error.message,
+          // });
         }
       };
 
@@ -373,47 +380,50 @@ function Homepage() {
 
               <Box sx={{ mb: 2 }}>
                 {index === steps.length - 1 ? (
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      // check that APIs are present and valid
-                      // if not, jump to step 0
-                      if (!state.modelURL || !state.datasetURL) {
-                        if (!state.modelURL) {
-                          setStateWrapper('isModelURLValid', false);
+                  <div>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        // check that APIs are present and valid
+                        // if not, jump to step 0
+                        if (!state.modelURL || !state.datasetURL) {
+                          if (!state.modelURL) {
+                            setStateWrapper('isModelURLValid', false);
+                          }
+                          if (!state.datasetURL) {
+                            setStateWrapper('isDatasetURLValid', false);
+                          }
+                          setStateWrapper('activeStep', 0);
                         }
-                        if (!state.datasetURL) {
-                          setStateWrapper('isDatasetURLValid', false);
+
+                        // check that at least one metric is selected
+                        // if not, jump to step 3
+                        else if (
+                          state.metricChips.filter(
+                            (metricChip) => metricChip.selected
+                          ).length === 0
+                        ) {
+                          setStateWrapper(
+                            'metricsHelperText',
+                            'Please select at least one metric'
+                          );
+                          setStateWrapper('activeStep', 2);
                         }
-                        setStateWrapper('activeStep', 0);
-                      }
+                        // if all checks pass, generate report
+                        else {
+                          handleSubmit();
+                        }
 
-                      // check that at least one metric is selected
-                      // if not, jump to step 3
-                      else if (
-                        state.metricChips.filter(
-                          (metricChip) => metricChip.selected
-                        ).length === 0
-                      ) {
-                        setStateWrapper(
-                          'metricsHelperText',
-                          'Please select at least one metric'
-                        );
-                        setStateWrapper('activeStep', 2);
-                      }
-                      // if all checks pass, generate report
-                      else {
-                        handleSubmit();
-                      }
-
-                      // open dashboard page in new tab
-                      window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
-                    }}
-                    sx={{ mt: 1, mr: 1 }}
-                  >
-                    {' '}
-                    Generate Report
-                  </Button>
+                        // open dashboard page in new tab
+                        // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
+                      }}
+                      sx={{ mt: 1, mr: 1 }}
+                    >
+                      {' '}
+                      Generate Report
+                    </Button>
+                    {state.showDashboard && <Dashboard />}
+                  </div>
                 ) : (
                   <Button
                     variant="contained"
