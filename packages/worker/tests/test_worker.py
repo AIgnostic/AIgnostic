@@ -76,7 +76,7 @@ def test_queue_error(mock_basic_publish):
 
 @patch("worker.worker.fetch_data", new_callable=AsyncMock)
 @patch("worker.worker.query_model", new_callable=AsyncMock)
-@patch("metrics.metrics.calculate_metrics")
+@patch("metrics.metrics.calculate_metrics", new_callable=AsyncMock)
 @patch("worker.worker.queue_result")
 @pytest.mark.asyncio
 async def test_process_job_success(

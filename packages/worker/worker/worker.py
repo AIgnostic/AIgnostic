@@ -123,7 +123,7 @@ async def process_job(job: Job) -> MetricValues:
         metrics_request = CalculateRequest(
             metrics=job.metrics, true_labels=labels, predicted_labels=predicted_labels
         )
-        metrics_results = metrics_lib.calculate_metrics(metrics_request)
+        metrics_results = await metrics_lib.calculate_metrics(metrics_request)
         print(f"Metrics request: {metrics_results}")
         queue_result(metrics_results)
         return metrics_results
