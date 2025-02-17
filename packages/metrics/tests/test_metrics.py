@@ -317,18 +317,18 @@ def test_calculate_fairness_metrics():
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
-# def test_calculate_equalized_odds_difference_nonzero():
-#     info = CalculateRequest(
-#         metrics=["equalized_odds_difference"],
-#         true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
-#         predicted_labels=[[1], [1], [0], [1], [0], [0], [1], [1]],
-#         privileged_groups=[{"protected_attr": 1}],
-#         unprivileged_groups=[{"protected_attr": 0}],
-#         protected_attr=[0, 1, 0, 1, 1, 0, 1, 0],
-#     )
-#     results = calculate_metrics(info)
-#     expected_results = {"equalized_odds_difference": 0.25}
-#     for metric, value in expected_results.items():
-#         assert round(results.metric_values[metric], 7) == round(
-#             value, 7
-#         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+def test_calculate_equalized_odds_difference_nonzero():
+    info = CalculateRequest(
+        metrics=["equalized_odds_difference"],
+        true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
+        predicted_labels=[[1], [1], [0], [1], [0], [0], [1], [1]],
+        privileged_groups=[{"protected_attr": 1}],
+        unprivileged_groups=[{"protected_attr": 0}],
+        protected_attr=[0, 1, 0, 1, 1, 0, 1, 0],
+    )
+    results = calculate_metrics(info)
+    expected_results = {"equalized_odds_difference": 0.1666667}
+    for metric, value in expected_results.items():
+        assert round(results.metric_values[metric], 7) == round(
+            value, 7
+        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"

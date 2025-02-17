@@ -228,16 +228,19 @@ def _prepare_datasets(info: CalculateRequest):
 """
 
 
-def equalized_odds_difference(name, info: CalculateRequest) -> tuple:
+def equalized_odds_difference(name, info: CalculateRequest) -> float:
     """
     Compute equalized odds difference from a CalculateRequest.
 
     Args:
         request: CalculateRequest object containing true labels, predicted labels, and protected attribute.
 
-    Returns:
+    Calculates:
         fpr_diff: Absolute difference in false positive rates across groups.
         tpr_diff: Absolute difference in true positive rates across groups.
+
+    Returns:
+        float: Equalized odds difference (absolute difference in fpr_diff and tpr_diff).
     """
 
     is_valid_for_per_class_metrics(name, info.true_labels)
@@ -247,17 +250,44 @@ def equalized_odds_difference(name, info: CalculateRequest) -> tuple:
 
     labels = info.true_labels
     predictions = info.predicted_labels
-    groups = info.protected_attr
+    groups = np.array(info.protected_attr)
 
-    def rate(cond, pred):
-        return np.mean(pred[cond]) if np.any(cond) else 0.0
+    def rate(target_label, group):
+        """Compute TPR or FPR based on the target class and group."""
+        try:
+            # Select only data belonging to the current group (group mask)
+            group_mask = (groups == group)
 
-    fpr_1 = rate((labels == 0) & (groups == 1), predictions)
-    fpr_0 = rate((labels == 0) & (groups == 0), predictions)
-    tpr_1 = rate((labels == 1) & (groups == 1), predictions)
-    tpr_0 = rate((labels == 1) & (groups == 0), predictions)
+            # Filter the labels, predictions, and groups for the current group
+            group_labels = labels[group_mask]
+            group_predictions = predictions[group_mask]
 
-    return abs(fpr_1 - fpr_0), abs(tpr_1 - tpr_0)
+            if target_label == 1:
+                # True Positive Rate (TPR) -> TP / (TP + FN)
+                tp = np.count_nonzero((group_labels == 1) & (group_predictions == 1))
+                fn = np.count_nonzero((group_labels == 1) & (group_predictions == 0))
+                total = tp + fn
+            else:
+                # False Positive Rate (FPR) -> FP / (FP + TN)
+                fp = np.count_nonzero((group_labels == 0) & (group_predictions == 1))
+                tn = np.count_nonzero((group_labels == 0) & (group_predictions == 0))
+                total = fp + tn
+
+            if total == 0:
+                return 0.0
+            return tp / total if target_label == 1 else fp / total
+        except Exception as e:
+            raise MetricsException(name, additional_context=str(e))
+
+    try:
+        fpr_1 = rate(0, 1)  # False positive rate for group 1
+        fpr_0 = rate(0, 0)  # False positive rate for group 0
+        tpr_1 = rate(1, 1)  # True positive rate for group 1
+        tpr_0 = rate(1, 0)  # True positive rate for group 0
+
+        return abs(abs(fpr_1 - fpr_0) - abs(tpr_1 - tpr_0))
+    except Exception as e:
+        raise MetricsException(name, additional_context=str(e))
 
 
 def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], Any]):
