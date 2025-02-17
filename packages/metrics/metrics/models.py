@@ -30,6 +30,7 @@ class CalculateRequest(BaseModel):
     unprivileged_groups: Optional[list[dict[str, Any]]] = None
     protected_attr: Optional[list[int]] = None
     model_endpoint: Optional[HttpUrl] = None
+    model_api_key: Optional[str] = None
 
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @field_validator('true_labels', 'predicted_labels', 'protected_attr', mode='after')
