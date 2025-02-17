@@ -51,15 +51,21 @@ def test_extract_legislation_text_with_no_article_content():
         article = "31"
         result = extract_legislation_text(article)
     assert "Could not parse content for Article 31." in result, "Test failed: No article content should return an error."
+
+
 def test_parse_legislation_text_with_valid_content():
     article = "31"
-    # article_content = """
-    # Art. 31 GDPR Cooperation with the supervisory authority
-    # 1. The controller and the processor and, where applicable, their representatives, shall cooperate, on request, with the supervisory authority in the performance of its tasks.
-    # Suitable Recitals
-    # 82
-    # """
-    article_content = extract_legislation_text(article)
+    article_content = """
+    Art. 31 GDPR 
+    Cooperation with the supervisory authority
+    The controller and the processor and, where applicable, their representatives, shall cooperate, on request, with the supervisory authority in the performance of its tasks.
+    Suitable Recitals
+    (
+    82
+    ) Record of Processing Activities
+    <- 
+    Art. 30 GDPR
+    """
     expected_output = {
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
@@ -67,8 +73,53 @@ def test_parse_legislation_text_with_valid_content():
         "suitable_recitals": ["https://gdpr-info.eu/recitals/no-82/"]
     }
     result = parse_legislation_text(article, article_content)
-    print(result)
     assert result == expected_output, "Test failed: Valid content parsing error"
+
+
+def test_parse_legislation_text_with_multiple_recitals():
+    article = "31"
+    article_content = """
+    Art. 31 GDPR 
+    Cooperation with the supervisory authority
+    The controller and the processor and, where applicable, their representatives, shall cooperate, on request, with the supervisory authority in the performance of its tasks.
+    Suitable Recitals
+    (
+    82
+    ) Record of Processing Activities
+     (
+    81
+    ) Record of Processing Activities Second
+    <- 
+    Art. 30 GDPR
+    """
+    expected_output = {
+        "article_number": "31",
+        "article_title": "Cooperation with the supervisory authority",
+        "description": "The controller and the processor and, where applicable, their representatives, shall cooperate, on request, with the supervisory authority in the performance of its tasks.",
+        "suitable_recitals": ["https://gdpr-info.eu/recitals/no-82/", "https://gdpr-info.eu/recitals/no-81/"]
+    }
+    result = parse_legislation_text(article, article_content)
+    assert result == expected_output, "Test failed: Valid content parsing error with multiple recitals"
+
+
+def test_parse_legislation_text_with_no_recitals():
+    article = "31"
+    article_content = """
+    Art. 31 GDPR 
+    Cooperation with the supervisory authority
+    The controller and the processor and, where applicable, their representatives, shall cooperate, on request, with the supervisory authority in the performance of its tasks.
+    Suitable Recitals
+    <- 
+    Art. 30 GDPR
+    """
+    expected_output = {
+        "article_number": "31",
+        "article_title": "Cooperation with the supervisory authority",
+        "description": "The controller and the processor and, where applicable, their representatives, shall cooperate, on request, with the supervisory authority in the performance of its tasks.",
+        "suitable_recitals": []
+    }
+    result = parse_legislation_text(article, article_content)
+    assert result == expected_output, "Test failed: Valid content parsing error with no recitals"
 
 
 def test_parse_legislation_text_with_empty_content():
