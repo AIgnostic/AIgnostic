@@ -228,6 +228,7 @@ def _prepare_datasets(info: CalculateRequest):
     Fairness metrics
 """
 
+
 def equalized_odds_difference(name, info: CalculateRequest) -> float:
     """
     Compute equalized odds difference from a CalculateRequest.
