@@ -23,6 +23,8 @@ class CalculateRequest(BaseModel):
         nested list corresponds to one row of data.
     """
     metrics: list[str]
+    batch_size: int
+    total_sample_size: int
     true_labels: Optional[list[list]] = None
     predicted_labels: Optional[list[list]] = None
     target_class: Optional[Any] = None
@@ -41,3 +43,5 @@ class MetricValues(BaseModel):
     Receive calculated metric values
     """
     metric_values: dict[str, float]
+    batch_size: int
+    total_sample_size: int

@@ -122,12 +122,15 @@ async def process_job(job: Job) -> MetricValues:
 
         # Construct CalculateRequest
         metrics_request = CalculateRequest(
-            metrics=job.metrics, true_labels=labels, predicted_labels=predicted_labels
+            metrics=job.metrics,
+            batch_size=job.batch_size,
+            total_sample_size=job.total_sample_size,
+            true_labels=labels, predicted_labels=predicted_labels
         )
         metrics_results = metrics_lib.calculate_metrics(metrics_request)
-        print(f"Metrics request: {metrics_results}")
+        print(f"Final Results: {metrics_results}")
         queue_result(metrics_results)
-        return metrics_results
+        return 
     except Exception as e:
         raise WorkerException(f"Error while processing data: {e}")
 

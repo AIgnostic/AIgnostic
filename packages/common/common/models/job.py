@@ -14,6 +14,7 @@ class Job(BaseModel):
     :param model_api_key: str - the API key for the model
     """
     batch_size: int
+    total_sample_size: int
     metrics: list[str]
     data_url: str
     model_url: str
