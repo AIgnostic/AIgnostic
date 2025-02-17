@@ -15,17 +15,7 @@ from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
 import pandas as pd
 import numpy as np
-
-
-class MetricsException(Exception):
-    detail: str
-    status_code: int = 500
-
-    def __init__(self, name, additional_context=None):
-        self.detail = f"Error during metric calculation: {name}"
-        if additional_context:
-            self.detail += f"; {additional_context}"
-        super().__init__(self.detail, self.status_code)
+from metrics.exceptions import MetricsException
 
 
 def is_valid_for_per_class_metrics(metric_name, true_labels):
