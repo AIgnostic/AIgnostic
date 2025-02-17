@@ -7,11 +7,40 @@ from pika.adapters.blocking_connection import BlockingChannel
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 
+
+class MetricsAggregator():
+    def __init__(self):
+        self.metrics = {}
+
+    def set_total_sample_size(self, total_sample_size):
+        self.total_sample_size = total_sample_size
+
+    def aggregate_new_batch(self, batch_metrics_results, batch_size):
+        for metric, value in batch_metrics_results.items():
+            if metric not in self.metrics:
+                # First time encountering this metric, initialize with the first batch value
+                self.metrics[metric] = {"value": value, "count": batch_size}
+            else:
+                # Update the running average incrementally
+                prev_value = self.metrics[metric]["value"]
+                prev_count = self.metrics[metric]["count"]
+                
+                # Compute new weighted average
+                new_count = prev_count + batch_size
+                self.metrics[metric]["value"] = (prev_value * prev_count + value * batch_size) / new_count
+                self.metrics[metric]["count"] = new_count  # Update the total count
+
+    def get_aggregated_metrics(self):
+        return self.metrics
+
+
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 connection = None
 channel: BlockingChannel = None
 connected_clients = set()  # Store multiple WebSocket clients
 message_queue = queue.Queue()  # Store messages until a client connects
+metrics_aggregator = MetricsAggregator()
+
 
 # Connect to RabbitMQ
 def connect_to_queue():
@@ -32,22 +61,24 @@ def on_result_fetched(ch, method, properties, body):
     result_data = json.loads(body)
     print(f"Received result: {result_data}")
 
-    # Format the data for frontend
-    results = []
-    if "error" in result_data:
-        results.append({"error": result_data["error"]})
-    else:
-        for metric, value in result_data["metric_values"].items():
-            results.append(
-                {
-                    "metric": metric,
-                    "result": value,
-                    "legislation_results": ["Placeholder"],
-                    "llm_model_summary": ["Placeholder"],
-                }
-            )
+    metrics_aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
 
-    message = json.dumps(results)
+    # # Format the data for frontend
+    # results = []
+    # if "error" in result_data:
+    #     results.append({"error": result_data["error"]})
+    # else:
+    #     for metric, value in result_data["metric_values"].items():
+    #         results.append(
+    #             {
+    #                 "metric": metric,
+    #                 "result": value,
+    #                 "legislation_results": ["Placeholder"],
+    #                 "llm_model_summary": ["Placeholder"],
+    #             }
+    #         )
+
+    message = json.dumps(metrics_aggregator.get_aggregated_metrics())
 
     # If clients exist, send immediately; otherwise, store in the queue
     if connected_clients:
