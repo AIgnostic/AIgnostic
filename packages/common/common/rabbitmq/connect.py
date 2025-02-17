@@ -3,7 +3,8 @@ import socket
 import time
 from pika.adapters.blocking_connection import BlockingChannel
 from .constants import JOB_QUEUE, RESULT_QUEUE
-
+from pika.adapters.asyncio_connection import AsyncioConnection
+import asyncio
 
 def connect_to_rabbitmq(
     host: str = "localhost",
@@ -21,6 +22,10 @@ def connect_to_rabbitmq(
             print(f"Connection failed. Retrying {i+1}/10...")
             time.sleep(3)
     raise Exception(f"Could not connect to RabbitMQ after {retries} attempts.")
+
+# async def connect_to_rabbitmq():
+#     loop = asyncio.get_event_loop()
+#     connection = await AsyncioConnection(pika.ConnectionParameters(host='localhost'), loop=loop, )
 
 
 def init_queues(channel: BlockingChannel):

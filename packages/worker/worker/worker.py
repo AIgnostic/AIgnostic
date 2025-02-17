@@ -22,6 +22,7 @@ from common.models import CalculateRequest, MetricValues
 from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
 
 from pika.adapters.blocking_connection import BlockingChannel
+from pika.adapters.asyncio_connection import AsyncioConnection
 
 
 connection = None

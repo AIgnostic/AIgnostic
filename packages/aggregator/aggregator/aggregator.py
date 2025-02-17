@@ -35,28 +35,57 @@ class MetricsAggregator():
         for metric, data in self.metrics.items():
             results[metric] = data["value"]
         return results
+    
+
+
+
+
+class ResultsConsumer():
+
+    def __init__(self, host="localhost"):
+        """Create a new instance of the consumer class, passing in the AMQP
+        URL used to connect to RabbitMQ.
+
+        """
+
+        self._host = host
+        self._connection = None
+        self._channel = None
+
+
+    def connect(self): 
+        """Connect to RabbitMQ, returning the connection handle.
+
+        When the connection is established, the on_connection_open method
+        will be invoked by pika.
+
+        :rtype: pika.SelectConnection
+
+        """
+        self._connection = connect_to_rabbitmq(host=self._host)
+        self._channel = self._connection.channel()
+        init_queues(self._channel)
+
+    def run(self, on_message_callback=None):
+        """
+        Run the consumer loop.
+
+        """
+        self.connect()
+        try:
+            self._channel.basic_consume(queue=RESULT_QUEUE, on_message_callback=on_message_callback, auto_ack=True)
+            print("Waiting for messages...")
+            self._channel.start_consuming()  # Blocking call, waits for messages
+        except KeyboardInterrupt:
+            self.stop() 
+
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
-connection = None
-channel: BlockingChannel = None
 connected_clients = set()  # Store multiple WebSocket clients
 message_queue = queue.Queue()  # Store messages until a client connects
 metrics_aggregator = MetricsAggregator()
 
-
-# Connect to RabbitMQ
-def connect_to_queue():
-    global connection
-    global channel
-    connection = connect_to_rabbitmq(host=RABBIT_MQ_HOST)
-    channel = connection.channel()
-    init_queues(channel)
-
-    channel.basic_consume(queue=RESULT_QUEUE, on_message_callback=on_result_fetched, auto_ack=True)
-
-    print("Waiting for messages...")
-    channel.start_consuming()  # Blocking call, waits for messages
 
 def on_result_fetched(ch, method, properties, body):
     """Handles incoming messages and waits for at least one client before sending."""
@@ -138,4 +167,5 @@ if __name__ == '__main__':
     threading.Thread(target=start_websocket_server, daemon=True).start()
 
     # Start RabbitMQ consumer (blocking)
-    connect_to_queue()
+    consumer = ResultsConsumer(RABBIT_MQ_HOST)
+    consumer.run(on_result_fetched)
