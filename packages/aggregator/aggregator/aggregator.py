@@ -1,19 +1,20 @@
 import os
-import asyncio
 import json
-import websockets
-from fastapi import FastAPI
+import threading
+import queue
+import websockets.sync.server
 from pika.adapters.blocking_connection import BlockingChannel
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
-from common.rabbitmq.constants import RESULT_QUEUE, AGGREGATES_QUEUE
+from common.rabbitmq.constants import RESULT_QUEUE
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 connection = None
 channel: BlockingChannel = None
-connected_clients = set()
+connected_clients = set()  # Store multiple WebSocket clients
+message_queue = queue.Queue()  # Store messages until a client connects
 
 # Connect to RabbitMQ
-async def connect_to_queue():
+def connect_to_queue():
     global connection
     global channel
     connection = connect_to_rabbitmq(host=RABBIT_MQ_HOST)
@@ -22,16 +23,16 @@ async def connect_to_queue():
 
     channel.basic_consume(queue=RESULT_QUEUE, on_message_callback=on_result_fetched, auto_ack=True)
 
-    # Start consuming messages in the current event loop
     print("Waiting for messages...")
-    await asyncio.to_thread(channel.start_consuming)
+    channel.start_consuming()  # Blocking call, waits for messages
 
 def on_result_fetched(ch, method, properties, body):
+    """Handles incoming messages and waits for at least one client before sending."""
+    global connected_clients
     result_data = json.loads(body)
     print(f"Received result: {result_data}")
 
-    # TEMPORARY
-    # Format the data into the format the frontend expects
+    # Format the data for frontend
     results = []
     if "error" in result_data:
         results.append({"error": result_data["error"]})
@@ -46,43 +47,60 @@ def on_result_fetched(ch, method, properties, body):
                 }
             )
 
-    # Send the result to all connected clients
-    asyncio.create_task(async_send_to_clients(json.dumps(results)))
+    message = json.dumps(results)
 
-# Function to send data to all WebSocket clients
-async def async_send_to_clients(message):
+    # If clients exist, send immediately; otherwise, store in the queue
+    if connected_clients:
+        send_to_clients(message)
+    else:
+        print("No clients connected, storing message in queue...")
+        message_queue.put(message)
+
+def send_to_clients(message):
+    """Sends messages to all connected WebSocket clients."""
+    global connected_clients
+    disconnected_clients = set()
+
     for client in connected_clients:
         try:
-            await client.send(message)
+            client.send(message)
             print(f"Sent message to client: {message}")
         except Exception as e:
             print(f"Error sending message to client: {e}")
+            disconnected_clients.add(client)  # Mark client for removal
 
-# WebSocket handler function
-async def websocket_handler(websocket, path):
+    # Remove disconnected clients
+    connected_clients.difference_update(disconnected_clients)
+
+def websocket_handler(websocket):
+    """Handles WebSocket connections and sends any queued messages upon connection."""
+    global connected_clients
     print("New WebSocket connection")
     connected_clients.add(websocket)
+
+    # Send any stored messages when the first client connects
+    while not message_queue.empty():
+        message = message_queue.get()
+        print("Sending queued message to new client")
+        send_to_clients(message)
+
     try:
-        while True:
-            await websocket.recv()  # Keep connection alive
-    except websockets.exceptions.ConnectionClosed as e:
+        for _ in websocket:  # Keep connection open
+            pass
+    except Exception as e:
         print(f"WebSocket connection closed: {e}")
     finally:
-        connected_clients.remove(websocket)
+        connected_clients.remove(websocket)  # Remove on disconnect
 
-# Function to start the WebSocket server
-async def start_websocket_server():
-    server = await websockets.serve(websocket_handler, "0.0.0.0", 5005)
+# Start WebSocket server in a separate thread
+def start_websocket_server():
+    server = websockets.sync.server.serve(websocket_handler, "0.0.0.0", 5005)
     print("WebSocket server started on ws://0.0.0.0:5005")
-    await server.wait_closed()
-
-# Function to start everything
-async def start():
-    # Start RabbitMQ consumer
-    await connect_to_queue()
-
-    # Start WebSocket server
-    await start_websocket_server()
+    server.serve_forever()  # Blocking call
 
 if __name__ == '__main__':
-    asyncio.run(start())
+    # Start WebSocket server in a separate thread
+    threading.Thread(target=start_websocket_server, daemon=True).start()
+
+    # Start RabbitMQ consumer (blocking)
+    connect_to_queue()

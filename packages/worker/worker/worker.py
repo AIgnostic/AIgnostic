@@ -52,6 +52,7 @@ def start_worker():
     connection = connect_to_rabbitmq(host=RABBIT_MQ_HOST)
     channel = connection.channel()
     init_queues(channel)
+    print("Connection established to RabbitMQ")
 
 
 def fetch_job() -> Optional[Job]:
