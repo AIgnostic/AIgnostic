@@ -13,7 +13,7 @@ from worker.worker import (
     process_job,
     fetch_data,
     query_model,
-    check_model_response,
+    _check_model_response,
 )
 
 
@@ -136,4 +136,4 @@ def test_check_model_response():
     response = MagicMock()
     response.json.return_value = {"predictions": [[0, 1], [1, 0]]}
     labels = [[0, 1], [1, 0]]
-    check_model_response(response, labels)
+    _check_model_response(response, labels)

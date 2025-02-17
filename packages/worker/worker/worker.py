@@ -157,7 +157,7 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
             detail=e.response.json()["detail"], status_code=e.response.status_code
         )
 
-    check_model_response(response, data["labels"])
+    _check_model_response(response, data["labels"])
 
     try:
         # Check if the request was successful
@@ -173,8 +173,7 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
         )
 
 
-# TODO: Write a doc explaining error messages and what checking is/isn't supported
-def check_model_response(response, labels):
+def _check_model_response(response, labels):
     """
     PRE: response is received from a deserialised pydantic model and labels and types
     have been enforced according to ModelOutput.
@@ -234,7 +233,6 @@ def check_model_response(response, labels):
                     "All columns for an output label should be of the same type",
                     status_code=400,
                 )
-
     return
 
 

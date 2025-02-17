@@ -1,4 +1,4 @@
-from metrics.metrics import MetricsException
+from metrics.exceptions import MetricsException
 import numpy as np
 from metrics.models import CalculateRequest
 from sklearn.linear_model import Ridge
@@ -156,7 +156,7 @@ def _check_model_response(response, labels):
     predictions = response.json()["predictions"]
     if len(predictions) != len(labels):
         raise MetricsException(
-            "Number of model outputs does not match expected number of labels",
+            additional_context="Number of model outputs does not match expected number of labels",
             status_code=400,
         )
 

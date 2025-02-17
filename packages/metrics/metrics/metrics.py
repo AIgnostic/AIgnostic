@@ -25,17 +25,17 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
     if len(true_labels) == 0:
         raise MetricsException(
             metric_name,
-            additional_context="No labels provided - will lead to division by zero",
+            detail="No labels provided - will lead to division by zero",
         )
     elif len(true_labels[0]) > 1:
         raise MetricsException(
             metric_name,
-            additional_context=f"Multiple attributes provided - cannot calculate {metric_name}",
+            detail=f"Multiple attributes provided - cannot calculate {metric_name}",
         )
     elif len(true_labels[0]) == 0:
         raise MetricsException(
             metric_name,
-            additional_context=f"No attributes provided - cannot calculate {metric_name}",
+            detail=f"No attributes provided - cannot calculate {metric_name}",
         )
 
 
@@ -52,7 +52,7 @@ def accuracy(name, info: CalculateRequest) -> float:
         return (info.true_labels == info.predicted_labels).mean()
     except Exception as e:
         # Catch exceptions generally for now rather than specific ones
-        raise MetricsException(name, additional_context=str(e))
+        raise MetricsException(name, detail=str(e))
 
 
 def _calculate_precision(metric_name, true_labels, predicted_labels, target_class):
@@ -66,7 +66,7 @@ def _calculate_precision(metric_name, true_labels, predicted_labels, target_clas
         )
         return tp / (tp + fp) if (tp + fp) != 0 else 0
     except (ValueError, TypeError) as e:
-        raise MetricsException(metric_name, additional_context=str(e))
+        raise MetricsException(metric_name, detail=str(e))
 
 
 def class_precision(name, info: CalculateRequest) -> float:
@@ -105,7 +105,7 @@ def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
         )
         return tp / (tp + fn) if (tp + fn) != 0 else 0
     except Exception as e:
-        raise MetricsException(metric_name, additional_context=str(e))
+        raise MetricsException(metric_name, detail=str(e))
 
 
 def class_recall(name, info: CalculateRequest) -> float:
@@ -268,7 +268,7 @@ def equalized_odds_difference(name, info: CalculateRequest) -> float:
                 return 0.0
             return tp / total if target_label == 1 else fp / total
         except Exception as e:
-            raise MetricsException(name, additional_context=str(e))
+            raise MetricsException(name, detail=str(e))
 
     try:
         fpr_1 = rate(0, 1)  # False positive rate for group 1
@@ -278,7 +278,7 @@ def equalized_odds_difference(name, info: CalculateRequest) -> float:
 
         return abs(abs(fpr_1 - fpr_0) - abs(tpr_1 - tpr_0))
     except Exception as e:
-        raise MetricsException(name, additional_context=str(e))
+        raise MetricsException(name, detail=str(e))
 
 
 def create_fairness_metric_fn(metric_fn: Callable[ClassificationMetric, float]) -> Callable:
@@ -309,12 +309,12 @@ def create_fairness_metric_fn(metric_fn: Callable[ClassificationMetric, float]) 
             metrics = metric_fn(metric)
 
         except Exception as e:
-            raise MetricsException(name, additional_context=str(e))
+            raise MetricsException(name, detail=str(e))
 
         if np.isnan(metrics):
             raise MetricsException(
                     name,
-                    additional_context="Output of Metric Calculation is NaN (expected a float)",
+                    detail="Output of Metric Calculation is NaN (expected a float)",
                 )
         return metrics
 
