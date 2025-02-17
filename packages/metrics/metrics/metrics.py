@@ -353,11 +353,11 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
         raise MetricsException(name, detail="Confidence scores are required.")
 
     id_data: np.array = np.array(info.input_data)   # In-distribution dataset (N x d array).
+    d: int = id_data.shape[1]                       # Feature dimensionality
 
-    d = id_data.shape[1]                            # Feature dimensionality
+    id_scores: list[list] = info.confidence_scores  # Confidence scores for ID samples
 
-    id_scores = info.confidence_scores              # Confidence scores for ID samples
-
+    # Generate OOD samples
     id_min, id_max = id_data.min(axis=0), id_data.max(axis=0)
     ood_data = np.random.uniform(id_min, id_max, size=(num_ood_samples, d))
 
@@ -369,17 +369,23 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     }
 
     # Call model endpoint to get confidence scores
-    response: dict = await __query_model(model_input, info.model_url, info.model_api_key)
+    response: dict = await __query_model(name, model_input, info.model_url, info.model_api_key)
 
     # Get confidence scores for OOD samples
-    ood_scores = response.get("confidence_scores", None)
+    ood_scores: list[list] = response.get("confidence_scores", None)
 
     if ood_scores is None:
         raise MetricsException(name, detail="Model response did not contain confidence scores, which are required.")
 
     # Construct labels: 1 for ID, 0 for OOD
     labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])
-    scores = np.concatenate([id_scores, ood_scores])
+
+    # Flatten the confidence scores for both ID and OOD samples
+    scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
+
+    # Check if lengths match
+    if len(labels) != len(scores):
+        raise MetricsException(name, detail="Length mismatch between labels and scores.")
 
     return roc_auc_score(labels, scores)
 
@@ -418,7 +424,7 @@ metric_to_fn = {
 """ Mapping of metric names to their corresponding functions"""
 
 
-def calculate_metrics(info: CalculateRequest) -> MetricValues:
+async def calculate_metrics(info: CalculateRequest) -> MetricValues:
     """
     calculate_metrics, given a request for calculation of certain metrics and information
     necessary for calculation, attempt to calculate and return the metrics and their scores
@@ -433,5 +439,5 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
         if metric not in metric_to_fn.keys():
             results[metric] = 1
         else:
-            results[metric] = metric_to_fn[metric](metric, info)
+            results[metric] = await metric_to_fn[metric](metric, info)
     return MetricValues(metric_values=results)

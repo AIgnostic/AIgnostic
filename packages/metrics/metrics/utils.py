@@ -97,7 +97,7 @@ async def _lime_explanation(name, info: CalculateRequest, num_samples: int = 50,
     }
 
     # Call model endpoint to get confidence scores
-    response: dict = await __query_model(model_input, info.model_url, info.model_api_key)
+    response: dict = await __query_model(name, model_input, info.model_url, info.model_api_key)
 
     # Compute model predictions for perturbed samples
     predictions = response.get("predictions", None)
@@ -115,13 +115,13 @@ async def _lime_explanation(name, info: CalculateRequest, num_samples: int = 50,
     return reg.coef_
 
 
-async def __query_model(data: dict, model_url: HttpUrl,
+async def __query_model(metric_name, data: dict, model_url: HttpUrl,
                         model_api_key: Optional[str] = None) -> dict:
     """
     Helper function to query the model API
 
     Params:
-    - data : Data to be passed to the model in JSON format with DataSet pydantic model type
+    - data : Data to be sent to the model
     - modelURL : API URL of the model
     - modelAPIKey : API key for the model
 
@@ -141,6 +141,7 @@ async def __query_model(data: dict, model_url: HttpUrl,
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         raise MetricsException(
+            metric_name=metric_name,
             detail=e.response.json()["detail"], status_code=e.response.status_code
         )
 

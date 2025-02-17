@@ -15,7 +15,6 @@ from metrics.metrics import (
     mean_absolute_error,
     mean_squared_error,
     r_squared,
-    # ood_auroc,
 )
 from metrics.models import CalculateRequest
 import pytest
@@ -273,14 +272,14 @@ def test_error_if_no_protected_attrs():
     assert "protected_attr is missing" in str(e.value)
 
 
-def test_calculate_metrics():
+async def test_calculate_metrics():
     info = CalculateRequest(
         metrics=["accuracy", "class_precision", "class_recall"],
         true_labels=[[2], [0], [2], [2], [0], [2], [0], [0]],
         predicted_labels=[[2], [0], [2], [0], [0], [2], [2], [2]],
         target_class=2,
     )
-    results = calculate_metrics(info)
+    results = await calculate_metrics(info)
     expected_results = {
         "accuracy": 0.625,
         "class_precision": 0.6,
@@ -292,7 +291,7 @@ def test_calculate_metrics():
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
-def test_calculate_performance_metrics():
+async def test_calculate_performance_metrics():
     info = CalculateRequest(
         metrics=[
             "mean_absolute_error",
@@ -306,7 +305,7 @@ def test_calculate_performance_metrics():
         predicted_labels=[[0.9], [0.3], [0.6], [0.7], [0.2], [0.8], [0.1], [0.4], [0.5], [0.35]],
         target_class=1,
     )
-    results = calculate_metrics(info)
+    results = await calculate_metrics(info)
     expected_results = {
         "mean_absolute_error": 0.335,
         "mean_squared_error": 0.14725,
@@ -321,7 +320,7 @@ def test_calculate_performance_metrics():
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
-def test_calculate_fairness_metrics():
+async def test_calculate_fairness_metrics():
     info = CalculateRequest(
         metrics=["disparate_impact", "equal_opportunity_difference"],
         true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
@@ -330,7 +329,7 @@ def test_calculate_fairness_metrics():
         unprivileged_groups=[{"protected_attr": 0}],
         protected_attr=[0, 1, 0, 0, 1, 0, 1, 1],
     )
-    results = calculate_metrics(info)
+    results = await calculate_metrics(info)
     expected_results = {
         "disparate_impact": 0.5,
         "equal_opportunity_difference": 0.25,
@@ -341,7 +340,7 @@ def test_calculate_fairness_metrics():
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
-def test_calculate_equalized_odds_difference_nonzero():
+async def test_calculate_equalized_odds_difference_nonzero():
     info = CalculateRequest(
         metrics=["equalized_odds_difference"],
         true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
@@ -350,14 +349,9 @@ def test_calculate_equalized_odds_difference_nonzero():
         unprivileged_groups=[{"protected_attr": 0}],
         protected_attr=[0, 1, 0, 1, 1, 0, 1, 0],
     )
-    results = calculate_metrics(info)
+    results = await calculate_metrics(info)
     expected_results = {"equalized_odds_difference": 0.1666667}
     for metric, value in expected_results.items():
         assert round(results.metric_values[metric], 7) == round(
             value, 7
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
-
-
-@pytest.mark.skip(reason="To be implemented")
-def test_calculate_uncertainty_metrics():
-    pass
