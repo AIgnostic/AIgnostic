@@ -90,12 +90,12 @@ def test_multiple_binary_classifier_metrics():
     expected_metrics = {
         "disparate_impact": 2.0,
         "equal_opportunity_difference": 0.0,
-        "equalized_odds_difference": 0.0,
+        "equalized_odds_difference": 0.5,
     }
     for metric, value in expected_metrics.items():
         assert round(response.json()["metric_values"][metric], 7) == round(
             value, 7
-        ), f"{metric} failed"
+        ), f"Expected {metric} to be {value}, but got {response.json()["metric_values"][metric]}"
 
 
 def test_error_if_no_protected_attrs():

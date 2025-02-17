@@ -1,0 +1,61 @@
+services:
+  ###
+  # Services
+  ###
+  rabbitmq:
+    image: rabbitmq:3-management
+    expose:
+      - 5672
+      - 15672
+    networks:
+      - aignostic_network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  ###
+  # Backend services
+  ###
+  # Api Router
+  api_router:
+    container_name: api_router
+    image: ghcr.io/aignostic/api:latest
+    ports:
+      - '8000:8000'
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # Microservices
+  worker_ms:
+    container_name: worker
+    image: ghcr.io/aignostic/worker:latest
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  aggregator_ms:
+    container_name: aggregator
+    image: ghcr.io/aignostic/aggregator:latest
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  venv:
+networks:
+  aignostic_network:

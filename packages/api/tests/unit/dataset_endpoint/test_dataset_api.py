@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from tests.utils.api_utils import MOCK_DATASET_API_KEY
 from tests.utils.dataset.mock_server import app as client_mock
-from api.dataset.validate_dataset_api import validate_dataset_format, app as server_app
+from api.dataset.validate_dataset_api import _validate_dataset_format, app as server_app
 from api.pydantic_models.data_models import ModelInput
 import pytest
 
@@ -54,7 +54,7 @@ def test_valid_dataset():
         "labels": [[0], [1]],
         "group_ids": [1, 2]
     }
-    result = validate_dataset_format(valid_data)
+    result = _validate_dataset_format(valid_data)
     assert isinstance(result, ModelInput)
 
 
@@ -65,7 +65,7 @@ def test_mismatched_list_lengths():
         "group_ids": [1, 2]
     }
     with pytest.raises(ValueError, match="Features, labels, and group_ids must have the same number of rows"):
-        validate_dataset_format(invalid_data)
+        _validate_dataset_format(invalid_data)
 
 
 def test_inconsistent_feature_row_lengths():
@@ -75,7 +75,7 @@ def test_inconsistent_feature_row_lengths():
         "group_ids": [1, 2]
     }
     with pytest.raises(ValueError, match="All feature rows must have the same number of elements"):
-        validate_dataset_format(invalid_data)
+        _validate_dataset_format(invalid_data)
 
 
 def test_inconsistent_label_row_lengths():
@@ -85,7 +85,7 @@ def test_inconsistent_label_row_lengths():
         "group_ids": [1, 2]
     }
     with pytest.raises(ValueError, match="All label rows must have the same number of elements"):
-        validate_dataset_format(invalid_data)
+        _validate_dataset_format(invalid_data)
 
 
 def test_empty_dataset():
@@ -94,14 +94,14 @@ def test_empty_dataset():
         "labels": [],
         "group_ids": []
     }
-    result = validate_dataset_format(empty_data)
+    result = _validate_dataset_format(empty_data)
     assert isinstance(result, ModelInput)
 
 
 def test_invalid_data_type():
     invalid_data = "invalid_string"
     with pytest.raises(TypeError):  # Pydantic should fail here
-        validate_dataset_format(invalid_data)
+        _validate_dataset_format(invalid_data)
 
 
 def test_invalid_model_structure():
@@ -111,4 +111,4 @@ def test_invalid_model_structure():
         "group_ids": "not a list"
     }
     with pytest.raises(ValueError):
-        validate_dataset_format(invalid_data)
+        _validate_dataset_format(invalid_data)

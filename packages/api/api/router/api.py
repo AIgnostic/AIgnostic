@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import json
 from fastapi.responses import JSONResponse
 from pika.adapters.blocking_connection import BlockingChannel
+from common.rabbitmq.constants import JOB_QUEUE
 
 
 api = APIRouter()
@@ -47,13 +48,6 @@ async def generate_metrics_from_info(
         raise HTTPException(status_code=500, detail=f"Error dispatching jobs - {e}")
 
 
-# Sanity check endpoint
-# This for checking time of last deployment
-@api.get("/")
-def info():
-    return {"message": "Pushed at 21/01/2025 07:32"}
-
-
 def dispatch_job(
     batch_size: int,
     metric: list[str],
@@ -75,4 +69,4 @@ def dispatch_job(
         "model_api_key": model_api_key,
     }
     message = json.dumps(job_json)
-    channel.basic_publish(exchange="", routing_key="job_queue", body=message)
+    channel.basic_publish(exchange="", routing_key=JOB_QUEUE, body=message)

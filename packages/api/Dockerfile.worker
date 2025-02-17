@@ -1,6 +1,0 @@
-FROM python:3.12
-
-# INSTALL PIKA
-
-RUN pip install pika
-

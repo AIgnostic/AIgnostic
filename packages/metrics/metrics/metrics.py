@@ -10,6 +10,7 @@ from metrics.models import (
     CalculateRequest,
     MetricValues,
 )
+from sklearn.metrics import f1_score, roc_auc_score, mean_absolute_error as mae, mean_squared_error as mse, r2_score
 from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
 import pandas as pd
@@ -38,13 +39,18 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
     elif len(true_labels[0]) > 1:
         raise MetricsException(
             metric_name,
-            additional_context="Multiple attributes provided - cannot calculate precision",
+            additional_context=f"Multiple attributes provided - cannot calculate {metric_name}",
         )
     elif len(true_labels[0]) == 0:
         raise MetricsException(
             metric_name,
-            additional_context="No attributes provided - cannot calculate precision",
+            additional_context=f"No attributes provided - cannot calculate {metric_name}",
         )
+
+
+"""
+    Performance metrics
+"""
 
 
 def accuracy(name, info: CalculateRequest) -> float:
@@ -136,6 +142,55 @@ def macro_recall(name, info: CalculateRequest) -> float:
     ) / len(np.unique(info.true_labels))
 
 
+def class_f1(name, info: CalculateRequest) -> float:
+    """
+    Calculate the F1 score for a given class. The labels
+    provided must only be for one attribute of the predictions.
+    """
+    is_valid_for_per_class_metrics(name, info.true_labels)
+    return f1_score(info.true_labels, info.predicted_labels)
+
+
+def macro_f1(name, info: CalculateRequest) -> float:
+    """
+    Calculate the macro F1 score for all classes
+    """
+    is_valid_for_per_class_metrics(name, info.true_labels)
+    return f1_score(info.true_labels, info.predicted_labels, average="macro")
+
+
+def roc_auc(name, info: CalculateRequest) -> float:
+    """
+    Calculate the ROC-AUC score.
+    """
+    is_valid_for_per_class_metrics(name, info.true_labels)
+    return roc_auc_score(info.true_labels, info.predicted_labels)
+
+
+def mean_absolute_error(name, info: CalculateRequest) -> float:
+    """
+    Calculate the Mean Absolute Error (MAE).
+    """
+    is_valid_for_per_class_metrics(name, info.true_labels)
+    return mae(info.true_labels, info.predicted_labels)
+
+
+def mean_squared_error(name, info: CalculateRequest) -> float:
+    """
+    Calculate the Mean Squared Error (MSE).
+    """
+    is_valid_for_per_class_metrics(name, info.true_labels)
+    return mse(info.true_labels, info.predicted_labels)
+
+
+def r_squared(name, info: CalculateRequest) -> float:
+    """
+    Calculate the R-squared score.
+    """
+    is_valid_for_per_class_metrics(name, info.true_labels)
+    return r2_score(info.true_labels, info.predicted_labels)
+
+
 def _prepare_datasets(info: CalculateRequest):
     """
     _prepare_datasets reformats the input data as required by aif360 library for fairness
@@ -167,6 +222,72 @@ def _prepare_datasets(info: CalculateRequest):
         df=df_pred, label_names=["label"], protected_attribute_names=["protected_attr"]
     )  # predictions
     return dataset, classified_dataset
+
+
+"""
+    Fairness metrics
+"""
+
+def equalized_odds_difference(name, info: CalculateRequest) -> float:
+    """
+    Compute equalized odds difference from a CalculateRequest.
+
+    Args:
+        request: CalculateRequest object containing true labels, predicted labels, and protected attribute.
+
+    Calculates:
+        fpr_diff: Absolute difference in false positive rates across groups.
+        tpr_diff: Absolute difference in true positive rates across groups.
+
+    Returns:
+        float: Equalized odds difference (absolute difference in fpr_diff and tpr_diff).
+    """
+
+    is_valid_for_per_class_metrics(name, info.true_labels)
+
+    if info.true_labels is None or info.predicted_labels is None or info.protected_attr is None:
+        raise ValueError("Missing required fields: true_labels, predicted_labels, or protected_attr")
+
+    labels = info.true_labels
+    predictions = info.predicted_labels
+    groups = np.array(info.protected_attr)
+
+    def rate(target_label, group):
+        """Compute TPR or FPR based on the target class and group."""
+        try:
+            # Select only data belonging to the current group (group mask)
+            group_mask = (groups == group)
+
+            # Filter the labels, predictions, and groups for the current group
+            group_labels = labels[group_mask]
+            group_predictions = predictions[group_mask]
+
+            if target_label == 1:
+                # True Positive Rate (TPR) -> TP / (TP + FN)
+                tp = np.count_nonzero((group_labels == 1) & (group_predictions == 1))
+                fn = np.count_nonzero((group_labels == 1) & (group_predictions == 0))
+                total = tp + fn
+            else:
+                # False Positive Rate (FPR) -> FP / (FP + TN)
+                fp = np.count_nonzero((group_labels == 0) & (group_predictions == 1))
+                tn = np.count_nonzero((group_labels == 0) & (group_predictions == 0))
+                total = fp + tn
+
+            if total == 0:
+                return 0.0
+            return tp / total if target_label == 1 else fp / total
+        except Exception as e:
+            raise MetricsException(name, additional_context=str(e))
+
+    try:
+        fpr_1 = rate(0, 1)  # False positive rate for group 1
+        fpr_0 = rate(0, 0)  # False positive rate for group 0
+        tpr_1 = rate(1, 1)  # True positive rate for group 1
+        tpr_0 = rate(1, 0)  # True positive rate for group 0
+
+        return abs(abs(fpr_1 - fpr_0) - abs(tpr_1 - tpr_0))
+    except Exception as e:
+        raise MetricsException(name, additional_context=str(e))
 
 
 def create_fairness_metric_fn(metric_fn: Callable[ClassificationMetric, float]) -> Callable:
@@ -215,19 +336,26 @@ metric_to_fn = {
     "precision": macro_precision,
     "class_recall": class_recall,
     "recall": macro_recall,
+    "class_f1_score": class_f1,
+    "f1_score": macro_f1,
+    "roc_auc": roc_auc,
+    "mean_absolute_error": mean_absolute_error,
+    "mean_squared_error": mean_squared_error,
+    "r_squared": r_squared,
+    "equalized_odds_difference": equalized_odds_difference,
     **{
         metric_name: create_fairness_metric_fn(
             # name=metric_name needed here otherwise metric_name will be captured by the lambda once
             lambda metric, name=metric_name: getattr(metric, name)()
         )
-        for metric_name in [
-            "disparate_impact",
+        for metric_name in [                    # aif360 fairness metrics
+            "statistical_parity_difference",    # demographic parity
+            # "equalized_odds_difference",      # doesn't exist
             "equal_opportunity_difference",
-            # "equalized_odds_difference",
+            "disparate_impact",
             "false_negative_rate_difference",
             "negative_predictive_value",
             "positive_predictive_value",
-            "statistical_parity_difference",
             "true_positive_rate_difference",
         ]
     },

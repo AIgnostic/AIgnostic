@@ -9,6 +9,12 @@ from metrics.metrics import (
     create_fairness_metric_fn,
     _prepare_datasets,
     calculate_metrics,
+    class_f1,
+    macro_f1,
+    roc_auc,
+    mean_absolute_error,
+    mean_squared_error,
+    r_squared,
 )
 from metrics.models import CalculateRequest
 import pytest
@@ -84,6 +90,54 @@ def test_validity_check_fails(true_labels, exception_message):
             [[2], [0], [2], [0], [0], [2], [2], [2]],
             None,
             0.625,
+        ),
+        (
+            class_f1,
+            "class_f1",
+            [[1], [0], [1], [1], [0], [1], [0], [0]],
+            [[1], [0], [1], [0], [0], [1], [1], [0]],
+            1,
+            0.75,
+        ),
+        (
+            macro_f1,
+            "macro_f1",
+            [[1], [0], [1], [1], [0], [1], [0], [0]],
+            [[1], [0], [1], [0], [0], [1], [1], [0]],
+            None,
+            0.75,
+        ),
+        (
+            roc_auc,
+            "roc_auc",
+            [[1], [0], [1], [1], [0], [1], [0], [0]],
+            [[1], [0], [1], [0], [0], [1], [1], [0]],
+            None,
+            0.75,
+        ),
+        (
+            mean_absolute_error,
+            "mean_absolute_error",
+            [[1.0], [0.0], [1.0], [1.0]],
+            [[0.8], [0.1], [0.9], [1.2]],
+            None,
+            0.15,
+        ),
+        (
+            mean_squared_error,
+            "mean_squared_error",
+            [[1.0], [0.0], [1.0], [1.0]],
+            [[0.8], [0.1], [0.9], [1.2]],
+            None,
+            0.025,
+        ),
+        (
+            r_squared,
+            "r_squared",
+            [[3.0], [5.0], [2.5], [7.0]],
+            [[2.8], [5.1], [2.6], [6.8]],
+            None,
+            0.9921182,
         ),
     ],
 )
@@ -182,7 +236,9 @@ def test_multiple_binary_classifier_metrics():
         # "equalized_odds_difference": 0.0,
     }
     for metric, value in expected_metrics.items():
-        assert round(results[metric], 7) == round(value, 7), f"{metric} failed"
+        assert round(results[metric], 7) == round(
+            value, 7
+        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
 @pytest.mark.skip(reason="Not solved - needs to be implemented")
@@ -232,7 +288,36 @@ def test_calculate_metrics():
     for metric, value in expected_results.items():
         assert round(results.metric_values[metric], 7) == round(
             value, 7
-        ), f"{metric} failed"
+        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+
+
+def test_calculate_performance_metrics():
+    info = CalculateRequest(
+        metrics=[
+            "mean_absolute_error",
+            "mean_squared_error",
+            "r_squared",
+            "roc_auc",
+            "class_f1",
+            "macro_f1",
+        ],
+        true_labels=[[1.0], [0.0], [1.0], [1.0], [0.0], [1.0], [0.0], [1.0], [0.0], [1.0]],
+        predicted_labels=[[0.9], [0.3], [0.6], [0.7], [0.2], [0.8], [0.1], [0.4], [0.5], [0.35]],
+        target_class=1,
+    )
+    results = calculate_metrics(info)
+    expected_results = {
+        "mean_absolute_error": 0.335,
+        "mean_squared_error": 0.14725,
+        "r_squared": 0.3864583,
+        "roc_auc": 0.9166667,
+        "class_f1": 1.0,
+        "macro_f1": 1.0,
+    }
+    for metric, value in expected_results.items():
+        assert round(results.metric_values[metric], 7) == round(
+            value, 7
+        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
 def test_calculate_fairness_metrics():
@@ -252,4 +337,21 @@ def test_calculate_fairness_metrics():
     for metric, value in expected_results.items():
         assert round(results.metric_values[metric], 7) == round(
             value, 7
-        ), f"{metric} failed"
+        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+
+
+def test_calculate_equalized_odds_difference_nonzero():
+    info = CalculateRequest(
+        metrics=["equalized_odds_difference"],
+        true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
+        predicted_labels=[[1], [1], [0], [1], [0], [0], [1], [1]],
+        privileged_groups=[{"protected_attr": 1}],
+        unprivileged_groups=[{"protected_attr": 0}],
+        protected_attr=[0, 1, 0, 1, 1, 0, 1, 0],
+    )
+    results = calculate_metrics(info)
+    expected_results = {"equalized_odds_difference": 0.1666667}
+    for metric, value in expected_results.items():
+        assert round(results.metric_values[metric], 7) == round(
+            value, 7
+        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
