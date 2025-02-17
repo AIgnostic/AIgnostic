@@ -1,5 +1,7 @@
 from pydantic import ValidationError
-from api.pydantic_models.data_models import ModelInput, FetchDatasetRequest
+from api.pydantic_models.data_models import FetchDatasetRequest
+from common.models import ModelInput
+
 from fastapi import FastAPI, HTTPException
 import requests
 import uvicorn

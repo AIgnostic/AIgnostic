@@ -1,7 +1,7 @@
 from folktables import ACSDataSource, ACSEmployment
 from fastapi import FastAPI, Query, Depends, HTTPException
 from tests.utils.api_utils import get_dataset_api_key
-from api.pydantic_models.data_models import ModelInput
+from common.models import ModelInput
 import pandas as pd
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware

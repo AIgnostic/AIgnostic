@@ -22,7 +22,8 @@ from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
 import pandas as pd
 import numpy as np
-from metrics.exceptions import MetricsException
+from metrics.exceptions import MetricsException, ModelQueryException
+from common.models import ModelInput, ModelResponse
 
 
 def is_valid_for_per_class_metrics(metric_name, true_labels):
@@ -362,20 +363,20 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     ood_data = np.random.uniform(id_min, id_max, size=(num_ood_samples, d))
 
     # Construct dictionary for model input (labels and group_ids are not required)
-    model_input = {
-        "features": ood_data.tolist(),
-        "labels": np.zeros(num_ood_samples).tolist(),
-        "group_ids": np.zeros(num_ood_samples).tolist(),
-    }
+    model_input = ModelInput(
+        features=ood_data.tolist(),
+        labels=np.zeros(num_ood_samples).tolist(),
+        group_ids=np.zeros(num_ood_samples).tolist(),
+    )
 
     # Call model endpoint to get confidence scores
-    response: dict = await _query_model(model_input, info.model_url, info.model_api_key)
+    response: ModelResponse = await _query_model(model_input, info.model_url, info.model_api_key)
 
     # Get confidence scores for OOD samples
-    ood_scores: list[list] = response.get("confidence_scores", None)
 
-    if ood_scores is None:
-        raise MetricsException(name, detail="Model response did not contain confidence scores, which are required.")
+    if response.confidence_scores is None:
+        raise ModelQueryException(name, detail="Model response did not contain confidence scores, which are required.")
+    ood_scores: list[list] = response.confidence_scores
 
     # Construct labels: 1 for ID, 0 for OOD
     labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])

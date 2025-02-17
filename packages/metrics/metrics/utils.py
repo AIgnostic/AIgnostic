@@ -6,6 +6,7 @@ from pydantic import HttpUrl
 from sklearn.linear_model import Ridge
 from scipy.spatial.distance import euclidean
 import requests
+from common.models import ModelInput, ModelResponse
 
 
 def _finite_difference_gradient(
@@ -72,13 +73,14 @@ async def _lime_explanation(info: CalculateRequest, num_samples: int = 50,
     Compute LIME explanation for a black-box model.
 
     Args:
-        model: Black-box model (function: R^d -> R)
+        info: information required to compute the explanation including model URL and API key
         num_samples: Number of perturbed samples
         kernel_width: Width of the Gaussian kernel for weighting
+
     Returns :
         explanation: Linear surrogate model coefficients (d-dimensional array)
     """
-    x: np.ndarray = np.ndarray(info.input_data)     # Input sample (d-dimensional array)
+    x: np.ndarray = np.ndarray(info.input_data)    # Input sample (d-dimensional array)
 
     d = x.shape[0]
 
@@ -90,17 +92,17 @@ async def _lime_explanation(info: CalculateRequest, num_samples: int = 50,
 
     # Construct dictionary for model input (labels and group_ids are not required)
     n = len(perturbed_samples)
-    model_input = {
-        "features": perturbed_samples.tolist(),
-        "labels": np.zeros(n).tolist(),
-        "group_ids": np.zeros(n).tolist(),
-    }
+    model_input = ModelInput(
+        features=perturbed_samples.tolist(),
+        labels=np.zeros(n).tolist(),
+        group_ids=np.zeros(n).tolist(),
+    )
 
     # Call model endpoint to get confidence scores
-    response: dict = await _query_model(model_input, info.model_url, info.model_api_key)
+    response: ModelResponse = await _query_model(model_input, info.model_url, info.model_api_key)
 
     # Compute model predictions for perturbed samples
-    predictions = response.get("predictions", None)
+    predictions = response.predictions
 
     if predictions is None:
         raise ModelQueryException(

@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 import pickle
 from tests.utils.api_utils import get_model_api_key
-from api.pydantic_models.data_models import ModelInput, ModelResponse
+from common.models import ModelInput, ModelResponse
 import os
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware

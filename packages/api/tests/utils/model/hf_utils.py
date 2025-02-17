@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from transformers import pipeline
-from api.pydantic_models.data_models import ModelInput, ModelResponse
+from common.models import ModelInput, ModelResponse
 
 
 def predict(input: ModelInput, pipe: pipeline) -> ModelResponse:
