@@ -406,8 +406,8 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
     def distance_fn(x, y) -> float:
         return np.linalg.norm(x - y)
 
-    lime_actual = _lime_explanation(info)
-    lime_perturbed = _lime_explanation(info)    
+    lime_actual, _ = _lime_explanation(info)
+    lime_perturbed, _ = _lime_explanation(info)    
 
     diff = distance_fn(lime_actual, lime_perturbed)
     return 1 - np.mean(diff).item()
@@ -425,12 +425,36 @@ def explanation_sparsity_score(name, info: CalculateRequest) -> float:
         where sparsity_fn is || E(x) ||_0 / d - number of non-zero elements in the explanation
         divided by the total number of features 
     """
-    lime_explanation = _lime_explanation(info)
+    lime_explanation, _ = _lime_explanation(info)
     sparsity = np.count_nonzero(lime_explanation) / lime_explanation.shape[1]
     return 1 - sparsity
 
 
 def explanation_fidelity_score(name, info: CalculateRequest) -> float:
+    """
+    Calculate the explanation fidelity score for a given model and sample inputs
+
+    :param name: str - name of the metric being calculated
+    :param info: CalculateRequest - contains information required to calculate the metric.
+        explanation_fidelity_score requires the input_features, predicted_labels, model_url
+        and model_api_key.
+
+    :return: float - the explanation fidelity score (1 - 1/N * fidelity_fn(f(x), g(x))) where
+        fidelity_fn is the distance function between the model output f(x) and the output of
+        an interpretable approximation g(x) of the model
+    """
+    _, reg_model = _lime_explanation(info)
+
+    # TODO: Update fidelity_fn implementation after discussion with supervisor
+    def fidelity_fn(x, y) -> float:
+        return np.linalg.norm(x - y)
+
+    return 1 - np.mean(
+        fidelity_fn(
+            info.predicted_labels,
+            reg_model.predict(info.input_features
+        )
+    )).item()
     pass
 
 

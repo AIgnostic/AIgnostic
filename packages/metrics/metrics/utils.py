@@ -112,9 +112,9 @@ async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) 
     weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2))
 
     # Fit a weighted linear regression model
-    reg = Ridge(alpha=1.0)
-    reg.fit(perturbed_samples - info.input_features, predictions, sample_weight=weights)
-    return reg.coef_
+    reg_model = Ridge(alpha=1.0)
+    reg_model.fit(perturbed_samples - info.input_features, predictions, sample_weight=weights)
+    return reg_model.coef_, reg_model
 
 
 async def _query_model(data: dict, model_url: HttpUrl,
