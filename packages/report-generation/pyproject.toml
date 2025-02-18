@@ -22,6 +22,7 @@ readme = "README.md"
 
   [tool.poetry.dependencies]
   python = ">=3.12,<3.13"
+  bs4 = "^0.0.2"
 
     [tool.poetry.dependencies.metrics]
     path = "../metrics"
