@@ -355,3 +355,18 @@ async def test_calculate_equalized_odds_difference_nonzero():
         assert round(results.metric_values[metric], 7) == round(
             value, 7
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+
+
+@pytest.mark.skip(reason="Function not implemented")
+def test_explanation_stability_score():
+    pass
+
+
+@pytest.mark.skip(reason="Function not implemented")
+def test_explanation_sparsity_score():
+    pass
+
+
+@pytest.mark.skip(reason="Function not implemented")
+def test_explanation_fidelity_score():
+    pass

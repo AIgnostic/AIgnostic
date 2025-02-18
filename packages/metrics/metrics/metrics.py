@@ -10,7 +10,7 @@ from metrics.models import (
     CalculateRequest,
     MetricValues,
 )
-from metrics.utils import _query_model
+from metrics.utils import _query_model, _fgsm_attack, _lime_explanation
 from sklearn.metrics import (
     f1_score,
     roc_auc_score,
@@ -347,13 +347,13 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     Returns :
         auroc: Estimated OOD AUROC score.
     """
-    if info.input_data is None:
+    if info.input_features is None:
         raise MetricsException(name, detail="Input data is required.")
 
     if info.confidence_scores is None:
         raise MetricsException(name, detail="Confidence scores are required.")
 
-    id_data: np.array = np.array(info.input_data)   # In-distribution dataset (N x d array).
+    id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
     d: int = id_data.shape[1]                       # Feature dimensionality
 
     id_scores: list[list] = info.confidence_scores  # Confidence scores for ID samples
@@ -391,6 +391,43 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     return roc_auc_score(labels, scores)
 
 
+def explanation_stability_score(name, info: CalculateRequest) -> float:
+    """
+    Calculate the explanation stability score for a given model and sample inputs
+
+    :param name: str - name of the metric being calculated
+    :param info: CalculateRequest - contains information required to calculate the metric.
+        explanation_stability_score requires the input_features, predicted_labels, model_url,
+        and model_api_key.
+
+    :return: float - the explanation stability score (1 - 1/N * sum(distance_fn(E(x), E(x')))
+        where distance_fn is the distance function between two explanations E(x) and E(x') 
+    """
+    # TODO: Replace with actual distance fn or endpoint once impl finalised
+    def distance_fn(x, y) -> float:
+        return np.linalg.norm(x - y)
+
+    # TODO: Update with actual gradients once implemented
+    num_samples, d = info.input_features.shape
+    gradients = np.random.normal(size=(num_samples, d))
+    perturbed_samples = _fgsm_attack(info.input_features, gradients, epsilon=0.1)
+
+    lime_actual = _lime_explanation(info)
+    lime_perturbed = _lime_explanation(info)    
+
+    diff = distance_fn(lime_actual, lime_perturbed)
+    return 1 - np.mean(diff).item()
+
+
+def explanation_sparsity_score(name, info: CalculateRequest) -> float:
+
+    pass
+
+
+def explanation_fidelity_score(name, info: CalculateRequest) -> float:
+    pass
+
+
 metric_to_fn = {
     "accuracy": accuracy,
     "class_precision": class_precision,
@@ -421,6 +458,9 @@ metric_to_fn = {
         ]
     },
     "ood_auroc": ood_auroc,
+    "explanation_stability_score": explanation_stability_score,
+    "explanation_sparsity_score": explanation_sparsity_score,
+    "explanation_fidelity_score": explanation_fidelity_score,
 }
 """ Mapping of metric names to their corresponding functions"""
 

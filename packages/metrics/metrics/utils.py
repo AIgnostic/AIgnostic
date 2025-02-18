@@ -67,28 +67,25 @@ def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
     return x_adv
 
 
-async def _lime_explanation(info: CalculateRequest, num_samples: int = 50,
-                            kernel_width: float = 0.75) -> np.ndarray:
+async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.ndarray:
     """
     Compute LIME explanation for a black-box model.
 
     Args:
-        info: information required to compute the explanation including model URL and API key
-        num_samples: Number of perturbed samples
+        info: information required to compute the explanation including input_features,
+            model_url and model_api_key
         kernel_width: Width of the Gaussian kernel for weighting
 
     Returns :
         explanation: Linear surrogate model coefficients (d-dimensional array)
     """
-    x: np.ndarray = np.ndarray(info.input_data)    # Input sample (d-dimensional array)
+    num_samples, d = info.input_features.shape[0]
 
-    d = x.shape[0]
-
-    # TODO: Update with actual gradients from a (different??) model API endpoint
+    # TODO: Update with actual gradients once implemented
     gradients = np.random.normal(size=(num_samples, d))
 
     # Generate perturbed samples
-    perturbed_samples = _fgsm_attack(x, gradients, epsilon=0.1)
+    perturbed_samples = _fgsm_attack(info.input_features, gradients, epsilon=0.1)
 
     # Construct dictionary for model input (labels and group_ids are not required)
     n = len(perturbed_samples)
@@ -111,12 +108,12 @@ async def _lime_explanation(info: CalculateRequest, num_samples: int = 50,
         )
 
     # Compute similarity weights using an RBF kernel
-    distances = np.array([euclidean(x, sample) for sample in perturbed_samples])
+    distances = np.array([euclidean(info.input_features, sample) for sample in perturbed_samples])
     weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2))
 
     # Fit a weighted linear regression model
     reg = Ridge(alpha=1.0)
-    reg.fit(perturbed_samples - x, predictions, sample_weight=weights)
+    reg.fit(perturbed_samples - info.input_features, predictions, sample_weight=weights)
     return reg.coef_
 
 

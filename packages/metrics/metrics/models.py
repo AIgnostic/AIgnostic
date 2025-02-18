@@ -35,7 +35,7 @@ class CalculateRequest(BaseModel):
     :param model_api_key: Optional[str] - API key for accessing the model endpoint.
     """
     metrics: list[str]
-    input_data: Optional[list[list]] = None
+    input_features: Optional[list[list]] = None
     true_labels: Optional[list[list]] = None
     predicted_labels: Optional[list[list]] = None
     target_class: Optional[Any] = None
@@ -47,7 +47,13 @@ class CalculateRequest(BaseModel):
     model_api_key: Optional[str] = None
 
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
-    @field_validator('true_labels', 'predicted_labels', 'protected_attr', mode='after')
+    @field_validator(
+        'input_features',
+        'true_labels',
+        'predicted_labels',
+        'protected_attr',
+        mode='after'
+    )
     def convert_to_np_arrays(cls, v):
         return nested_list_to_np(v)
 
