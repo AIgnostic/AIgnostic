@@ -1,8 +1,13 @@
-from report_gen.utils import search_legislation
-from report_gen.utils import extract_legislation_text
-from report_gen.utils import parse_legislation_text
-from report_gen.utils import generate_report
+from report_generation.utils import search_legislation
+from report_generation.utils import extract_legislation_text
+from report_generation.utils import parse_legislation_text
+from report_generation.utils import generate_report
 from unittest import mock
+
+EXTRACT = 'report_generation.utils.extract_legislation_text'
+PARSE = 'report_generation.utils.parse_legislation_text'
+
+""" SEARCH LEGISLATION TESTS """
 
 
 def test_search_legislation_with_valid_metric():
@@ -33,6 +38,9 @@ def test_search_legislation_with_empty_string():
     assert result == expected_output
 
 
+""" EXTRACT LEGISLATION TESTS """
+
+
 def test_extract_legislation_text_with_valid_article():
     article_31_text = extract_legislation_text("31")
     assert "Art. 31" in article_31_text
@@ -58,6 +66,9 @@ def test_extract_legislation_text_with_no_article_content():
         article = "31"
         result = extract_legislation_text(article)
     assert "Could not parse content for Article 31." in result
+
+
+""" PARSE LEGISLATION TESTS """
 
 
 def test_parse_legislation_text_with_valid_content():
@@ -185,12 +196,18 @@ def test_generate_report_with_valid_metrics():
         "llm insights": []
     }
 
-    with mock.patch('report_gen.utils.extract_legislation_text') as mock_extract, \
-            mock.patch('report_gen.utils.parse_legislation_text') as mock_parse:
+    with mock.patch(EXTRACT) as mock_extract, \
+         mock.patch(PARSE) as mock_parse:
         mock_extract.side_effect = [
-            "Art. 15 GDPR\nTitle for Article 15\nDescription for Article 15.\nSuitable Recitals\n(\n82\n)",
-            "Art. 10 GDPR\nTitle for Article 10\nDescription for Article 10.\nSuitable Recitals\n(\n81\n)",
-            "Art. 15 GDPR\nTitle for Article 15\nDescription for Article 15.\nSuitable Recitals\n(\n82\n)"
+            "Art. 15 GDPR\nTitle for Article 15\n" +
+            "Description for Article 15.\n" +
+            "Suitable Recitals\n(\n82\n)",
+            "Art. 10 GDPR\nTitle for Article 10\n" +
+            "Description for Article 10.\n" +
+            "Suitable Recitals\n(\n81\n)",
+            "Art. 15 GDPR\nTitle for Article 15\n" +
+            "Description for Article 15.\n" +
+            "Suitable Recitals\n(\n82\n)"
         ]
         mock_parse.side_effect = [
             {

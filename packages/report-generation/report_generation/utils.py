@@ -87,7 +87,7 @@ def generate_report(metrics_data: dict) -> json:
     """
     Generates a structured JSON report mapping metrics to legal references.
     """
-    results ={
+    results = {
         "extracts": [],
         "llm insights": []
     }
@@ -96,7 +96,7 @@ def generate_report(metrics_data: dict) -> json:
         for article in legislation:
             article_number = article.split()[-1]
             article_content = extract_legislation_text(article_number)
-            parsed_data = parse_legislation_text(article_number, article_content)
+            parsed_data = parse_legislation_text(article_number,
+                                                 article_content)
             results["extracts"].append(parsed_data)
     return results
-

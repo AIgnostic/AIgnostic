@@ -1,0 +1,32 @@
+[tool.coverage.run]
+branch = true
+source = [ "report_generation" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report html:'../../coverage/packages/report-generation/html' --cov-report xml:'../../coverage/packages/report-generation/coverage.xml' --html='../../reports/packages/report-generation/unittests/html/index.html' --junitxml='../../reports/packages/report-generation/unittests/junit.xml'"
+
+[tool.poetry]
+name = "report_generation"
+version = "1.0.0"
+description = "Report Generation "
+authors = [ ]
+license = "Proprietary"
+readme = "README.md"
+
+  [[tool.poetry.packages]]
+  include = "report_generation"
+
+  [tool.poetry.dependencies]
+  python = ">=3.12,<3.13"
+
+    [tool.poetry.dependencies.metrics]
+    path = "../metrics"
+    develop = true
+
+[build-system]
+requires = [ "poetry-core" ]
+build-backend = "poetry.core.masonry.api"
