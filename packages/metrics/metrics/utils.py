@@ -7,23 +7,22 @@ import numpy as np
 import requests
 
 
-def _finite_difference_gradient(name, features: list[list], model_fn: callable,
+def _finite_difference_gradient(name, info: CalculateRequest,
                                 h: float = 1e-5) -> np.ndarray:
     """
     Compute the finite difference approximation of the gradient for given data.
 
     Args:
         name: Name of the metric (for exception handling).
-        features: List of data points (2D list).
-        model_fn: Function that computes the outputs given data (could be a model).
-        h: Step size for numerical differentiation (default is 1e-5).
+        info: Information required to compute the gradient including info.input_features,
+            model_url and model_api_key.
 
     Returns:
         Gradient matrix of shape (num_samples, num_features).
     """
     try:
-        X = np.array(features, dtype=np.float64)
-        num_samples, num_features = X.shape
+        X = np.array(info.input_features, dtype=np.float64)
+        _, num_features = X.shape
         gradients = np.zeros_like(X)
 
         for i in range(num_features):
@@ -32,11 +31,14 @@ def _finite_difference_gradient(name, features: list[list], model_fn: callable,
             X_forward[:, i] += h
             X_backward[:, i] -= h
 
-            # TODO: Update with actual model API endpoint call
+            def predict(x):
+                # Helper function to query the model with perturbed inputs
+                nonlocal info
+                return _query_model(x, info)
 
             # Compute the function values (assuming the metric function is applied row-wise)
-            f_forward = np.apply_along_axis(model_fn, 1, X_forward)
-            f_backward = np.apply_along_axis(model_fn, 1, X_backward)
+            f_forward = np.apply_along_axis(predict, 1, X_forward)
+            f_backward = np.apply_along_axis(predict, 1, X_backward)
 
             # Compute gradient using central difference
             gradients[:, i] = (f_forward - f_backward) / (2 * h)
@@ -69,31 +71,26 @@ async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) 
     Compute LIME explanation for a black-box model.
 
     Args:
-        info: information required to compute the explanation including input_features,
+        info: information required to compute the explanation including info.input_features,
             model_url and model_api_key
         kernel_width: Width of the Gaussian kernel for weighting
 
-    Returns :
+    Returns:
         explanation: Linear surrogate model coefficients (d-dimensional array)
     """
     num_samples, d = info.input_features.shape[0]
 
-    # TODO: Update with actual gradients once implemented
-    gradients = np.random.normal(size=(num_samples, d))
+    # model input features with normal distribution
+    # stds = np.std(info.input_features, axis=0)
 
     # Generate perturbed samples
-    perturbed_samples = _fgsm_attack(info.input_features, gradients, epsilon=0.1)
-
-    # Construct dictionary for model input (labels and group_ids are not required)
-    n = len(perturbed_samples)
-    perturbed_input = ModelInput(
-        features=perturbed_samples.tolist(),
-        labels=np.zeros(n).tolist(),
-        group_ids=np.zeros(n).tolist(),
+    perturbed_samples = info.input_features + np.random.normal(
+        scale=0.1 * np.std(info.input_features, axis=0),
+        size=(num_samples, d)
     )
 
     # Call model endpoint to get confidence scores
-    response: ModelResponse = await _query_model(perturbed_input, info)
+    response: ModelResponse = await _query_model(perturbed_samples, info)
 
     # Compute model predictions for perturbed samples
     predictions = response.predictions
@@ -114,7 +111,7 @@ async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) 
     return reg_model.coef_, reg_model
 
 
-async def _query_model(generated_input: ModelInput, info: CalculateRequest) -> ModelResponse:
+async def _query_model(generated_input_features: np.array, info: CalculateRequest) -> ModelResponse:
     """
     Helper function to query the model API
 
@@ -125,12 +122,19 @@ async def _query_model(generated_input: ModelInput, info: CalculateRequest) -> M
     Returns:
     - response : Response from the model API
     """
+
+    model_input = ModelInput(
+        features=generated_input_features.tolist(),
+        labels=np.zeros((len(generated_input_features), 1)).tolist(),
+        group_ids=np.zeros(len(generated_input_features), dtype=int).tolist(),
+    )
+
     if info.model_api_key is None:
-        response = requests.post(url=info.model_url, json=generated_input.model_dump(mode="json"))
+        response = requests.post(url=info.model_url, json=model_input.model_dump(mode="json"))
     else:
         response = requests.post(
             url=info.model_url,
-            json=generated_input.model_dump(mode="json"),
+            json=model_input.model_dump(mode="json"),
             headers={"Authorization": f"Bearer {info.model_api_key}"},
         )
 

@@ -1,10 +1,9 @@
 from fastapi import FastAPI, Depends
 import numpy as np
 from sklearn.pipeline import Pipeline
-import pickle
-from tests.utils.api_utils import get_model_api_key
+from mocks.api_utils import get_model_api_key
+from mocks.utils import load_scikit_model
 from common.models import ModelInput, ModelResponse
-import os
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,7 +19,7 @@ app.add_middleware(
 )
 
 
-model: Pipeline = pickle.load(open(os.path.join(os.path.dirname(__file__), '../../../scikit_model.sav'), 'rb'))
+model: Pipeline = load_scikit_model()
 
 
 @app.get("/")

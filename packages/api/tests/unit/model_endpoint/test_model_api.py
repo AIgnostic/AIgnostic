@@ -1,13 +1,14 @@
 from fastapi.testclient import TestClient
-from tests.utils.api_utils import MOCK_MODEL_API_KEY
-from tests.utils.model.huggingface_binclassifier import app as huggingface_app
-from tests.utils.model.scikit_mock import app as scikit_app
-from tests.utils.model.finbert import app as finbert_app
-from tests.utils.model.mock import app as mock_app
+from mocks.api_utils import MOCK_MODEL_API_KEY
+from mocks.model.huggingface_binclassifier import app as huggingface_app
+from mocks.model.scikit_mock import app as scikit_app
+from mocks.model.finbert import app as finbert_app
+from mocks.model.mock import app as mock_app
 from folktables import ACSDataSource, ACSEmployment
 import pandas as pd
-import pickle
 import pytest
+from mocks.utils import load_scikit_model
+
 
 huggingface_mock = TestClient(huggingface_app)
 scikit_mock = TestClient(scikit_app)
@@ -73,7 +74,7 @@ def test_valid_data_scikit_folktables():
     assert response.status_code == 200, response.text
 
     # Test the response is the same as the expected response from the pickled model
-    model = pickle.load(open('scikit_model.sav', 'rb'))
+    model = load_scikit_model()
     y_hat = model.predict(features)
 
     assert response.json() == {

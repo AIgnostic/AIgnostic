@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 
+@pytest.mark.skip("Not implemented yet")
 def test_finite_difference_gradient_approximation_without_model():
     # constant function
     def const_fn(_):

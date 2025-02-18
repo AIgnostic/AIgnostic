@@ -1,7 +1,7 @@
 from transformers import pipeline
 from fastapi import FastAPI
 from common.models import ModelInput, ModelResponse
-from tests.utils.model.hf_utils import predict as text_classification_predict
+from mocks.model.hf_utils import predict as text_classification_predict
 
 app = FastAPI()
 

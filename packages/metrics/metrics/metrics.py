@@ -22,12 +22,13 @@ from sklearn.metrics import (
     mean_squared_error as mse,
     r2_score,
 )
+from sklearn.metrics.pairwise import cosine_similarity
 from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
 import pandas as pd
 import numpy as np
 from metrics.exceptions import MetricsException, ModelQueryException
-from common.models import ModelInput, ModelResponse
+from common.models import ModelResponse
 
 
 def is_valid_for_per_class_metrics(metric_name, true_labels):
@@ -366,15 +367,8 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     id_min, id_max = id_data.min(axis=0), id_data.max(axis=0)
     ood_data = np.random.uniform(id_min, id_max, size=(num_ood_samples, d))
 
-    # Construct dictionary for model input (labels and group_ids are not required)
-    generated_input = ModelInput(
-        features=ood_data.tolist(),
-        labels=np.zeros((num_ood_samples, 1)).tolist(),
-        group_ids=np.zeros(num_ood_samples, dtype=int).tolist(),
-    )
-
     # Call model endpoint to get confidence scores
-    response: ModelResponse = await _query_model(generated_input, info)
+    response: ModelResponse = await _query_model(ood_data, info)
 
     # Get confidence scores for OOD samples
     if response.confidence_scores is None:
@@ -410,14 +404,11 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
     :return: float - the explanation stability score (1 - 1/N * sum(distance_fn(E(x), E(x')))
         where distance_fn is the distance function between two explanations E(x) and E(x')
     """
-    # TODO: Replace with actual distance fn or endpoint once impl finalised
-    def distance_fn(x, y) -> float:
-        return np.linalg.norm(x - y)
-
     lime_actual, _ = _lime_explanation(info)
     lime_perturbed, _ = _lime_explanation(info)
 
-    diff = distance_fn(lime_actual, lime_perturbed)
+    # use cosine-similarity for now but can be replaced with model-provider function later
+    diff = cosine_similarity(lime_actual, lime_perturbed)
     return 1 - np.mean(diff).item()
 
 
@@ -433,8 +424,10 @@ def explanation_sparsity_score(name, info: CalculateRequest) -> float:
         where sparsity_fn is || E(x) ||_0 / d - number of non-zero elements in the explanation
         divided by the total number of features
     """
+    # Threshold for sparsity - defined arbitrarily for now
+    threshold = 1e-2
     lime_explanation, _ = _lime_explanation(info)
-    sparsity = np.count_nonzero(lime_explanation) / lime_explanation.shape[1]
+    sparsity = np.sum(lime_explanation < threshold) / lime_explanation.shape[1]
     return 1 - sparsity
 
 
