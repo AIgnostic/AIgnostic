@@ -9,7 +9,7 @@ Each worker:
 """
 
 import os
-from common.models.job import Job
+from common.models.common import Job
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 import requests
 from pydantic.networks import HttpUrl
@@ -151,6 +151,7 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
         )
 
     try:
+        # Check if the request was successful
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         raise WorkerException(
@@ -160,13 +161,7 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
     _check_model_response(response, data["labels"])
 
     try:
-        # Check if the request was successful
-
-        # Parse the response JSON
-        data = response.json()
-
-        # Return the data
-        return data
+        return response.json()
     except Exception as e:
         raise WorkerException(
             f"Could not parse model response - {e}; response = {response.text}"

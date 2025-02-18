@@ -1,7 +1,7 @@
 import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
-from common.models.job import Job
+from common.models.common import Job
 from common.models import MetricValues
 
 

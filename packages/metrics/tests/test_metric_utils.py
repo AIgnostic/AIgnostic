@@ -1,7 +1,7 @@
 from metrics.utils import (
     _finite_difference_gradient,
     _fgsm_attack,
-    _lime_explanation,
+    # _lime_explanation,
     # __query_model
 )
 import numpy as np
@@ -50,7 +50,7 @@ def test_fgsm_attack():
 
 @pytest.mark.skip("Not implemented yet")
 def test_lime_explanation():
-    
+    # TODO: Implement this test
     pass
 
 

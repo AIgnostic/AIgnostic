@@ -30,7 +30,7 @@ def run_servers():
     thread.join()
 
 
-@pytest.mark.skip("Failing - pydantic model validation errors")
+# @pytest.mark.skip("Failing - pydantic model validation errors")
 @pytest.mark.asyncio
 async def test_ood_auroc(run_servers):
     input_data = np.random.rand(10, 10).tolist()  # 100 samples, 10 features
@@ -38,7 +38,7 @@ async def test_ood_auroc(run_servers):
     confidence_scores = [[score] for score in confidence_scores]
     info = CalculateRequest(
         metrics=["ood_auroc"],
-        input_data=input_data,
+        input_features=input_data,
         confidence_scores=confidence_scores,
         model_url=model_url,
     )

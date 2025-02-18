@@ -1,17 +1,14 @@
-from typing import Optional
 from metrics.exceptions import MetricsException, ModelQueryException
-import numpy as np
 from metrics.models import CalculateRequest
-from pydantic import HttpUrl
+from common.models import ModelInput, ModelResponse
 from sklearn.linear_model import Ridge
 from scipy.spatial.distance import euclidean
+import numpy as np
 import requests
-from common.models import ModelInput, ModelResponse
 
 
-def _finite_difference_gradient(
-    name, features: list[list], model_fn: callable, h: float = 1e-5
-) -> np.ndarray:
+def _finite_difference_gradient(name, features: list[list], model_fn: callable,
+                                h: float = 1e-5) -> np.ndarray:
     """
     Compute the finite difference approximation of the gradient for given data.
 
@@ -89,14 +86,14 @@ async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) 
 
     # Construct dictionary for model input (labels and group_ids are not required)
     n = len(perturbed_samples)
-    model_input = ModelInput(
+    perturbed_input = ModelInput(
         features=perturbed_samples.tolist(),
         labels=np.zeros(n).tolist(),
         group_ids=np.zeros(n).tolist(),
     )
 
     # Call model endpoint to get confidence scores
-    response: ModelResponse = await _query_model(info)
+    response: ModelResponse = await _query_model(perturbed_input, info)
 
     # Compute model predictions for perturbed samples
     predictions = response.predictions
@@ -117,24 +114,23 @@ async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) 
     return reg_model.coef_, reg_model
 
 
-async def _query_model(info: CalculateRequest) -> dict:
+async def _query_model(generated_input: ModelInput, info: CalculateRequest) -> ModelResponse:
     """
     Helper function to query the model API
 
     Params:
-    - data : Data to be sent to the model
-    - modelURL : API URL of the model
-    - modelAPIKey : API key for the model
+    - generated_input : Input data to be sent to the model API
+    - info : Information required to query the model API
 
     Returns:
-    - dict : Response from the model API
+    - response : Response from the model API
     """
     if info.model_api_key is None:
-        response = requests.post(url=info.model_url, json=info.input_features)
+        response = requests.post(url=info.model_url, json=generated_input.model_dump(mode="json"))
     else:
         response = requests.post(
             url=info.model_url,
-            json=info.input_features,
+            json=generated_input.model_dump(mode="json"),
             headers={"Authorization": f"Bearer {info.model_api_key}"},
         )
 
@@ -147,7 +143,7 @@ async def _query_model(info: CalculateRequest) -> dict:
         )
 
     try:
-        return response.json()
+        return ModelResponse(**response.json())
     except Exception as e:
         raise ModelQueryException(
             detail=str(e),

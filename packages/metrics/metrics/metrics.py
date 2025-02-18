@@ -10,7 +10,11 @@ from metrics.models import (
     CalculateRequest,
     MetricValues,
 )
-from metrics.utils import _query_model, _fgsm_attack, _lime_explanation
+from metrics.utils import (
+    _query_model,
+    _lime_explanation
+    # _fgsm_attack,
+)
 from sklearn.metrics import (
     f1_score,
     roc_auc_score,
@@ -363,17 +367,16 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     ood_data = np.random.uniform(id_min, id_max, size=(num_ood_samples, d))
 
     # Construct dictionary for model input (labels and group_ids are not required)
-    model_input = ModelInput(
+    generated_input = ModelInput(
         features=ood_data.tolist(),
-        labels=np.zeros(num_ood_samples).tolist(),
-        group_ids=np.zeros(num_ood_samples).tolist(),
+        labels=np.zeros((num_ood_samples, 1)).tolist(),
+        group_ids=np.zeros(num_ood_samples, dtype=int).tolist(),
     )
 
     # Call model endpoint to get confidence scores
-    response: ModelResponse = await _query_model(info)
+    response: ModelResponse = await _query_model(generated_input, info)
 
     # Get confidence scores for OOD samples
-
     if response.confidence_scores is None:
         raise ModelQueryException(name, detail="Model response did not contain confidence scores, which are required.")
     ood_scores: list[list] = response.confidence_scores
@@ -391,6 +394,11 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     return roc_auc_score(labels, scores)
 
 
+"""
+    Explainability metrics
+"""
+
+
 def explanation_stability_score(name, info: CalculateRequest) -> float:
     """
     Calculate the explanation stability score for a given model and sample inputs
@@ -400,14 +408,14 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
         explanation_stability_score requires the input_features, model_url and model_api_key.
 
     :return: float - the explanation stability score (1 - 1/N * sum(distance_fn(E(x), E(x')))
-        where distance_fn is the distance function between two explanations E(x) and E(x') 
+        where distance_fn is the distance function between two explanations E(x) and E(x')
     """
     # TODO: Replace with actual distance fn or endpoint once impl finalised
     def distance_fn(x, y) -> float:
         return np.linalg.norm(x - y)
 
     lime_actual, _ = _lime_explanation(info)
-    lime_perturbed, _ = _lime_explanation(info)    
+    lime_perturbed, _ = _lime_explanation(info)
 
     diff = distance_fn(lime_actual, lime_perturbed)
     return 1 - np.mean(diff).item()
@@ -423,7 +431,7 @@ def explanation_sparsity_score(name, info: CalculateRequest) -> float:
 
     :return: float - the explanation sparsity score (1 - sparsity_fn(E(x)))
         where sparsity_fn is || E(x) ||_0 / d - number of non-zero elements in the explanation
-        divided by the total number of features 
+        divided by the total number of features
     """
     lime_explanation, _ = _lime_explanation(info)
     sparsity = np.count_nonzero(lime_explanation) / lime_explanation.shape[1]
@@ -452,10 +460,8 @@ def explanation_fidelity_score(name, info: CalculateRequest) -> float:
     return 1 - np.mean(
         fidelity_fn(
             info.predicted_labels,
-            reg_model.predict(info.input_features
-        )
-    )).item()
-    pass
+            reg_model.predict(info.input_features)
+        )).item()
 
 
 metric_to_fn = {
@@ -478,7 +484,6 @@ metric_to_fn = {
         )
         for metric_name in [                    # aif360 fairness metrics
             "statistical_parity_difference",    # demographic parity
-            # "equalized_odds_difference",      # doesn't exist
             "equal_opportunity_difference",
             "disparate_impact",
             "false_negative_rate_difference",
