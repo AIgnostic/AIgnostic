@@ -370,7 +370,7 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     )
 
     # Call model endpoint to get confidence scores
-    response: ModelResponse = await _query_model(model_input, info.model_url, info.model_api_key)
+    response: ModelResponse = await _query_model(info)
 
     # Get confidence scores for OOD samples
 

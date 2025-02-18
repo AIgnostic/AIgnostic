@@ -96,7 +96,7 @@ async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) 
     )
 
     # Call model endpoint to get confidence scores
-    response: ModelResponse = await _query_model(model_input, info.model_url, info.model_api_key)
+    response: ModelResponse = await _query_model(info)
 
     # Compute model predictions for perturbed samples
     predictions = response.predictions
@@ -117,8 +117,7 @@ async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) 
     return reg_model.coef_, reg_model
 
 
-async def _query_model(data: dict, model_url: HttpUrl,
-                        model_api_key: Optional[str] = None) -> dict:
+async def _query_model(info: CalculateRequest) -> dict:
     """
     Helper function to query the model API
 
@@ -130,13 +129,13 @@ async def _query_model(data: dict, model_url: HttpUrl,
     Returns:
     - dict : Response from the model API
     """
-    if model_api_key is None:
-        response = requests.post(url=model_url, json=data)
+    if info.model_api_key is None:
+        response = requests.post(url=info.model_url, json=info.input_features)
     else:
         response = requests.post(
-            url=model_url,
-            json=data,
-            headers={"Authorization": f"Bearer {model_api_key}"},
+            url=info.model_url,
+            json=info.input_features,
+            headers={"Authorization": f"Bearer {info.model_api_key}"},
         )
 
     try:
