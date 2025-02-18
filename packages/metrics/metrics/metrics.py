@@ -397,8 +397,7 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
 
     :param name: str - name of the metric being calculated
     :param info: CalculateRequest - contains information required to calculate the metric.
-        explanation_stability_score requires the input_features, predicted_labels, model_url,
-        and model_api_key.
+        explanation_stability_score requires the input_features, model_url and model_api_key.
 
     :return: float - the explanation stability score (1 - 1/N * sum(distance_fn(E(x), E(x')))
         where distance_fn is the distance function between two explanations E(x) and E(x') 
@@ -406,11 +405,6 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
     # TODO: Replace with actual distance fn or endpoint once impl finalised
     def distance_fn(x, y) -> float:
         return np.linalg.norm(x - y)
-
-    # TODO: Update with actual gradients once implemented
-    num_samples, d = info.input_features.shape
-    gradients = np.random.normal(size=(num_samples, d))
-    perturbed_samples = _fgsm_attack(info.input_features, gradients, epsilon=0.1)
 
     lime_actual = _lime_explanation(info)
     lime_perturbed = _lime_explanation(info)    
@@ -420,8 +414,20 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
 
 
 def explanation_sparsity_score(name, info: CalculateRequest) -> float:
+    """
+    Calculate the explanation sparsity score for a given model and sample inputs
 
-    pass
+    :param name: str - name of the metric being calculated
+    :param info: CalculateRequest - contains information required to calculate the metric.
+        explanation_sparsity_score requires the input_features, model_url and model_api_key.
+
+    :return: float - the explanation sparsity score (1 - sparsity_fn(E(x)))
+        where sparsity_fn is || E(x) ||_0 / d - number of non-zero elements in the explanation
+        divided by the total number of features 
+    """
+    lime_explanation = _lime_explanation(info)
+    sparsity = np.count_nonzero(lime_explanation) / lime_explanation.shape[1]
+    return 1 - sparsity
 
 
 def explanation_fidelity_score(name, info: CalculateRequest) -> float:
