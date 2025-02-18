@@ -35,10 +35,6 @@ package-mode = false
     path = "packages/aggregator"
     develop = true
 
-    [tool.poetry.dependencies.report-gen]
-    path = "packages/report-gen"
-    develop = true
-
     [tool.poetry.dependencies.report_generation]
     path = "packages/report-generation"
     develop = true
