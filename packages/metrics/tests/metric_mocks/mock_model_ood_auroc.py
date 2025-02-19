@@ -13,12 +13,7 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to the mock server!"}
-
-
-@app.post('/get-prediction-and-confidence', response_model=ModelResponse)
+@app.post('/predict', response_model=ModelResponse)
 async def get_prediction_and_confidence(input_data: ModelInput):
     n = len(input_data.features)
     predictions = [[random.randint(0, 1)] for _ in range(n)]

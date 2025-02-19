@@ -16,6 +16,7 @@ def _finite_difference_gradient(name, info: CalculateRequest,
         name: Name of the metric (for exception handling).
         info: Information required to compute the gradient including info.input_features,
             model_url and model_api_key.
+        h: Perturbation magnitude.
 
     Returns:
         Gradient matrix of shape (num_samples, num_features).

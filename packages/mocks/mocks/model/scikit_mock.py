@@ -46,11 +46,6 @@ def predict(input: ModelInput) -> ModelResponse:
     return ModelResponse(predictions=predictions)
 
 
-"""
-TODO: (Low Priority) Extend to batch querying / single datapoint querying for convenience
-(e.g. if dataset is very large)
-"""
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=5001)
