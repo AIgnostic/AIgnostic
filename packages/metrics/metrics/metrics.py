@@ -441,7 +441,11 @@ def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -> floa
 
     # Get confidence scores for OOD samples
     if response.confidence_scores is None:
-        raise ModelQueryException(name, detail="Model response did not contain confidence scores, which are required.")
+        raise ModelQueryException(
+            name,
+            detail="Model response did not contain confidence scores, which are required.",
+            status_code=500,
+        )
     ood_scores: list[list] = response.confidence_scores
 
     # Construct labels: 1 for ID, 0 for OOD
