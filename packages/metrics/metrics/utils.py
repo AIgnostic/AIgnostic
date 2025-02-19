@@ -79,10 +79,9 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
     Returns:
         explanation: Linear surrogate model coefficients (d-dimensional array)
     """
-    num_samples, d = info.input_features.shape[0]
-
-    # model input features with normal distribution
-    # stds = np.std(info.input_features, axis=0)
+    # Convert input_features to numpy array if it's a list
+    input_features = np.array(info.input_features) if isinstance(info.input_features, list) else info.input_features
+    num_samples, d = input_features.shape
 
     # Generate perturbed samples
     perturbed_samples = info.input_features + np.random.normal(
@@ -90,25 +89,25 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
         size=(num_samples, d)
     )
 
-    # Call model endpoint to get confidence scores
+    # Call the model endpoint to get predictions
     response: ModelResponse = _query_model(perturbed_samples, info)
 
-    # Compute model predictions for perturbed samples
-    predictions = response.predictions
-
-    if predictions is None:
+    # Get model predictions for perturbed samples
+    if response.predictions is None:
         raise ModelQueryException(
             detail="Model response does not contain predictions",
-            status_code=400
+            status_code=500
         )
+    predictions = response.predictions
 
     # Compute similarity weights using an RBF kernel
-    distances = np.array([euclidean(info.input_features, sample) for sample in perturbed_samples])
+    distances = np.array([euclidean(input_features[i], sample) for i, sample in enumerate(perturbed_samples)])
     weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2))
 
     # Fit a weighted linear regression model
     reg_model = Ridge(alpha=1.0)
     reg_model.fit(perturbed_samples - info.input_features, predictions, sample_weight=weights)
+
     return reg_model.coef_, reg_model
 
 
@@ -123,7 +122,6 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
     Returns:
     - response : Response from the model API
     """
-
     model_input = ModelInput(
         features=generated_input_features.tolist(),
         labels=np.zeros((len(generated_input_features), 1)).tolist(),

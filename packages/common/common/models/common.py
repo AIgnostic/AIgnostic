@@ -2,6 +2,7 @@ from pydantic import BaseModel  # , field_validator
 from typing import Optional
 # from common.utils import nested_list_to_np
 
+
 class Job(BaseModel):
     """
     Job pydantic model represents the request body when sending a request
@@ -38,6 +39,7 @@ class ModelInput(BaseModel):
     # @field_validator('features', 'labels', mode='after')
     # def convert_to_np_array(cls, v):
     #     return nested_list_to_np(v)
+
 
 class ModelResponse(BaseModel):
     """

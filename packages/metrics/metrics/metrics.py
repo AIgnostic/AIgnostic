@@ -336,59 +336,6 @@ def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], float]
 
 
 """
-    Uncertainty metrics
-"""
-
-
-def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -> float:
-    """
-    Estimate OOD AUROC by comparing in-distribution (ID) and out-of-distribution (OOD)
-    confidence scores.
-
-    Args:
-        info: CalculateRequest object containing input data, confidence scores, model URL, and model API key.
-        num_ood_samples: Number of OOD samples to generate.
-
-    Returns :
-        auroc: Estimated OOD AUROC score.
-    """
-    if info.input_features is None:
-        raise MetricsException(name, detail="Input data is required.")
-
-    if info.confidence_scores is None:
-        raise MetricsException(name, detail="Confidence scores are required.")
-
-    id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
-    d: int = id_data.shape[1]                       # Feature dimensionality
-
-    id_scores: list[list] = info.confidence_scores  # Confidence scores for ID samples
-
-    # Generate OOD samples
-    id_min, id_max = id_data.min(axis=0), id_data.max(axis=0)
-    ood_data = np.random.uniform(id_min, id_max, size=(num_ood_samples, d))
-
-    # Call model endpoint to get confidence scores
-    response: ModelResponse = _query_model(ood_data, info)
-
-    # Get confidence scores for OOD samples
-    if response.confidence_scores is None:
-        raise ModelQueryException(name, detail="Model response did not contain confidence scores, which are required.")
-    ood_scores: list[list] = response.confidence_scores
-
-    # Construct labels: 1 for ID, 0 for OOD
-    labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])
-
-    # Flatten the confidence scores for both ID and OOD samples
-    scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
-
-    # Check if lengths match
-    if len(labels) != len(scores):
-        raise MetricsException(name, detail="Length mismatch between labels and scores.")
-
-    return roc_auc_score(labels, scores)
-
-
-"""
     Explainability metrics
 """
 
@@ -457,7 +404,65 @@ def explanation_fidelity_score(name, info: CalculateRequest) -> float:
         )).item()
 
 
+"""
+    Uncertainty metrics
+"""
+
+
+def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -> float:
+    """
+    Estimate OOD AUROC by comparing in-distribution (ID) and out-of-distribution (OOD)
+    confidence scores.
+
+    Args:
+        info: CalculateRequest object containing input data, confidence scores, model URL, and model API key.
+        num_ood_samples: Number of OOD samples to generate.
+
+    Returns :
+        auroc: Estimated OOD AUROC score.
+    """
+    if info.input_features is None:
+        raise MetricsException(name, detail="Input data is required.")
+
+    if info.confidence_scores is None:
+        raise MetricsException(name, detail="Confidence scores are required.")
+
+    id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
+    d: int = id_data.shape[1]                       # Feature dimensionality
+
+    id_scores: list[list] = info.confidence_scores  # Confidence scores for ID samples
+
+    # Generate OOD samples
+    id_min, id_max = id_data.min(axis=0), id_data.max(axis=0)
+    ood_data = np.random.uniform(id_min, id_max, size=(num_ood_samples, d))
+
+    # Call model endpoint to get confidence scores
+    response: ModelResponse = _query_model(ood_data, info)
+
+    # Get confidence scores for OOD samples
+    if response.confidence_scores is None:
+        raise ModelQueryException(
+            name,
+            detail="Model response did not contain confidence scores, which are required.",
+            status_code=500,
+        )
+    ood_scores: list[list] = response.confidence_scores
+
+    # Construct labels: 1 for ID, 0 for OOD
+    labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])
+
+    # Flatten the confidence scores for both ID and OOD samples
+    scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
+
+    # Check if lengths match
+    if len(labels) != len(scores):
+        raise MetricsException(name, detail="Length mismatch between labels and scores.")
+
+    return roc_auc_score(labels, scores)
+
+
 metric_to_fn = {
+    # Performance metrics
     "accuracy": accuracy,
     "class_precision": class_precision,
     "precision": macro_precision,
@@ -469,7 +474,8 @@ metric_to_fn = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "r_squared": r_squared,
-    "equalized_odds_difference": equalized_odds_difference,
+
+    # Fairness metrics
     **{
         metric_name: create_fairness_metric_fn(
             # name=metric_name needed here otherwise metric_name will be captured by the lambda once
@@ -485,10 +491,15 @@ metric_to_fn = {
             "true_positive_rate_difference",
         ]
     },
-    "ood_auroc": ood_auroc,
+    "equalized_odds_difference": equalized_odds_difference,
+
+    # Explainability metrics
     "explanation_stability_score": explanation_stability_score,
     "explanation_sparsity_score": explanation_sparsity_score,
     "explanation_fidelity_score": explanation_fidelity_score,
+
+    # Uncertainty metrics
+    "ood_auroc": ood_auroc,
 }
 """ Mapping of metric names to their corresponding functions"""
 

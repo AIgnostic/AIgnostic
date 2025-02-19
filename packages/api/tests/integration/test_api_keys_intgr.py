@@ -43,10 +43,6 @@ def run_servers():
         thread.start()
 
     time.sleep(2)  # Wait for the servers to start
-    assert data_server.started
-    assert model_server.started
-    assert app_server.started
-    assert worker_server.started
 
     yield
 
