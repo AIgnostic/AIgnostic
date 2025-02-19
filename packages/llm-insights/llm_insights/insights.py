@@ -30,7 +30,7 @@ async def metric_insights(
     property_name: str,
     metric_name: str,
     metric_value: str,
-    article_extracts: List[str],
+    article_extracts: List[dict],
     llm: BaseChatModel,
 ) -> BaseMessage:
     """Obtain insights into a metric using an LLM, by asking the LLM "here's the score, the metric, the law, does this seem right?"

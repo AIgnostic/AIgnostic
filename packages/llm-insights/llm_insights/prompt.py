@@ -19,6 +19,11 @@ We want to know how 'good' our LLM would be and if it is compliant with the law 
 A string response explaining the implications of the metric in relation to the law and our model.
 </return format>
 
+<warnings>
+- Your responses are targeted towards researches with expertise in the area - please do not simplify your response
+- Keep responses brief and to the point: they are going into a report and we don't want that to be too long
+</warnings>
+
 <information>
 	<property_name>{property_name}</property_name>
 	<metric_name>{metric_name}</metric_name>
@@ -33,15 +38,32 @@ Please provide your response.
 
 
 def construct_articles(article_extracts: List[str]) -> str:
-    return "\n\n----\n\n".join(article_extracts)
+    finalStr = ""
+
+    for extract in article_extracts:
+        article_number = extract["article_number"]
+        article_title = extract["article_title"]
+        description = extract["description"]
+        finalStr += f"""
+<article>
+    <article_number>{article_number}</article_number>
+    <article_title>{article_title}</article_title>
+    <description>{description}</description>
+</article>
+				"""
+
+    return finalStr
 
 
 def construct_prompt(
-		property_name: str, metric_name: str, metric_value: str, article_extracts: List[str]
+    property_name: str,
+    metric_name: str,
+    metric_value: str,
+    article_extracts: List[dict],
 ) -> str:
-		return PROMPT.format(
-				property_name=property_name,
-				metric_name=metric_name,
-				metric_value=metric_value,
-				article_extracts=construct_articles(article_extracts),
-		)
+    return PROMPT.format(
+        property_name=property_name,
+        metric_name=metric_name,
+        metric_value=metric_value,
+        article_extracts=construct_articles(article_extracts),
+    )
