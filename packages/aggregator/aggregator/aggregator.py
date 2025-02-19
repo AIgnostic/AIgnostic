@@ -7,6 +7,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 from common.models.aggregator_models import AggregatorMessage, MessageType
+from report_generation.utils import get_legislation_extract
 
 aggregator_metrics_completion_log = AggregatorMessage(
     messageType=MessageType.METRICS_COMPLETE,
@@ -63,6 +64,11 @@ class MetricsAggregator():
         self.samples_processed += batch_size
 
     def get_aggregated_metrics(self):
+        """
+            Returns the aggregated metrics as a dictionary
+            i.e. { metric1: value1, metric2: value2, ... }
+        """
+
         results = {}
         for metric, data in self.metrics.items():
             results[metric] = data["value"]
@@ -122,32 +128,63 @@ def on_result_fetched(ch, method, properties, body):
     result_data = json.loads(body)
     print(f"Received result: {result_data}")
 
+    if (metrics_aggregator.total_sample_size == 0):
+        metrics_aggregator.set_total_sample_size(result_data["total_sample_size"])
+
     metrics_aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
 
     aggregates = metrics_aggregator.get_aggregated_metrics()
     # # Format the data for frontend
-    results = []
+    # results = []
     # if "error" in result_data:
     #     results.append({"error": result_data["error"]})
     # else:
-    for metric, value in aggregates.items():
-        results.append(
-            {
-                "metric": metric,
-                "result": value,
-                "legislation_results": ["Placeholder"],
-                "llm_model_summary": ["Placeholder"],
-            }
-        )
+    # for metric, value in aggregates.items():
+    #     results.append(
+    #         {
+    #             "metric": metric,
+    #             "result": value,
+    #             "legislation_results": ["Placeholder"],
+    #             "llm_model_summary": ["Placeholder"],
+    #         }
+    #     )
 
-    send_to_clients(aggregator_intermediate_metrics_log(results))
+    send_to_clients(aggregator_intermediate_metrics_log(aggregates))
+    print(f"{metrics_aggregator.samples_processed} / {metrics_aggregator.total_sample_size} Processed")
 
     if (metrics_aggregator.samples_processed == metrics_aggregator.total_sample_size):
+        print("Finished processing all batches")
         # All batches have now been processed, send completion message
         metrics_aggregator.samples_processed = 0
         metrics_aggregator.metrics = {}
 
         send_to_clients(aggregator_metrics_completion_log)
+
+        print("Creating and sending final report")
+        # generate a report and send to the frontend
+        report_json = aggregate_report(aggregates)
+
+        send_to_clients(aggregator_final_report_log(report_json))
+
+def aggregate_report(metrics: dict):
+    """
+        Generates a report to send to the frontend
+        By collating the metrics, and pulling information from the report generator
+    """
+
+    report_json = []
+    for metric, value in metrics.items():
+        legislation_extract = get_legislation_extract(metric)
+        report_json.append(
+            {
+                "metric": metric,
+                "result": value,
+                "legislation_results": legislation_extract,
+                "llm_model_summary": ["PLACEHOLDER"],
+            }
+        )
+        
+    return report_json
 
 def send_to_clients(message: AggregatorMessage):
     """Sends messages to all connected WebSocket clients."""

@@ -146,48 +146,10 @@ function Homepage() {
         return;
       }
 
-      console.log('Job accepted. Polling for results...');
+      console.log('Job accepted. Waiting for results');
 
-      // Polling function for results
-      const pollResults = async () => {
-        try {
-          const getResponse = await fetch(RESULTS_URL, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          });
-
-          if (getResponse.status === 204) {
-            console.log('Still processing... polling again.');
-            setTimeout(pollResults, 2000); // Poll again in 2 seconds
-          } else if (getResponse.status === 200) {
-            const data = await getResponse.json();
-            const results = data['results'];
-            console.log('Results received:', results);
-            const doc = generateReportText(results);
-            doc.save('AIgnostic_Report.pdf');
-          } else {
-            const errorData = await getResponse.json();
-            console.error(`Error: ${getResponse.status}`, errorData.detail);
-            setStateWrapper('error', true);
-            setStateWrapper('errorMessage', {
-              header: `Error ${getResponse.status}`,
-              text: errorData.detail,
-            });
-          }
-        } catch (error: any) {
-          console.error('Error during polling:', error.message);
-          // setStateWrapper('error', true);
-          // setStateWrapper('errorMessage', {
-          //   header: 'Polling Error',
-          //   text: error.message,
-          // });
-        }
-      };
-
-      // Start polling
-      pollResults();
     } catch (error: any) {
-      console.error('Error during fetch:', error.message);
+      console.error('Error while posting to backend:', error.message);
       setStateWrapper('error', true);
       setStateWrapper('errorMessage', {
         header: 'Submission Error',
@@ -254,11 +216,11 @@ function Homepage() {
                     const handleOnBlur =
                       field.validKey && field.isValid !== undefined
                         ? () => {
-                            setStateWrapper(
-                              field.validKey as keyof typeof state,
-                              checkURL(field.value)
-                            );
-                          }
+                          setStateWrapper(
+                            field.validKey as keyof typeof state,
+                            checkURL(field.value)
+                          );
+                        }
                         : undefined; // Don't do anything for fields that don't need validation onBlur
 
                     const errorProps =
@@ -371,9 +333,9 @@ function Homepage() {
                     ).length === 0
                       ? 'You have not selected any metrics'
                       : state.metricChips
-                          .filter((metricChip) => metricChip.selected)
-                          .map((metricChip) => metricChip.label)
-                          .join(', ')}
+                        .filter((metricChip) => metricChip.selected)
+                        .map((metricChip) => metricChip.label)
+                        .join(', ')}
                   </Typography>
                 </Box>
               )}

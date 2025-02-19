@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ErrorMessage from './components/ErrorMessage';
-
-interface Metric {
-  metric: string;
-  result: number;
-  legislationResults: string[];
-  llmModelSummary: string[];
-}
+import { generateReportText } from './utils';
 
 interface AggregatorResponse {
   messageType: string;
@@ -15,10 +9,17 @@ interface AggregatorResponse {
   content: string;
 }
 
+interface Report {
+  metric: string;
+  result: number;
+  legislationResults: string[];
+  llmModelSummary: string[];
+}
+
 const Dashboard: React.FC = (DashboardProps) => {
-  const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [metrics, setMetrics] = useState<Record<string, number> | null>(null);
   const [log, setLog] = useState<string>("");
-  const [report, setReport] = useState<string>(""); // TODO: idt this is the right type
+  const [report, setReport] = useState<Report[] | null>(null);
   const [error, setError] = useState<{ header: string; text: string }>({ header: '', text: '' });
   const [showError, setShowError] = useState<boolean>(false);
 
@@ -47,7 +48,7 @@ const Dashboard: React.FC = (DashboardProps) => {
           try {
             // Parse the JSON string back into an array of dictionaries (objects)
             console.log('Data content:', data.content);
-            const parsedData: Metric[] = data.content.metrics_results;
+            const parsedData: Record<string, number> = data.content.metrics_results;
             console.log('Parsed data:', parsedData);
             setMetrics(parsedData); // Store the parsed list of dictionaries in state
           } catch (e: any) {
@@ -57,7 +58,11 @@ const Dashboard: React.FC = (DashboardProps) => {
             break;
           }
         case 'REPORT':
+          console.log("Results received:", data.content)
           setReport(data.content);
+          console.log('Report:', data.content);
+          const doc = generateReportText(data.content);
+          doc.save('AIgnostic_Report.pdf');
           break;
         case 'ERROR':
           setShowError(true);
@@ -93,7 +98,7 @@ const Dashboard: React.FC = (DashboardProps) => {
         />
       )}
       <p>Log: {log}</p>
-      {metrics.length > 0 ? (
+      {metrics !== null ? (
         <pre>{JSON.stringify(metrics, null, 2)}</pre>
       ) : (
         <p>Waiting for messages...</p>
