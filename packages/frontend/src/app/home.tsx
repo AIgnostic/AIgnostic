@@ -30,9 +30,10 @@ import {
 import { HomepageState } from './types';
 import { AIGNOSTIC } from './constants';
 import Dashboard from './dashboard';
+import theme from './theme';
 
 function Homepage() {
-  const [state, setState] = useState<HomepageState>({
+  const [state, setState] = useState<HomepageState & { dashboardKey: number }>({
     modelURL: '',
     datasetURL: '',
     modelAPIKey: '',
@@ -51,6 +52,7 @@ function Homepage() {
     error: false,
     errorMessage: { header: '', text: '' },
     showDashboard: false,
+    dashboardKey: 0, // Added key to force Dashboard remount
   });
 
   const getValues = {
@@ -114,6 +116,7 @@ function Homepage() {
       console.log('Please fill in both text inputs.');
       return;
     }
+    setStateWrapper('dashboardKey', state.dashboardKey + 1);
 
     setStateWrapper('showDashboard', true);
 
@@ -286,6 +289,12 @@ function Homepage() {
                             ? errorProps?.error
                             : false
                         }
+                        variant="filled"
+                        InputProps={{
+                          sx: {
+                            color: '#fff',
+                          },
+                        }}
                       />
                     );
                   })}
@@ -321,7 +330,7 @@ function Homepage() {
                         <FormControlLabel
                           key={modelType}
                           value={modelType}
-                          control={<Radio color="primary" />}
+                          control={<Radio color="secondary" />}
                           label={modelType}
                         />
                       ))}
@@ -347,7 +356,7 @@ function Homepage() {
                         metricChip.selected = !metricChip.selected;
                         setStateWrapper('metricChips', [...state.metricChips]);
                       }}
-                      color={metricChip.selected ? 'primary' : 'default'}
+                      color={metricChip.selected ? 'secondary' : 'default'}
                       style={{ margin: '5px' }}
                     />
                   ))}
@@ -422,7 +431,10 @@ function Homepage() {
                       {' '}
                       Generate Report
                     </Button>
-                    {state.showDashboard && <Dashboard />}
+                    {state.showDashboard && (
+                      // Passing the dashboardKey forces remount when it changes.
+                      <Dashboard key={state.dashboardKey} />
+                    )}
                   </div>
                 ) : (
                   <Button
