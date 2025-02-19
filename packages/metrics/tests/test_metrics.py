@@ -15,6 +15,7 @@ from metrics.metrics import (
     mean_absolute_error,
     mean_squared_error,
     r_squared,
+    equalized_odds_difference,
 )
 from metrics.models import CalculateRequest
 import pytest
@@ -349,7 +350,7 @@ async def test_calculate_equalized_odds_difference_nonzero():
         unprivileged_groups=[{"protected_attr": 0}],
         protected_attr=[0, 1, 0, 1, 1, 0, 1, 0],
     )
-    results = await calculate_metrics(info)
+    results = await equalized_odds_difference("test_calculate_equalized_odds", info)
     expected_results = {"equalized_odds_difference": 0.1666667}
     for metric, value in expected_results.items():
         assert round(results.metric_values[metric], 7) == round(
