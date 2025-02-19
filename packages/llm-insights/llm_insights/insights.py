@@ -3,6 +3,7 @@ from typing import List
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages.base import BaseMessage
+from llm_insights.prompt import construct_prompt
 
 
 def init_llm(api_key: str) -> BaseChatModel:
@@ -30,7 +31,6 @@ async def metric_insights(
     metric_name: str,
     metric_value: str,
     article_extracts: List[str],
-    api_key: str,
     llm: BaseChatModel,
 ) -> BaseMessage:
     """Obtain insights into a metric using an LLM, by asking the LLM "here's the score, the metric, the law, does this seem right?"
@@ -44,4 +44,15 @@ async def metric_insights(
     Returns:
                     str: Insight output from LLM
     """
-    return await llm.ainvoke([])
+    messages = [
+        (
+            "human",
+            construct_prompt(
+                property_name=property_name,
+                metric_name=metric_name,
+                metric_value=metric_value,
+                article_extracts=article_extracts,
+            ),
+        )
+    ]
+    return await llm.ainvoke(messages)
