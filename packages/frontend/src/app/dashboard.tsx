@@ -1,15 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import ErrorMessage from './components/ErrorMessage';
 
 interface Metric {
-    metric: string;
-    result: number;
-    legislationResults: string[];
-    llmModelSummary: string[];
-
+  metric: string;
+  result: number;
+  legislationResults: string[];
+  llmModelSummary: string[];
 }
 
-const Dashboard: React.FC = () => {
-  const [data, setData] = useState<Metric[]>([]);
+interface AggregatorResponse {
+  messageType: string;
+  message: string;
+  statusCode: number;
+  content: string;
+}
+
+const Dashboard: React.FC = (DashboardProps) => {
+  const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [log, setLog] = useState<string>("");
+  const [report, setReport] = useState<string>(""); // TODO: idt this is the right type
+  const [error, setError] = useState<{ header: string; text: string }>({ header: '', text: '' });
+  const [showError, setShowError] = useState<boolean>(false);
 
   useEffect(() => {
     // Connect to the backend WebSocket server
@@ -22,23 +33,48 @@ const Dashboard: React.FC = () => {
 
     // Listen for messages from the WebSocket server
     socket.onmessage = (event) => {
-      const data = event.data;
+      const data = JSON.parse(event.data);
       console.log('Received message:', data);
 
-      try {
-        // Parse the JSON string back into an array of dictionaries (objects)
-        const parsedData: Metric[] = JSON.parse(data);
-        console.log('Parsed data:', parsedData);
-        setData(parsedData); // Store the parsed list of dictionaries in state
-      } catch (e) {
-        console.error('Error parsing JSON:', e);
+      switch (data.messageType) {
+        case 'LOG':
+          setLog(data.message);
+          break;
+        case 'METRICS_COMPLETE':
+          setLog(data.message);
+          break;
+        case 'METRICS_INTERMEDIATE':
+          try {
+            // Parse the JSON string back into an array of dictionaries (objects)
+            console.log('Data content:', data.content);
+            const parsedData: Metric[] = data.content.metrics_results;
+            console.log('Parsed data:', parsedData);
+            setMetrics(parsedData); // Store the parsed list of dictionaries in state
+          } catch (e: any) {
+            setShowError(true);
+            setError({ header: 'Error parsing data:', text: e.message });
+          } finally {
+            break;
+          }
+        case 'REPORT':
+          setReport(data.content);
+          break;
+        case 'ERROR':
+          setShowError(true);
+          setError({ header: 'Error 500:', text: data.message });
+          break;
+        default:
+          console.log('Unknown response from server:', data, data.messageType);
+          setShowError(true);
+          setError({ header: 'Unknown response from server:', text: data.message });
       }
     };
 
-    // Handle WebSocket errors
-    socket.onerror = (err) => {
-      console.log("WebSocket Error: ", err);
-    };
+    // // Handle WebSocket errors
+    // socket.onerror = (err: any) => {
+    //   setShowError(true);
+    //   setError({ header: 'WebSocket Error:', text: err.message });
+    // };
 
     // Clean up the connection when the component unmounts
     return () => {
@@ -49,8 +85,16 @@ const Dashboard: React.FC = () => {
   return (
     <div>
       <h1>Messages from RabbitMQ</h1>
-      {data.length > 0 ? (
-        <pre>{JSON.stringify(data, null, 2)}</pre>
+      {showError && (
+        <ErrorMessage
+          onClose={() => setShowError(false)}
+          errorHeader={error.header}
+          errorMessage={error.text}
+        />
+      )}
+      <p>Log: {log}</p>
+      {metrics.length > 0 ? (
+        <pre>{JSON.stringify(metrics, null, 2)}</pre>
       ) : (
         <p>Waiting for messages...</p>
       )}

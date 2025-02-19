@@ -6,11 +6,41 @@ import websockets.sync.server
 from pika.adapters.blocking_connection import BlockingChannel
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
+from common.models.aggregator_models import AggregatorMessage, MessageType
 
+aggregator_metrics_completion_log = AggregatorMessage(
+    messageType=MessageType.METRICS_COMPLETE,
+    message="Metrics processing complete - all batches successfully processed",
+    statusCode=200,
+    content=None
+)
+
+aggregator_error_log = lambda error: AggregatorMessage(
+    messageType=MessageType.ERROR,
+    message="Error processing metrics",
+    statusCode=500,
+    content=error
+)
+
+aggregator_final_report_log = lambda report: AggregatorMessage(
+    messageType=MessageType.REPORT,
+    message="Final report successfully generated",
+    statusCode=200,
+    content=report
+)
+
+aggregator_intermediate_metrics_log = lambda metrics: AggregatorMessage(
+    messageType=MessageType.METRICS_INTERMEDIATE,
+    message="Batch successfully processed - intermediate metrics successfully generated",
+    statusCode=202,
+    content={"metrics_results" : metrics}
+)
 
 class MetricsAggregator():
     def __init__(self):
         self.metrics = {}
+        self.samples_processed = 0
+        self.total_sample_size = 0
 
     def set_total_sample_size(self, total_sample_size):
         self.total_sample_size = total_sample_size
@@ -30,14 +60,13 @@ class MetricsAggregator():
                 self.metrics[metric]["value"] = (prev_value * prev_count + value * batch_size) / new_count
                 self.metrics[metric]["count"] = new_count  # Update the total count
 
+        self.samples_processed += batch_size
+
     def get_aggregated_metrics(self):
         results = {}
         for metric, data in self.metrics.items():
             results[metric] = data["value"]
         return results
-    
-
-
 
 
 class ResultsConsumer():
@@ -111,24 +140,30 @@ def on_result_fetched(ch, method, properties, body):
             }
         )
 
-    message = json.dumps(results)
+    send_to_clients(aggregator_intermediate_metrics_log(results))
 
-    # If clients exist, send immediately; otherwise, store in the queue
-    if connected_clients:
-        send_to_clients(message)
-    else:
-        print("No clients connected, storing message in queue...")
-        message_queue.put(message)
+    if (metrics_aggregator.samples_processed == metrics_aggregator.total_sample_size):
+        # All batches have now been processed, send completion message
+        metrics_aggregator.samples_processed = 0
+        metrics_aggregator.metrics = {}
 
-def send_to_clients(message):
+        send_to_clients(aggregator_metrics_completion_log)
+
+def send_to_clients(message: AggregatorMessage):
     """Sends messages to all connected WebSocket clients."""
     global connected_clients
     disconnected_clients = set()
+    
+    # If clients exist, send immediately; otherwise, store in the queue
+    if not connected_clients:
+        print("No clients connected, storing message in queue...")
+        message_queue.put(message)
+        return
 
     for client in connected_clients:
         try:
-            client.send(message)
-            print(f"Sent message to client: {message}")
+            client.send(json.dumps(message.dict()))
+            print(f"Sent message to client: {json.dumps(message.dict())}")
         except Exception as e:
             print(f"Error sending message to client: {e}")
             disconnected_clients.add(client)  # Mark client for removal
@@ -154,9 +189,9 @@ def websocket_handler(websocket):
     except Exception as e:
         print(f"WebSocket connection closed: {e}")
     finally:
+        print("Client disconnected")
         connected_clients.remove(websocket)  # Remove on disconnect
 
-# Start WebSocket server in a separate thread
 def start_websocket_server():
     server = websockets.sync.server.serve(websocket_handler, "0.0.0.0", 5005)
     print("WebSocket server started on ws://0.0.0.0:5005")
