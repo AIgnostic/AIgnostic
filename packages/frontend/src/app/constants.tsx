@@ -3,8 +3,10 @@ import { ConditionAlertFailure, HomepageState } from './types';
 const AIGNOSTIC = 'AIgnostic';
 const HOME = '/AIgnostic';
 
-const MOCK_MODEL_API_URL = 'http://scikit-mock-model-api:5001/predict';
-const MOCK_DATASET_API_URL = 'http://folktables-dataset-api:5000/fetch-datapoints';
+// const MOCK_MODEL_API_URL = 'http://scikit-mock-model-api:5001/predict';
+const MOCK_MODEL_API_URL = 'http://finbert-mock-model-api:5001/predict';
+// const MOCK_DATASET_API_URL = 'http://folktables-dataset-api:5000/fetch-datapoints';
+const MOCK_DATASET_API_URL = 'http://financial-dataset-api:5000/fetch-datapoints';
 
 const steps = [
   {

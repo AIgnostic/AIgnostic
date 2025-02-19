@@ -8,7 +8,7 @@ import asyncio
 
 def connect_to_rabbitmq(
     host: str = "localhost",
-    retries: int = 10,
+    retries: int = 20,
 ):
     for i in range(retries):  # Retry up to 10 times
         print(f"Connecting to RabbitMQ at {host}")
@@ -18,8 +18,8 @@ def connect_to_rabbitmq(
             )
             return connection
         except (pika.exceptions.AMQPConnectionError, socket.gaierror) as e:
-            print(f"Connection failed due to {e}. Retrying {i+1}/10...")
-            print(f"Connection failed. Retrying {i+1}/10...")
+            print(f"Connection failed due to {e}. Retrying {i+1}/{retries}...")
+            print(f"Connection failed. Retrying {i+1}/{retries}...")
             time.sleep(3)
     raise Exception(f"Could not connect to RabbitMQ after {retries} attempts.")
 
