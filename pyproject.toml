@@ -36,6 +36,10 @@ uvicorn = "^0.34.0"
     path = "packages/aggregator"
     develop = true
 
+    [tool.poetry.dependencies.mocks]
+    path = "packages/mocks"
+    develop = true
+    
     [tool.poetry.dependencies.report_generation]
     path = "packages/report-generation"
     develop = true

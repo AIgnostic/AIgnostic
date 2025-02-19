@@ -1,13 +1,14 @@
 from fastapi.testclient import TestClient
-from tests.utils.model.scikit_mock import app as scikit_app
-from tests.utils.api_utils import MOCK_MODEL_API_KEY
-from tests.utils.model.mock import app as mock_app
-import pandas as pd
+from mocks.api_utils import MOCK_MODEL_API_KEY
+from mocks.model.huggingface_binclassifier import app as huggingface_app
+from mocks.model.scikit_mock import app as scikit_app
+from mocks.model.finbert import app as finbert_app
+from mocks.model.mock import app as mock_app
 from folktables import ACSDataSource, ACSEmployment
-import pickle
-from tests.utils.model.huggingface_binclassifier import app as huggingface_app
-from tests.utils.model.finbert import app as finbert_app
+import pandas as pd
 import pytest
+from mocks.utils import load_scikit_model
+
 
 huggingface_mock = TestClient(huggingface_app)
 scikit_mock = TestClient(scikit_app)
@@ -28,7 +29,10 @@ def test_mock_returns_empty():
         "group_ids": []  # Empty list for no group IDs
     })
     assert response.status_code == 200, response.text
-    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
+    assert response.json() == {
+        "predictions": [],
+        "confidence_scores": None
+    }, "Empty values not returned given empty input"
 
 
 def test_empty_data_scikit():
@@ -38,7 +42,10 @@ def test_empty_data_scikit():
         "group_ids": []  # Empty list for no group IDs
     }, headers={"Authorization": f"Bearer {MOCK_MODEL_API_KEY}"})
     assert response.status_code == 200, response.text
-    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
+    assert response.json() == {
+        "predictions": [],
+        "confidence_scores": None
+    }, "Empty values not returned given empty input"
 
 
 @pytest.mark.skip(reason="Test to be implemented")
@@ -67,11 +74,12 @@ def test_valid_data_scikit_folktables():
     assert response.status_code == 200, response.text
 
     # Test the response is the same as the expected response from the pickled model
-    model = pickle.load(open('scikit_model.sav', 'rb'))
+    model = load_scikit_model()
     y_hat = model.predict(features)
 
     assert response.json() == {
-        "predictions": [y_hat.tolist()]
+        "predictions": [y_hat.tolist()],
+        "confidence_scores": None
     }, "Model output does not match expected output"
 
 
@@ -115,7 +123,10 @@ def test_empty_input_finbert():
         "group_ids": []  # Empty list for no group IDs
     })
     assert response.status_code == 200, response.text
-    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
+    assert response.json() == {
+        "predictions": [],
+        "confidence_scores": None
+    }, "Empty values not returned given empty input"
 
 
 def test_invalid_input_finbert():

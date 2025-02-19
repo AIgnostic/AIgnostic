@@ -55,13 +55,6 @@ async def generate_metrics_from_info(
         raise HTTPException(status_code=500, detail=f"Error dispatching jobs - {e}")
 
 
-# Sanity check endpoint
-# This for checking time of last deployment
-@api.get("/")
-def info():
-    return {"message": "Pushed at 21/01/2025 07:32"}
-
-
 def dispatch_job(
     batch_size: int,
     total_sample_size: int,

@@ -109,8 +109,8 @@ services:
     volumes:
       - .:/app
       - venv:/app/.venv
-    command: poetry run python3 -u -m tests.utils.dataset.mock_server --host 0.0.0.0 --reload
-    working_dir: /app/packages/api
+    command: poetry run python3 -u -m mocks.dataset.mock_server --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
     networks:
       - aignostic_network
     ports:
@@ -122,8 +122,8 @@ services:
     volumes:
       - .:/app
       - venv:/app/.venv
-    command: poetry run python3 -u -m tests.utils.model.scikit_mock --host 0.0.0.0 --reload
-    working_dir: /app/packages/api
+    command: poetry run python3 -u -m mocks.model.scikit_mock --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
     networks:
       - aignostic_network
     ports:

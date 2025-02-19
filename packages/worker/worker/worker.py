@@ -9,7 +9,7 @@ Each worker:
 """
 
 import os
-from common.models.job import Job
+from common.models.common import Job
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 import requests
 from pydantic.networks import HttpUrl

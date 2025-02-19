@@ -1,7 +1,7 @@
 from transformers import pipeline
 from fastapi import FastAPI
-from api.pydantic_models.data_models import ModelInput, ModelResponse
-from tests.utils.model.hf_utils import predict as text_classification_predict
+from common.models import ModelInput, ModelResponse
+from mocks.model.hf_utils import predict as text_classification_predict
 
 app = FastAPI()
 pipe = pipeline("text-classification", model="ProsusAI/finbert")
