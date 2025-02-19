@@ -79,35 +79,47 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
     Returns:
         explanation: Linear surrogate model coefficients (d-dimensional array)
     """
-    # Convert input_features to numpy array if it's a list
-    input_features = np.array(info.input_features) if isinstance(info.input_features, list) else info.input_features
-    num_samples, d = input_features.shape
+    num_samples, d = info.input_features.shape
 
-    # Generate perturbed samples
+    # TODO: Change to probabilities instead of probabilities
+    # Need total softmax as we can identify if the class value changes .e.g. 0.9 -> 0.1 means some other class higher p value
+
+    # Binary -> Bernoulli Noise
+    # Assume numeric values for now
+    # TODO: Add support for categorical features
     perturbed_samples = info.input_features + np.random.normal(
         scale=0.1 * np.std(info.input_features, axis=0),
         size=(num_samples, d)
     )
-
-    # Call the model endpoint to get predictions
+    print(f"Std: {np.std(info.input_features, axis=0)}")
+    # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
 
-    # Get model predictions for perturbed samples
-    if response.predictions is None:
-        raise ModelQueryException(
-            detail="Model response does not contain predictions",
-            status_code=500
-        )
+    # Compute model predictions for perturbed samples
     predictions = response.predictions
 
+    if predictions is None:
+        raise ModelQueryException(
+            detail="Model response does not contain predictions",
+            status_code=400
+        )
+
     # Compute similarity weights using an RBF kernel
-    distances = np.array([euclidean(input_features[i], sample) for i, sample in enumerate(perturbed_samples)])
-    weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2))
+    distances = np.array([euclidean(info.input_features[i], sample) for i, sample in enumerate(perturbed_samples)])
+    print(f"Distances: {distances}")
+    print(f"Kernel width: {kernel_width}")
+
+    epsilon = 1e-10 # Small constant for numerical stability (avoid division by zero)
+    weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2)) + epsilon
 
     # Fit a weighted linear regression model
     reg_model = Ridge(alpha=1.0)
+    print(f"Input features: {info.input_features}")
+    print(f"Perturbed samples: {perturbed_samples}")
+    print(f"Predictions: {predictions}")
+    print(f"Weights: {weights}")
+    print(f"perturbed_samples - info.input_features: {perturbed_samples - info.input_features}")
     reg_model.fit(perturbed_samples - info.input_features, predictions, sample_weight=weights)
-
     return reg_model.coef_, reg_model
 
 
@@ -122,6 +134,7 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
     Returns:
     - response : Response from the model API
     """
+
     model_input = ModelInput(
         features=generated_input_features.tolist(),
         labels=np.zeros((len(generated_input_features), 1)).tolist(),

@@ -365,7 +365,12 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
     lime_perturbed, _ = _lime_explanation(info)
 
     # use cosine-similarity for now but can be replaced with model-provider function later
-    diff = cosine_similarity(lime_actual, lime_perturbed)
+    print(f"lime_actual: {lime_actual}")
+    print(f"lime_perturbed: {lime_perturbed}")
+
+    # TODO: Took absolute value of cosine similarity - verify if this is correct
+    diff = np.abs(cosine_similarity(lime_perturbed.reshape(1,-1), lime_actual.reshape(1,-1)))
+    print(diff)
     return 1 - np.mean(diff).item()
 
 
@@ -382,7 +387,8 @@ def explanation_sparsity_score(name, info: CalculateRequest) -> float:
         divided by the total number of features
     """
     # Threshold for sparsity - defined arbitrarily for now
-    threshold = 1e-2
+    # TODO: get mean and std of the *explanations* element-wise (per feature) - then check proportion less than 2 sigma from the mean
+    threshold = 1e-2 # mean +- std
     lime_explanation, _ = _lime_explanation(info)
     sparsity = np.sum(lime_explanation < threshold) / lime_explanation.shape[1]
     return 1 - sparsity
@@ -402,6 +408,8 @@ def explanation_fidelity_score(name, info: CalculateRequest) -> float:
         an interpretable approximation g(x) of the model
     """
     _, reg_model = _lime_explanation(info)
+
+    # regression model predicts *probability* not prediction (after updating lime explanation)
 
     # TODO: Update fidelity_fn implementation after discussion with supervisor
     def fidelity_fn(x, y) -> float:

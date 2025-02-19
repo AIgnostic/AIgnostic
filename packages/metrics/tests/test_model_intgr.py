@@ -6,7 +6,7 @@ from tests.metric_mocks.mock_model_finite_diff_grad import (
     EPSILON,
     EXPECTED_GRADIENT
 )
-
+from tests.metric_mocks.mock_model_explaination_stability import app as expl_stability_app
 from tests.metric_mocks.mock_model_ood_auroc import app as ood_auroc_app
 from metrics.metrics import calculate_metrics
 from threading import Thread
@@ -15,6 +15,7 @@ import pytest
 import uvicorn
 import time
 import contextlib
+
 
 HOST = "127.0.0.1"
 
@@ -26,7 +27,11 @@ server_configs = {
     "ood_auroc": {
         "port": 3334,
         "app": ood_auroc_app,
-    }
+    },
+    "explanation_stability_score": {
+        "port": 3335,
+        "app": expl_stability_app,
+    },
 }
 
 
@@ -62,10 +67,29 @@ def server_factory():
             thread.join()
 
 
-def test_explanation_stability_scores(server_factory):
+def test_explanation_stability_similar_scores_result_in_1(server_factory):
     metric_name = "explanation_stability_score"
-    # Check similar predictions have value close to 1
-    pass
+    with server_factory(metric_name):
+        # Check similar predictions after perturbation have value close to 1
+        info = CalculateRequest(
+            metrics=[metric_name],
+            input_features=[[1, 2]],
+            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-10000"
+        )
+        result = calculate_metrics(info)
+        assert result.metric_values[metric_name] == pytest.approx(1.0)
+
+def test_explanation_stability_different_scores_is_not_1(server_factory):
+    metric_name = "explanation_stability_score"
+    with server_factory(metric_name):
+        # Check different predictions after perturbation have value close to 0
+        info = CalculateRequest(
+            metrics=[metric_name],
+            input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0,60], [-34,2222]],
+            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-different"
+        )
+        result = calculate_metrics(info)
+        assert result.metric_values[metric_name] < 1.0
 
 
 def test_finite_diff_gradient(server_factory):
