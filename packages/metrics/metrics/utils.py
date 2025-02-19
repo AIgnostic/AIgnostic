@@ -79,7 +79,9 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
     Returns:
         explanation: Linear surrogate model coefficients (d-dimensional array)
     """
-    num_samples, d = info.input_features.shape[0]
+    # Convert input_features to numpy array if it's a list
+    input_features = np.array(info.input_features) if isinstance(info.input_features, list) else info.input_features
+    num_samples, d = input_features.shape
 
     # Generate perturbed samples
     perturbed_samples = info.input_features + np.random.normal(
@@ -99,7 +101,7 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
     predictions = response.predictions
 
     # Compute similarity weights using an RBF kernel
-    distances = np.array([euclidean(info.input_features, sample) for sample in perturbed_samples])
+    distances = np.array([euclidean(input_features[i], sample) for i, sample in enumerate(perturbed_samples)])
     weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2))
 
     # Fit a weighted linear regression model
