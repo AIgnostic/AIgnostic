@@ -63,7 +63,7 @@ def server_factory():
 
 
 def test_explanation_stability_scores(server_factory):
-    metric_name = "explanation_stability_score"
+    # metric_name = "explanation_stability_score"
     # Check similar predictions have value close to 1
     pass
 

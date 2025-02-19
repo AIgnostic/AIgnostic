@@ -25,6 +25,7 @@ pipe = pipeline("text-classification", model="ProsusAI/finbert")
 def predict(input: ModelInput) -> ModelResponse:
     return text_classification_predict(input, pipe)
 
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=5001)

@@ -1,7 +1,8 @@
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel
 from abc import ABC
 from enum import Enum
 from typing import Any
+
 
 class AggregatorMessage(BaseModel, ABC):
     messageType: str
@@ -11,6 +12,7 @@ class AggregatorMessage(BaseModel, ABC):
 
     class Config:
         arbitrary_types_allowed = True
+
 
 class MessageType(str, Enum):
     LOG = "LOG"

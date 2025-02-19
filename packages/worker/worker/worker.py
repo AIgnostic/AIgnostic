@@ -22,7 +22,6 @@ from common.models import CalculateRequest, MetricValues
 from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
 
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.adapters.asyncio_connection import AsyncioConnection
 
 
 connection = None
@@ -64,7 +63,6 @@ class Worker():
         self._channel = self._connection.channel()
         init_queues(self._channel)
         print("Connection established to RabbitMQ")
-    
 
     def queue_result(self, result: MetricValues):
         """
@@ -100,8 +98,7 @@ class Worker():
             except ValueError as e:
                 raise WorkerException(f"Invalid job format: {e}", status_code=400)
         return None
-    
-        
+
     async def fetch_data(self, data_url: HttpUrl, dataset_api_key) -> dict:
         """
         Helper function to fetch data from the dataset API
@@ -133,7 +130,7 @@ class Worker():
             return data
         except Exception as e:
             raise WorkerException(f"Error while fetching data: {e}")
-        
+
     async def query_model(self, model_url: HttpUrl, data: dict, model_api_key):
         """
         Helper function to query the model API
@@ -175,7 +172,6 @@ class Worker():
                 f"Could not parse model response - {e}; response = {response.text}"
             )
 
-    
     async def process_job(self, job: Job) -> MetricValues:
 
         # fetch data from datasetURL
@@ -190,7 +186,7 @@ class Worker():
             raise WorkerException("KeyError occurred during data processing")
         except Exception:
             raise WorkerException("Error while processing data")
-        
+
         # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
 
         predictions = await self.query_model(
@@ -230,8 +226,6 @@ class Worker():
         except KeyboardInterrupt:
             self.close()
             print("Worker stopped")
-
-
 
     # TODO: Write a doc explaining error messages and what checking is/isn't supported
     def check_model_response(self, response, labels):
@@ -296,8 +290,6 @@ class Worker():
                     )
 
         return
-
-
 
 
 if __name__ == "__main__":

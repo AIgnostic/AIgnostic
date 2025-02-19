@@ -101,6 +101,7 @@ def generate_report(metrics_data: dict) -> json:
             results["extracts"].append(parsed_data)
     return results
 
+
 def get_legislation_extract(metric: str) -> json:
     extracts = []
     legislation = search_legislation(metric)
@@ -108,7 +109,7 @@ def get_legislation_extract(metric: str) -> json:
         article_number = article.split()[-1]
         article_content = extract_legislation_text(article_number)
         parsed_data = parse_legislation_text(article_number,
-                                                article_content)
+                                             article_content)
         extracts.append(parsed_data)
 
     return extracts

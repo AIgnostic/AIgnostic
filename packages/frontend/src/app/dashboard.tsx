@@ -54,16 +54,16 @@ const Dashboard: React.FC = (DashboardProps) => {
           } catch (e: any) {
             setShowError(true);
             setError({ header: 'Error parsing data:', text: e.message });
-          } finally {
-            break;
           }
-        case 'REPORT':
+          break;
+        case 'REPORT': {
           console.log("Results received:", data.content)
           setReport(data.content);
           console.log('Report:', data.content);
           const doc = generateReportText(data.content);
           doc.save('AIgnostic_Report.pdf');
           break;
+        }
         case 'ERROR':
           setShowError(true);
           setError({ header: 'Error 500:', text: data.message });
