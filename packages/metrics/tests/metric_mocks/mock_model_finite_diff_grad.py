@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from common.models import ModelInput, ModelResponse
-import numpy as np
 
 app: FastAPI = FastAPI()
 app.add_middleware(
@@ -43,4 +42,4 @@ async def predict(input_data: ModelInput):
             predictions=predictions
         )
     except KeyError:
-        raise KeyError(f"Input data {as_tuple} not in test data - Update tests / mock to include this")
+        raise KeyError(f"Input data {input_data} not in test data - Update tests / mock to include this")

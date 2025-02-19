@@ -77,9 +77,15 @@ def test_finite_diff_gradient(server_factory):
 
         result = _finite_difference_gradient("none", info, EPSILON)
 
-        assert len(result) == len(TEST_INPUT), f"Expected gradient to have {len(TEST_INPUT)} samples, but got {len(result)}"
-        assert len(result[0]) == len(TEST_INPUT[0]), f"Expected gradient to have {len(TEST_INPUT[0])} features, but got {len(result[0])}"
-        assert result.tolist() == EXPECTED_GRADIENT, f"Expected gradient to be {EXPECTED_GRADIENT}, but got {result}"
+        assert len(result) == len(TEST_INPUT), (
+            f"Expected gradient to have {len(TEST_INPUT)} samples, but got {len(result)}"
+        )
+        assert len(result[0]) == len(TEST_INPUT[0]), (
+            f"Expected gradient to have {len(TEST_INPUT[0])} features, but got {len(result[0])}"
+        )
+        assert result.tolist() == EXPECTED_GRADIENT, (
+            f"Expected gradient to be {EXPECTED_GRADIENT}, but got {result}"
+        )
 
 
 def test_ood_auroc(server_factory):
