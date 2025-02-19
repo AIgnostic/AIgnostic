@@ -66,7 +66,6 @@ def test_explanation_stability_scores(server_factory):
     pass
 
 
-@pytest.mark.skip("Failing - mock implemented incorrectly")
 def test_finite_diff_gradient(server_factory):
     metric_name = "finite_diff_grad"
     with server_factory(metric_name):
@@ -80,7 +79,7 @@ def test_finite_diff_gradient(server_factory):
 
         assert len(result) == len(TEST_INPUT), f"Expected gradient to have {len(TEST_INPUT)} samples, but got {len(result)}"
         assert len(result[0]) == len(TEST_INPUT[0]), f"Expected gradient to have {len(TEST_INPUT[0])} features, but got {len(result[0])}"
-        assert result == EXPECTED_GRADIENT, f"Expected gradient to be {EXPECTED_GRADIENT}, but got {result}"
+        assert result.tolist() == EXPECTED_GRADIENT, f"Expected gradient to be {EXPECTED_GRADIENT}, but got {result}"
 
 # @pytest.mark.skip("Failing - pydantic model validation errors")
 def test_ood_auroc(server_factory):

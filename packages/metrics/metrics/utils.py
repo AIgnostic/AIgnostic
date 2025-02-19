@@ -35,7 +35,7 @@ def _finite_difference_gradient(name, info: CalculateRequest,
             def predict(x):
                 # Helper function to query the model with perturbed inputs
                 nonlocal info
-                return _query_model(x.reshape(1, -1), info)
+                return _query_model(x.reshape(1, -1), info).predictions[0][0]
 
             # Compute the function values (assuming the metric function is applied row-wise)
             f_forward = np.apply_along_axis(predict, 1, X_forward)

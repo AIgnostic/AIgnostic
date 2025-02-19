@@ -14,41 +14,33 @@ app.add_middleware(
 
 EPSILON = 0.25
 TEST_INPUT = [
-    [1, 1, 1],
-    [1, 2, 1],
-    [1, 1, 1],
-    [2, 3, 2],
-    [2, 2, 2],
-    [2, 1, 2],
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, -1]
+    [1, 2],
+    [2, 2],
 ]
-TEST_INPUT_FORWARD = (np.array(TEST_INPUT) + EPSILON).tolist()
-TEST_INPUT_BACKWARD = (np.array(TEST_INPUT) - EPSILON).tolist()
-TEST_LABELS = [[1], [1], [1], [2], [2], [2], [3], [3], [3]]
-TEST_LABELS_FORWARD = [[2], [2], [1], [2], [2], [2], [3], [1], [3]]
-TEST_LABELS_BACKWARD = [[1], [1], [1], [1], [2], [3], [3], [3], [3]]
+INPUTS_TO_LABELS = {
+    (1, 2): [1],
+    (2, 2): [2],
+    (1.25, 2): [2],
+    (2.25, 2): [2],
+    (1, 2.25): [1.5],
+    (2, 2.25): [2],
+    (0.75, 2): [1],
+    (1.75, 2): [2],
+    (1, 1.75): [1.75],
+    (2, 1.75): [1]
+}
 EXPECTED_GRADIENT = [
-    [2, 2, 2],
-    [2, 2, 2],
-    [0, 0, 0],
-    [2, 2, 2],
-    [0, 0, 0],
-    [-2, -2, -2],
-    [0, 0, 0],
-    [-4, -4, -4],
-    [0, 0, 0]
+    [2, -0.5],
+    [0, 2]
 ]
 
 
 @app.post('/predict', response_model=ModelResponse)
 async def predict(input_data: ModelInput):
-    if input_data.features == TEST_INPUT:
-        return ModelResponse(predictions=TEST_LABELS)
-    elif input_data.features == TEST_INPUT_FORWARD:
-        return ModelResponse(predictions=TEST_LABELS_FORWARD)
-    elif input_data.features == TEST_INPUT_BACKWARD:
-        return ModelResponse(predictions=TEST_LABELS_BACKWARD)
-    else:
-        raise ValueError(f"Unexpected input data for test: {input_data.features}")
+    try:
+        predictions = [INPUTS_TO_LABELS[tuple(row)] for row in input_data.features]
+        return ModelResponse(
+            predictions=predictions
+        )
+    except KeyError:
+        raise KeyError(f"Input data {as_tuple} not in test data - Update tests / mock to include this")
