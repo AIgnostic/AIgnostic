@@ -15,7 +15,6 @@ from metrics.metrics import (
     mean_absolute_error,
     mean_squared_error,
     r_squared,
-    equalized_odds_difference,
 )
 from metrics.models import CalculateRequest
 import pytest
@@ -280,7 +279,7 @@ async def test_calculate_metrics():
         predicted_labels=[[2], [0], [2], [0], [0], [2], [2], [2]],
         target_class=2,
     )
-    results = await calculate_metrics(info)
+    results = calculate_metrics(info)
     expected_results = {
         "accuracy": 0.625,
         "class_precision": 0.6,
@@ -306,7 +305,7 @@ async def test_calculate_performance_metrics():
         predicted_labels=[[0.9], [0.3], [0.6], [0.7], [0.2], [0.8], [0.1], [0.4], [0.5], [0.35]],
         target_class=1,
     )
-    results = await calculate_metrics(info)
+    results = calculate_metrics(info)
     expected_results = {
         "mean_absolute_error": 0.335,
         "mean_squared_error": 0.14725,
@@ -321,37 +320,35 @@ async def test_calculate_performance_metrics():
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
-async def test_calculate_fairness_metrics():
+def test_calculate_fairness_metrics():
     info = CalculateRequest(
-        metrics=["disparate_impact", "equal_opportunity_difference"],
-        true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
-        predicted_labels=[[1], [0], [0], [0], [1], [0], [1], [0]],
-        privileged_groups=[{"protected_attr": 1}],
-        unprivileged_groups=[{"protected_attr": 0}],
-        protected_attr=[0, 1, 0, 0, 1, 0, 1, 1],
-    )
-    results = await calculate_metrics(info)
-    expected_results = {
-        "disparate_impact": 0.5,
-        "equal_opportunity_difference": 0.25,
-    }
-    for metric, value in expected_results.items():
-        assert round(results.metric_values[metric], 7) == round(
-            value, 7
-        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
-
-
-async def test_calculate_equalized_odds_difference_nonzero():
-    info = CalculateRequest(
-        metrics=["equalized_odds_difference"],
+        metrics=[
+            "statistical_parity_difference",
+            "disparate_impact",
+            "equal_opportunity_difference",
+            "equalized_odds_difference",
+            "false_negative_rate_difference",
+            "negative_predictive_value",
+            "positive_predictive_value",
+            "true_positive_rate_difference",
+        ],
         true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
         predicted_labels=[[1], [1], [0], [1], [0], [0], [1], [1]],
         privileged_groups=[{"protected_attr": 1}],
         unprivileged_groups=[{"protected_attr": 0}],
         protected_attr=[0, 1, 0, 1, 1, 0, 1, 0],
     )
-    results = await equalized_odds_difference("test_calculate_equalized_odds", info)
-    expected_results = {"equalized_odds_difference": 0.1666667}
+    results = calculate_metrics(info)
+    expected_results = {
+        "statistical_parity_difference": -0.25,
+        "disparate_impact":  0.6666667,
+        "equal_opportunity_difference": -0.5,
+        "equalized_odds_difference": 0.1666667,
+        "false_negative_rate_difference": 0.5,
+        "negative_predictive_value": 1 / 3,
+        "positive_predictive_value": 0.6,
+        "true_positive_rate_difference": -0.5,
+    }
     for metric, value in expected_results.items():
         assert round(results.metric_values[metric], 7) == round(
             value, 7
