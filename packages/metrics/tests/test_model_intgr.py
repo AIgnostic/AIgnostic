@@ -1,5 +1,12 @@
 from metrics.models import CalculateRequest
-from tests.metric_mocks.mock_model_finite_diff_grad import app as finite_diff_grad_app
+from metrics.utils import _finite_difference_gradient
+from tests.metric_mocks.mock_model_finite_diff_grad import (
+    app as finite_diff_grad_app,
+    TEST_INPUT,
+    EPSILON,
+    EXPECTED_GRADIENT
+)
+
 from tests.metric_mocks.mock_model_ood_auroc import app as ood_auroc_app
 from metrics.metrics import calculate_metrics
 from threading import Thread
@@ -59,14 +66,24 @@ def test_explanation_stability_scores(server_factory):
     pass
 
 
-@pytest.mark.asyncio
-async def test_finite_diff_gradient(server_factory):
-    pass
+@pytest.mark.skip("Failing - mock implemented incorrectly")
+def test_finite_diff_gradient(server_factory):
+    metric_name = "finite_diff_grad"
+    with server_factory(metric_name):
+        info = CalculateRequest(
+            metrics=[metric_name],
+            input_features=TEST_INPUT,
+            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict",
+        )
 
+        result = _finite_difference_gradient("none", info, EPSILON)
+
+        assert len(result) == len(TEST_INPUT), f"Expected gradient to have {len(TEST_INPUT)} samples, but got {len(result)}"
+        assert len(result[0]) == len(TEST_INPUT[0]), f"Expected gradient to have {len(TEST_INPUT[0])} features, but got {len(result[0])}"
+        assert result == EXPECTED_GRADIENT, f"Expected gradient to be {EXPECTED_GRADIENT}, but got {result}"
 
 # @pytest.mark.skip("Failing - pydantic model validation errors")
-@pytest.mark.asyncio
-async def test_ood_auroc(server_factory):
+def test_ood_auroc(server_factory):
     metric_name = "ood_auroc"
     with server_factory(metric_name):
         input_data = np.random.rand(100, 10).tolist()  # 100 samples, 10 features
@@ -79,7 +96,7 @@ async def test_ood_auroc(server_factory):
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict",
         )
 
-        result = await calculate_metrics(info)
+        result = calculate_metrics(info)
         result = result.metric_values["ood_auroc"]
 
         assert isinstance(result, float), f"Expected AUROC to be a float, but got {type(result)}"

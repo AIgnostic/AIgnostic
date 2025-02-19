@@ -35,7 +35,7 @@ def _finite_difference_gradient(name, info: CalculateRequest,
             def predict(x):
                 # Helper function to query the model with perturbed inputs
                 nonlocal info
-                return _query_model(x, info)
+                return _query_model(x.reshape(1, -1), info)
 
             # Compute the function values (assuming the metric function is applied row-wise)
             f_forward = np.apply_along_axis(predict, 1, X_forward)
@@ -67,7 +67,7 @@ def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
     return x_adv
 
 
-async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.ndarray:
+def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.ndarray:
     """
     Compute LIME explanation for a black-box model.
 
@@ -91,7 +91,7 @@ async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) 
     )
 
     # Call model endpoint to get confidence scores
-    response: ModelResponse = await _query_model(perturbed_samples, info)
+    response: ModelResponse = _query_model(perturbed_samples, info)
 
     # Compute model predictions for perturbed samples
     predictions = response.predictions
@@ -112,7 +112,7 @@ async def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) 
     return reg_model.coef_, reg_model
 
 
-async def _query_model(generated_input_features: np.array, info: CalculateRequest) -> ModelResponse:
+def _query_model(generated_input_features: np.array, info: CalculateRequest) -> ModelResponse:
     """
     Helper function to query the model API
 

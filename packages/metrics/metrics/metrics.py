@@ -340,7 +340,7 @@ def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], float]
 """
 
 
-async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -> float:
+def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     """
     Estimate OOD AUROC by comparing in-distribution (ID) and out-of-distribution (OOD)
     confidence scores.
@@ -368,7 +368,7 @@ async def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -
     ood_data = np.random.uniform(id_min, id_max, size=(num_ood_samples, d))
 
     # Call model endpoint to get confidence scores
-    response: ModelResponse = await _query_model(ood_data, info)
+    response: ModelResponse = _query_model(ood_data, info)
 
     # Get confidence scores for OOD samples
     if response.confidence_scores is None:
@@ -493,7 +493,7 @@ metric_to_fn = {
 """ Mapping of metric names to their corresponding functions"""
 
 
-async def calculate_metrics(info: CalculateRequest) -> MetricValues:
+def calculate_metrics(info: CalculateRequest) -> MetricValues:
     """
     calculate_metrics, given a request for calculation of certain metrics and information
     necessary for calculation, attempt to calculate and return the metrics and their scores
@@ -508,5 +508,5 @@ async def calculate_metrics(info: CalculateRequest) -> MetricValues:
         if metric not in metric_to_fn.keys():
             results[metric] = 1
         else:
-            results[metric] = await metric_to_fn[metric](metric, info)
+            results[metric] = metric_to_fn[metric](metric, info)
     return MetricValues(metric_values=results)
