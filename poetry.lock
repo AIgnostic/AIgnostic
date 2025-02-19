@@ -2566,4 +2566,4 @@ url = "packages/worker"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "939cdb85d0a50618aa10ee8db3043345995fd100092323985c9c28855262922d"
+content-hash = "2e3e4e4678e3b2cabf840f5e17f477711f5f498d6806b3c87ffe9374deee5b24"
