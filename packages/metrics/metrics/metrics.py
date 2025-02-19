@@ -12,8 +12,8 @@ from metrics.models import (
 )
 from metrics.utils import (
     _query_model,
-    _lime_explanation
-    # _fgsm_attack,
+    _lime_explanation,
+    _finite_difference_gradient
 )
 from sklearn.metrics import (
     f1_score,
@@ -352,6 +352,16 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
         where distance_fn is the distance function between two explanations E(x) and E(x')
     """
     lime_actual, _ = _lime_explanation(info)
+
+    # Calculate gradients for perturbation
+    gradients = _finite_difference_gradient(name, info, 0.01)
+    perturbation_constant = 0.01
+    perturbation = perturbation_constant * gradients
+
+    # Go in direction of greatest loss
+    info.input_features = info.input_features + perturbation
+
+    # Obtain perturbed lime output
     lime_perturbed, _ = _lime_explanation(info)
 
     # use cosine-similarity for now but can be replaced with model-provider function later
