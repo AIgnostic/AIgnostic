@@ -67,34 +67,6 @@ def server_factory():
             thread.join()
 
 
-def test_explanation_stability_similar_scores_result_is_1(server_factory):
-    metric_name = "explanation_stability_score"
-    with server_factory(metric_name):
-        # Check similar predictions after perturbation have value close to 1
-        info = CalculateRequest(
-            metrics=[metric_name],
-            input_features=[[1, 2]],
-            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-10000"
-        )
-        result = explanation_stability_score("test_similar_scores_result_is_1", info)
-        # assert result.metric_values[metric_name] == pytest.approx(1.0)
-        assert result == pytest.approx(1.0)
-
-
-def test_explanation_stability_different_scores_is_not_1(server_factory):
-    metric_name = "explanation_stability_score"
-    with server_factory(metric_name):
-        # Check different predictions after perturbation have value close to 0
-        info = CalculateRequest(
-            metrics=[metric_name],
-            input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
-            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-different"
-        )
-        result = explanation_stability_score("", info)
-        # assert result.metric_values[metric_name] < 1.0
-        assert result < 1.0
-
-
 def test_finite_diff_gradient(server_factory):
     metric_name = "finite_diff_grad"
     with server_factory(metric_name):
@@ -135,3 +107,34 @@ def test_ood_auroc(server_factory):
 
         assert isinstance(result, float), f"Expected AUROC to be a float, but got {type(result)}"
         assert 0.0 <= result <= 1.0, f"Expected AUROC to be between 0.0 and 1.0, but got {result}"
+
+
+def test_explanation_stability_similar_scores_result_is_1(server_factory):
+    metric_name = "explanation_stability_score"
+    with server_factory(metric_name):
+        # Check similar predictions after perturbation have value close to 1
+        info = CalculateRequest(
+            metrics=[metric_name],
+            input_features=[[1, 2]],
+            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-10000"
+        )
+        result = explanation_stability_score("test_similar_scores_result_is_1", info)
+        # assert result.metric_values[metric_name] == pytest.approx(1.0)
+        assert result == pytest.approx(1.0)
+
+
+def test_explanation_stability_different_scores_is_not_1(server_factory):
+    metric_name = "explanation_stability_score"
+    with server_factory(metric_name):
+        # Check different predictions after perturbation have value close to 0
+        info = CalculateRequest(
+            metrics=[metric_name],
+            input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
+            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-different"
+        )
+        result = explanation_stability_score("", info)
+        # assert result.metric_values[metric_name] < 1.0
+        assert result < 1.0
+
+
+# TODO: Test explanation sparse and fidelity metrics
