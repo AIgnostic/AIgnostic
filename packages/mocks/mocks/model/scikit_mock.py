@@ -43,6 +43,8 @@ def predict(input: ModelInput) -> ModelResponse:
         print(predictions)
     except Exception as e:
         raise HTTPException(detail=f"Error occured during model prediction: {e}", status_code=500)
+
+    # Does not need to return confidence scores as a regression model
     return ModelResponse(predictions=predictions)
 
 

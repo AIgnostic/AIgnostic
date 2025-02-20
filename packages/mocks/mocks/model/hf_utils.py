@@ -14,7 +14,7 @@ def predict(input: ModelInput, model_name: str) -> ModelResponse:
 
         # Convert nested list to list of strings
         texts = [" ".join(map(str, features)) for features in input.features]
-        
+
         # Tokenize the input texts
         inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
 
