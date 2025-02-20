@@ -2,7 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from .constants import property_to_metrics, property_to_regulations
+from llm_insights.insights import init_llm, metric_insights
+import os
+import dotenv
 
+dotenv.load_dotenv()
 
 def search_legislation(metric: str) -> list:
     """
@@ -143,7 +147,19 @@ def generate_report(metrics_data: dict) -> list[dict]:
             property_result["legislation_extracts"].append(parsed_data)
 
         # TODO: Add LLM insights
-        property_result["llm_insights"] = ["PLACEHOLDER"]
+        property_result["llm_insights"] = []
+
+        mesg = metric_insights(
+            property_name=property,
+            metrics=[
+                {"metric": metric.replace("_", " "), "value": str(metrics_data[metric])}
+                for metric in common_metrics
+            ],
+            article_extracts=property_result["legislation_extracts"],
+            llm=init_llm(os.getenv("GOOGLE_API_KEY"))
+        )
+        
+        property_result["llm_insights"].append(mesg)
 
         results.append(property_result)
 

@@ -1,19 +1,18 @@
-from typing import List
+from typing import List, Dict
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages.base import BaseMessage
 from llm_insights.prompt import construct_prompt
 
-
 def init_llm(api_key: str) -> BaseChatModel:
     """Give an LLM client for sending messages for LLM Insights
 
     Args:
-                    api_key (str): API Key to use
+        api_key (str): API Key to use
 
     Returns:
-                    BaseChatModel: Chatbot
+        BaseChatModel: Chatbot
     """
     return ChatGoogleGenerativeAI(
         model="gemini-2.0-flash-thinking-exp",
@@ -25,38 +24,31 @@ def init_llm(api_key: str) -> BaseChatModel:
         google_api_key=api_key,
     )
 
-
-async def metric_insights(
+def metric_insights(
     property_name: str,
-    metric_name: str,
-    metric_value: str,
+    metrics: List[Dict[str, str]],
     article_extracts: List[dict],
     llm: BaseChatModel,
 ) -> BaseMessage:
-    """Obtain insights into a metric using an LLM, by asking the LLM "here's the score, the metric, the law,
-    does this seem right?"
+    """Obtain insights into multiple metrics using an LLM.
 
     Args:
-                    property_name (str): Name of the property in question
-                    metric_name (str): Name of metric in question that is linked into the property
-                    metric_value (str): Value evaluated for the metric (string for flexibility)
-                    article_extracts (List[str]): Extracts of articles related to the metric/property to use
-                    llm (BaseChatModel): LLM to use, likely created using init_llm but can be any LLM from LangChain
+        property_name (str): Name of the property in question
+        metrics (List[Dict[str, str]]): List of dictionaries with 'metric' and 'value' keys
+        article_extracts (List[dict]): Extracts of articles related to the metrics/property to use
+        llm (BaseChatModel): LLM to use, likely created using init_llm but can be any LLM from LangChain
 
     Returns:
-                    str: Insight output from LLM
-
-    See tests/demo.py for an example
+        BaseMessage: Insight output from LLM
     """
     messages = [
         (
             "human",
             construct_prompt(
                 property_name=property_name,
-                metric_name=metric_name,
-                metric_value=metric_value,
+                metrics=metrics,
                 article_extracts=article_extracts,
             ),
         )
     ]
-    return await llm.ainvoke(messages)
+    return llm.invoke(messages)

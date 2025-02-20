@@ -37,6 +37,10 @@ readme = "README.md"
     path = "../report-generation"
     develop = true
 
+    [tool.poetry.dependencies.llm_insights]
+    path = "../llm-insights"
+    develop = true
+
 [build-system]
 requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"

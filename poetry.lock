@@ -13,6 +13,7 @@ develop = true
 [package.dependencies]
 common = {path = "../common", develop = true}
 fastapi = "^0.115.8"
+llm_insights = {path = "../llm-insights", develop = true}
 pika = "^1.3.2"
 pydantic = "^2.10.6"
 report-generation = {path = "../report-generation"}
@@ -4080,4 +4081,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "5bd44cc96e30d26c3c45d70011a465c99bdfd932c37be79607890ff1a9e7bf25"
+content-hash = "9f7ef182392c3db72eeb11978cb70edea9a8368e5301529f67c646cd6e89fc2b"

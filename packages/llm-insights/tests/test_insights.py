@@ -7,8 +7,10 @@ from llm_insights.prompt import construct_prompt
 @pytest.mark.asyncio
 async def test_metric_insights():
     property_name = "Fairness"
-    metric_name = "Bias"
-    metric_value = "0.2"
+    metrics = [
+        {"metric": "Bias", "value": "0.2"},
+        {"metric": "Representation", "value": "0.8"}
+    ]
     article_extracts = [
         {
             "article_number": "1",
@@ -24,7 +26,7 @@ async def test_metric_insights():
         "llm_insights.insights.construct_prompt", wraps=construct_prompt
     ) as mock_construct_prompt:
         result = await metric_insights(
-            property_name, metric_name, metric_value, article_extracts, mock_llm
+            property_name, metrics, article_extracts, mock_llm
         )
 
         # Check that the LLM is called
@@ -36,7 +38,6 @@ async def test_metric_insights():
         # Check that the prompt provided to the model matches the one from construct_prompt
         mock_construct_prompt.assert_called_once_with(
             property_name=property_name,
-            metric_name=metric_name,
-            metric_value=metric_value,
+            metrics=metrics,
             article_extracts=article_extracts,
         )
