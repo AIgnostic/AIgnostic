@@ -390,10 +390,16 @@ def explanation_sparsity_score(name, info: CalculateRequest) -> float:
     # Threshold for sparsity - defined arbitrarily for now
     # TODO: get mean and std of the *explanations* element-wise (per feature)
     #  - then check proportion less than 2 sigma from the mean
-    threshold = 1e-2    # mean +- std
+    # Note unnormalised inputs may have a volatile stability scores due to varying gradients
+    # leading to greater variations in mean and std
     lime_explanation, _ = _lime_explanation(info)
-    sparsity = np.sum(lime_explanation < threshold) / lime_explanation.shape[1]
-    return 1 - sparsity
+    mean = np.mean(lime_explanation)
+    std = np.std(lime_explanation)
+
+    # Number of coefficients within 2 sigma of the mean
+    count_2_sigma = np.sum(np.abs(lime_explanation - mean) < 2 * std)
+
+    return 1 - count_2_sigma
 
 
 def explanation_fidelity_score(name, info: CalculateRequest) -> float:
@@ -419,7 +425,7 @@ def explanation_fidelity_score(name, info: CalculateRequest) -> float:
 
     return 1 - np.mean(
         fidelity_fn(
-            info.predicted_labels,
+            info.confidence_scores,
             reg_model.predict(info.input_features)
         )).item()
 
