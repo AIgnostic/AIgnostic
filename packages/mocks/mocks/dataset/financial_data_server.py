@@ -22,7 +22,6 @@ app.add_middleware(
 # Load Financial PhraseBank data
 DATA_PATH = os.path.join(os.path.dirname(__file__),
                          "FinancialPhraseBank-v1.0",
-                         "FinancialPhraseBank-v1.0",
                          "Sentences_50Agree.txt")
 df = pd.read_csv(DATA_PATH, delimiter=".@", names=["text", "sentiment"], encoding="ISO-8859-1")
 

@@ -5,6 +5,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages.base import BaseMessage
 from llm_insights.prompt import construct_prompt
 
+
 def init_llm(api_key: str) -> BaseChatModel:
     """Give an LLM client for sending messages for LLM Insights
 
@@ -12,17 +13,22 @@ def init_llm(api_key: str) -> BaseChatModel:
         api_key (str): API Key to use
 
     Returns:
-        BaseChatModel: Chatbot
     """
-    return ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-thinking-exp",
-        temperature=0,
-        max_tokens=None,
-        timeout=None,
-        max_retries=2,
-        api_key=api_key,
-        google_api_key=api_key,
-    )
+
+    try:
+        return ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash-thinking-exp",
+            temperature=0,
+            max_tokens=None,
+            timeout=None,
+            max_retries=2,
+            api_key=api_key,
+            google_api_key=api_key,
+        )
+    except Exception as e:
+        print(f"Failed to initialize LLM: {e}")
+        raise e
+    
 
 def metric_insights(
     property_name: str,

@@ -149,16 +149,21 @@ def generate_report(metrics_data: dict) -> list[dict]:
         # TODO: Add LLM insights
         property_result["llm_insights"] = []
 
-        mesg = metric_insights(
-            property_name=property,
-            metrics=[
-                {"metric": metric.replace("_", " "), "value": str(metrics_data[metric])}
-                for metric in common_metrics
-            ],
-            article_extracts=property_result["legislation_extracts"],
-            llm=init_llm(os.getenv("GOOGLE_API_KEY"))
-        )
-        
+
+        try :
+            llm = init_llm(os.getenv("GOOGLE_API_KEY"))
+            mesg = metric_insights(
+                property_name=property,
+                metrics=[
+                    {"metric": metric.replace("_", " "), "value": str(metrics_data[metric])}
+                    for metric in common_metrics
+                ],
+                article_extracts=property_result["legislation_extracts"],
+                llm=llm
+            )
+        except Exception as e:
+            mesg = "Failed to initialize LLM"
+
         property_result["llm_insights"].append(mesg)
 
         results.append(property_result)
