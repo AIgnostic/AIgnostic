@@ -21,15 +21,15 @@ HOST = "127.0.0.1"
 
 server_configs = {
     "finite_diff_grad": {
-        "port": 3333,
+        "port": 3000,
         "app": finite_diff_grad_app,
     },
     "ood_auroc": {
-        "port": 3334,
+        "port": 3001,
         "app": ood_auroc_app,
     },
     "explanation_stability_score": {
-        "port": 3335,
+        "port": 3002,
         "app": expl_stability_app,
     },
 }
