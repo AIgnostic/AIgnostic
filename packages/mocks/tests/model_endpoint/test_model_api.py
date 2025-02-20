@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from mocks.utils import load_scikit_model
 
+# TODO: Modify the tests to use pydantic models to ensure they are correctly validated
 
 huggingface_mock = TestClient(huggingface_app)
 scikit_mock = TestClient(scikit_app)
@@ -125,7 +126,7 @@ def test_empty_input_finbert():
     assert response.status_code == 200, response.text
     assert response.json() == {
         "predictions": [],
-        "confidence_scores": None
+        "confidence_scores": []
     }, "Empty values not returned given empty input"
 
 
@@ -145,7 +146,15 @@ def test_finbert_single_input():
         "group_ids": []
     })
     assert response.status_code == 200, response.text
-    assert response.json()["predictions"][0][0]["label"] == "neutral", "Single data output is not the expected value"
+    print(response.json())
+    predictions = response.json()["predictions"]
+    confidence_scores = response.json()["confidence_scores"]
+    assert len(predictions) == 1, f"Expected 1 prediction, got {len(predictions)}"
+    assert len(confidence_scores) == 1, f"Expected 1 confidence score, got {len(confidence_scores)}"
+    assert predictions[0][0] == "neutral", "Single data output is not the expected value"
+    print(confidence_scores)
+    assert confidence_scores[0][0] <= 1, "Probability score is greater than 1"
+    assert confidence_scores[0][0] >= 0, "Probability score is less than 0"
 
 
 def test_finbert_multiple_inputs():
@@ -164,6 +173,6 @@ def test_finbert_multiple_inputs():
     })
     assert response.status_code == 200, response.text
     assert len(response.json()["predictions"]) == 3, "Incorrect number of outputs produced given number of inputs"
-    assert response.json()["predictions"][0][0]["label"] == "negative", "First input not classified as negative"
-    assert response.json()["predictions"][1][0]["label"] == "positive", "Second input not classified as positive"
-    assert response.json()["predictions"][2][0]["label"] == "neutral", "Third input not classified as neutral"
+    assert response.json()["predictions"][0][0] == "negative", "First input not classified as negative"
+    assert response.json()["predictions"][1][0] == "positive", "Second input not classified as positive"
+    assert response.json()["predictions"][2][0] == "neutral", "Third input not classified as neutral"
