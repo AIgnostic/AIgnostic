@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/llm-insights/dist",
         "publish": false,
@@ -36,7 +38,9 @@
     },
     "lint": {
       "executor": "@nxlv/python:flake8",
-      "outputs": ["{workspaceRoot}/reports/packages/llm-insights/pylint.txt"],
+      "outputs": [
+        "{workspaceRoot}/reports/packages/llm-insights/pylint.txt"
+      ],
       "options": {
         "outputFile": "reports/packages/llm-insights/pylint.txt"
       },
@@ -45,8 +49,8 @@
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
-        "{workspaceRoot}/reports/packages/llm-insights/unittests",
-        "{workspaceRoot}/coverage/packages/llm-insights"
+        "{workspaceRoot}/reports/llm-insights/unittests",
+        "{workspaceRoot}/coverage/llm-insights"
       ],
       "options": {
         "command": "poetry run pytest tests/",

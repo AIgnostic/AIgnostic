@@ -10,8 +10,6 @@ async def main():
     article_content_14 = extract_legislation_text("14")
     parsed_data_14 = parse_legislation_text("14", article_content_14)
 
-    # print(parsed_data_13)
-
     mesg = await metric_insights(
         property_name="explainability",
         metric_name="gradient explanations",
