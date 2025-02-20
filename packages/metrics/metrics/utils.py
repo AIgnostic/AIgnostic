@@ -82,7 +82,8 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
     num_samples, d = info.input_features.shape
 
     # TODO: Change to probabilities instead of probabilities
-    # Need total softmax as we can identify if the class value changes .e.g. 0.9 -> 0.1 means some other class higher p value
+    # Need total softmax as we can identify if the class value changes
+    #  e.g. 0.9 -> 0.1 means some other class higher p value
 
     # Binary -> Bernoulli Noise
     # Assume numeric values for now
@@ -109,7 +110,7 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
     print(f"Distances: {distances}")
     print(f"Kernel width: {kernel_width}")
 
-    epsilon = 1e-10 # Small constant for numerical stability (avoid division by zero)
+    epsilon = 1e-10     # Small constant for numerical stability (avoid division by zero)
     weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2)) + epsilon
 
     # Fit a weighted linear regression model
