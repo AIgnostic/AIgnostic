@@ -168,7 +168,7 @@ def roc_auc(name, info: CalculateRequest) -> float:
     Calculate the ROC-AUC score.
     """
     is_valid_for_per_class_metrics(name, info.true_labels)
-    return roc_auc_score(info.true_labels, info.predicted_labels)
+    return roc_auc_score(info.true_labels, info.predicted_labels, average="macro", multi_class="ovr")
 
 
 def mean_absolute_error(name, info: CalculateRequest) -> float:
@@ -526,7 +526,9 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
     """
     results = {}
     for metric in info.metrics:
+        metric = metric.lower().replace(" ", "_")
         if metric not in metric_to_fn.keys():
+            print("Metric {metric} not found - skipping")
             results[metric] = 1
         else:
             results[metric] = metric_to_fn[metric](metric, info)

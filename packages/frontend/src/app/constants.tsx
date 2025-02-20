@@ -38,24 +38,23 @@ const BACKEND_URL = 'http://localhost:8000/evaluate';
 const RESULTS_URL = 'http://localhost:5002/results';
 
 const generalMetrics = ['Accuracy', 'Precision', 'Recall'];
-
+const fairnessMetrics = 
+  ["Statistical Parity Difference",
+   "Equal Opportunity Difference",
+   "Disparate Impact",
+   "False Negative Rate Difference",
+   "Negative Predictive Value",
+   "Positive Predictive Value",
+   "True Positive Rate Difference",
+   "Equalized Odds Difference",
+  ];
 const modelTypesToMetrics: { [key: string]: string[] } = {
-  Classification: ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC'],
+  Classification: ['Accuracy', 'Precision', 'Recall', 'F1 Score'].concat(fairnessMetrics),
   Regression: [
     'Mean Absolute Error',
     'Mean Squared Error',
     'R-squared',
     'Root Mean Squared Error',
-  ],
-  'Binary Classifier': [
-    'Accuracy',
-    'Precision',
-    'Recall',
-    'F1 Score',
-    'ROC AUC',
-    'Confusion Matrix',
-    'Disparate Impact',
-    'Equal Opportunity Difference',
   ],
   'General (Accuracy, Precision, Recall)': generalMetrics,
 };

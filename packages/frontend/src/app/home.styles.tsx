@@ -88,7 +88,7 @@ const reportStyles = {
     sectionHeader: { font: "helvetica", style: "bold", size: 16 },
     subHeader: { font: "helvetica", style: "bold", size: 14 },
     normalText: { font: "helvetica", style: "normal", size: 12 },
-    bulletText: { font: "helvetica", style: "normal", size: 14 }
+    bulletText: { font: "helvetica", style: "normal", size: 11 }
 };
 
 export { styles, reportStyles};

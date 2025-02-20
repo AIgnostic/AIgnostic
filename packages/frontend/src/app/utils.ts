@@ -2,6 +2,7 @@ import isURL from "validator/lib/isURL";
 import jsPDF from "jspdf";
 import { reportStyles } from "./home.styles";
 import { MOCK_MODEL_API_URL, MOCK_DATASET_API_URL} from "./constants"
+import { Article } from "@mui/icons-material";
 
 function checkURL(url: string): boolean {
 
@@ -36,36 +37,34 @@ function generateReportText(results: any) : jsPDF {
     doc.text("AIgnostic Report", 105, y, { align: "center" });
     y += 15;
 
-    applyStyle(doc, reportStyles.subHeader);
-    doc.text("Summary of Metrics:", 10, y);
-    y += 10;
-
-    results.forEach((result: any) => {
-        applyStyle(doc, reportStyles.bulletText);
-        doc.text(`• ${result.metric}`, 15, y);
-        y += 6;
-    });
-    y += 10;
-
-    applyStyle(doc, reportStyles.sectionHeader);
-    doc.text("Results:", 10, y);
-    y += 10;
 
     results.forEach((result: any) => {
         applyStyle(doc, reportStyles.subHeader);
-        doc.text(result.metric, 10, y);
+        doc.text(result.property, 10, y);
         y += 6;
 
         applyStyle(doc, reportStyles.normalText);
-        doc.text(`Result: ${result.result}`, 15, y);
+        doc.text(`Computed Metrics: `, 15, y);
         y += 6;
 
-        applyStyle(doc, reportStyles.normalText);
-        doc.text(`Legislation Quote: ${result.legislation_results[0]}`, 15, y);
-        y += 6;
+        result.computed_metrics.forEach((metric: any) => {
+            applyStyle(doc, reportStyles.bulletText);
+            doc.text(`• ${metric.metric}: ${metric.value}`, 20, y);
+            y += 6;
+        });
 
         applyStyle(doc, reportStyles.normalText);
-        doc.text(`LLM Summary: ${result.llm_model_summary[0]}`, 15, y);
+        doc.text(`Relevant Legislation Extracts:`, 15, y);
+        y += 6;
+
+        result.legislation_extracts.forEach((legislation: any) => {
+            applyStyle(doc, reportStyles.bulletText);
+            doc.text(`• Article ${legislation.article_number} [${legislation.article_title}] - ${legislation.description}`, 20, y);
+            y += 6;
+        });
+
+        applyStyle(doc, reportStyles.normalText);
+        doc.text(`LLM Summary: ${result.llm_insights[0]}`, 15, y);
         y += 10;
     });
 

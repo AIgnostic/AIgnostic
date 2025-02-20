@@ -10,10 +10,10 @@ interface AggregatorResponse {
 }
 
 interface Report {
-  metric: string;
-  result: number;
-  legislationResults: string[];
-  llmModelSummary: string[];
+  property: string;
+  computedMetrics: { metric: string; result: string }[];
+  legislationExtracts: string[];
+  llmInsights: string[];
 }
 
 const Dashboard: React.FC = (DashboardProps) => {

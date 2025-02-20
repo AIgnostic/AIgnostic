@@ -6,7 +6,7 @@ import websockets.sync.server
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 from common.models.aggregator_models import AggregatorMessage, MessageType
-from report_generation.utils import get_legislation_extract
+from report_generation.utils import generate_report
 
 
 def aggregator_metrics_completion_log():
@@ -165,17 +165,7 @@ def aggregate_report(metrics: dict):
         By collating the metrics, and pulling information from the report generator
     """
 
-    report_json = []
-    for metric, value in metrics.items():
-        legislation_extract = get_legislation_extract(metric)
-        report_json.append(
-            {
-                "metric": metric,
-                "result": value,
-                "legislation_results": legislation_extract,
-                "llm_model_summary": ["PLACEHOLDER"],
-            }
-        )
+    report_json = generate_report(metrics)
 
     return report_json
 

@@ -18,6 +18,7 @@ import json
 from typing import Optional
 import asyncio
 from common.models import CalculateRequest, MetricValues
+import random
 
 from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
 
@@ -99,7 +100,7 @@ class Worker():
                 raise WorkerException(f"Invalid job format: {e}", status_code=400)
         return None
 
-    async def fetch_data(self, data_url: HttpUrl, dataset_api_key) -> dict:
+    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size:int) -> dict:
         """
         Helper function to fetch data from the dataset API
 
@@ -108,10 +109,12 @@ class Worker():
         """
         # Send a GET request to the dataset API
         if dataset_api_key is None:
-            response = requests.get(data_url)
+            response = requests.get(data_url, params={"n": batch_size})
         else:
             response = requests.get(
-                data_url, headers={"Authorization": f"Bearer {dataset_api_key}"}
+                data_url, 
+                headers={"Authorization": f"Bearer {dataset_api_key}"},
+                params={"n": batch_size}
             )
 
         try:
@@ -175,7 +178,7 @@ class Worker():
     async def process_job(self, job: Job) -> MetricValues:
 
         # fetch data from datasetURL
-        data: dict = await self.fetch_data(job.data_url, job.data_api_key)
+        data: dict = await self.fetch_data(job.data_url, job.data_api_key, job.batch_size)
 
         # strip the label from the datapoint
         try:
@@ -202,12 +205,23 @@ class Worker():
             print(f"True labels: {labels}")
             print(f"Metrics to compute: {job.metrics}")
 
+            # predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, labels)
+            predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, labels)
+
+            print(f"Predicted labels: {predicted_labels}")
+            print(f"True labels: {true_labels}")
+
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
                 metrics=job.metrics,
                 batch_size=job.batch_size,
                 total_sample_size=job.total_sample_size,
-                true_labels=labels, predicted_labels=predicted_labels
+                true_labels=true_labels,
+                predicted_labels=predicted_labels,
+                # TODO: Do this group stuff properly
+                privileged_groups=[{"protected_attr": 1}],
+                unprivileged_groups=[{"protected_attr": 0}],
+                protected_attr=[random.randint(0, 1) for _ in range(len(true_labels))]
             )
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")
@@ -290,6 +304,32 @@ class Worker():
                     )
 
         return
+    
+    def convert_to_numeric_classes(self, predicted_labels, true_labels):
+        """
+        Function to convert labels to numeric classes
+        """
+        # flatten the labels
+        predicted_labels = [label for sublist in predicted_labels for label in sublist]
+        true_labels = [label for sublist in true_labels for label in sublist]
+        label_set = set(predicted_labels + true_labels)
+        print(f"Label set is: {label_set}")
+        label_map = {label: i for i, label in enumerate(label_set)}
+        predicted_labels_new = [[label_map[label]] for label in predicted_labels]
+        true_labels_new = [[label_map[label]] for label in true_labels]
+        return predicted_labels_new, true_labels_new
+    
+    def binarize_finbert_output(self, predicted_labels, true_labels):
+        """
+        Function to binarize the output of FinBERT
+        """
+        # flatten the labels
+        predicted_labels = [label for sublist in predicted_labels for label in sublist]
+        true_labels = [label for sublist in true_labels for label in sublist]
+        # binarize the labels
+        predicted_labels = [[1] if label == "positive" else [0] for label in predicted_labels]
+        true_labels = [[1] if label == "positive" else [0] for label in true_labels]
+        return predicted_labels, true_labels
 
 
 if __name__ == "__main__":

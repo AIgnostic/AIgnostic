@@ -13,6 +13,7 @@ def predict(input: ModelInput, pipe: pipeline) -> ModelResponse:
             else:
                 result = pipe(data[0])  # Perform prediction
                 results.append([r['label'] for r in result])  # Extract the label from the result
+
                 assert isinstance(data, list), "Input text must be encapsulated in a list"
 
         return ModelResponse(predictions=results)
