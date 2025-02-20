@@ -100,7 +100,7 @@ class Worker():
                 raise WorkerException(f"Invalid job format: {e}", status_code=400)
         return None
 
-    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size:int) -> dict:
+    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> dict:
         """
         Helper function to fetch data from the dataset API
 
@@ -112,7 +112,7 @@ class Worker():
             response = requests.get(data_url, params={"n": batch_size})
         else:
             response = requests.get(
-                data_url, 
+                data_url,
                 headers={"Authorization": f"Bearer {dataset_api_key}"},
                 params={"n": batch_size}
             )
@@ -304,7 +304,7 @@ class Worker():
                     )
 
         return
-    
+
     def convert_to_numeric_classes(self, predicted_labels, true_labels):
         """
         Function to convert labels to numeric classes
@@ -318,7 +318,7 @@ class Worker():
         predicted_labels_new = [[label_map[label]] for label in predicted_labels]
         true_labels_new = [[label_map[label]] for label in true_labels]
         return predicted_labels_new, true_labels_new
-    
+
     def binarize_finbert_output(self, predicted_labels, true_labels):
         """
         Function to binarize the output of FinBERT

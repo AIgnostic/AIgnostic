@@ -1,4 +1,3 @@
-import json
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -82,9 +81,10 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     data["description"] = data["description"].strip()
     return data
 
+
 def generate_report(metrics_data: dict) -> list[dict]:
     """
-    metrics_data: 
+    metrics_data:
     {
         "metric1": "value1",
         "metric2": "value2",
@@ -93,7 +93,7 @@ def generate_report(metrics_data: dict) -> list[dict]:
 
     output:
 
-    [ 
+    [
         "property": fairness
         "computed_metrics": [
             {"metric": "metric1", "value": "value1"},
@@ -114,25 +114,23 @@ def generate_report(metrics_data: dict) -> list[dict]:
             ...
         ]
         "llm_insights": "blah blah blah"
-            
     ]
     """
 
     results = []
     computed_metrics = set(metrics_data.keys())
-    print(f"Computed metrics: {computed_metrics}")        
+    print(f"Computed metrics: {computed_metrics}")
 
     for property in property_to_metrics.keys():
         property_result = {}
         # find the intersection of computed metrics and metrics for the property
         property_metrics = set([p.replace(" ", "_") for p in property_to_metrics[property]])
         common_metrics = computed_metrics.intersection(property_metrics)
-        
-        
+
         property_result["property"] = property
         if common_metrics:
             property_result["computed_metrics"] = [
-                {"metric" : metric.replace("_", " "), "value": metrics_data[metric]}
+                {"metric": metric.replace("_", " "), "value": metrics_data[metric]}
                 for metric in common_metrics
             ]
         else:
@@ -148,7 +146,7 @@ def generate_report(metrics_data: dict) -> list[dict]:
         property_result["llm_insights"] = ["PLACEHOLDER"]
 
         results.append(property_result)
-        
+
     return results
 
 
