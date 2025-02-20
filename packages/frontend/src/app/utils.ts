@@ -6,7 +6,7 @@ import { Article } from "@mui/icons-material";
 
 function checkURL(url: string): boolean {
 
-    if (url === MOCK_MODEL_API_URL || url === MOCK_DATASET_API_URL) {
+    if (url === MOCK_MODEL_API_URL || url === MOCK_DATASET_API_URL || url === 'http://scikit-mock-model-api:5011/predict' || url === 'http://folktables-dataset-api:5010/fetch-datapoints')  {
         return true; 
     }
     if (url === '') {
