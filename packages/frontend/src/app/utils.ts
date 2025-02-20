@@ -64,7 +64,7 @@ function generateReportText(results: any) : jsPDF {
         });
 
         applyStyle(doc, reportStyles.normalText);
-        doc.text(`LLM Summary: ${result.llm_insights[0]}`, 15, y);
+        doc.text(`LLM Summary: ${result.llm_insights[0].content}`, 15, y);
         y += 10;
     });
 
