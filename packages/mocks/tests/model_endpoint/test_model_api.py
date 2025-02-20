@@ -173,6 +173,27 @@ def test_finbert_multiple_inputs():
     })
     assert response.status_code == 200, response.text
     assert len(response.json()["predictions"]) == 3, "Incorrect number of outputs produced given number of inputs"
+    assert len(response.json()["confidence_scores"]) == 3, "Incorrect number of confidence scores produced"
     assert response.json()["predictions"][0][0] == "negative", "First input not classified as negative"
     assert response.json()["predictions"][1][0] == "positive", "Second input not classified as positive"
     assert response.json()["predictions"][2][0] == "neutral", "Third input not classified as neutral"
+
+
+def test_probabilities_sum_to_one():
+    response = finbert_mock.post("/predict", json={
+        "features": [
+            ["Tech stocks are bearish with investors fearing a burst in the AI bubble"],
+            ["The stock market is bullish with investors optimistic about the future"],
+            ["The market will be the same tomorrow as it was the same yesterday"]
+        ],
+        "labels": [
+            ["negative"],
+            ["positive"],
+            ["neutral"]
+        ],
+        "group_ids": []
+    })
+    for confidence_scores in response.json()["confidence_scores"]:
+        assert confidence_scores[0] <= 1, "Probability score is greater than 1"
+        assert confidence_scores[0] >= 0, "Probability score is less than 0"
+        assert sum(confidence_scores) == pytest.approx(1), "Confidence scores do not sum to 1"
