@@ -40,8 +40,9 @@ function generateReportText(results: any) : jsPDF {
 
     results.forEach((result: any) => {
         applyStyle(doc, reportStyles.subHeader);
-        doc.text(result.property, 10, y);
-        y += 6;
+        const capitalizedProperty = result.property.replace(/\b\w/g, (char: string) => char.toUpperCase());
+        doc.text(capitalizedProperty, 10, y);
+        y += 10;
 
         applyStyle(doc, reportStyles.normalText);
         doc.text(`Computed Metrics: `, 15, y);
@@ -56,16 +57,40 @@ function generateReportText(results: any) : jsPDF {
         applyStyle(doc, reportStyles.normalText);
         doc.text(`Relevant Legislation Extracts:`, 15, y);
         y += 6;
-
         result.legislation_extracts.forEach((legislation: any) => {
             applyStyle(doc, reportStyles.bulletText);
-            doc.text(`• Article ${legislation.article_number} [${legislation.article_title}] - ${legislation.description}`, 20, y);
+            const bulletPoint = `• Article ${legislation.article_number} [${legislation.article_title}] - ${legislation.description}`;
+            const lines = doc.splitTextToSize(bulletPoint, 160);
+            lines.forEach((line: string) => {
+            doc.text(line, 20, y);
             y += 6;
+            if (y > 280) { // Check if the y-coordinate is near the bottom of the page
+                doc.addPage();
+                y = 20; // Reset y-coordinate for the new page
+            }
+            });
         });
+        y += 6;
+
 
         applyStyle(doc, reportStyles.normalText);
-        doc.text(`LLM Summary: ${result.llm_insights[0].content}`, 15, y);
+        const llmSummary = result.llm_insights[0].content;
+        const maxLineLength = 160;
+        const lines = doc.splitTextToSize(llmSummary, maxLineLength);
+        lines.forEach((line: string) => {
+            doc.text(line, 15, y);
+            y += 6;
+            if (y > 280) { // Check if the y-coordinate is near the bottom of the page
+                doc.addPage();
+                y = 20; // Reset y-coordinate for the new page
+            }
+        });
         y += 10;
+
+        if (y > 280) { // Check if the y-coordinate is near the bottom of the page
+            doc.addPage();
+            y = 20; // Reset y-coordinate for the new page
+        }
     });
 
     return doc;
