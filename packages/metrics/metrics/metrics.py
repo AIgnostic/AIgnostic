@@ -387,8 +387,9 @@ def explanation_sparsity_score(name, info: CalculateRequest) -> float:
         divided by the total number of features
     """
     # Threshold for sparsity - defined arbitrarily for now
-    # TODO: get mean and std of the *explanations* element-wise (per feature) - then check proportion less than 2 sigma from the mean
-    threshold = 1e-2 # mean +- std
+    # TODO: get mean and std of the *explanations* element-wise (per feature)
+    #  - then check proportion less than 2 sigma from the mean
+    threshold = 1e-2    # mean +- std
     lime_explanation, _ = _lime_explanation(info)
     sparsity = np.sum(lime_explanation < threshold) / lime_explanation.shape[1]
     return 1 - sparsity

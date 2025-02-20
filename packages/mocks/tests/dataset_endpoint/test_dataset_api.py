@@ -1,14 +1,12 @@
 from fastapi.testclient import TestClient
 from mocks.api_utils import MOCK_DATASET_API_KEY
 from mocks.dataset.mock_server import app as client_mock
-from api.dataset.validate_dataset_api import _validate_dataset_format, app as server_app
+from api.dataset.validate_dataset_api import _validate_dataset_format
 from common.models import ModelInput
 import pytest
 
-server_app = TestClient(server_app)
 client_mock = TestClient(client_mock)
 
-local_server = "http://127.0.0.1:5000"
 valid_api_key = {"Authorization": f"Bearer {MOCK_DATASET_API_KEY}"}
 invalid_api_key = {"Authorization": "Bearer INVALID_KEY"}
 
