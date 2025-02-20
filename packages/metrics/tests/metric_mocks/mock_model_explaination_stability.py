@@ -16,12 +16,14 @@ app.add_middleware(
 @app.post('/predict-10000', response_model=ModelResponse)
 async def predict(input_data: ModelInput):
     return ModelResponse(
-        predictions=[[10000] for _ in range(len(input_data.features))]
+        predictions=[[10000] for _ in range(len(input_data.features))],
+        confidence_scores=[[1] for _ in range(len(input_data.features))]
     )
 
 
 @app.post('/predict-different', response_model=ModelResponse)
 async def predict(input_data: ModelInput):
     return ModelResponse(
-        predictions=[[random.random()] for _ in range(len(input_data.features))]
+        predictions=[[random.random()] for _ in range(len(input_data.features))],
+        confidence_scores=[[random.random()] for _ in range(len(input_data.features))]
     )

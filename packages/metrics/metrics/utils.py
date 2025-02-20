@@ -91,35 +91,27 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
         scale=0.1 * np.std(info.input_features, axis=0),
         size=(num_samples, d)
     )
-    print(f"Std: {np.std(info.input_features, axis=0)}")
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
 
-    # Compute model predictions for perturbed samples
-    predictions = response.predictions
+    # Compute model probabilities for perturbed samples
+    probabilities = response.confidence_scores
 
-    if predictions is None:
+    if probabilities is None:
         raise ModelQueryException(
-            detail="Model response does not contain predictions",
+            detail="Model response does not contain probability scores for outputs",
             status_code=400
         )
 
     # Compute similarity weights using an RBF kernel
     distances = np.array([euclidean(info.input_features[i], sample) for i, sample in enumerate(perturbed_samples)])
-    print(f"Distances: {distances}")
-    print(f"Kernel width: {kernel_width}")
 
     epsilon = 1e-10 # Small constant for numerical stability (avoid division by zero)
     weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2)) + epsilon
 
     # Fit a weighted linear regression model
     reg_model = Ridge(alpha=1.0)
-    print(f"Input features: {info.input_features}")
-    print(f"Perturbed samples: {perturbed_samples}")
-    print(f"Predictions: {predictions}")
-    print(f"Weights: {weights}")
-    print(f"perturbed_samples - info.input_features: {perturbed_samples - info.input_features}")
-    reg_model.fit(perturbed_samples - info.input_features, predictions, sample_weight=weights)
+    reg_model.fit(perturbed_samples - info.input_features, probabilities, sample_weight=weights)
     return reg_model.coef_, reg_model
 
 

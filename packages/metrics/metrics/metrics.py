@@ -27,7 +27,11 @@ from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
 import pandas as pd
 import numpy as np
-from metrics.exceptions import MetricsException, ModelQueryException
+from metrics.exceptions import (
+    MetricsException,
+    DataInconstencyException,
+    ModelQueryException
+)
 from common.models import ModelResponse
 
 
@@ -365,12 +369,8 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
     lime_perturbed, _ = _lime_explanation(info)
 
     # use cosine-similarity for now but can be replaced with model-provider function later
-    print(f"lime_actual: {lime_actual}")
-    print(f"lime_perturbed: {lime_perturbed}")
-
     # TODO: Took absolute value of cosine similarity - verify if this is correct
     diff = np.abs(cosine_similarity(lime_perturbed.reshape(1,-1), lime_actual.reshape(1,-1)))
-    print(diff)
     return 1 - np.mean(diff).item()
 
 
@@ -532,6 +532,17 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
     data required for calculation of these metrics.
     :return: MetricValues - contains the calculated metrics and their scores
     """
+
+    # Input validation
+    if info.confidence_scores is not None:
+        if info.true_labels is not None:
+            # If confidence scores and labels are both given, ensure they have the same length
+            if info.confidence_scores.shape != info.true_labels.shape:
+                raise DataInconstencyException(
+                    "calculate_metrics",
+                    detail="Length mismatch between confidence scores and true labels.",
+                )
+
     results = {}
     for metric in info.metrics:
         if metric not in metric_to_fn.keys():

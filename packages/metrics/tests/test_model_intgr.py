@@ -74,10 +74,12 @@ def test_explanation_stability_similar_scores_result_in_1(server_factory):
         info = CalculateRequest(
             metrics=[metric_name],
             input_features=[[1, 2]],
+            confidence_scores=[[0.5]],
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-10000"
         )
         result = calculate_metrics(info)
         assert result.metric_values[metric_name] == pytest.approx(1.0)
+
 
 def test_explanation_stability_different_scores_is_not_1(server_factory):
     metric_name = "explanation_stability_score"
@@ -86,6 +88,7 @@ def test_explanation_stability_different_scores_is_not_1(server_factory):
         info = CalculateRequest(
             metrics=[metric_name],
             input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0,60], [-34,2222]],
+            confidence_scores=[[0.5], [0.6], [0.2], [0.8], [0.9], [0.1]],
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-different"
         )
         result = calculate_metrics(info)

@@ -36,6 +36,24 @@ class MetricsException(__MetricsPackageException):
         super().__init__(err_msg, status_code)
 
 
+class DataInconstencyException(__MetricsPackageException):
+    """
+    Class representing invalid inputs for metric calculations - specifically regarding
+    .e.g. inconsistent number of datapoints or other data inconstency issues
+
+    Args:
+        detail: [str | None] = None - Error message to display to the user. Default message is
+            "Data inconsistency error". Having a non-empty detail message will append it to the
+            default message with ": {detail}".
+        status_code: [int] = 400 - HTTP status code to return to the user.
+    """
+
+    def __init__(self, detail=None, status_code=400):
+        err_msg = "Data inconsistency error"
+        if detail:
+            err_msg += f": {detail}"
+        super().__init__(err_msg, status_code)
+
 class ModelQueryException(__MetricsPackageException):
     """
     Class for all model query-related exceptions (as a result of querying the model during
