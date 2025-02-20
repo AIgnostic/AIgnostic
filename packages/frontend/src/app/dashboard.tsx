@@ -17,8 +17,12 @@ interface Metric {
   llmModelSummary: string[];
 }
 
+interface DashboardProps {
+  onComplete: () => void;
+}
+
 // Each item from the websocket is an array of Metric objects.
-const Dashboard: React.FC = () => {
+const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
   // 'items' holds each item (which is an array of Metric objects) received from the socket.
   const [items, setItems] = useState<Metric[][]>([]);
   const [log, setLog] = useState<string>('');
@@ -54,7 +58,13 @@ const Dashboard: React.FC = () => {
             // Assume each intermediate message contains one item with multiple metrics.
             const newItem: Metric[] = data.content.metrics_results;
             // Append the new item to our list of items.
-            setItems((prevItems) => [...prevItems, newItem]);
+            setItems((prevItems) => {
+              const updatedItems = [...prevItems, newItem];
+              if (updatedItems.length >= expectedItems) {
+                onComplete();
+              }
+              return updatedItems;
+            });
           } catch (e: any) {
             setShowError(true);
             setError({ header: 'Error parsing data:', text: e.message });
@@ -80,7 +90,7 @@ const Dashboard: React.FC = () => {
     return () => {
       socket.close();
     };
-  }, []);
+  }, [onComplete]);
 
   // Calculate overall progress as the number of items received divided by the expected total.
   const overallProgress = Math.min(items.length / expectedItems, 1);

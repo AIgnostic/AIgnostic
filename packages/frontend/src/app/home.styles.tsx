@@ -48,7 +48,6 @@ const styles = {
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer' as const,
-    backgroundColor: theme.palette.secondary.main,
     color: '#fff',
   },
   accordion: {

@@ -23,6 +23,7 @@ export interface HomepageState {
   error: boolean;
   errorMessage: { header: string; text: string };
   showDashboard: boolean;
+  isGeneratingReport: boolean;
 }
 
 /*

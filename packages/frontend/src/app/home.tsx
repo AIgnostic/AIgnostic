@@ -53,6 +53,7 @@ function Homepage() {
     errorMessage: { header: '', text: '' },
     showDashboard: false,
     dashboardKey: 0, // Added key to force Dashboard remount
+    isGeneratingReport: false,
   });
 
   const getValues = {
@@ -116,8 +117,18 @@ function Homepage() {
       console.log('Please fill in both text inputs.');
       return;
     }
-    setStateWrapper('dashboardKey', state.dashboardKey + 1);
 
+    if (state.isGeneratingReport) {
+      setStateWrapper('error', true);
+      setStateWrapper('errorMessage', {
+        header: 'Report Being Generated',
+        text: 'Please wait for the current report to finish generating.',
+      });
+      return;
+    }
+
+    setStateWrapper('isGeneratingReport', true); // Prevent multiple clicks
+    setStateWrapper('dashboardKey', state.dashboardKey + 1);
     setStateWrapper('showDashboard', true);
 
     const user_info = {
@@ -420,12 +431,15 @@ function Homepage() {
                         }
                         // if all checks pass, generate report
                         else {
-                          handleSubmit();
+                          if (!state.isGeneratingReport) {
+                            handleSubmit();
+                          }
                         }
 
                         // open dashboard page in new tab
                         // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
                       }}
+                      disabled={state.isGeneratingReport}
                       sx={{ mt: 1, mr: 1 }}
                     >
                       {' '}
@@ -433,7 +447,12 @@ function Homepage() {
                     </Button>
                     {state.showDashboard && (
                       // Passing the dashboardKey forces remount when it changes.
-                      <Dashboard key={state.dashboardKey} />
+                      <Dashboard
+                        key={state.dashboardKey}
+                        onComplete={() => {
+                          setStateWrapper('isGeneratingReport', false);
+                        }}
+                      />
                     )}
                   </div>
                 ) : (
@@ -465,6 +484,9 @@ function Homepage() {
                       (index === 1 && state.selectedModelType === '')
                     }
                     sx={{ mt: 1, mr: 1 }}
+                    style={{
+                      backgroundColor: theme.palette.secondary.main,
+                    }}
                   >
                     {' '}
                     Next
@@ -473,7 +495,7 @@ function Homepage() {
 
                 <Button
                   variant="contained"
-                  disabled={index === 0}
+                  disabled={index === 0 || state.isGeneratingReport}
                   onClick={handleBack}
                   sx={[{ mt: 1, mr: 1 }, styles.secondaryButton]}
                 >
