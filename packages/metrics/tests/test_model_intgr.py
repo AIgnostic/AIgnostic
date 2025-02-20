@@ -1,14 +1,14 @@
 from metrics.models import CalculateRequest
 from metrics.utils import _finite_difference_gradient
 from tests.metric_mocks.mock_model_finite_diff_grad import (
-    app as finite_diff_grad_app,
+    app as finite_diff_grad_app,    
     TEST_INPUT,
     EPSILON,
     EXPECTED_GRADIENT
 )
 from tests.metric_mocks.mock_model_explaination_stability import app as expl_stability_app
 from tests.metric_mocks.mock_model_ood_auroc import app as ood_auroc_app
-from metrics.metrics import calculate_metrics
+from metrics.metrics import calculate_metrics, explanation_stability_score
 from threading import Thread
 import numpy as np
 import pytest
@@ -67,7 +67,7 @@ def server_factory():
             thread.join()
 
 
-def test_explanation_stability_similar_scores_result_in_1(server_factory):
+def test_explanation_stability_similar_scores_result_is_1(server_factory):
     metric_name = "explanation_stability_score"
     with server_factory(metric_name):
         # Check similar predictions after perturbation have value close to 1
@@ -76,8 +76,9 @@ def test_explanation_stability_similar_scores_result_in_1(server_factory):
             input_features=[[1, 2]],
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-10000"
         )
-        result = calculate_metrics(info)
-        assert result.metric_values[metric_name] == pytest.approx(1.0)
+        result = explanation_stability_score("test_similar_scores_result_is_1", info)
+        # assert result.metric_values[metric_name] == pytest.approx(1.0)
+        assert result == pytest.approx(1.0)
 
 
 def test_explanation_stability_different_scores_is_not_1(server_factory):
@@ -89,8 +90,9 @@ def test_explanation_stability_different_scores_is_not_1(server_factory):
             input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-different"
         )
-        result = calculate_metrics(info)
-        assert result.metric_values[metric_name] < 1.0
+        result = explanation_stability_score("", info)
+        # assert result.metric_values[metric_name] < 1.0
+        assert result < 1.0
 
 
 def test_finite_diff_gradient(server_factory):
