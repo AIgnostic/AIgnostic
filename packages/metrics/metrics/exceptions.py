@@ -7,7 +7,6 @@ class __MetricsPackageException(Exception, ABC):
     __MetricsPackageException is the base exception class for the metrics package
         - it extends Exception as an abstract class and requires a detail field (not empty)
         to describe an error as well as a status code.
-
     """
     @abstractmethod
     def __init__(self, detail, status_code):
@@ -54,6 +53,7 @@ class DataInconstencyException(__MetricsPackageException):
             err_msg += f": {detail}"
         super().__init__(err_msg, status_code)
 
+
 class ModelQueryException(__MetricsPackageException):
     """
     Class for all model query-related exceptions (as a result of querying the model during
@@ -67,6 +67,21 @@ class ModelQueryException(__MetricsPackageException):
     """
     def __init__(self, detail=None, status_code=400):
         err_msg = "Error when querying model"
+        if detail:
+            err_msg += f": {detail}"
+        super().__init__(err_msg, status_code)
+
+
+class InsufficientDataProvisionException(__MetricsPackageException):
+    """
+    Class representing insufficient data provision for metric calculations - this occurs when
+    the user's choice of metrics require certain extra data to be provided. If the conditions
+    to calculate a metric are not satisfied, this exception is raised.
+    """
+
+    # This is a 400 error as metrics is implemented as a microservice
+    def __init__(self, detail=None, status_code=400):
+        err_msg = "Insufficient data provided to calculate user metrics"
         if detail:
             err_msg += f": {detail}"
         super().__init__(err_msg, status_code)

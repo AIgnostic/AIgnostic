@@ -30,7 +30,8 @@ import numpy as np
 from metrics.exceptions import (
     MetricsException,
     DataInconstencyException,
-    ModelQueryException
+    ModelQueryException,
+    InsufficientDataProvisionException
 )
 from common.models import ModelResponse
 
@@ -370,7 +371,7 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
 
     # use cosine-similarity for now but can be replaced with model-provider function later
     # TODO: Took absolute value of cosine similarity - verify if this is correct
-    diff = np.abs(cosine_similarity(lime_perturbed.reshape(1,-1), lime_actual.reshape(1,-1)))
+    diff = np.abs(cosine_similarity(lime_perturbed.reshape(1, -1), lime_actual.reshape(1, -1)))
     return 1 - np.mean(diff).item()
 
 
@@ -533,21 +534,25 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
     data required for calculation of these metrics.
     :return: MetricValues - contains the calculated metrics and their scores
     """
+    try:
+        # Input validation
+        if info.confidence_scores is not None:
+            if info.true_labels is not None:
+                # If confidence scores and labels are both given, ensure they have the same length
+                if info.confidence_scores.shape != info.true_labels.shape:
+                    raise DataInconstencyException(
+                        "calculate_metrics",
+                        detail="Length mismatch between confidence scores and true labels.",
+                    )
 
-    # Input validation
-    if info.confidence_scores is not None:
-        if info.true_labels is not None:
-            # If confidence scores and labels are both given, ensure they have the same length
-            if info.confidence_scores.shape != info.true_labels.shape:
-                raise DataInconstencyException(
-                    "calculate_metrics",
-                    detail="Length mismatch between confidence scores and true labels.",
-                )
-
-    results = {}
-    for metric in info.metrics:
-        if metric not in metric_to_fn.keys():
-            results[metric] = 1
-        else:
-            results[metric] = metric_to_fn[metric](metric, info)
-    return MetricValues(metric_values=results)
+        results = {}
+        for metric in info.metrics:
+            if metric not in metric_to_fn.keys():
+                results[metric] = 1
+            else:
+                results[metric] = metric_to_fn[metric](metric, info)
+        return MetricValues(metric_values=results)
+    except AttributeError as e:
+        raise InsufficientDataProvisionException(
+            detail=str(e)
+        )
