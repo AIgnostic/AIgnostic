@@ -1,3 +1,5 @@
+"""Example way to call the LLM insights API."""
+
 import os
 from llm_insights.insights import init_llm, metric_insights
 from report_generation.utils import extract_legislation_text, parse_legislation_text

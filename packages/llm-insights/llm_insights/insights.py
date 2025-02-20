@@ -40,9 +40,12 @@ async def metric_insights(
                     metric_name (str): Name of metric in question that is linked into the property
                     metric_value (str): Value evaluated for the metric (string for flexibility)
                     article_extracts (List[str]): Extracts of articles related to the metric/property to use
+                    llm (BaseChatModel): LLM to use, likely created using init_llm but can be any LLM from LangChain
 
     Returns:
                     str: Insight output from LLM
+
+    See tests/demo.py for an example
     """
     messages = [
         (

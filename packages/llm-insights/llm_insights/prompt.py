@@ -10,7 +10,7 @@ Below you are provided with:
 - The name of the property in question
 - The name of the metric in question that is linked into the property
 - The value evaluated for the metric (usually floating point number between 0 and 1)
-- Extracts of articles of laws related to the metric/property to use
+- Extracts of articles of the EU AI Act related to the metric/property to use
 
 We want to know how 'good' our LLM would be and if it is compliant with the law - it is your job based on the information to provide a written response about this
 </goal>
@@ -33,7 +33,7 @@ A string response explaining the implications of the metric in relation to the l
 	{article_extracts}
 </articles>
 
-Please provide your response.
+Please provide your response in a maximum of 2 paragraphs.
 """
 
 
