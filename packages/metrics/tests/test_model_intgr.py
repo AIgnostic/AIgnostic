@@ -1,7 +1,7 @@
 from metrics.models import CalculateRequest
 from metrics.utils import _finite_difference_gradient
 from tests.metric_mocks.mock_model_finite_diff_grad import (
-    app as finite_diff_grad_app,    
+    app as finite_diff_grad_app,
     TEST_INPUT,
     EPSILON,
     EXPECTED_GRADIENT

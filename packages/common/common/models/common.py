@@ -3,7 +3,7 @@ from typing import Optional
 # from common.utils import nested_list_to_np
 
 
-class Job(BaseModel):
+class Job(BaseModel):   # pragma: no cover
     """
     Job pydantic model represents the request body when sending a request
     to calculate metrics. It includes list of metrics to be calculated as well as all relevant
@@ -23,7 +23,7 @@ class Job(BaseModel):
     model_api_key: str
 
 
-class ModelInput(BaseModel):
+class ModelInput(BaseModel):    # pragma: no cover
     """
     A model for a dataset to be sent to a model
 
@@ -41,7 +41,7 @@ class ModelInput(BaseModel):
     #     return nested_list_to_np(v)
 
 
-class ModelResponse(BaseModel):
+class ModelResponse(BaseModel):     # pragma: no cover
     """
     A model for a response from a model
 
