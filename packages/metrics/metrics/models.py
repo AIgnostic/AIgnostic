@@ -68,3 +68,4 @@ class MetricValues(BaseModel):
     Receive calculated metric values
     """
     metric_values: dict[str, float]
+    warning_msg: Optional[str] = None

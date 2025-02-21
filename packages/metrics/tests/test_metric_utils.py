@@ -37,6 +37,7 @@ def mock_info():
             self.input_features = np.array([[1, 2], [3, 4], [5, 6]])
             self.model_url = "http://model-api.com"
             self.model_api_key = "fake_api_key"
+            self.regression_flag = False
     return MockInfo()
 
 
