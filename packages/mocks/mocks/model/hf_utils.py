@@ -1,21 +1,32 @@
 from fastapi import HTTPException
-from transformers import pipeline
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from common.models import ModelInput, ModelResponse
+import torch
 
 
-def predict(input: ModelInput, pipe: pipeline) -> ModelResponse:
+def predict(input: ModelInput, model_name: str) -> ModelResponse:
     try:
-        inputs = input.features
-        results = []
-        for data in inputs:
-            if len(data) != 1:
-                raise HTTPException(status_code=400, detail=f"Input text must be a single string. Got {data}")
-            else:
-                result = pipe(data[0])  # Perform prediction
-                results.append([r['label'] for r in result])  # Extract the label from the result
+        model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-                assert isinstance(data, list), "Input text must be encapsulated in a list"
+        if not input.features:
+            return ModelResponse(predictions=[], confidence_scores=[])
 
-        return ModelResponse(predictions=results)
+        # Convert nested list to list of strings
+        texts = [" ".join(map(str, features)) for features in input.features]
+
+        # Tokenize the input texts
+        inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+
+        with torch.no_grad():
+            outputs = model(**inputs)
+            logits = outputs.logits
+
+            # Apply softmax on output scores to get probabilities
+            probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
+
+            predicted_class_ids = logits.argmax(dim=-1).tolist()
+            labels = [[model.config.id2label[class_id]] for class_id in predicted_class_ids]
+            return ModelResponse(predictions=labels, confidence_scores=probabilities.tolist())
     except Exception as e:
         raise HTTPException(detail=f"Error occured during model prediction: {e}", status_code=400)

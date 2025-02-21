@@ -1,4 +1,4 @@
-from metrics.exceptions import MetricsException, ModelQueryException
+from metrics.exceptions import ModelQueryException
 from metrics.models import CalculateRequest
 from common.models import ModelInput, ModelResponse
 from sklearn.linear_model import Ridge
@@ -7,13 +7,12 @@ import numpy as np
 import requests
 
 
-def _finite_difference_gradient(name, info: CalculateRequest,
+def _finite_difference_gradient(info: CalculateRequest,
                                 h: float = 1e-5) -> np.ndarray:
     """
     Compute the finite difference approximation of the gradient for given data.
 
     Args:
-        name: Name of the metric (for exception handling).
         info: Information required to compute the gradient including info.input_features,
             model_url and model_api_key.
         h: Perturbation magnitude.
@@ -21,33 +20,29 @@ def _finite_difference_gradient(name, info: CalculateRequest,
     Returns:
         Gradient matrix of shape (num_samples, num_features).
     """
-    try:
-        X = np.array(info.input_features, dtype=np.float64)
-        _, num_features = X.shape
-        gradients = np.zeros_like(X)
+    X = np.array(info.input_features, dtype=np.float64)
+    _, num_features = X.shape
+    gradients = np.zeros_like(X)
 
-        for i in range(num_features):
-            X_forward = X.copy()
-            X_backward = X.copy()
-            X_forward[:, i] += h
-            X_backward[:, i] -= h
+    for i in range(num_features):
+        X_forward = X.copy()
+        X_backward = X.copy()
+        X_forward[:, i] += h
+        X_backward[:, i] -= h
 
-            def predict(x):
-                # Helper function to query the model with perturbed inputs
-                nonlocal info
-                return _query_model(x.reshape(1, -1), info).predictions[0][0]
+        def predict(x):
+            # Helper function to query the model with perturbed inputs
+            nonlocal info
+            return _query_model(x.reshape(1, -1), info).predictions[0][0]
 
-            # Compute the function values (assuming the metric function is applied row-wise)
-            f_forward = np.apply_along_axis(predict, 1, X_forward)
-            f_backward = np.apply_along_axis(predict, 1, X_backward)
+        # Compute the function values (assuming the metric function is applied row-wise)
+        f_forward = np.apply_along_axis(predict, 1, X_forward)
+        f_backward = np.apply_along_axis(predict, 1, X_backward)
 
-            # Compute gradient using central difference
-            gradients[:, i] = (f_forward - f_backward) / (2 * h)
+        # Compute gradient using central difference
+        gradients[:, i] = (f_forward - f_backward) / (2 * h)
 
-        return gradients
-
-    except (TypeError, ValueError, AttributeError, IndexError, ZeroDivisionError) as e:
-        raise MetricsException(name, detail=str(e))
+    return gradients
 
 
 def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
@@ -73,41 +68,46 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
 
     Args:
         info: information required to compute the explanation including info.input_features,
-            model_url and model_api_key
+            confidence_scores, model_url and model_api_key
         kernel_width: Width of the Gaussian kernel for weighting
 
     Returns:
         explanation: Linear surrogate model coefficients (d-dimensional array)
     """
-    # Convert input_features to numpy array if it's a list
-    input_features = np.array(info.input_features) if isinstance(info.input_features, list) else info.input_features
-    num_samples, d = input_features.shape
+    num_samples, d = info.input_features.shape
 
-    # Generate perturbed samples
+    # TODO: Change to probabilities instead of probabilities
+    # Need total softmax as we can identify if the class value changes
+    #  e.g. 0.9 -> 0.1 means some other class higher p value
+
+    # Binary -> Bernoulli Noise
+    # Assume numeric values for now
+    # TODO: Add support for categorical features
     perturbed_samples = info.input_features + np.random.normal(
         scale=0.1 * np.std(info.input_features, axis=0),
         size=(num_samples, d)
     )
-
-    # Call the model endpoint to get predictions
+    # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
 
-    # Get model predictions for perturbed samples
-    if response.predictions is None:
+    # Compute model probabilities for perturbed samples
+    probabilities = response.confidence_scores
+
+    if probabilities is None:
         raise ModelQueryException(
-            detail="Model response does not contain predictions",
-            status_code=500
+            detail="Model response does not contain probability scores for outputs",
+            status_code=400
         )
-    predictions = response.predictions
 
     # Compute similarity weights using an RBF kernel
-    distances = np.array([euclidean(input_features[i], sample) for i, sample in enumerate(perturbed_samples)])
-    weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2))
+    distances = np.array([euclidean(info.input_features[i], sample) for i, sample in enumerate(perturbed_samples)])
+
+    epsilon = 1e-10     # Small constant for numerical stability (avoid division by zero)
+    weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2)) + epsilon
 
     # Fit a weighted linear regression model
     reg_model = Ridge(alpha=1.0)
-    reg_model.fit(perturbed_samples - info.input_features, predictions, sample_weight=weights)
-
+    reg_model.fit(perturbed_samples - info.input_features, probabilities, sample_weight=weights)
     return reg_model.coef_, reg_model
 
 
@@ -122,6 +122,7 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
     Returns:
     - response : Response from the model API
     """
+
     model_input = ModelInput(
         features=generated_input_features.tolist(),
         labels=np.zeros((len(generated_input_features), 1)).tolist(),

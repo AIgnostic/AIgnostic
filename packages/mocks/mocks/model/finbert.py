@@ -1,7 +1,6 @@
 """
 Mock FinBERT model
 """
-from transformers import pipeline
 from fastapi import FastAPI
 from common.models import ModelInput, ModelResponse
 from mocks.model.hf_utils import predict as text_classification_predict
@@ -17,13 +16,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-pipe = pipeline("text-classification", model="ProsusAI/finbert")
+name = "ProsusAI/finbert"
 
 
 @app.post("/predict", response_model=ModelResponse)
 def predict(input: ModelInput) -> ModelResponse:
-    return text_classification_predict(input, pipe)
+    return text_classification_predict(input, name)
 
 
 if __name__ == "__main__":

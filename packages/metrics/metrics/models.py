@@ -19,6 +19,9 @@ class CalculateRequest(BaseModel):
     :param metrics: list[str] - List of metrics to be calculated.
     :param input_data: Optional[list[list]] - 2D list of input data where each nested list
         corresponds to one row of data.
+    :param confidence_scores: Optional[list[list]] - 2D list of probabilities where each nested
+        list corresponds to one row of data - indicates the probability of a given output prediction
+        and all other possible outputs
     :param true_labels: Optional[list[list]] - 2D list of true labels where each nested list
         corresponds to one row of data.
     :param predicted_labels: Optional[list[list]] - 2D list of predicted labels where each
@@ -29,8 +32,6 @@ class CalculateRequest(BaseModel):
     :param unprivileged_groups: Optional[list[dict[str, Any]]] - List of dictionaries representing
         unprivileged groups.
     :param protected_attr: Optional[list[int]] - List of indices representing protected attributes.
-    :param confidence_scores: Optional[list[list]] - 2D list of confidence scores where each nested
-        list corresponds to one row of data.
     :param model_url: Optional[HttpUrl] - URL of the model endpoint.
     :param model_api_key: Optional[str] - API key for accessing the model endpoint.
     """
@@ -38,19 +39,20 @@ class CalculateRequest(BaseModel):
     batch_size: int
     total_sample_size: int
     input_features: Optional[list[list]] = None
+    confidence_scores: Optional[list[list]] = None
     true_labels: Optional[list[list]] = None
     predicted_labels: Optional[list[list]] = None
     target_class: Optional[Any] = None
     privileged_groups: Optional[list[dict[str, Any]]] = None
     unprivileged_groups: Optional[list[dict[str, Any]]] = None
     protected_attr: Optional[list[int]] = None
-    confidence_scores: Optional[list[list]] = None
     model_url: Optional[HttpUrl] = None
     model_api_key: Optional[str] = None
 
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @field_validator(
         'input_features',
+        'confidence_scores',
         'true_labels',
         'predicted_labels',
         'protected_attr',

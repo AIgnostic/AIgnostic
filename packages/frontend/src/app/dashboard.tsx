@@ -42,7 +42,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
   const [report, setReport] = useState<Report | null>(null);
 
   // We expect to receive 20 items total.
-  const expectedItems = 20;
+  const expectedItems = 10;
 
   useEffect(() => {
     const socket = new WebSocket('ws://localhost:5005');

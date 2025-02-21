@@ -44,6 +44,7 @@ def mock_query_model(perturbed_samples, info):
     class MockResponse:
         def __init__(self):
             self.predictions = np.random.rand(perturbed_samples.shape[0])
+            self.confidence_scores = np.random.rand(perturbed_samples.shape[0])
     return MockResponse()
 
 
@@ -69,7 +70,7 @@ def test_lime_explanation(mock_query, mock_info):
 """
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def mock_post():
     with patch('requests.post') as mock:
         yield mock

@@ -6,7 +6,7 @@ from tests.metric_mocks.mock_model_finite_diff_grad import (
     EPSILON,
     EXPECTED_GRADIENT
 )
-
+from tests.metric_mocks.mock_model_explaination_stability import app as expl_stability_app
 from tests.metric_mocks.mock_model_ood_auroc import app as ood_auroc_app
 from metrics.metrics import calculate_metrics
 from threading import Thread
@@ -16,17 +16,22 @@ import uvicorn
 import time
 import contextlib
 
+
 HOST = "127.0.0.1"
 
 server_configs = {
     "finite_diff_grad": {
-        "port": 3333,
+        "port": 3000,
         "app": finite_diff_grad_app,
     },
     "ood_auroc": {
-        "port": 3334,
+        "port": 3001,
         "app": ood_auroc_app,
-    }
+    },
+    "explanation_stability_score": {
+        "port": 3002,
+        "app": expl_stability_app,
+    },
 }
 
 
@@ -62,10 +67,41 @@ def server_factory():
             thread.join()
 
 
+<<<<<<< HEAD
 def test_explanation_stability_scores(server_factory):
     # metric_name = "explanation_stability_score"
     # Check similar predictions have value close to 1
     pass
+=======
+def test_explanation_stability_similar_scores_result_in_1(server_factory):
+    metric_name = "explanation_stability_score"
+    with server_factory(metric_name):
+        # Check similar predictions after perturbation have value close to 1
+        info = CalculateRequest(
+            metrics=[metric_name],
+            input_features=[[1, 2]],
+            confidence_scores=[[0.5]],
+            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-10000",
+            model_api_key="None"
+        )
+        result = calculate_metrics(info)
+        assert result.metric_values[metric_name] == pytest.approx(1.0)
+
+
+def test_explanation_stability_different_scores_is_not_1(server_factory):
+    metric_name = "explanation_stability_score"
+    with server_factory(metric_name):
+        # Check different predictions after perturbation have value close to 0
+        info = CalculateRequest(
+            metrics=[metric_name],
+            input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
+            confidence_scores=[[0.5], [0.6], [0.2], [0.8], [0.9], [0.1]],
+            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-different",
+            model_api_key="None"
+        )
+        result = calculate_metrics(info)
+        assert result.metric_values[metric_name] < 1.0
+>>>>>>> origin/3.1A-metrics-implementation
 
 
 def test_finite_diff_gradient(server_factory):
@@ -77,7 +113,7 @@ def test_finite_diff_gradient(server_factory):
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict",
         )
 
-        result = _finite_difference_gradient("none", info, EPSILON)
+        result = _finite_difference_gradient(info, EPSILON)
 
         assert len(result) == len(TEST_INPUT), (
             f"Expected gradient to have {len(TEST_INPUT)} samples, but got {len(result)}"
@@ -101,6 +137,7 @@ def test_ood_auroc(server_factory):
             input_features=input_data,
             confidence_scores=confidence_scores,
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict",
+            model_api_key="None"
         )
 
         result = calculate_metrics(info)
@@ -108,3 +145,6 @@ def test_ood_auroc(server_factory):
 
         assert isinstance(result, float), f"Expected AUROC to be a float, but got {type(result)}"
         assert 0.0 <= result <= 1.0, f"Expected AUROC to be between 0.0 and 1.0, but got {result}"
+
+
+# TODO: Test explanation sparse and fidelity metrics

@@ -9,9 +9,10 @@ from common.rabbitmq.constants import JOB_QUEUE
 
 api = APIRouter()
 BATCH_SIZE = 50
+NUM_BATCHES = 10
 # total sample size should be a multiple of batch size
 # TOTAL_SAMPLE_SIZE = round(1000 / BATCH_SIZE) * BATCH_SIZE
-TOTAL_SAMPLE_SIZE = 1000
+TOTAL_SAMPLE_SIZE = BATCH_SIZE * NUM_BATCHES
 
 
 class ModelEvaluationRequest(BaseModel):

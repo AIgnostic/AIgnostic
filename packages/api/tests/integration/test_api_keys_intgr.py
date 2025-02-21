@@ -25,10 +25,10 @@ def run_servers():
     data_config = uvicorn.Config(app=data_app, host="127.0.0.1", port=3333)
     model_config = uvicorn.Config(app=sk_model_app, host="127.0.0.1", port=3334)
     app_config = uvicorn.Config(app=app_client, host="127.0.0.1", port=3335)
+    worker_config = uvicorn.Config(app=sk_model_app, host="127.0.0.1", port=3336)
     data_server = uvicorn.Server(data_config)
     model_server = uvicorn.Server(model_config)
     app_server = uvicorn.Server(app_config)
-    worker_config = uvicorn.Config(app=sk_model_app, host="127.0.0.1", port=3336)
     worker_server = uvicorn.Server(worker_config)
 
     def start_server(server):
