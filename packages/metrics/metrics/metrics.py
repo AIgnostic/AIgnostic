@@ -39,6 +39,12 @@ from common.models import ModelResponse
 def is_valid_for_per_class_metrics(metric_name, true_labels):
     """
     Check if the input is valid for the given metric. Valid fn for precision, recall and F1 scoring
+    
+    :param metric_name: str - name of the metric being calculated for error handling
+    :param true_labels: np.array - the true labels for the dataset
+    
+    :raises MetricsException: if the input is invalid for the given metric
+    :return: None
     """
     if len(true_labels) == 0:
         raise MetricsException(
@@ -55,6 +61,7 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
             metric_name,
             detail=f"No attributes provided - cannot calculate {metric_name}",
         )
+    return
 
 
 """
@@ -62,11 +69,10 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
 """
 
 
-def accuracy(name, info: CalculateRequest) -> float:
+def accuracy(info: CalculateRequest) -> float:
     """
     Calculate the accuracy of the model
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         accuracy requires true_labels and predicted_labels to be provided.
     """
@@ -74,6 +80,17 @@ def accuracy(name, info: CalculateRequest) -> float:
 
 
 def _calculate_precision(metric_name, true_labels, predicted_labels, target_class):
+    """
+    Apply the precision formula to the given data
+
+    :param metric_name: str - name of the metric being calculated for error handling
+    :param true_labels: np.array - the true labels for the dataset
+    :param predicted_labels: np.array - the predicted labels for the dataset
+    :param target_class: int - the class for which precision is being calculated
+
+    :raises MetricsException: if the input is invalid for the given metric
+    :return: float - the precision score for the given class
+    """
     try:
         target_reshaped = np.full_like(true_labels, target_class)
         tp = np.count_nonzero(
@@ -87,30 +104,34 @@ def _calculate_precision(metric_name, true_labels, predicted_labels, target_clas
         raise MetricsException(metric_name, detail=str(e))
 
 
-def class_precision(name, info: CalculateRequest) -> float:
+def class_precision(info: CalculateRequest) -> float:
     """
     Calculate the precision for a given class. The labels/predictions provided must only be for
     one attribute of the predictions. Calculating precisions for multiple attributes will raise
     an exception
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         class_precision requires true_labels, predicted_labels and target_class to be provided.
+
+    :return: float - the precision score for the given class
     """
+    name = "class_precision"
     is_valid_for_per_class_metrics(name, info.true_labels)
     return _calculate_precision(
         name, info.true_labels, info.predicted_labels, info.target_class
     )
 
 
-def macro_precision(name, info: CalculateRequest) -> float:
+def macro_precision(info: CalculateRequest) -> float:
     """
     Calculate the macro precision for all classes
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         macro_precision requires true_labels and predicted_labels to be provided.
+
+    :return: float - the macro precision score for all classes
     """
+    name = "macro_precision"
     is_valid_for_per_class_metrics(name, info.true_labels)
     return sum(
         [
@@ -121,6 +142,17 @@ def macro_precision(name, info: CalculateRequest) -> float:
 
 
 def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
+    """
+    Apply the recall formula to the given data
+
+    :param metric_name: str - name of the metric being calculated for error handling
+    :param true_labels: np.array - the true labels for the dataset
+    :param predicted_labels: np.array - the predicted labels for the dataset
+    :param target_class: int - the class for which recall is being calculated
+
+    :raises MetricsException: if the input is invalid for the given metric
+    :return: float - the recall score for the given class
+    """
     try:
         target_reshaped = np.full_like(true_labels, target_class)
         tp = np.count_nonzero(
@@ -134,30 +166,34 @@ def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
         raise MetricsException(metric_name, detail=str(e))
 
 
-def class_recall(name, info: CalculateRequest) -> float:
+def class_recall(info: CalculateRequest) -> float:
     """
     Calculate the recall for a given class. The labels/predictions provided must only be for
     one attribute of the predictions. Calculating recalls for multiple attributes will raise
     an exception
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         class_recall requires true_labels, predicted_labels and target_class to be provided.
+
+    :return: float - the recall score for the given class
     """
+    name = "class_recall"
     is_valid_for_per_class_metrics(name, info.true_labels)
     return _calculate_recall(
         name, info.true_labels, info.predicted_labels, info.target_class
     )
 
 
-def macro_recall(name, info: CalculateRequest) -> float:
+def macro_recall(info: CalculateRequest) -> float:
     """
     Calculate the macro recall for all classes
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         macro_recall requires true_labels and predicted_labels to be provided.
+
+    :return: float - the macro recall score for all classes
     """
+    name = "macro_recall"
     is_valid_for_per_class_metrics(name, info.true_labels)
     return sum(
         [
@@ -169,77 +205,84 @@ def macro_recall(name, info: CalculateRequest) -> float:
 
 # TODO: Check if this function is even required as it's not any new functionality for the library
 # It can also be replaced with macro_f1 in almost all cases
-def class_f1(name, info: CalculateRequest) -> float:
+def class_f1(info: CalculateRequest) -> float:
     """
     Calculate the F1 score for a given class. The labels
     provided must only be for one attribute of the predictions.
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         class_f1 requires true_labels and predicted_labels to be provided.
+
+    :return: float - the F1 score for the given class
     """
+    name = "class_f1"
     is_valid_for_per_class_metrics(name, info.true_labels)
     # TODO: Check if this is the correct way to calculate F1 score for a single class
     return f1_score(info.true_labels, info.predicted_labels)
 
 
-def macro_f1(name, info: CalculateRequest) -> float:
+def macro_f1(info: CalculateRequest) -> float:
     """
     Calculate the macro F1 score for all classes
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         macro_f1 requires true_labels and predicted_labels to be provided.
+
+    :return: float - the macro F1 score for all classes
     """
+    name = "macro_f1"
     is_valid_for_per_class_metrics(name, info.true_labels)
     return f1_score(info.true_labels, info.predicted_labels, average="macro")
 
 
-def roc_auc(name, info: CalculateRequest) -> float:
+def roc_auc(info: CalculateRequest) -> float:
     """
     Calculate the ROC-AUC score.
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         roc_auc requires true_labels and predicted_labels to be provided.
+
+    :return: float - the ROC-AUC score
     """
+    name = "roc_auc"
     is_valid_for_per_class_metrics(name, info.true_labels)
     return roc_auc_score(info.true_labels, info.predicted_labels)
 
 
-def mean_absolute_error(name, info: CalculateRequest) -> float:
+def mean_absolute_error(info: CalculateRequest) -> float:
     """
     Calculate the Mean Absolute Error (MAE).
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         mean_absolute_error requires true_labels and predicted_labels to be provided.
+
+    :return: float - the MAE score
     """
-    is_valid_for_per_class_metrics(name, info.true_labels)
     return mae(info.true_labels, info.predicted_labels)
 
 
-def mean_squared_error(name, info: CalculateRequest) -> float:
+def mean_squared_error(info: CalculateRequest) -> float:
     """
     Calculate the Mean Squared Error (MSE).
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         mean_squared_error requires true_labels and predicted_labels to be provided.
+
+    :return: float - the MSE score
     """
-    is_valid_for_per_class_metrics(name, info.true_labels)
     return mse(info.true_labels, info.predicted_labels)
 
 
-def r_squared(name, info: CalculateRequest) -> float:
+def r_squared(info: CalculateRequest) -> float:
     """
     Calculate the R-squared score.
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         r_squared requires true_labels and predicted_labels to be provided.
+
+    :return: float - the R-squared score given by 1 - (sum of squares of residuals / 
+        sum of squares of total)
     """
-    is_valid_for_per_class_metrics(name, info.true_labels)
     return r2_score(info.true_labels, info.predicted_labels)
 
 
@@ -282,21 +325,17 @@ def _prepare_datasets(info: CalculateRequest):
 """
 
 
-def equalized_odds_difference(name, info: CalculateRequest) -> float:
+def equalized_odds_difference(info: CalculateRequest) -> float:
     """
     Compute equalized odds difference from a CalculateRequest.
 
-    Args:
-        request: CalculateRequest object containing true_labels, predicted_labels, and protected_attr.
+    :param info: CalculateRequest - contains information required to calculate the metric.
+        equalized_odds_difference requires true_labels, predicted_labels, and protected_attr.
 
-    Calculates:
-        fpr_diff: Absolute difference in false positive rates across groups.
-        tpr_diff: Absolute difference in true positive rates across groups.
-
-    Returns:
-        float: Equalized odds difference (absolute difference in fpr_diff and tpr_diff).
+    :return: float - the equalized odds difference
     """
 
+    name = "equalized_odds_difference"
     is_valid_for_per_class_metrics(name, info.true_labels)
 
     if info.true_labels is None or info.predicted_labels is None or info.protected_attr is None:
@@ -352,9 +391,8 @@ def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], float]
     :return: Callable - a function that takes the name of the metric and information required in
       calculations. A function is returned for lazy evaluation.
     """
-    def wrapper(name: str, info: CalculateRequest) -> float:
+    def wrapper(info: CalculateRequest) -> float:
         """
-        :param: name: str - name of the metric being calculated for error handling
         :param: info: CalculateRequest - contains information required to calculate the metric.
             wrapper requires true_labels, predicted_labels, protected_attr, privileged_groups,
             and unprivileged_groups to be provided.
@@ -385,11 +423,10 @@ def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], float]
 """
 
 
-def explanation_stability_score(name, info: CalculateRequest) -> float:
+def explanation_stability_score(info: CalculateRequest) -> float:
     """
     Calculate the explanation stability score for a given model and sample inputs
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         explanation_stability_score requires the input_features, confidence_scores,
         model_url and model_api_key.
@@ -416,11 +453,10 @@ def explanation_stability_score(name, info: CalculateRequest) -> float:
     return 1 - np.mean(diff).item()
 
 
-def explanation_sparsity_score(name, info: CalculateRequest) -> float:
+def explanation_sparsity_score(info: CalculateRequest) -> float:
     """
     Calculate the explanation sparsity score for a given model and sample inputs
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         explanation_sparsity_score requires the input_features, confidence_scores, model_url
         and model_api_key.
@@ -444,11 +480,10 @@ def explanation_sparsity_score(name, info: CalculateRequest) -> float:
     return 1 - count_2_sigma
 
 
-def explanation_fidelity_score(name, info: CalculateRequest) -> float:
+def explanation_fidelity_score(info: CalculateRequest) -> float:
     """
     Calculate the explanation fidelity score for a given model and sample inputs
 
-    :param name: str - name of the metric being calculated for error handling
     :param info: CalculateRequest - contains information required to calculate the metric.
         explanation_fidelity_score requires the input_features, confidence_scores, model_url
         and model_api_key.
@@ -477,19 +512,19 @@ def explanation_fidelity_score(name, info: CalculateRequest) -> float:
 """
 
 
-def ood_auroc(name, info: CalculateRequest, num_ood_samples: int = 1000) -> float:
+def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     """
     Estimate OOD AUROC by comparing in-distribution (ID) and out-of-distribution (OOD)
     confidence scores.
 
-    Args:
-        info: CalculateRequest object containing input_features, confidence_scores,
-            model_url, and model_api_key.
-        num_ood_samples: Number of OOD samples to generate.
+    :param info: CalculateRequest - contains information required to calculate the metric.
+        ood_auroc requires input_features, confidence_scores, model_url, and model_api_key.
+    :param num_ood_samples: int - number of OOD samples to generate.
 
-    Returns :
-        auroc: Estimated OOD AUROC score.
+    :return: float - the estimated OOD AUROC score
     """
+    name = "ood_auroc"
+
     if info.input_features is None:
         raise MetricsException(name, detail="Input data is required.")
 
@@ -602,7 +637,7 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
             if metric not in metric_to_fn.keys():
                 results[metric] = 1
             else:
-                results[metric] = metric_to_fn[metric](metric, info)
+                results[metric] = metric_to_fn[metric](info)
 
         return MetricValues(metric_values=results)
     except AttributeError as e:

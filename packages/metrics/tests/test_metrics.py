@@ -40,7 +40,7 @@ def test_accuracy(true_labels, predicted_labels, expected):
         true_labels=true_labels,
         predicted_labels=predicted_labels,
     )
-    result = accuracy("accuracy", info)
+    result = accuracy(info)
     assert result == expected
 
 
@@ -154,7 +154,7 @@ def test_metrics(
         predicted_labels=predicted_labels,
         target_class=target_class,
     )
-    result = metric_fn(metric_name, info)
+    result = metric_fn(info)
     assert round(result, 7) == round(expected, 7)
 
 
@@ -180,9 +180,7 @@ def test_fairness_metrics(metric_name, expected):
         unprivileged_groups=[{"protected_attr": 0}],
         protected_attr=[0, 1, 0, 0, 1, 0, 1, 1],
     )
-    result = create_fairness_metric_fn(lambda metric: getattr(metric, metric_name)())(
-        metric_name, info
-    )
+    result = create_fairness_metric_fn(lambda metric: getattr(metric, metric_name)())(info)
     assert result == expected
 
 
@@ -194,9 +192,9 @@ def test_multiple_metrics():
         target_class=2,
     )
     results = {
-        "accuracy": accuracy("accuracy", info),
-        "class_precision": class_precision("class_precision", info),
-        "class_recall": class_recall("class_recall", info),
+        "accuracy": accuracy(info),
+        "class_precision": class_precision(info),
+        "class_recall": class_recall(info),
     }
     assert results == {
         "accuracy": 0.625,
@@ -221,13 +219,13 @@ def test_multiple_binary_classifier_metrics():
     results = {
         "disparate_impact": create_fairness_metric_fn(
             lambda metric: metric.disparate_impact()
-        )("disparate_impact", info),
+        )(info),
         "equal_opportunity_difference": create_fairness_metric_fn(
             lambda metric: metric.equal_opportunity_difference()
-        )("equal_opportunity_difference", info),
+        )(info),
         "equalized_odds_difference": create_fairness_metric_fn(
             lambda metric: metric.equalized_odds_difference()
-        )("equalized_odds_difference", info),
+        )(info),
     }
     expected_metrics = {
         "disparate_impact": 0.5,
@@ -253,7 +251,7 @@ def test_zero_division_fairness_metrics_return_0():
     )
     results = create_fairness_metric_fn(
         lambda metric: metric.equal_opportunity_difference()
-    )("equal_opportunity_difference", info)
+    )(info)
     assert results == 0
 
 
