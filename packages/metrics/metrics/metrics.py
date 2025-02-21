@@ -35,6 +35,47 @@ from metrics.exceptions import (
 )
 from common.models import ModelResponse
 
+task_type_to_metric = {
+    "binary_classification": [
+        "accuracy",
+        "precision",
+        "recall",
+        "f1_score",
+        "roc_auc",
+        "statistical_parity_difference",
+        "equal_opportunity_difference",
+        "equalized_odds_difference",
+        "disparate_impact",
+        "false_negative_rate_difference",
+        "negative_predictive_value",
+        "positive_predictive_value",
+        "true_positive_rate_difference",
+        "explanation_stability_score",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
+        "ood_auroc",
+    ],
+    "multi_class_classification": [
+        "accuracy",
+        "class_precision",
+        "precision",
+        "class_recall",
+        "recall",
+        "class_f1_score",
+        "f1_score",
+        "roc_auc",
+        "explanation_stability_score",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
+        "ood_auroc",
+    ],
+    "regression": [
+        "mean_absolute_error",
+        "mean_squared_error",
+        "r_squared",
+    ],
+}
+
 
 def is_valid_for_per_class_metrics(metric_name, true_labels):
     """
