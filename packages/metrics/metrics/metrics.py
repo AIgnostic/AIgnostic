@@ -39,10 +39,10 @@ from common.models import ModelResponse
 def is_valid_for_per_class_metrics(metric_name, true_labels):
     """
     Check if the input is valid for the given metric. Valid fn for precision, recall and F1 scoring
-    
+
     :param metric_name: str - name of the metric being calculated for error handling
     :param true_labels: np.array - the true labels for the dataset
-    
+
     :raises MetricsException: if the input is invalid for the given metric
     :return: None
     """
@@ -280,7 +280,7 @@ def r_squared(info: CalculateRequest) -> float:
     :param info: CalculateRequest - contains information required to calculate the metric.
         r_squared requires true_labels and predicted_labels to be provided.
 
-    :return: float - the R-squared score given by 1 - (sum of squares of residuals / 
+    :return: float - the R-squared score given by 1 - (sum of squares of residuals /
         sum of squares of total)
     """
     return r2_score(info.true_labels, info.predicted_labels)
@@ -565,29 +565,70 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     return roc_auc_score(labels, scores)
 
 
-""" Mapping of metric names to their corresponding functions"""
-metric_to_fn = {
+""" Mapping of metric names to their corresponding functions and required inputs"""
+metric_to_fn_and_requirements = {
     # Performance metrics
-    "accuracy": accuracy,
-    "class_precision": class_precision,
-    "precision": macro_precision,
-    "class_recall": class_recall,
-    "recall": macro_recall,
-    "class_f1_score": class_f1,
-    "f1_score": macro_f1,
-    "roc_auc": roc_auc,
-    "mean_absolute_error": mean_absolute_error,
-    "mean_squared_error": mean_squared_error,
-    "r_squared": r_squared,
+    "accuracy": {
+        "function": accuracy,
+        "required_inputs": ["true_labels", "predicted_labels"]
+    },
+    "class_precision": {
+        "function": class_precision,
+        "required_inputs": ["true_labels", "predicted_labels", "target_class"]
+    },
+    "precision": {
+        "function": macro_precision,
+        "required_inputs": ["true_labels", "predicted_labels"]
+    },
+    "class_recall": {
+        "function": class_recall,
+        "required_inputs": ["true_labels", "predicted_labels", "target_class"]
+    },
+    "recall": {
+        "function": macro_recall,
+        "required_inputs": ["true_labels", "predicted_labels"]
+    },
+    "class_f1_score": {
+        "function": class_f1,
+        "required_inputs": ["true_labels", "predicted_labels"]
+    },
+    "f1_score": {
+        "function": macro_f1,
+        "required_inputs": ["true_labels", "predicted_labels"]
+    },
+    "roc_auc": {
+        "function": roc_auc,
+        "required_inputs": ["true_labels", "predicted_labels"]
+    },
+    "mean_absolute_error": {
+        "function": mean_absolute_error,
+        "required_inputs": ["true_labels", "predicted_labels"]
+    },
+    "mean_squared_error": {
+        "function": mean_squared_error,
+        "required_inputs": ["true_labels", "predicted_labels"]
+    },
+    "r_squared": {
+        "function": r_squared,
+        "required_inputs": ["true_labels", "predicted_labels"]
+    },
 
     # Fairness metrics
     **{
-        metric_name: create_fairness_metric_fn(
-            # name=metric_name needed here otherwise metric_name will be captured by the lambda once
-            lambda metric, name=metric_name: getattr(metric, name)()
-        )
-        for metric_name in [                    # aif360 fairness metrics
-            "statistical_parity_difference",    # demographic parity
+        metric_name: {
+            "function": create_fairness_metric_fn(
+                lambda metric, name=metric_name: getattr(metric, name)()
+            ),
+            "required_inputs": [
+                "true_labels",
+                "predicted_labels",
+                "protected_attr",
+                "privileged_groups",
+                "unprivileged_groups"
+            ]
+        }
+        for metric_name in [
+            "statistical_parity_difference",
             "equal_opportunity_difference",
             "disparate_impact",
             "false_negative_rate_difference",
@@ -596,16 +637,55 @@ metric_to_fn = {
             "true_positive_rate_difference",
         ]
     },
-    "equalized_odds_difference": equalized_odds_difference,
+    "equalized_odds_difference": {
+        "function": equalized_odds_difference,
+        "required_inputs": ["true_labels", "predicted_labels", "protected_attr"]
+    },
 
     # Explainability metrics
-    "explanation_stability_score": explanation_stability_score,
-    "explanation_sparsity_score": explanation_sparsity_score,
-    "explanation_fidelity_score": explanation_fidelity_score,
+    "explanation_stability_score": {
+        "function": explanation_stability_score,
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+    },
+    "explanation_sparsity_score": {
+        "function": explanation_sparsity_score,
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+    },
+    "explanation_fidelity_score": {
+        "function": explanation_fidelity_score,
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+    },
 
     # Uncertainty metrics
-    "ood_auroc": ood_auroc,
+    "ood_auroc": {
+        "function": ood_auroc,
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+    },
 }
+
+
+def check_all_required_fields_present(info: CalculateRequest):
+    """
+    check_all_required_fields_present ensures that all the required fields are present in the
+    CalculateRequest object.
+
+    :param info: CalculateRequest - contains information required to calculate the metric.
+
+    :return: None
+    """
+    for metric in info.metrics:
+        if metric not in metric_to_fn_and_requirements:
+            raise MetricsException(
+                metric,
+                detail=f"Metric {metric} is not supported."
+            )
+        else:
+            for field in metric_to_fn_and_requirements[metric]["required_inputs"]:
+                if not hasattr(info, field) or getattr(info, field) is None:
+                    raise InsufficientDataProvisionException(
+                        detail=f"Field {field} is required to calculate metric {metric}."
+                    )
+    return
 
 
 def calculate_metrics(info: CalculateRequest) -> MetricValues:
@@ -629,20 +709,20 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
                     detail="Length mismatch between confidence scores and true labels.",
                 )
 
+    check_all_required_fields_present(info)
+
     try:
         results = {}
 
         for metric in info.metrics:
             current_metric = metric
-            if metric not in metric_to_fn.keys():
+            if metric not in metric_to_fn_and_requirements.keys():
                 results[metric] = 1
             else:
-                results[metric] = metric_to_fn[metric](info)
+                results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
 
         return MetricValues(metric_values=results)
-    except AttributeError as e:
-        raise InsufficientDataProvisionException(
-            detail=str(e)
-        )
+    except (MetricsException, ModelQueryException) as e:
+        raise e
     except Exception as e:
         raise MetricsException(current_metric, detail=str(e))

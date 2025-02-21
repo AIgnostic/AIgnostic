@@ -75,7 +75,8 @@ def test_explanation_stability_similar_scores_result_in_1(server_factory):
             metrics=[metric_name],
             input_features=[[1, 2]],
             confidence_scores=[[0.5]],
-            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-10000"
+            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-10000",
+            model_api_key="None"
         )
         result = calculate_metrics(info)
         assert result.metric_values[metric_name] == pytest.approx(1.0)
@@ -89,7 +90,8 @@ def test_explanation_stability_different_scores_is_not_1(server_factory):
             metrics=[metric_name],
             input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
             confidence_scores=[[0.5], [0.6], [0.2], [0.8], [0.9], [0.1]],
-            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-different"
+            model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict-different",
+            model_api_key="None"
         )
         result = calculate_metrics(info)
         assert result.metric_values[metric_name] < 1.0
@@ -128,6 +130,7 @@ def test_ood_auroc(server_factory):
             input_features=input_data,
             confidence_scores=confidence_scores,
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict",
+            model_api_key="None"
         )
 
         result = calculate_metrics(info)
