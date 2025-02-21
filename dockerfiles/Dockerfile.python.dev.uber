@@ -76,4 +76,5 @@ RUN poetry install -v --only=$ROOT_DEPGROUP
 # Must use poetry run to ensure correct python used
 # Do one at a time to avoid conflicts/race conditions on install
 RUN poetry run npx nx run-many --all --target=install --parallel=1 --args="--only=main"
-RUN poetry run npx nx install api --args="--only=main,dataset,model"
+# Ensure we can run mock servers
+RUN poetry run npx nx install mocks --args="--only=main,dev"
