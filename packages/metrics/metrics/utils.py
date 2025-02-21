@@ -6,6 +6,8 @@ from scipy.spatial.distance import euclidean
 import numpy as np
 import requests
 
+# TODO: Update pydocs for regression tasks
+
 
 def _finite_difference_gradient(info: CalculateRequest,
                                 h: float = 1e-5) -> np.ndarray:
@@ -91,9 +93,9 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
     response: ModelResponse = _query_model(perturbed_samples, info)
 
     # Compute model probabilities for perturbed samples
-    probabilities = response.confidence_scores
+    outputs = response.predictions if info.regression_flag else response.confidence_scores
 
-    if probabilities is None:
+    if outputs is None:
         raise ModelQueryException(
             detail="Model response does not contain probability scores for outputs",
             status_code=400
@@ -107,7 +109,7 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
 
     # Fit a weighted linear regression model
     reg_model = Ridge(alpha=1.0)
-    reg_model.fit(perturbed_samples - info.input_features, probabilities, sample_weight=weights)
+    reg_model.fit(perturbed_samples - info.input_features, outputs, sample_weight=weights)
     return reg_model.coef_, reg_model
 
 

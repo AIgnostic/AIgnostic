@@ -47,6 +47,9 @@ class CalculateRequest(BaseModel):
     model_url: Optional[HttpUrl] = None
     model_api_key: Optional[str] = None
 
+    # TODO: Refactor this to a better implementation
+    regression_flag: bool = False
+
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @field_validator(
         'input_features',

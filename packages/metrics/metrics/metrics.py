@@ -5,6 +5,8 @@
     For a binary classification problem
 """
 
+# TODO: Update pydocs for regression tasks
+
 from typing import Callable
 from metrics.models import (
     CalculateRequest,
@@ -36,7 +38,7 @@ from metrics.exceptions import (
 from common.models import ModelResponse
 
 task_type_to_metric = {
-    "binary_classification": [
+    "binary_classification": {
         "accuracy",
         "precision",
         "recall",
@@ -54,8 +56,8 @@ task_type_to_metric = {
         "explanation_sparsity_score",
         "explanation_fidelity_score",
         "ood_auroc",
-    ],
-    "multi_class_classification": [
+    },
+    "multi_class_classification": {
         "accuracy",
         "class_precision",
         "precision",
@@ -68,11 +70,14 @@ task_type_to_metric = {
         "explanation_sparsity_score",
         "explanation_fidelity_score",
         "ood_auroc",
-    ],
+    },
     "regression": [
         "mean_absolute_error",
         "mean_squared_error",
         "r_squared",
+        "explanation_stability_score",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
     ],
 }
 
@@ -727,6 +732,11 @@ def check_all_required_fields_present(info: CalculateRequest):
                         detail=f"Field {field} is required to calculate metric {metric}."
                     )
     return
+
+
+def check_metrics_are_supported_for_task(info: CalculateRequest):
+    # TODO
+    pass
 
 
 def calculate_metrics(info: CalculateRequest) -> MetricValues:
