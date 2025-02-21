@@ -41,6 +41,10 @@ package-mode = false
     path = "packages/report-generation"
     develop = true
 
+    [tool.poetry.dependencies.llm_insights]
+    path = "packages/llm-insights"
+    develop = true
+
 [tool.poetry.group.dev.dependencies]
 flake8 = "7.1.1"
 autopep8 = "2.3.1"
