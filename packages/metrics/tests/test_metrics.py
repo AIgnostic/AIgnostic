@@ -1,5 +1,4 @@
 from metrics.metrics import (
-    MetricsException,
     is_valid_for_per_class_metrics,
     accuracy,
     class_precision,
@@ -15,6 +14,11 @@ from metrics.metrics import (
     mean_absolute_error,
     mean_squared_error,
     r_squared,
+)
+from metrics.exceptions import (
+    MetricsException,
+    InsufficientDataProvisionException,
+    DataInconstencyException
 )
 from metrics.models import CalculateRequest
 import pytest
@@ -154,17 +158,12 @@ def test_metrics(
     assert round(result, 7) == round(expected, 7)
 
 
-@pytest.mark.skip(reason="Not a part of AIF360 library - needs to be implemented")
-def test_fairness_equalized_odds():
-    pass
-
-
 @pytest.mark.parametrize(
     "metric_name, expected",
     [
         ("disparate_impact", 0.5),
         ("equal_opportunity_difference", 0.25),
-        # ("equalized_odds_difference", 0.0),
+        ("equalized_odds_difference", 0.0),
         ("false_negative_rate_difference", -0.25),
         ("negative_predictive_value", 0.2),
         ("positive_predictive_value", 1 / 3),
@@ -211,7 +210,7 @@ def test_multiple_binary_classifier_metrics():
         metrics=[
             "disparate_impact",
             "equal_opportunity_difference",
-            # "equalized_odds_difference",
+            "equalized_odds_difference",
         ],
         true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
         predicted_labels=[[1], [0], [0], [0], [1], [0], [1], [0]],
@@ -226,14 +225,14 @@ def test_multiple_binary_classifier_metrics():
         "equal_opportunity_difference": create_fairness_metric_fn(
             lambda metric: metric.equal_opportunity_difference()
         )("equal_opportunity_difference", info),
-        # "equalized_odds_difference": create_fairness_metric_fn(
-        #     lambda metric: metric.equalized_odds_difference()
-        # )("equalized_odds_difference", info),
+        "equalized_odds_difference": create_fairness_metric_fn(
+            lambda metric: metric.equalized_odds_difference()
+        )("equalized_odds_difference", info),
     }
     expected_metrics = {
         "disparate_impact": 0.5,
         "equal_opportunity_difference": 0.25,
-        # "equalized_odds_difference": 0.0,
+        "equalized_odds_difference": 0.0,
     }
     for metric, value in expected_metrics.items():
         assert round(results[metric], 7) == round(
@@ -241,7 +240,6 @@ def test_multiple_binary_classifier_metrics():
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
-@pytest.mark.skip(reason="Not solved - needs to be implemented")
 def test_zero_division_fairness_metrics_return_0():
     info = CalculateRequest(
         metrics=[
@@ -353,3 +351,25 @@ def test_calculate_fairness_metrics():
         assert round(results.metric_values[metric], 7) == round(
             value, 7
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+
+
+def test_calculate_metrics_with_missing_information_throws_insufficient_data_error():
+    info = CalculateRequest(
+        metrics = ["accuracy"]
+    )
+    with pytest.raises(InsufficientDataProvisionException) as e:
+        calculate_metrics(info)
+        assert "Insufficient data provided to calculate user metrics" in e.value.detail
+        assert "true_labels" in e.value.detail
+
+
+def test_calculate_metrics_with_invalid_data_throws_data_inconsistency_error():
+    info = CalculateRequest(
+        metrics = ["accuracy"],
+        true_labels = [[1], [0], [1]],
+        confidence_scores = [[1]]
+    )
+    with pytest.raises(DataInconstencyException) as e:
+        calculate_metrics(info)
+        assert "Data inconsistency error" in e.value.detail
+        assert "Length mismatch between confidence scores and true labels" in e.value.detail

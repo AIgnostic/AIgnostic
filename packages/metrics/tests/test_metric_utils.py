@@ -70,7 +70,7 @@ def test_lime_explanation(mock_query, mock_info):
 """
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def mock_post():
     with patch('requests.post') as mock:
         yield mock

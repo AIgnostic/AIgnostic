@@ -66,11 +66,7 @@ def accuracy(name, info: CalculateRequest) -> float:
     """
     Calculate the accuracy of the model
     """
-    try:
-        return (info.true_labels == info.predicted_labels).mean()
-    except Exception as e:
-        # Catch exceptions generally for now rather than specific ones
-        raise MetricsException(name, detail=str(e))
+    return (info.true_labels == info.predicted_labels).mean()
 
 
 def _calculate_precision(metric_name, true_labels, predicted_labels, target_class):
@@ -83,7 +79,7 @@ def _calculate_precision(metric_name, true_labels, predicted_labels, target_clas
             (true_labels != target_reshaped) & (predicted_labels == target_reshaped)
         )
         return tp / (tp + fp) if (tp + fp) != 0 else 0
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError, ZeroDivisionError) as e:
         raise MetricsException(metric_name, detail=str(e))
 
 
@@ -122,7 +118,7 @@ def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
             (true_labels == target_reshaped) & (predicted_labels != target_reshaped)
         )
         return tp / (tp + fn) if (tp + fn) != 0 else 0
-    except Exception as e:
+    except (ValueError, TypeError, ZeroDivisionError) as e:
         raise MetricsException(metric_name, detail=str(e))
 
 
@@ -286,18 +282,15 @@ def equalized_odds_difference(name, info: CalculateRequest) -> float:
             if total == 0:
                 return 0.0
             return tp / total if target_label == 1 else fp / total
-        except Exception as e:
+        except ZeroDivisionError as e:
             raise MetricsException(name, detail=str(e))
 
-    try:
-        fpr_1 = rate(0, 1)  # False positive rate for group 1
-        fpr_0 = rate(0, 0)  # False positive rate for group 0
-        tpr_1 = rate(1, 1)  # True positive rate for group 1
-        tpr_0 = rate(1, 0)  # True positive rate for group 0
+    fpr_1 = rate(0, 1)  # False positive rate for group 1
+    fpr_0 = rate(0, 0)  # False positive rate for group 0
+    tpr_1 = rate(1, 1)  # True positive rate for group 1
+    tpr_0 = rate(1, 0)  # True positive rate for group 0
 
-        return abs(abs(fpr_1 - fpr_0) - abs(tpr_1 - tpr_0))
-    except Exception as e:
-        raise MetricsException(name, detail=str(e))
+    return abs(abs(fpr_1 - fpr_0) - abs(tpr_1 - tpr_0))
 
 
 def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], float]) -> Callable:
@@ -316,25 +309,20 @@ def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], float]
         :param: name: str - name of the metric being calculated
         :param: info: CalculateRequest - contains information required to calculate the metric
         """
-        try:
-            dataset, classified_dataset = _prepare_datasets(info)
-            metric = ClassificationMetric(
-                dataset,
-                classified_dataset,
-                privileged_groups=info.privileged_groups,
-                unprivileged_groups=info.unprivileged_groups,
-            )
+        dataset, classified_dataset = _prepare_datasets(info)
+        metric = ClassificationMetric(
+            dataset,
+            classified_dataset,
+            privileged_groups=info.privileged_groups,
+            unprivileged_groups=info.unprivileged_groups,
+        )
 
-            metrics = metric_fn(metric)
-
-        except Exception as e:
-            raise MetricsException(name, detail=str(e))
+        metrics = metric_fn(metric)
 
         if np.isnan(metrics):
-            raise MetricsException(
-                    name,
-                    detail="Output of Metric Calculation is NaN (expected a float)",
-                )
+            # 0 returned to avoid division by zero errors
+            # TODO: Only return 0 if division by zero has been identified
+            return 0
         return metrics
 
     return wrapper
@@ -540,25 +528,31 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
     data required for calculation of these metrics.
     :return: MetricValues - contains the calculated metrics and their scores
     """
-    try:
-        # Input validation
-        if info.confidence_scores is not None:
-            if info.true_labels is not None:
-                # If confidence scores and labels are both given, ensure they have the same length
-                if info.confidence_scores.shape != info.true_labels.shape:
-                    raise DataInconstencyException(
-                        "calculate_metrics",
-                        detail="Length mismatch between confidence scores and true labels.",
-                    )
+    current_metric = "calculate_metrics"
 
+    # Input validation
+    if info.confidence_scores is not None:
+        if info.true_labels is not None:
+            # If confidence scores and labels are both given, ensure they have the same length
+            if info.confidence_scores.shape != info.true_labels.shape:
+                raise DataInconstencyException(
+                    detail="Length mismatch between confidence scores and true labels.",
+                )
+
+    try:
         results = {}
+
         for metric in info.metrics:
+            current_metric = metric
             if metric not in metric_to_fn.keys():
                 results[metric] = 1
             else:
                 results[metric] = metric_to_fn[metric](metric, info)
+
         return MetricValues(metric_values=results)
     except AttributeError as e:
         raise InsufficientDataProvisionException(
             detail=str(e)
         )
+    except Exception as e:
+        raise MetricsException(current_metric, detail=str(e))
