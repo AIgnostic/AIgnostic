@@ -744,9 +744,9 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
 
     # Input validation
     if info.confidence_scores is not None:
-        if info.true_labels is not None:
+        if info.predicted_labels is not None:
             # If confidence scores and labels are both given, ensure they have the same length
-            if info.confidence_scores.shape != info.true_labels.shape:
+            if info.confidence_scores.shape[0] != info.predicted_labels.shape[0]:
                 raise DataInconstencyException(
                     detail="Length mismatch between confidence scores and true labels.",
                 )
