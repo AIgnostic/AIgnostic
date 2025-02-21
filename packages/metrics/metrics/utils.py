@@ -1,4 +1,4 @@
-from metrics.exceptions import MetricsException, ModelQueryException
+from metrics.exceptions import ModelQueryException
 from metrics.models import CalculateRequest
 from common.models import ModelInput, ModelResponse
 from sklearn.linear_model import Ridge
@@ -7,13 +7,12 @@ import numpy as np
 import requests
 
 
-def _finite_difference_gradient(name, info: CalculateRequest,
+def _finite_difference_gradient(info: CalculateRequest,
                                 h: float = 1e-5) -> np.ndarray:
     """
     Compute the finite difference approximation of the gradient for given data.
 
     Args:
-        name: Name of the metric (for exception handling).
         info: Information required to compute the gradient including info.input_features,
             model_url and model_api_key.
         h: Perturbation magnitude.
@@ -21,33 +20,29 @@ def _finite_difference_gradient(name, info: CalculateRequest,
     Returns:
         Gradient matrix of shape (num_samples, num_features).
     """
-    try:
-        X = np.array(info.input_features, dtype=np.float64)
-        _, num_features = X.shape
-        gradients = np.zeros_like(X)
+    X = np.array(info.input_features, dtype=np.float64)
+    _, num_features = X.shape
+    gradients = np.zeros_like(X)
 
-        for i in range(num_features):
-            X_forward = X.copy()
-            X_backward = X.copy()
-            X_forward[:, i] += h
-            X_backward[:, i] -= h
+    for i in range(num_features):
+        X_forward = X.copy()
+        X_backward = X.copy()
+        X_forward[:, i] += h
+        X_backward[:, i] -= h
 
-            def predict(x):
-                # Helper function to query the model with perturbed inputs
-                nonlocal info
-                return _query_model(x.reshape(1, -1), info).predictions[0][0]
+        def predict(x):
+            # Helper function to query the model with perturbed inputs
+            nonlocal info
+            return _query_model(x.reshape(1, -1), info).predictions[0][0]
 
-            # Compute the function values (assuming the metric function is applied row-wise)
-            f_forward = np.apply_along_axis(predict, 1, X_forward)
-            f_backward = np.apply_along_axis(predict, 1, X_backward)
+        # Compute the function values (assuming the metric function is applied row-wise)
+        f_forward = np.apply_along_axis(predict, 1, X_forward)
+        f_backward = np.apply_along_axis(predict, 1, X_backward)
 
-            # Compute gradient using central difference
-            gradients[:, i] = (f_forward - f_backward) / (2 * h)
+        # Compute gradient using central difference
+        gradients[:, i] = (f_forward - f_backward) / (2 * h)
 
-        return gradients
-
-    except (TypeError, ValueError, AttributeError, IndexError, ZeroDivisionError) as e:
-        raise MetricsException(name, detail=str(e))
+    return gradients
 
 
 def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
@@ -73,7 +68,7 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
 
     Args:
         info: information required to compute the explanation including info.input_features,
-            model_url and model_api_key
+            confidence_scores, model_url and model_api_key
         kernel_width: Width of the Gaussian kernel for weighting
 
     Returns:

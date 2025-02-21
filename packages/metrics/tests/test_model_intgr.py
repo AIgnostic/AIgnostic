@@ -104,7 +104,7 @@ def test_finite_diff_gradient(server_factory):
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict",
         )
 
-        result = _finite_difference_gradient("none", info, EPSILON)
+        result = _finite_difference_gradient(info, EPSILON)
 
         assert len(result) == len(TEST_INPUT), (
             f"Expected gradient to have {len(TEST_INPUT)} samples, but got {len(result)}"

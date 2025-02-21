@@ -355,7 +355,7 @@ def test_calculate_fairness_metrics():
 
 def test_calculate_metrics_with_missing_information_throws_insufficient_data_error():
     info = CalculateRequest(
-        metrics = ["accuracy"]
+        metrics=["accuracy"]
     )
     with pytest.raises(InsufficientDataProvisionException) as e:
         calculate_metrics(info)
@@ -365,9 +365,9 @@ def test_calculate_metrics_with_missing_information_throws_insufficient_data_err
 
 def test_calculate_metrics_with_invalid_data_throws_data_inconsistency_error():
     info = CalculateRequest(
-        metrics = ["accuracy"],
-        true_labels = [[1], [0], [1]],
-        confidence_scores = [[1]]
+        metrics=["accuracy"],
+        true_labels=[[1], [0], [1]],
+        confidence_scores=[[1]]
     )
     with pytest.raises(DataInconstencyException) as e:
         calculate_metrics(info)
