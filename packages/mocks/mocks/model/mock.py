@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from api.pydantic_models.data_models import ModelInput, ModelResponse
+from common.models import ModelInput, ModelResponse
 
 
 app: FastAPI = FastAPI()

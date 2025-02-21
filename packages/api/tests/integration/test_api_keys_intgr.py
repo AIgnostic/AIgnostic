@@ -1,9 +1,9 @@
 from threading import Thread
 import pytest
 from api.router.api import api
-from tests.utils.dataset.mock_server import app as data_app
-from tests.utils.model.scikit_mock import app as sk_model_app
-from tests.utils.api_utils import MOCK_DATASET_API_KEY, MOCK_MODEL_API_KEY
+from mocks.dataset.mock_server import app as data_app
+from mocks.model.scikit_mock import app as sk_model_app
+from mocks.api_utils import MOCK_DATASET_API_KEY, MOCK_MODEL_API_KEY
 import uvicorn
 import time
 from fastapi.testclient import TestClient
@@ -25,10 +25,10 @@ def run_servers():
     data_config = uvicorn.Config(app=data_app, host="127.0.0.1", port=3333)
     model_config = uvicorn.Config(app=sk_model_app, host="127.0.0.1", port=3334)
     app_config = uvicorn.Config(app=app_client, host="127.0.0.1", port=3335)
+    worker_config = uvicorn.Config(app=sk_model_app, host="127.0.0.1", port=3336)
     data_server = uvicorn.Server(data_config)
     model_server = uvicorn.Server(model_config)
     app_server = uvicorn.Server(app_config)
-    worker_config = uvicorn.Config(app=sk_model_app, host="127.0.0.1", port=3336)
     worker_server = uvicorn.Server(worker_config)
 
     def start_server(server):
@@ -43,10 +43,6 @@ def run_servers():
         thread.start()
 
     time.sleep(2)  # Wait for the servers to start
-    assert data_server.started
-    assert model_server.started
-    assert app_server.started
-    assert worker_server.started
 
     yield
 

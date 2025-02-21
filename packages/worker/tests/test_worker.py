@@ -1,7 +1,7 @@
 import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
-from common.models.job import Job
+from common.models.common import Job
 from common.models import MetricValues
 
 
@@ -13,7 +13,7 @@ from worker.worker import (
     process_job,
     fetch_data,
     query_model,
-    check_model_response,
+    _check_model_response,
 )
 
 
@@ -76,7 +76,7 @@ def test_queue_error(mock_basic_publish):
 
 @patch("worker.worker.fetch_data", new_callable=AsyncMock)
 @patch("worker.worker.query_model", new_callable=AsyncMock)
-@patch("metrics.metrics.calculate_metrics")
+@patch("metrics.metrics.calculate_metrics", new_callable=AsyncMock)
 @patch("worker.worker.queue_result")
 @pytest.mark.asyncio
 async def test_process_job_success(
@@ -136,4 +136,4 @@ def test_check_model_response():
     response = MagicMock()
     response.json.return_value = {"predictions": [[0, 1], [1, 0]]}
     labels = [[0, 1], [1, 0]]
-    check_model_response(response, labels)
+    _check_model_response(response, labels)

@@ -1,5 +1,7 @@
 from pydantic import ValidationError
-from api.pydantic_models.data_models import ModelInput, FetchDatasetRequest
+from api.pydantic_models.data_models import FetchDatasetRequest
+from common.models import ModelInput
+
 from fastapi import FastAPI, HTTPException
 import requests
 import uvicorn
@@ -7,7 +9,7 @@ import uvicorn
 app = FastAPI()
 
 
-def validate_dataset_format(data_to_validate: dict) -> ModelInput:
+def _validate_dataset_format(data_to_validate: dict) -> ModelInput:
     try:
         data = ModelInput(**data_to_validate)
     except ValidationError as e:
@@ -57,7 +59,7 @@ def fetch_dataset(request: FetchDatasetRequest) -> ModelInput:
         raise HTTPException(status_code=500, detail=f"Error while processing data: {e}")
 
     try:
-        return validate_dataset_format(data)
+        return _validate_dataset_format(data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Error while validating data: {e}")
 

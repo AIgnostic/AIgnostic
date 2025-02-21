@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
-from tests.utils.dataset.mock_server import app as data_app
-from tests.utils.model.scikit_mock import app as sk_model_app
-from tests.utils.model.huggingface_binclassifier import app as hf_model_app
-from tests.utils.api_utils import MOCK_DATASET_API_KEY, MOCK_MODEL_API_KEY
+from mocks.dataset.mock_server import app as data_app
+from mocks.model.scikit_mock import app as sk_model_app
+from mocks.model.huggingface_binclassifier import app as hf_model_app
+from mocks.api_utils import MOCK_DATASET_API_KEY, MOCK_MODEL_API_KEY
 
 data_client = TestClient(data_app)
 sk_model_client = TestClient(sk_model_app)

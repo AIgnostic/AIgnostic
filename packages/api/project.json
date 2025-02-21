@@ -91,15 +91,15 @@
     "mock-dataset": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "python3 -m tests.utils.dataset.mock_server",
-        "cwd": "packages/api"
+        "command": "python3 -m mocks.dataset.mock_server",
+        "cwd": "packages/mocks"
       }
     },
     "mock-model": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "python3 -m tests.utils.model.scikit_mock",
-        "cwd": "packages/api"
+        "command": "python3 -m mocks.model.scikit_mock",
+        "cwd": "packages/mocks"
       }
     },
     "container": {

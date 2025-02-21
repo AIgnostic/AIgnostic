@@ -1,13 +1,15 @@
 from fastapi.testclient import TestClient
-from tests.utils.model.scikit_mock import app as scikit_app
-from tests.utils.api_utils import MOCK_MODEL_API_KEY
-from tests.utils.model.mock import app as mock_app
-import pandas as pd
+from mocks.api_utils import MOCK_MODEL_API_KEY
+from mocks.model.huggingface_binclassifier import app as huggingface_app
+from mocks.model.scikit_mock import app as scikit_app
+from mocks.model.finbert import app as finbert_app
+from mocks.model.mock import app as mock_app
 from folktables import ACSDataSource, ACSEmployment
-import pickle
-from tests.utils.model.huggingface_binclassifier import app as huggingface_app
-from tests.utils.model.finbert import app as finbert_app
+import pandas as pd
 import pytest
+from mocks.utils import load_scikit_model
+
+# TODO: Modify the tests to use pydantic models to ensure they are correctly validated
 
 huggingface_mock = TestClient(huggingface_app)
 scikit_mock = TestClient(scikit_app)
@@ -28,7 +30,10 @@ def test_mock_returns_empty():
         "group_ids": []  # Empty list for no group IDs
     })
     assert response.status_code == 200, response.text
-    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
+    assert response.json() == {
+        "predictions": [],
+        "confidence_scores": None
+    }, "Empty values not returned given empty input"
 
 
 def test_empty_data_scikit():
@@ -38,7 +43,10 @@ def test_empty_data_scikit():
         "group_ids": []  # Empty list for no group IDs
     }, headers={"Authorization": f"Bearer {MOCK_MODEL_API_KEY}"})
     assert response.status_code == 200, response.text
-    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
+    assert response.json() == {
+        "predictions": [],
+        "confidence_scores": None
+    }, "Empty values not returned given empty input"
 
 
 @pytest.mark.skip(reason="Test to be implemented")
@@ -67,11 +75,12 @@ def test_valid_data_scikit_folktables():
     assert response.status_code == 200, response.text
 
     # Test the response is the same as the expected response from the pickled model
-    model = pickle.load(open('scikit_model.sav', 'rb'))
+    model = load_scikit_model()
     y_hat = model.predict(features)
 
     assert response.json() == {
-        "predictions": [y_hat.tolist()]
+        "predictions": [y_hat.tolist()],
+        "confidence_scores": None
     }, "Model output does not match expected output"
 
 
@@ -115,7 +124,10 @@ def test_empty_input_finbert():
         "group_ids": []  # Empty list for no group IDs
     })
     assert response.status_code == 200, response.text
-    assert response.json() == {"predictions": []}, "Empty values not returned given empty input"
+    assert response.json() == {
+        "predictions": [],
+        "confidence_scores": []
+    }, "Empty values not returned given empty input"
 
 
 def test_invalid_input_finbert():
@@ -134,7 +146,15 @@ def test_finbert_single_input():
         "group_ids": []
     })
     assert response.status_code == 200, response.text
-    assert response.json()["predictions"][0][0]["label"] == "neutral", "Single data output is not the expected value"
+    print(response.json())
+    predictions = response.json()["predictions"]
+    confidence_scores = response.json()["confidence_scores"]
+    assert len(predictions) == 1, f"Expected 1 prediction, got {len(predictions)}"
+    assert len(confidence_scores) == 1, f"Expected 1 confidence score, got {len(confidence_scores)}"
+    assert predictions[0][0] == "neutral", "Single data output is not the expected value"
+    print(confidence_scores)
+    assert confidence_scores[0][0] <= 1, "Probability score is greater than 1"
+    assert confidence_scores[0][0] >= 0, "Probability score is less than 0"
 
 
 def test_finbert_multiple_inputs():
@@ -153,6 +173,27 @@ def test_finbert_multiple_inputs():
     })
     assert response.status_code == 200, response.text
     assert len(response.json()["predictions"]) == 3, "Incorrect number of outputs produced given number of inputs"
-    assert response.json()["predictions"][0][0]["label"] == "negative", "First input not classified as negative"
-    assert response.json()["predictions"][1][0]["label"] == "positive", "Second input not classified as positive"
-    assert response.json()["predictions"][2][0]["label"] == "neutral", "Third input not classified as neutral"
+    assert len(response.json()["confidence_scores"]) == 3, "Incorrect number of confidence scores produced"
+    assert response.json()["predictions"][0][0] == "negative", "First input not classified as negative"
+    assert response.json()["predictions"][1][0] == "positive", "Second input not classified as positive"
+    assert response.json()["predictions"][2][0] == "neutral", "Third input not classified as neutral"
+
+
+def test_probabilities_sum_to_one():
+    response = finbert_mock.post("/predict", json={
+        "features": [
+            ["Tech stocks are bearish with investors fearing a burst in the AI bubble"],
+            ["The stock market is bullish with investors optimistic about the future"],
+            ["The market will be the same tomorrow as it was the same yesterday"]
+        ],
+        "labels": [
+            ["negative"],
+            ["positive"],
+            ["neutral"]
+        ],
+        "group_ids": []
+    })
+    for confidence_scores in response.json()["confidence_scores"]:
+        assert confidence_scores[0] <= 1, "Probability score is greater than 1"
+        assert confidence_scores[0] >= 0, "Probability score is less than 0"
+        assert sum(confidence_scores) == pytest.approx(1), "Confidence scores do not sum to 1"

@@ -1,8 +1,8 @@
 from threading import Thread
 import pytest
-from tests.utils.dataset.mock_server import app as client_mock
+from mocks.dataset.mock_server import app as client_mock
 from api.dataset.validate_dataset_api import app as server_app
-from tests.utils.api_utils import MOCK_DATASET_API_KEY
+from mocks.api_utils import MOCK_DATASET_API_KEY
 import uvicorn
 import time
 from api.pydantic_models.data_models import FetchDatasetRequest
@@ -10,14 +10,14 @@ from fastapi.testclient import TestClient
 
 app_client = TestClient(server_app)
 
-valid_dataset_url = "http://127.0.0.1:3333/fetch-datapoints"
-invalid_format_url = "http://127.0.0.1:3333/invalid-data-format"
-not_found_url = "http://127.0.0.1:3333/not-found-url"
+valid_dataset_url = "http://127.0.0.1:2222/fetch-datapoints"
+invalid_format_url = "http://127.0.0.1:2222/invalid-data-format"
+not_found_url = "http://127.0.0.1:2222/not-found-url"
 
 
 @pytest.fixture(scope="module")
 def run_servers():
-    data_config = uvicorn.Config(app=client_mock, host="127.0.0.1", port=3333)
+    data_config = uvicorn.Config(app=client_mock, host="127.0.0.1", port=2222)
     data_server = uvicorn.Server(data_config)
 
     def start_server(server):

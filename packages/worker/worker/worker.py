@@ -9,7 +9,7 @@ Each worker:
 """
 
 import os
-from common.models.job import Job
+from common.models.common import Job
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 import requests
 from pydantic.networks import HttpUrl
@@ -123,7 +123,7 @@ async def process_job(job: Job) -> MetricValues:
         metrics_request = CalculateRequest(
             metrics=job.metrics, true_labels=labels, predicted_labels=predicted_labels
         )
-        metrics_results = metrics_lib.calculate_metrics(metrics_request)
+        metrics_results = await metrics_lib.calculate_metrics(metrics_request)
         print(f"Metrics request: {metrics_results}")
         queue_result(metrics_results)
         return metrics_results
@@ -151,30 +151,24 @@ async def query_model(model_url: HttpUrl, data: dict, model_api_key):
         )
 
     try:
+        # Check if the request was successful
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         raise WorkerException(
             detail=e.response.json()["detail"], status_code=e.response.status_code
         )
 
-    check_model_response(response, data["labels"])
+    _check_model_response(response, data["labels"])
 
     try:
-        # Check if the request was successful
-
-        # Parse the response JSON
-        data = response.json()
-
-        # Return the data
-        return data
+        return response.json()
     except Exception as e:
         raise WorkerException(
             f"Could not parse model response - {e}; response = {response.text}"
         )
 
 
-# TODO: Write a doc explaining error messages and what checking is/isn't supported
-def check_model_response(response, labels):
+def _check_model_response(response, labels):
     """
     PRE: response is received from a deserialised pydantic model and labels and types
     have been enforced according to ModelOutput.
@@ -234,7 +228,6 @@ def check_model_response(response, labels):
                     "All columns for an output label should be of the same type",
                     status_code=400,
                 )
-
     return
 
 
