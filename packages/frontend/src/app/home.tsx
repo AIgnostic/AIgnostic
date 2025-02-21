@@ -30,9 +30,10 @@ import {
 import { HomepageState } from './types';
 import { AIGNOSTIC } from './constants';
 import Dashboard from './dashboard';
+import theme from './theme';
 
 function Homepage() {
-  const [state, setState] = useState<HomepageState>({
+  const [state, setState] = useState<HomepageState & { dashboardKey: number }>({
     modelURL: '',
     datasetURL: '',
     modelAPIKey: '',
@@ -51,6 +52,8 @@ function Homepage() {
     error: false,
     errorMessage: { header: '', text: '' },
     showDashboard: false,
+    dashboardKey: 0, // Added key to force Dashboard remount
+    isGeneratingReport: false,
   });
 
   const getValues = {
@@ -115,6 +118,17 @@ function Homepage() {
       return;
     }
 
+    if (state.isGeneratingReport) {
+      setStateWrapper('error', true);
+      setStateWrapper('errorMessage', {
+        header: 'Report Being Generated',
+        text: 'Please wait for the current report to finish generating.',
+      });
+      return;
+    }
+
+    setStateWrapper('isGeneratingReport', true); // Prevent multiple clicks
+    setStateWrapper('dashboardKey', state.dashboardKey + 1);
     setStateWrapper('showDashboard', true);
 
     const user_info = {
@@ -248,6 +262,12 @@ function Homepage() {
                             ? errorProps?.error
                             : false
                         }
+                        variant="filled"
+                        InputProps={{
+                          sx: {
+                            color: '#fff',
+                          },
+                        }}
                       />
                     );
                   })}
@@ -283,7 +303,7 @@ function Homepage() {
                         <FormControlLabel
                           key={modelType}
                           value={modelType}
-                          control={<Radio color="primary" />}
+                          control={<Radio color="secondary" />}
                           label={modelType}
                         />
                       ))}
@@ -309,7 +329,7 @@ function Homepage() {
                         metricChip.selected = !metricChip.selected;
                         setStateWrapper('metricChips', [...state.metricChips]);
                       }}
-                      color={metricChip.selected ? 'primary' : 'default'}
+                      color={metricChip.selected ? 'secondary' : 'default'}
                       style={{ margin: '5px' }}
                     />
                   ))}
@@ -373,18 +393,29 @@ function Homepage() {
                         }
                         // if all checks pass, generate report
                         else {
-                          handleSubmit();
+                          if (!state.isGeneratingReport) {
+                            handleSubmit();
+                          }
                         }
 
                         // open dashboard page in new tab
                         // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
                       }}
+                      disabled={state.isGeneratingReport}
                       sx={{ mt: 1, mr: 1 }}
                     >
                       {' '}
                       Generate Report
                     </Button>
-                    {state.showDashboard && <Dashboard />}
+                    {state.showDashboard && (
+                      // Passing the dashboardKey forces remount when it changes.
+                      <Dashboard
+                        key={state.dashboardKey}
+                        onComplete={() => {
+                          setStateWrapper('isGeneratingReport', false);
+                        }}
+                      />
+                    )}
                   </div>
                 ) : (
                   <Button
@@ -415,6 +446,9 @@ function Homepage() {
                       (index === 1 && state.selectedModelType === '')
                     }
                     sx={{ mt: 1, mr: 1 }}
+                    style={{
+                      backgroundColor: theme.palette.secondary.main,
+                    }}
                   >
                     {' '}
                     Next
@@ -423,7 +457,7 @@ function Homepage() {
 
                 <Button
                   variant="contained"
-                  disabled={index === 0}
+                  disabled={index === 0 || state.isGeneratingReport}
                   onClick={handleBack}
                   sx={[{ mt: 1, mr: 1 }, styles.secondaryButton]}
                 >
