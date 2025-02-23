@@ -20,7 +20,7 @@ server_configs = {
         "port": 3001,
         "app": ood_auroc_app,
     },
-    "explanation_stability_score": {
+    "explanation_metrics": {
         "port": 3002,
         "app": expl_stability_app,
     },
