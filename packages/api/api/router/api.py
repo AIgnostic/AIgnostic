@@ -62,7 +62,7 @@ async def generate_metrics_from_info(
 def dispatch_job(
     batch_size: int,
     total_sample_size: int,
-    metric: list[str],
+    metrics: list[str],
     model_type: str,
     data_url: HttpUrl,
     model_url: HttpUrl,
@@ -76,7 +76,7 @@ def dispatch_job(
     job_json = {
         "batch_size": batch_size,
         "total_sample_size": total_sample_size,
-        "metrics": metric,
+        "metrics": metrics,
         "model_type": model_type,
         "data_url": str(data_url),
         "model_url": str(model_url),
