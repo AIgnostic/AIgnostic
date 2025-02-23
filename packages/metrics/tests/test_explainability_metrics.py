@@ -1,52 +1,87 @@
 from metrics.models import CalculateRequest
 from metrics.metrics import calculate_metrics
-from pytest import approx
+import pytest
 from tests.server_factory import (
     server_factory,
     HOST,
     server_configs
 )
-
+from tests.metric_mocks.mock_model_explaination_metrics import (
+    BIVARIATE_ESP_INPUT_FEATURES,
+    BIVARIATE_ESP_EXPECTED_SCORE,
+    BIVARIATE_ESP_MARGIN
+)
 server_factory = server_factory  # To suppress lint errors
 
 # Mock name used to access server_config fields
 mock_name = "explanation_metrics"
 
 
-def test_explanation_stability_similar_scores_result_in_1(server_factory):
+@pytest.fixture(scope="module")
+def apply_server_factory(server_factory):
+    with server_factory(mock_name):
+        yield
+
+
+def test_explanation_stability_similar_scores_result_in_1(apply_server_factory):
 
     # Names to be tested
     metric_name = "explanation_stability_score"
 
-    with server_factory(mock_name):
-        # Check similar predictions after perturbation have value close to 1
-        info = CalculateRequest(
-            metrics=[metric_name],
-            input_features=[[1, 2]],
-            confidence_scores=[[0.5]],
-            model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-10000-ESS",
-            model_api_key="None"
-        )
+    # Check similar predictions after perturbation have value close to 1
+    info = CalculateRequest(
+        metrics=[metric_name],
+        input_features=[[1, 2]],
+        confidence_scores=[[0.5]],
+        model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-10000-ESS",
+        model_api_key="None"
+    )
 
-        result = calculate_metrics(info)
-        assert result.metric_values[metric_name] == approx(1.0)
+    result = calculate_metrics(info)
+    assert result.metric_values[metric_name] == pytest.approx(1.0)
 
 
-def test_explanation_stability_different_scores_is_not_1(server_factory):
+def test_explanation_stability_different_scores_is_not_1(apply_server_factory):
     metric_name = "explanation_stability_score"
-    with server_factory(mock_name):
-        # Check different predictions after perturbation have value close to 0
-        info = CalculateRequest(
-            metrics=[metric_name],
-            input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
-            confidence_scores=[[0.5], [0.6], [0.2], [0.8], [0.9], [0.1]],
-            model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-different-ESS",
-            model_api_key="None"
-        )
-        result = calculate_metrics(info)
-        assert result.metric_values[metric_name] < 1.0
+    # Check different predictions after perturbation have value close to 0
+    info = CalculateRequest(
+        metrics=[metric_name],
+        input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
+        confidence_scores=[[0.5], [0.6], [0.2], [0.8], [0.9], [0.1]],
+        model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-different-ESS",
+        model_api_key="None"
+    )
+    result = calculate_metrics(info)
+    assert result.metric_values[metric_name] < 1.0
 
 
 # TODO: Test explanation sparse and fidelity metrics
-def test_explanation_sparsity_ideal_case():
-    pass
+def test_explanation_sparsity_ideal_case(apply_server_factory):
+    metric_name = "explanation_sparsity_score"
+    info = CalculateRequest(
+        metrics=[metric_name],
+        input_features=[[1, 1]] * 10,
+        confidence_scores=[[0.5]] * 10,
+        model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-perfect-ESP",
+        model_api_key="None"
+    )
+    result = calculate_metrics(info)
+    print(result.metric_values[metric_name])
+    print(result)
+    assert result.metric_values[metric_name] == pytest.approx(1.0)
+
+
+def test_explanation_sparsity_bivariate_case_classification(apply_server_factory):
+    metric_name = "explanation_sparsity_score"
+    info = CalculateRequest(
+        metrics=[metric_name],
+        input_features=BIVARIATE_ESP_INPUT_FEATURES,
+        confidence_scores=[[0.8]]  * 30,
+        model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-bivariate-ESP",
+        model_api_key="None"
+    )
+    result = calculate_metrics(info)
+    assert result.metric_values[metric_name] == pytest.approx(
+        BIVARIATE_ESP_EXPECTED_SCORE,
+        BIVARIATE_ESP_MARGIN
+    )

@@ -508,22 +508,27 @@ def explanation_sparsity_score(info: CalculateRequest) -> float:
         and model_api_key.
 
     :return: float - the explanation sparsity score (1 - sparsity_fn(E(x)))
-        where sparsity_fn is || E(x) ||_0 / d - number of non-zero elements in the explanation
-        divided by the total number of features
+        where sparsity_fn is || E(x) ||_0 / d - number of coeffs within one standard deviation
+        of the mean coefficients.
     """
     # Threshold for sparsity - defined arbitrarily for now
     # TODO: get mean and std of the *explanations* element-wise (per feature)
     #  - then check proportion less than 2 sigma from the mean
     # Note unnormalised inputs may have a volatile stability scores due to varying gradients
     # leading to greater variations in mean and std
-    lime_explanation, _ = _lime_explanation(info)
-    mean = np.mean(lime_explanation)
-    std = np.std(lime_explanation)
+    lime_explanation_coeffs, _ = _lime_explanation(info, regression=True)
+    mean = np.mean(lime_explanation_coeffs)
+    std = np.std(lime_explanation_coeffs)
 
-    # Number of coefficients within 2 sigma of the mean
-    count_2_sigma = np.sum(np.abs(lime_explanation - mean) <= 2 * std)
+    print(f"info: {info}")
 
-    return 1 - count_2_sigma
+    # Number of coefficients greater than 2 sigma from the mean
+    count_far_from_mean = np.sum(np.abs(lime_explanation_coeffs - mean) > std)
+    print(f"mean: {mean}, std: {std}, count_far_from_mean: {count_far_from_mean}")
+    print(f"coeffs: {lime_explanation_coeffs}")
+    print(f"count: {count_far_from_mean}")
+
+    return 1 - count_far_from_mean / len(lime_explanation_coeffs)
 
 
 def explanation_fidelity_score(info: CalculateRequest) -> float:

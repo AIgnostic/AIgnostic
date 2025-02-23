@@ -36,17 +36,20 @@ async def predict_esp(input_data: ModelInput):
         confidence_scores=[[1] for _ in range(len(input_data.features))]
     )
 
+BIVARIATE_ESP_INPUT_FEATURES = (
+    [[0, 1, 0, 4, 2, 1, 10000, 30, 2, 9493]] * 10
+    + [[1, 0, 0, 2, 3, 1, 80, 40, 1, 9432]] * 10
+    + [[0, 1, 0, 4, 2, 1, 23331, 30, 2, 1]] * 10 
+)
+BIVARIATE_ESP_EXPECTED_SCORE = 0.8
+BIVARIATE_ESP_MARGIN = 0.15
+
 
 @app.post('/predict-bivariate-ESP', response_model=ModelResponse)
 async def predict_bivariate_esp(input_data: ModelInput):
-    assert len(input_data.features) > 10, (
-        "Input data must have more than 10 samples (arbitrarily decided) for a valid test"
-    )
-    midpoint = len(input_data.features) // 2
-
     # predictions required to test regression, confidence_scores required to test classification
-    predictions = [[1] for _ in range(midpoint)] + [[0] for _ in range(midpoint, len(input_data.features))]
-    confidence_scores = predictions
+    predictions = [[100]] * 10 + [[0]] * 10 + [[-180]] * 10
+    confidence_scores = [[1]] * 10 + [[0]] * 10 + [[0.3]] * 10
     return ModelResponse(
         predictions=predictions,
         confidence_scores=confidence_scores

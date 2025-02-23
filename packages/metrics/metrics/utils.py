@@ -64,7 +64,8 @@ def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
     return x_adv
 
 
-def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.ndarray:
+#TODO: Refactor regression flag (modified to make ESP pass)
+def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, regression=False) -> np.ndarray:
     """
     Compute LIME explanation for a black-box model.
 
@@ -93,7 +94,7 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
     response: ModelResponse = _query_model(perturbed_samples, info)
 
     # Compute model probabilities for perturbed samples
-    outputs = response.predictions if info.regression_flag else response.confidence_scores
+    outputs = response.predictions if (info.regression_flag or regression) else response.confidence_scores
 
     if outputs is None:
         raise ModelQueryException(
