@@ -1,95 +1,64 @@
-import json
-from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
-from aggregator.aggregator import (
-    aggregator_app,
-    fetch_result_from_queue,
-)
+import pytest
+from unittest.mock import MagicMock, patch
+from aggregator.aggregator import ResultsConsumer, RESULT_QUEUE
 
-client = TestClient(aggregator_app)
+@pytest.fixture
+def consumer():
+    return ResultsConsumer(host="test_host")
 
+def test_init(consumer):
+    assert consumer._host == "test_host"
+    assert consumer._connection is None
+    assert consumer._channel is None
 
-@patch("aggregator.aggregator.channel")
-def test_fetch_result_from_queue_success(mock_channel):
-    mock_method_frame = MagicMock()
-    mock_header_frame = MagicMock()
-    mock_body = json.dumps({"metric_values": {"metric1": 100, "metric2": 200}}).encode(
-        "utf-8"
+@patch('common.rabbitmq.connect.connect_to_rabbitmq')
+@patch('common.rabbitmq.connect.init_queues')
+def test_connect(mock_init_queues, mock_connect_to_rabbitmq, consumer):
+    mock_connection = MagicMock()
+    mock_channel = MagicMock()
+    mock_connect_to_rabbitmq.return_value = mock_connection
+    mock_connection.channel.return_value = mock_channel
+
+    consumer.connect()
+
+    mock_connect_to_rabbitmq.assert_called_once_with(host="test_host")
+    mock_connection.channel.assert_called_once()
+    mock_init_queues.assert_called_once_with(mock_channel)
+    assert consumer._connection == mock_connection
+    assert consumer._channel == mock_channel
+
+    # Add these print statements for debugging
+    print(f"mock_connect_to_rabbitmq called: {mock_connect_to_rabbitmq.called}")
+    print(f"mock_init_queues called: {mock_init_queues.called}")
+
+@patch('common.rabbitmq.connect.init_queues')
+@patch('common.rabbitmq.connect.connect_to_rabbitmq')
+def test_run(mock_init_queues, mock_connect_to_rabbitmq, consumer):
+    mock_connection = MagicMock()
+    mock_channel = MagicMock()
+    mock_connect_to_rabbitmq.return_value = mock_connection
+    mock_connection.channel.return_value = mock_channel
+
+    mock_callback = MagicMock()
+
+    consumer.run(on_message_callback=mock_callback)
+
+    mock_channel.basic_consume.assert_called_once_with(
+        queue=RESULT_QUEUE,
+        on_message_callback=mock_callback,
+        auto_ack=True
     )
-    mock_channel.basic_get.return_value = (
-        mock_method_frame,
-        mock_header_frame,
-        mock_body,
-    )
+    mock_channel.start_consuming.assert_called_once()
 
-    result = fetch_result_from_queue()
-    expected_result = [
-        {
-            "metric": "metric1",
-            "result": 100,
-            "legislation_results": ["Placeholder"],
-            "llm_model_summary": ["Placeholder"],
-        },
-        {
-            "metric": "metric2",
-            "result": 200,
-            "legislation_results": ["Placeholder"],
-            "llm_model_summary": ["Placeholder"],
-        },
-    ]
-    assert result == expected_result
+@patch('common.rabbitmq.connect.connect_to_rabbitmq')
+@patch('common.rabbitmq.connect.init_queues')
+def test_stop(mock_init_queues, mock_connect_to_rabbitmq, consumer):
+    mock_connection = MagicMock()
+    mock_channel = MagicMock()
+    consumer._connection = mock_connection
+    consumer._channel = mock_channel
 
+    consumer.stop()
 
-@patch("aggregator.aggregator.channel")
-def test_fetch_result_from_queue_no_result(mock_channel):
-    mock_channel.basic_get.return_value = (None, None, None)
-    result = fetch_result_from_queue()
-    assert result is None
-
-
-@patch("aggregator.aggregator.channel")
-def test_fetch_result_from_queue_error(mock_channel):
-    mock_method_frame = MagicMock()
-    mock_header_frame = MagicMock()
-    mock_body = json.dumps({"error": "Some error occurred"}).encode("utf-8")
-    mock_channel.basic_get.return_value = (
-        mock_method_frame,
-        mock_header_frame,
-        mock_body,
-    )
-
-    result = fetch_result_from_queue()
-    expected_result = [{"error": "Some error occurred"}]
-    assert result == expected_result
-
-
-@patch("aggregator.aggregator.fetch_result_from_queue")
-def test_get_results_success(mock_fetch_result_from_queue):
-    mock_fetch_result_from_queue.return_value = [
-        {
-            "metric": "metric1",
-            "result": 100,
-            "legislation_results": ["Placeholder"],
-            "llm_model_summary": ["Placeholder"],
-        }
-    ]
-    response = client.get("/results")
-    assert response.status_code == 200
-    assert response.json() == {
-        "message": "Data successfully received",
-        "results": [
-            {
-                "metric": "metric1",
-                "result": 100,
-                "legislation_results": ["Placeholder"],
-                "llm_model_summary": ["Placeholder"],
-            }
-        ],
-    }
-
-
-@patch("aggregator.aggregator.fetch_result_from_queue")
-def test_get_results_no_content(mock_fetch_result_from_queue):
-    mock_fetch_result_from_queue.return_value = None
-    response = client.get("/results")
-    assert response.status_code == 204
+    mock_channel.close.assert_called_once()
+    mock_connection.close.assert_called_once()
