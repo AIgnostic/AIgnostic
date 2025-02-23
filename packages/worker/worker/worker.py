@@ -160,7 +160,7 @@ class Worker():
                 detail=e.response.json()["detail"], status_code=e.response.status_code
             )
 
-        self.check_model_response(response, data["labels"])
+        self._check_model_response(response, data["labels"])
 
         try:
             # Check if the request was successful
@@ -254,7 +254,7 @@ class Worker():
             print("Worker stopped")
 
     # TODO: Write a doc explaining error messages and what checking is/isn't supported
-    def check_model_response(self, response, labels):
+    def _check_model_response(self, response, labels):
         """
         PRE: response is received from a deserialised pydantic model and labels and types
         have been enforced according to ModelOutput.
