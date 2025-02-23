@@ -36,6 +36,8 @@ import pytest
 )
 def test_accuracy(true_labels, predicted_labels, expected):
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=["accuracy"],
         true_labels=true_labels,
         predicted_labels=predicted_labels,
@@ -149,6 +151,8 @@ def test_metrics(
     metric_fn, metric_name, true_labels, predicted_labels, target_class, expected
 ):
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=[metric_name],
         true_labels=true_labels,
         predicted_labels=predicted_labels,
@@ -173,6 +177,8 @@ def test_metrics(
 )
 def test_fairness_metrics(metric_name, expected):
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=[metric_name],
         true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
         predicted_labels=[[1], [0], [0], [0], [1], [0], [1], [0]],
@@ -186,6 +192,8 @@ def test_fairness_metrics(metric_name, expected):
 
 def test_multiple_metrics():
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=["accuracy", "class_precision", "class_recall"],
         true_labels=[[2], [0], [2], [2], [0], [2], [0], [0]],
         predicted_labels=[[2], [0], [2], [0], [0], [2], [2], [2]],
@@ -205,6 +213,8 @@ def test_multiple_metrics():
 
 def test_multiple_binary_classifier_metrics():
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=[
             "disparate_impact",
             "equal_opportunity_difference",
@@ -240,6 +250,8 @@ def test_multiple_binary_classifier_metrics():
 
 def test_zero_division_fairness_metrics_return_0():
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=[
             "equal_opportunity_difference",
         ],
@@ -257,6 +269,8 @@ def test_zero_division_fairness_metrics_return_0():
 
 def test_error_if_no_protected_attrs():
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=["disparate_impact"],
         true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
         predicted_labels=[[1], [0], [0], [0], [1], [0], [1], [0]],
@@ -270,6 +284,8 @@ def test_error_if_no_protected_attrs():
 
 async def test_calculate_metrics():
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=["accuracy", "class_precision", "class_recall"],
         true_labels=[[2], [0], [2], [2], [0], [2], [0], [0]],
         predicted_labels=[[2], [0], [2], [0], [0], [2], [2], [2]],
@@ -289,6 +305,8 @@ async def test_calculate_metrics():
 
 async def test_calculate_performance_metrics():
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=[
             "mean_absolute_error",
             "mean_squared_error",
@@ -318,6 +336,8 @@ async def test_calculate_performance_metrics():
 
 def test_calculate_fairness_metrics():
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=[
             "statistical_parity_difference",
             "disparate_impact",
@@ -353,6 +373,8 @@ def test_calculate_fairness_metrics():
 
 def test_calculate_metrics_with_missing_information_throws_insufficient_data_error():
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=["accuracy"]
     )
     with pytest.raises(InsufficientDataProvisionException) as e:
@@ -363,8 +385,11 @@ def test_calculate_metrics_with_missing_information_throws_insufficient_data_err
 
 def test_calculate_metrics_with_invalid_data_throws_data_inconsistency_error():
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=["accuracy"],
         true_labels=[[1], [0], [1]],
+        predicted_labels=[[1], [0], [1]],
         confidence_scores=[[1]]
     )
     with pytest.raises(DataInconstencyException) as e:

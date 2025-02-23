@@ -67,17 +67,13 @@ def server_factory():
             thread.join()
 
 
-<<<<<<< HEAD
-def test_explanation_stability_scores(server_factory):
-    # metric_name = "explanation_stability_score"
-    # Check similar predictions have value close to 1
-    pass
-=======
 def test_explanation_stability_similar_scores_result_in_1(server_factory):
     metric_name = "explanation_stability_score"
     with server_factory(metric_name):
         # Check similar predictions after perturbation have value close to 1
         info = CalculateRequest(
+            batch_size=1,
+            total_sample_size=10,
             metrics=[metric_name],
             input_features=[[1, 2]],
             confidence_scores=[[0.5]],
@@ -93,6 +89,8 @@ def test_explanation_stability_different_scores_is_not_1(server_factory):
     with server_factory(metric_name):
         # Check different predictions after perturbation have value close to 0
         info = CalculateRequest(
+            batch_size=1,
+            total_sample_size=10,
             metrics=[metric_name],
             input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
             confidence_scores=[[0.5], [0.6], [0.2], [0.8], [0.9], [0.1]],
@@ -101,13 +99,14 @@ def test_explanation_stability_different_scores_is_not_1(server_factory):
         )
         result = calculate_metrics(info)
         assert result.metric_values[metric_name] < 1.0
->>>>>>> origin/3.1A-metrics-implementation
 
 
 def test_finite_diff_gradient(server_factory):
     metric_name = "finite_diff_grad"
     with server_factory(metric_name):
         info = CalculateRequest(
+            batch_size=1,
+            total_sample_size=10,
             metrics=[metric_name],
             input_features=TEST_INPUT,
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict",
@@ -133,6 +132,8 @@ def test_ood_auroc(server_factory):
         confidence_scores = np.random.uniform(0, 1, 100).tolist()  # 100 ID confidence scores
         confidence_scores = [[score] for score in confidence_scores]
         info = CalculateRequest(
+            batch_size=1,
+            total_sample_size=10,
             metrics=[metric_name],
             input_features=input_data,
             confidence_scores=confidence_scores,
