@@ -28,7 +28,6 @@ import {
   Radio,
 } from '@mui/material';
 import { HomepageState } from './types';
-import { AIGNOSTIC } from './constants';
 import Dashboard from './dashboard';
 import theme from './theme';
 
@@ -139,6 +138,7 @@ function Homepage() {
       metrics: state.metricChips
         .filter((metricChip) => metricChip.selected)
         .map((metricChip) => metricChip.label.toLowerCase()),
+      model_type: state.selectedModelType.toLowerCase(),
     };
 
     try {

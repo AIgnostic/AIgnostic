@@ -60,11 +60,8 @@ const binaryClassifierMetrics = ["accuracy",
 
 const multiClassClassifierMetrics = [
   "accuracy",
-  "class precision",
   "precision",
-  "class recall",
   "recall",
-  "class f1 score",
   "f1 score",
   // "roc auc",
   // "explanation stability score",
@@ -83,7 +80,7 @@ const modelTypesToMetrics: { [key: string]: string[] } = {
   "Binary Classification": binaryClassifierMetrics,
   "Multi Class Classification": multiClassClassifierMetrics,
   "Regression": regressionMetrics,
-  'General (Accuracy, Precision, Recall)': generalMetrics,
+  // 'General (Accuracy, Precision, Recall)': generalMetrics,
 };
 
 /*

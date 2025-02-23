@@ -206,8 +206,12 @@ class Worker():
             print(f"True labels: {labels}")
             print(f"Metrics to compute: {job.metrics}")
 
-            # predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, labels)
-            predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, labels)
+            # some preprocessing for FinBERT
+            # TODO: Need to sort out how to handle this properly
+            if job.model_type == "binary classification":
+                predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, labels)
+            elif job.model_type == "multi class classification":
+                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, labels)
 
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")

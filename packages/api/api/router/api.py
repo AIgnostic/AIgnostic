@@ -21,6 +21,7 @@ class ModelEvaluationRequest(BaseModel):
     model_url: HttpUrl
     model_api_key: str
     metrics: list[str]
+    model_type: str
 
 
 @api.post("/evaluate")
@@ -43,6 +44,7 @@ async def generate_metrics_from_info(
                 batch_size=BATCH_SIZE,
                 total_sample_size=TOTAL_SAMPLE_SIZE,
                 metric=request.metrics,
+                model_type=request.model_type,
                 data_url=request.dataset_url,
                 model_url=request.model_url,
                 data_api_key=request.dataset_api_key,
@@ -61,6 +63,7 @@ def dispatch_job(
     batch_size: int,
     total_sample_size: int,
     metric: list[str],
+    model_type: str,
     data_url: HttpUrl,
     model_url: HttpUrl,
     data_api_key: str,
@@ -74,6 +77,7 @@ def dispatch_job(
         "batch_size": batch_size,
         "total_sample_size": total_sample_size,
         "metrics": metric,
+        "model_type": model_type,
         "data_url": str(data_url),
         "model_url": str(model_url),
         "data_api_key": data_api_key,
