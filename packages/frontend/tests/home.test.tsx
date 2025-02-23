@@ -191,7 +191,7 @@ describe('API Calls', () => {
       target: { value: 'http://valid-dataset-url.com' },
     });
     fireEvent.click(screen.getAllByText('Next')[0]);
-    const radio = screen.getByLabelText('Classification');
+    const radio = screen.getByLabelText('Binary Classification');
     fireEvent.click(radio);
     fireEvent.click(screen.getAllByText('Next')[1]);
     fireEvent.click(screen.getAllByText('Next')[2]);
@@ -217,10 +217,10 @@ describe('Model Type Selection', () => {
       target: { value: 'http://valid-dataset-url.com' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    fireEvent.click(screen.getByLabelText('Classification'));
+    fireEvent.click(screen.getByLabelText('Binary Classification'));
     fireEvent.click(screen.getAllByText('Next')[0]);
     fireEvent.click(screen.getAllByText('Next')[0]);
-    const expectedMetrics = modelTypesToMetrics['Classification'];
+    const expectedMetrics = modelTypesToMetrics['Binary Classification'];
     expectedMetrics.forEach((metric) => {
       expect(screen.getByText(metric)).toBeInTheDocument();
     });
@@ -252,7 +252,7 @@ describe('Model Type Selection', () => {
       target: { value: 'http://valid-dataset-url.com' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    const radio = screen.getByLabelText('Classification');
+    const radio = screen.getByLabelText('Binary Classification');
     fireEvent.click(radio);
 
     expect(radio).toBeChecked();
