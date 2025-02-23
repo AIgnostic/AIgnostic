@@ -709,6 +709,24 @@ pycodestyle = ">=2.12.0,<2.13.0"
 pyflakes = ">=3.2.0,<3.3.0"
 
 [[package]]
+name = "folktables"
+version = "0.0.12"
+description = "New machine learning benchmarks from tabular datasets."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "folktables-0.0.12-py3-none-any.whl", hash = "sha256:979cda1900094b845ab3a8a3ae1b848f0138b780d5f8d17eeb6eb04c3c0c6617"},
+    {file = "folktables-0.0.12.tar.gz", hash = "sha256:e83dde0cbcdd54c7c39b175006a50bdfc4adc351f69d4389f82aaba3eee02115"},
+]
+
+[package.dependencies]
+numpy = "*"
+pandas = "*"
+requests = "*"
+scikit-learn = "*"
+
+[[package]]
 name = "fonttools"
 version = "4.56.0"
 description = "Tools to manipulate font files"
@@ -3397,4 +3415,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "cfb69577ac1a461f72c69e548ed483298cd41062e8bdbe06cc043b463e372e0f"
+content-hash = "28229a3a290312402c40d0791820e488d634144d52f22a51db99aa9fefafd649"
