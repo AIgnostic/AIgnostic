@@ -1341,32 +1341,32 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-google-genai"
-version = "2.0.9"
+version = "2.0.10"
 description = "An integration package connecting Google's genai package and LangChain"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "langchain_google_genai-2.0.9-py3-none-any.whl", hash = "sha256:48d8c78c42048d54f40dff333db9d359746644e0feb0e08b5eabdf34ad7149ca"},
-    {file = "langchain_google_genai-2.0.9.tar.gz", hash = "sha256:65205089da1f72688a0ed6e7c6914af308b6514ab8038fd8126ecb20f1df234c"},
+    {file = "langchain_google_genai-2.0.10-py3-none-any.whl", hash = "sha256:964a7542fd11fdec7592052b4eaef383227f7c4fa4d754a455e4bf0634f4ad28"},
+    {file = "langchain_google_genai-2.0.10.tar.gz", hash = "sha256:b51067b468853856f275bb7b1a85dbaf4467b59fe67e35fcd614fc0d744c810e"},
 ]
 
 [package.dependencies]
 filetype = ">=1.2.0,<2.0.0"
 google-generativeai = ">=0.8.0,<0.9.0"
-langchain-core = ">=0.3.27,<0.4.0"
+langchain-core = ">=0.3.37,<0.4.0"
 pydantic = ">=2,<3"
 
 [[package]]
 name = "langsmith"
-version = "0.3.9"
+version = "0.3.10"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "langsmith-0.3.9-py3-none-any.whl", hash = "sha256:0e250cca50d1142d8bb00528da573c83bef1c41d78de43b2c032f8d11a308d04"},
-    {file = "langsmith-0.3.9.tar.gz", hash = "sha256:460e70d349282cf8d7d503cdf16684db58061d12a6a512daf626257a3218e0fb"},
+    {file = "langsmith-0.3.10-py3-none-any.whl", hash = "sha256:2f1f9e27c4fc6dd605557c3cdb94465f4f33464ab195c69ce599b6ee44d18275"},
+    {file = "langsmith-0.3.10.tar.gz", hash = "sha256:7c05512d19a7741b348879149f4b7ef6aa4495abd12ad2e9418243664559b521"},
 ]
 
 [package.dependencies]

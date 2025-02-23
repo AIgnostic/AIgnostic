@@ -17,6 +17,9 @@ import pytest
 
 
 def test_fgsm_attack():
+    """
+    Test perturbations for fgsm attack are coorectly computed given gradeints and epsilon and input
+    """
     x = np.array([1, 2, 3])
     grad = np.array([1, -1, 1])
     epsilon = 0.5
@@ -31,9 +34,12 @@ def test_fgsm_attack():
 
 @pytest.fixture
 def mock_info():
+    """
+    Mock input object for testing
+    """
     class MockInfo:
         def __init__(self):
-            self.metrics = ["lime_test"]
+            self.metrics = ["explanation_stability_score"]
             self.input_features = np.array([[1, 2], [3, 4], [5, 6]])
             self.model_url = "http://model-api.com"
             self.model_api_key = "fake_api_key"
@@ -42,6 +48,9 @@ def mock_info():
 
 
 def mock_query_model(perturbed_samples, info):
+    """
+    Mock output of querying a model
+    """
     class MockResponse:
         def __init__(self):
             self.predictions = np.random.rand(perturbed_samples.shape[0])
@@ -78,16 +87,23 @@ def mock_post():
 
 
 def test_query_model_success(mock_post):
+    """
+    Test the _query_model successfully retrieves predictions and confidence scores given valid model
+    inputs.
+    """
     # Arrange
     generated_input_features = np.array([[1, 2, 3], [4, 5, 6]])
     info = CalculateRequest(metrics=[], model_url="http://fakeurl.com")
+
+    predictions = [[0], [1]]
+    confidence_scores = [[0.5], [0.6]]
 
     # Mock the response object
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {
-        "predictions": [[0], [1]],
-        "confidence_scores": [[0.5], [0.6]]
+        "predictions": predictions,
+        "confidence_scores": confidence_scores
     }
     mock_post.return_value = mock_response
 
@@ -104,9 +120,14 @@ def test_query_model_success(mock_post):
         ).model_dump(mode="json")
     )
     assert isinstance(response, ModelResponse)
+    assert response.predictions == predictions
+    assert response.confidence_scores == confidence_scores
 
 
 def test_query_model_http_error(mock_post):
+    """
+    Assert a ModelQueryException is raised when the model API returns an HTTP error.
+    """
     # Arrange
     generated_input_features = np.array([[1, 2, 3], [4, 5, 6]])
     info = CalculateRequest(metrics=[], model_url="http://fakeurl.com")

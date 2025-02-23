@@ -521,14 +521,14 @@ def explanation_sparsity_score(info: CalculateRequest) -> float:
     std = np.std(lime_explanation)
 
     # Number of coefficients within 2 sigma of the mean
-    count_2_sigma = np.sum(np.abs(lime_explanation - mean) < 2 * std)
+    count_2_sigma = np.sum(np.abs(lime_explanation - mean) <= 2 * std)
 
     return 1 - count_2_sigma
 
 
 def explanation_fidelity_score(info: CalculateRequest) -> float:
     """
-    Calculate the explanation fidelity score for a given model and sample inputs
+    Calculate the explanation fidelity score for a given model and sample inputs.
 
     :param info: CalculateRequest - contains information required to calculate the metric.
         explanation_fidelity_score requires the input_features, confidence_scores, model_url
@@ -536,7 +536,8 @@ def explanation_fidelity_score(info: CalculateRequest) -> float:
 
     :return: float - the explanation fidelity score (1 - 1/N * fidelity_fn(f(x), g(x))) where
         fidelity_fn is the distance function between the model output f(x) and the output of
-        an interpretable approximation g(x) of the model
+        an interpretable approximation g(x) of the model. For classification tasks, confidence_scores
+        (probabilities) are compared instead.
     """
     _, reg_model = _lime_explanation(info)
 
@@ -550,7 +551,8 @@ def explanation_fidelity_score(info: CalculateRequest) -> float:
         fidelity_fn(
             info.confidence_scores,
             reg_model.predict(info.input_features)
-        )).item()
+        )
+    ).item()
 
 
 """
