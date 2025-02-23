@@ -20,7 +20,7 @@ async def test_metric_insights():
     ]
     mock_llm = AsyncMock()
     mock_response = "Mocked LLM Response"
-    mock_llm.ainvoke.return_value = mock_response
+    mock_llm.invoke.return_value = mock_response
 
     with patch(
         "llm_insights.insights.construct_prompt", wraps=construct_prompt
@@ -30,7 +30,7 @@ async def test_metric_insights():
         )
 
         # Check that the LLM is called
-        mock_llm.ainvoke.assert_called_once()
+        mock_llm.invoke.assert_called_once()
 
         # Check that the response from the LLM is returned
         assert result == mock_response
