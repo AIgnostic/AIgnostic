@@ -2,24 +2,29 @@ from report_generation.utils import search_legislation
 from report_generation.utils import extract_legislation_text
 from report_generation.utils import parse_legislation_text
 from report_generation.utils import generate_report
+from report_generation.constants import property_to_regulations
 from unittest import mock
+import pytest
 
 EXTRACT = 'report_generation.utils.extract_legislation_text'
 PARSE = 'report_generation.utils.parse_legislation_text'
+LLM_INIT = 'llm_insights.insights.init_llm'
+LLM_INSIGHTS = 'llm_insights.insights.metric_insights'
+
 
 """ SEARCH LEGISLATION TESTS """
 
 
 def test_search_legislation_with_valid_metric():
     metric = "fast gradient sign method"
-    expected_output = ["article 15"]
+    expected_output = ["15"]
     result = search_legislation(metric)
     assert result == expected_output
 
 
 def test_search_legislation_with_multiple_articles():
-    metric = "equality of opportunity"
-    expected_output = ["article 10", "article 15"]
+    metric = "equal opportunity difference"
+    expected_output = ["10", "15"]
     result = search_legislation(metric)
     assert result == expected_output
 
@@ -167,90 +172,89 @@ def test_parse_legislation_text_with_empty_content():
     assert result == expected_output
 
 
-def test_generate_report_with_valid_metrics():
-    metrics_data = {
-        "fast gradient sign method": {},
-        "equality of opportunity": {}
-    }
-    expected_output = {
-        "extracts": [
-            {
-                "article_number": "15",
-                "article_title": "Title for Article 15",
-                "description": "Description for Article 15.",
-                "suitable_recitals": ["https://gdpr-info.eu/recitals/no-82/"]
-            },
-            {
-                "article_number": "10",
-                "article_title": "Title for Article 10",
-                "description": "Description for Article 10.",
-                "suitable_recitals": ["https://gdpr-info.eu/recitals/no-81/"]
-            },
-            {
-                "article_number": "15",
-                "article_title": "Title for Article 15",
-                "description": "Description for Article 15.",
-                "suitable_recitals": ["https://gdpr-info.eu/recitals/no-82/"]
-            }
-        ],
-        "llm insights": []
-    }
-
+@pytest.fixture
+def mock_dependencies():
     with mock.patch(EXTRACT) as mock_extract, \
-         mock.patch(PARSE) as mock_parse:
-        mock_extract.side_effect = [
-            "Art. 15 GDPR\nTitle for Article 15\n" +
-            "Description for Article 15.\n" +
-            "Suitable Recitals\n(\n82\n)",
-            "Art. 10 GDPR\nTitle for Article 10\n" +
-            "Description for Article 10.\n" +
-            "Suitable Recitals\n(\n81\n)",
-            "Art. 15 GDPR\nTitle for Article 15\n" +
-            "Description for Article 15.\n" +
-            "Suitable Recitals\n(\n82\n)"
+         mock.patch(PARSE) as mock_parse, \
+         mock.patch(LLM_INIT) as mock_llm_init, \
+         mock.patch(LLM_INSIGHTS) as mock_llm_insights:
+        mock_extract.return_value = [
+            "Art. 1 GDPR\nTitle for Article 1\n" +
+            "Description for Article 1.\n" +
+            "Suitable Recitals\n(\nR1\n)",
         ]
-        mock_parse.side_effect = [
+        mock_parse.return_value = [
             {
-                "article_number": "15",
-                "article_title": "Title for Article 15",
-                "description": "Description for Article 15.",
-                "suitable_recitals": ["https://gdpr-info.eu/recitals/no-82/"]
-            },
-            {
-                "article_number": "10",
-                "article_title": "Title for Article 10",
-                "description": "Description for Article 10.",
-                "suitable_recitals": ["https://gdpr-info.eu/recitals/no-81/"]
-            },
-            {
-                "article_number": "15",
-                "article_title": "Title for Article 15",
-                "description": "Description for Article 15.",
-                "suitable_recitals": ["https://gdpr-info.eu/recitals/no-82/"]
-            }
+                "article_number": "1",
+                "article_title": "Title for Article 1",
+                "description": "Description for Article 1.",
+                "suitable_recitals": ["https://gdpr-info.eu/recitals/no-R1/"]
+            } 
         ]
+        mock_llm_init.return_value = mock.Mock()
+        mock_llm_insights.return_value = ""
 
-        result = generate_report(metrics_data)
-        assert result == expected_output
+        yield mock_extract, mock_parse, mock_llm_init, mock_llm_insights
 
 
-def test_generate_report_with_empty_metrics():
-    metrics_data = {}
-    expected_output = {
-        "extracts": [],
-        "llm insights": []
+def test_generate_report_with_valid_metrics(mock_dependencies):
+    metrics_data = {
+        "fast_gradient_sign_method": 0.6,
+        "equal_opportunity_difference": 0.5
     }
+    
     result = generate_report(metrics_data)
-    assert result == expected_output
+
+    assert result[0]["property"] == "adversarial robustness"
+    assert result[0]["computed_metrics"] == [{"metric": "fast gradient sign method", "value": 0.6}]
+
+    assert result[2]["property"] == "fairness"
+    assert result[2]["computed_metrics"] == [{"metric": "equal opportunity difference", "value": 0.5}]
+    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
+    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
+    assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["fairness"])
+    assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["uncertainity"])
+    assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
+    assert len(result[5]["legislation_extracts"]) == len(property_to_regulations["data minimality"])
 
 
-def test_generate_report_with_non_existent_metric():
+def test_generate_report_with_empty_metrics(mock_dependencies):
+    metrics_data = {}
+
+    result = generate_report(metrics_data)
+    
+    assert result[0]["computed_metrics"] == []
+    assert result[1]["computed_metrics"] == []
+    assert result[2]["computed_metrics"] == []
+    assert result[3]["computed_metrics"] == []
+    assert result[4]["computed_metrics"] == []
+    assert result[5]["computed_metrics"] == []
+
+    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
+    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
+    assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["fairness"])
+    assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["uncertainity"])
+    assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
+    assert len(result[5]["legislation_extracts"]) == len(property_to_regulations["data minimality"])
+
+
+def test_generate_report_with_non_existent_metric(mock_dependencies):
     metrics_data = {
         "non-existent metric": {}
     }
-    expected_output = {
-        "extracts": [],
-        "llm insights": []
-    }
+
     result = generate_report(metrics_data)
-    assert result == expected_output
+    
+    assert result[0]["computed_metrics"] == []
+    assert result[1]["computed_metrics"] == []
+    assert result[2]["computed_metrics"] == []
+    assert result[3]["computed_metrics"] == []
+    assert result[4]["computed_metrics"] == []
+    assert result[5]["computed_metrics"] == []
+
+    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
+    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
+    assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["fairness"])
+    assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["uncertainity"])
+    assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
+    assert len(result[5]["legislation_extracts"]) == len(property_to_regulations["data minimality"])

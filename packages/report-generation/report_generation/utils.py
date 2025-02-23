@@ -123,15 +123,12 @@ def generate_report(metrics_data: dict) -> list[dict]:
 
     results = []
     computed_metrics = set(metrics_data.keys())
-    print(f"Computed metrics: {computed_metrics}")
 
     for property in property_to_metrics.keys():
         property_result = {}
         # find the intersection of computed metrics and metrics for the property
         property_metrics = set([p.replace(" ", "_") for p in property_to_metrics[property]])
-        print(f"Property metrics: {property_metrics}")
         common_metrics = computed_metrics.intersection(property_metrics)
-        print(f"Common metrics: {common_metrics}")
         property_result["property"] = property
         if common_metrics:
             property_result["computed_metrics"] = [
@@ -169,6 +166,7 @@ def generate_report(metrics_data: dict) -> list[dict]:
 
         results.append(property_result)
 
+    print(results)
     return results
 
 
