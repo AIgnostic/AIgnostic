@@ -3,7 +3,7 @@ from metrics.models import (
     MetricsInfo,
     MetricValues,
 )
-from metrics.metrics import MetricsException
+from metrics.metrics import MetricsComputationException
 from metrics.metrics import calculate_metrics as _calculate_metrics
 from fastapi import FastAPI, HTTPException
 
@@ -54,5 +54,5 @@ async def calculate_metrics(info: CalculateRequest) -> MetricValues:
     """
     try:
         return _calculate_metrics(info)
-    except MetricsException as e:
+    except MetricsComputationException as e:
         raise HTTPException(status_code=500, detail=e.detail)

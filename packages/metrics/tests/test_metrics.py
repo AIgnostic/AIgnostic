@@ -16,11 +16,11 @@ from metrics.metrics import (
     r_squared,
 )
 from metrics.exceptions import (
-    MetricsException,
-    InsufficientDataProvisionException,
-    DataInconstencyException
+    MetricsComputationException,
+    DataProvisionException,
+    DataInconsistencyException
 )
-from metrics.models import CalculateRequest
+from metrics.models import CalculateRequest, MetricsPackageExceptionModel
 import pytest
 
 
@@ -55,7 +55,7 @@ def test_accuracy(true_labels, predicted_labels, expected):
     ],
 )
 def test_validity_check_fails(true_labels, exception_message):
-    with pytest.raises(MetricsException) as e:
+    with pytest.raises(MetricsComputationException) as e:
         is_valid_for_per_class_metrics("class_precision", true_labels)
     assert exception_message in e.value.detail
 
@@ -351,14 +351,21 @@ def test_calculate_fairness_metrics():
         ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
 
-def test_calculate_metrics_with_missing_information_throws_insufficient_data_error():
+def test_calculate_metrics_with_missing_information_returns_insufficient_data_errors():
     info = CalculateRequest(
-        metrics=["accuracy"]
+        metrics=["accuracy"],
+        task_name="binary_classification",
     )
-    with pytest.raises(InsufficientDataProvisionException) as e:
-        calculate_metrics(info)
-        assert "Insufficient data provided to calculate user metrics" in e.value.detail
-        assert "true_labels" in e.value.detail
+    results = calculate_metrics(info)
+    assert results.metric_values == {
+        "accuracy": MetricsPackageExceptionModel(
+            detail="Insufficient data provided to calculate user metrics: "
+                "The following missing fields are required to calculate metric "
+                "accuracy:\n['true_labels', 'predicted_labels']",
+            status_code=400,
+            exception_type="DataProvisionException",
+        )
+    }
 
 
 def test_calculate_metrics_with_invalid_data_throws_data_inconsistency_error():
@@ -367,7 +374,7 @@ def test_calculate_metrics_with_invalid_data_throws_data_inconsistency_error():
         true_labels=[[1], [0], [1]],
         confidence_scores=[[1]]
     )
-    with pytest.raises(DataInconstencyException) as e:
+    with pytest.raises(DataInconsistencyException) as e:
         calculate_metrics(info)
         assert "Data inconsistency error" in e.value.detail
         assert "Length mismatch between confidence scores and true labels" in e.value.detail

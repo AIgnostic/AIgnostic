@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from warnings import warn
 
 
-class __MetricsPackageException(Exception, ABC):
+class _MetricsPackageException(Exception, ABC):
     """
     __MetricsPackageException is the base exception class for the metrics package
         - it extends Exception as an abstract class and requires a detail field (not empty)
@@ -17,7 +17,16 @@ class __MetricsPackageException(Exception, ABC):
         super().__init__(self.detail)
 
 
-class MetricsException(__MetricsPackageException):
+    @abstractmethod
+    def to_pydantic_model(self) -> dict:
+        return {
+            "detail": self.detail,
+            "status_code": self.status_code,
+            "exception_type": self.__class__.__name__
+        }
+
+
+class MetricsComputationException(_MetricsPackageException):
     """
     Class for all metric-related exceptions (as a result of metric calculation).
 
@@ -35,7 +44,7 @@ class MetricsException(__MetricsPackageException):
         super().__init__(err_msg, status_code)
 
 
-class DataInconstencyException(__MetricsPackageException):
+class DataInconsistencyException(_MetricsPackageException):
     """
     Class representing invalid inputs for metric calculations - specifically regarding
     .e.g. inconsistent number of datapoints or other data inconstency issues
@@ -54,7 +63,7 @@ class DataInconstencyException(__MetricsPackageException):
         super().__init__(err_msg, status_code)
 
 
-class ModelQueryException(__MetricsPackageException):
+class ModelQueryException(_MetricsPackageException):
     """
     Class for all model query-related exceptions (as a result of querying the model during
     metric calculations or otherwise).
@@ -72,7 +81,7 @@ class ModelQueryException(__MetricsPackageException):
         super().__init__(err_msg, status_code)
 
 
-class InsufficientDataProvisionException(__MetricsPackageException):
+class DataProvisionException(_MetricsPackageException):
     """
     Class representing insufficient data provision for metric calculations - this occurs when
     the user's choice of metrics require certain extra data to be provided. If the conditions

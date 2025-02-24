@@ -30,10 +30,10 @@ from aif360.datasets import BinaryLabelDataset
 import pandas as pd
 import numpy as np
 from metrics.exceptions import (
-    MetricsException,
-    DataInconstencyException,
+    MetricsComputationException,
+    DataInconsistencyException,
     ModelQueryException,
-    InsufficientDataProvisionException
+    DataProvisionException
 )
 from common.models import ModelResponse
 
@@ -93,17 +93,17 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
     :return: None
     """
     if len(true_labels) == 0:
-        raise MetricsException(
+        raise MetricsComputationException(
             metric_name,
             detail="No labels provided - will lead to division by zero",
         )
     elif len(true_labels[0]) > 1:
-        raise MetricsException(
+        raise MetricsComputationException(
             metric_name,
             detail=f"Multiple attributes provided - cannot calculate {metric_name}",
         )
     elif len(true_labels[0]) == 0:
-        raise MetricsException(
+        raise MetricsComputationException(
             metric_name,
             detail=f"No attributes provided - cannot calculate {metric_name}",
         )
@@ -147,7 +147,7 @@ def _calculate_precision(metric_name, true_labels, predicted_labels, target_clas
         )
         return tp / (tp + fp) if (tp + fp) != 0 else 0
     except (ValueError, TypeError, ZeroDivisionError) as e:
-        raise MetricsException(metric_name, detail=str(e))
+        raise MetricsComputationException(metric_name, detail=str(e))
 
 
 def class_precision(info: CalculateRequest) -> float:
@@ -209,7 +209,7 @@ def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
         )
         return tp / (tp + fn) if (tp + fn) != 0 else 0
     except (ValueError, TypeError, ZeroDivisionError) as e:
-        raise MetricsException(metric_name, detail=str(e))
+        raise MetricsComputationException(metric_name, detail=str(e))
 
 
 def class_recall(info: CalculateRequest) -> float:
@@ -416,7 +416,7 @@ def equalized_odds_difference(info: CalculateRequest) -> float:
                 return 0.0
             return tp / total if target_label == 1 else fp / total
         except ZeroDivisionError as e:
-            raise MetricsException(name, detail=str(e))
+            raise MetricsComputationException(name, detail=str(e))
 
     fpr_1 = rate(0, 1)  # False positive rate for group 1
     fpr_0 = rate(0, 0)  # False positive rate for group 0
@@ -582,10 +582,10 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     name = "ood_auroc"
 
     if info.input_features is None:
-        raise MetricsException(name, detail="Input data is required.")
+        raise MetricsComputationException(name, detail="Input data is required.")
 
     if info.confidence_scores is None:
-        raise MetricsException(name, detail="Confidence scores are required.")
+        raise MetricsComputationException(name, detail="Confidence scores are required.")
 
     id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
     d: int = id_data.shape[1]                       # Feature dimensionality
@@ -616,7 +616,7 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
 
     # Check if lengths match
     if len(labels) != len(scores):
-        raise MetricsException(name, detail="Length mismatch between labels and scores.")
+        raise MetricsComputationException(name, detail="Length mismatch between labels and scores.")
 
     return roc_auc_score(labels, scores)
 
@@ -720,7 +720,7 @@ metric_to_fn_and_requirements = {
 }
 
 
-def check_all_required_fields_present(info: CalculateRequest):
+def check_all_required_fields_present(metrics: set[str], info: CalculateRequest):
     """
     check_all_required_fields_present ensures that all the required fields are present in the
     CalculateRequest object.
@@ -729,25 +729,50 @@ def check_all_required_fields_present(info: CalculateRequest):
 
     :return: None
     """
-    for metric in info.metrics:
+    metrics_to_exceptions = {}
+    for metric in metrics:
         if metric not in metric_to_fn_and_requirements:
-            raise MetricsException(
+            metrics_to_exceptions[metric] = MetricsComputationException(
                 metric,
-                detail=f"Metric {metric} is not supported."
+                detail=f"Metric should be supported, but is not mapped to a computation. (Internal Error)"
             )
         else:
+            missing_fields = []
             for field in metric_to_fn_and_requirements[metric]["required_inputs"]:
                 if not hasattr(info, field) or getattr(info, field) is None:
-                    raise InsufficientDataProvisionException(
-                        detail=f"Field {field} is required to calculate metric {metric}."
-                    )
-    return
+                    missing_fields.append(field)
+            if missing_fields:
+                metrics_to_exceptions[metric] = DataProvisionException(
+                    detail=f"The following missing fields are required to calculate metric {metric}:\n"
+                            f"{missing_fields}"
+                )
+    return metrics_to_exceptions
 
 
 def check_metrics_are_supported_for_task(info: CalculateRequest):
-    # TODO
-    pass
-
+    """
+    check_metrics_are_supported_for_task ensures that the metrics requested are supported
+    for the task type provided.
+    """
+    if info.task_name not in task_type_to_metric:
+        raise DataProvisionException(
+            detail=f"Task {info.task_name} is not supported. Please choose a valid task."
+        )
+    
+    invalid_metrics = set(info.metrics) - task_type_to_metric[info.task_name]
+    metrics_to_exceptions = {}
+    for metric in invalid_metrics:
+            metrics_to_exceptions[metric] = MetricsComputationException(
+                metric,
+                detail=(
+                    f"Metric {metric} is not supported for {info.task_name} tasks."
+                    " Please only choose valid metrics for the task type."
+                    "\nSupported metrics for this task type are:\n"
+                    f" {task_type_to_metric[info.task_name]}"
+                ),
+                status_code=400
+            )
+    return metrics_to_exceptions
 
 def calculate_metrics(info: CalculateRequest) -> MetricValues:
     """
@@ -766,24 +791,38 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
         if info.true_labels is not None:
             # If confidence scores and labels are both given, ensure they have the same length
             if info.confidence_scores.shape != info.true_labels.shape:
-                raise DataInconstencyException(
+                raise DataInconsistencyException(
                     detail="Length mismatch between confidence scores and true labels.",
                 )
 
-    check_all_required_fields_present(info)
+    results = {}
 
-    try:
-        results = {}
+    if info.task_name:
+        # Add all metrics to results if they raise an exception
+        results = check_metrics_are_supported_for_task(info)
+        print(results)
+        results = results | check_all_required_fields_present(
+            set(info.metrics) - set(results.keys()),
+            info
+        )
+        print(results)
 
-        for metric in info.metrics:
+    for metric in info.metrics:
+        try:
+            # Skip the metric if it is known to throw an error
+            if metric in results:
+                continue
             current_metric = metric
             if metric not in metric_to_fn_and_requirements.keys():
                 results[metric] = 1
             else:
                 results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
 
-        return MetricValues(metric_values=results)
-    except (MetricsException, ModelQueryException) as e:
-        raise e
-    except Exception as e:
-        raise MetricsException(current_metric, detail=str(e))
+        # Return an exception in place of the metric result if applicable
+        # Approach allows valid metrics to still be calculated
+        except (MetricsComputationException, ModelQueryException) as e:
+            results[metric] = e
+        except Exception as e:
+            results[metric] = MetricsComputationException(current_metric, detail=str(e))
+    print(results)
+    return MetricValues(metric_values=results)

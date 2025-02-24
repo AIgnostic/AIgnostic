@@ -1,6 +1,7 @@
-from pydantic import BaseModel, field_validator, HttpUrl
-from typing import Optional, Any
+from pydantic import BaseModel, field_validator, HttpUrl, field_serializer, Field
+from typing import Optional, Any, Union, List
 from common.utils import nested_list_to_np
+from metrics.exceptions import _MetricsPackageException
 
 
 class MetricsInfo(BaseModel):
@@ -17,6 +18,8 @@ class CalculateRequest(BaseModel):
     data for the task.
 
     :param metrics: list[str] - List of metrics to be calculated.
+    :param task_name: Optional[str] - Name of the task for which metrics are calculated. Options:
+        "binary_classification", "multi_class_classification", "regression".
     :param input_data: Optional[list[list]] - 2D list of input data where each nested list
         corresponds to one row of data.
     :param confidence_scores: Optional[list[list]] - 2D list of probabilities where each nested
@@ -36,6 +39,7 @@ class CalculateRequest(BaseModel):
     :param model_api_key: Optional[str] - API key for accessing the model endpoint.
     """
     metrics: list[str]
+    task_name: Optional[str] = None
     input_features: Optional[list[list]] = None
     confidence_scores: Optional[list[list]] = None
     true_labels: Optional[list[list]] = None
@@ -63,9 +67,29 @@ class CalculateRequest(BaseModel):
         return nested_list_to_np(v)
 
 
+class MetricsPackageExceptionModel(BaseModel):
+    """
+    MetricsPackageExceptionModel is the pydantic model representing fields of the base exception
+    class for the metrics package.
+    """
+    detail: str
+    status_code: int
+    exception_type: str = Field(default="")
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
 class MetricValues(BaseModel):
     """
     Receive calculated metric values
     """
-    metric_values: dict[str, float]
-    warning_msg: Optional[str] = None
+    metric_values: dict[str, Union[MetricsPackageExceptionModel, float]]
+
+    @field_validator('metric_values', mode='before')
+    def convert_exception_to_model(cls, v):
+        if isinstance(v, dict):
+            for key, value in v.items():
+                if isinstance(value, _MetricsPackageException):
+                    v[key] = value.to_pydantic_model()
+        return v
