@@ -174,7 +174,7 @@ def aggregate_report(metrics: dict):
         By collating the metrics, and pulling information from the report generator
     """
 
-    report_json = generate_report(metrics)
+    report_json = generate_report(metrics, os.getenv("GOOGLE_API_KEY"))
 
     return report_json
 
@@ -231,6 +231,10 @@ def start_websocket_server():
 
 
 if __name__ == '__main__':
+    # Load environment variables
+    from dotenv import load_dotenv
+    load_dotenv()
+
     # Start WebSocket server in a separate thread
     threading.Thread(target=start_websocket_server, daemon=True).start()
 

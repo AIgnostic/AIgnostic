@@ -6,8 +6,6 @@ from llm_insights.insights import init_llm, metric_insights
 import os
 import dotenv
 
-dotenv.load_dotenv()
-
 
 def search_legislation(metric: str) -> list:
     """
@@ -87,7 +85,7 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     return data
 
 
-def generate_report(metrics_data: dict) -> list[dict]:
+def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
     """
     metrics_data:
     {
@@ -95,6 +93,7 @@ def generate_report(metrics_data: dict) -> list[dict]:
         "metric2": "value2",
         ...
     }
+    api_key: Google API key for LLM
 
     output:
 
@@ -149,7 +148,7 @@ def generate_report(metrics_data: dict) -> list[dict]:
         property_result["llm_insights"] = []
 
         try:
-            llm = init_llm(os.getenv("GOOGLE_API_KEY"))
+            llm = init_llm(api_key)
             mesg = metric_insights(
                 property_name=property,
                 metrics=[
