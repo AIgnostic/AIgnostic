@@ -4,7 +4,10 @@ import jsPDF from 'jspdf';
 import { applyStyle } from '../src/app/utils';
 import { reportStyles } from '../src/app/home.styles';
 import { generateReportText } from '../src/app/utils';
-import { MOCK_MODEL_API_URL, MOCK_DATASET_API_URL } from '../src/app/constants';
+import { MOCK_SCIKIT_API_URL,
+         MOCK_FINBERT_API_URL,
+         MOCK_FOLKTABLES_DATASET_API_URL,
+         MOCK_FINANCIAL_DATASET_API_URL} from '../src/app/constants';
 
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {
@@ -18,8 +21,10 @@ describe('checkURL function', () => {
       'http://example.com?search=test#anchor',
       'https://192.168.1.1',
       'https://www.example.com/path?query=value#fragment',
-      MOCK_MODEL_API_URL,
-      MOCK_DATASET_API_URL,
+      MOCK_SCIKIT_API_URL,
+      MOCK_FINBERT_API_URL,
+      MOCK_FOLKTABLES_DATASET_API_URL,
+      MOCK_FINANCIAL_DATASET_API_URL,
     ];
 
     validUrls.forEach((url) => {

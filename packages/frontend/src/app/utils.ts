@@ -1,12 +1,18 @@
 import isURL from "validator/lib/isURL";
 import jsPDF from "jspdf";
 import { reportStyles } from "./home.styles";
-import { MOCK_MODEL_API_URL, MOCK_DATASET_API_URL} from "./constants"
+import { MOCK_SCIKIT_API_URL,
+         MOCK_FINBERT_API_URL,
+         MOCK_FOLKTABLES_DATASET_API_URL,
+         MOCK_FINANCIAL_DATASET_API_URL} from "./constants"
 import { Article } from "@mui/icons-material";
 
 function checkURL(url: string): boolean {
 
-    if (url === MOCK_MODEL_API_URL || url === MOCK_DATASET_API_URL || url === 'http://scikit-mock-model-api:5011/predict' || url === 'http://folktables-dataset-api:5010/fetch-datapoints')  {
+    if (url === MOCK_SCIKIT_API_URL ||
+        url === MOCK_FINBERT_API_URL ||
+        url === MOCK_FOLKTABLES_DATASET_API_URL ||
+        url === MOCK_FINANCIAL_DATASET_API_URL)  {
         return true; 
     }
     if (url === '') {
