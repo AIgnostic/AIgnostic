@@ -7,7 +7,10 @@ from aggregator.aggregator import (RESULT_QUEUE,
                                    aggregator_intermediate_metrics_log,
                                    aggregator_metrics_completion_log,
                                    aggregator_final_report_log,
-                                   metrics_aggregator
+                                   metrics_aggregator,
+                                   connected_clients,
+                                   message_queue,
+                                   send_to_clients,
                                    )
 import json
 
@@ -157,3 +160,27 @@ def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
     # Ensure metrics are reset after completion
     assert metrics_aggregator.metrics == {}
     assert metrics_aggregator.samples_processed == 0
+
+
+def test_send_to_clients():
+    # Mock WebSocket clients
+    mock_client1 = MagicMock()
+    connected_clients.clear()
+
+    # Mock message
+    mock_message = "Test Message"
+
+    assert not connected_clients
+    assert not message_queue.queue
+    # Call function under test
+    mesg = aggregator_intermediate_metrics_log(mock_message)
+
+    send_to_clients(mesg)
+    assert message_queue.qsize() == 1
+
+    # Add clients to connected clients
+    connected_clients.add(mock_client1)
+    assert mock_client1.send.assert_called_once_with(mesg)
+
+    # Ensure message was sent to all clients
+    mock_client1.write_message.assert_called_once_with(mock_message)
