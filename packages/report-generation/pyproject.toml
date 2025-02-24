@@ -7,7 +7,7 @@ exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/packages/report_generation/html' --cov-report xml:'../../coverage/packages/report_generation/coverage.xml' --html='../../reports/packages/report_generation/unittests/html/index.html' --junitxml='../../reports/packages/report_generation/unittests/junit.xml'"
+addopts = "--cov --cov-report html:'../../coverage/packages/report-generation/html' --cov-report xml:'../../coverage/packages/report-generation/coverage.xml' --html='../../reports/packages/report-generation/unittests/html/index.html' --junitxml='../../reports/packages/report-generation/unittests/junit.xml'"
 
 [tool.poetry]
 name = "report-generation"
