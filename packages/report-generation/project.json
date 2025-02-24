@@ -49,8 +49,8 @@
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
-        "{workspaceRoot}/reports/report-generation/unittests",
-        "{workspaceRoot}/coverage/report-generation"
+        "{workspaceRoot}/reports/packages/report-generation/unittests",
+        "{workspaceRoot}/coverage/packages/report-generation"
       ],
       "options": {
         "command": "poetry run pytest tests/",

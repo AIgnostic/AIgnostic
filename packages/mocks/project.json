@@ -25,9 +25,7 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": [
-        "{projectRoot}/dist"
-      ],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "outputPath": "packages/mocks/dist",
         "publish": false,
@@ -38,9 +36,7 @@
     },
     "lint": {
       "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/packages/mocks/pylint.txt"
-      ],
+      "outputs": ["{workspaceRoot}/reports/packages/mocks/pylint.txt"],
       "options": {
         "outputFile": "reports/packages/mocks/pylint.txt"
       },
@@ -49,8 +45,8 @@
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
-        "{workspaceRoot}/reports/mocks/unittests",
-        "{workspaceRoot}/coverage/mocks"
+        "{workspaceRoot}/reports/packages/mocks/unittests",
+        "{workspaceRoot}/coverage/packages/mocks"
       ],
       "options": {
         "command": "poetry run pytest tests/",
