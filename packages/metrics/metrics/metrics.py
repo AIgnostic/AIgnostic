@@ -244,7 +244,8 @@ def macro_recall(info: CalculateRequest) -> float:
     return sum(
         [
             _calculate_recall(name, info.true_labels, info.predicted_labels, c)
-            for c in np.unique(info.true_labels)
+            for c in
+              np.unique(info.true_labels)
         ]
     ) / len(np.unique(info.true_labels))
 
@@ -626,47 +627,69 @@ metric_to_fn_and_requirements = {
     # Performance metrics
     "accuracy": {
         "function": accuracy,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "class_precision": {
         "function": class_precision,
-        "required_inputs": ["true_labels", "predicted_labels", "target_class"]
+        "required_inputs": ["true_labels", "predicted_labels", "target_class"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "precision": {
         "function": macro_precision,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "class_recall": {
         "function": class_recall,
-        "required_inputs": ["true_labels", "predicted_labels", "target_class"]
+        "required_inputs": ["true_labels", "predicted_labels", "target_class"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "recall": {
         "function": macro_recall,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "class_f1_score": {
         "function": class_f1,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "f1_score": {
         "function": macro_f1,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "roc_auc": {
         "function": roc_auc,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "mean_absolute_error": {
         "function": mean_absolute_error,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "mean_squared_error": {
         "function": mean_squared_error,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "r_squared": {
         "function": r_squared,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "expected_values": 69
     },
 
     # Fairness metrics
@@ -695,27 +718,37 @@ metric_to_fn_and_requirements = {
     },
     "equalized_odds_difference": {
         "function": equalized_odds_difference,
-        "required_inputs": ["true_labels", "predicted_labels", "protected_attr"]
+        "required_inputs": ["true_labels", "predicted_labels", "protected_attr"],
+        "range": (0, 1),
+        "expected_values": 69
     },
 
     # Explainability metrics
     "explanation_stability_score": {
         "function": explanation_stability_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "explanation_sparsity_score": {
         "function": explanation_sparsity_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "expected_values": 69
     },
     "explanation_fidelity_score": {
         "function": explanation_fidelity_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "expected_values": 69
     },
 
     # Uncertainty metrics
     "ood_auroc": {
         "function": ood_auroc,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "expected_values": 69
     },
 }
 
@@ -775,7 +808,7 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
 
     try:
         results = {}
-
+        range = {}
         for metric in info.metrics:
             metric = metric.replace(" ", "_")
             current_metric = metric
@@ -783,8 +816,13 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
                 results[metric] = 1
             else:
                 results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
+            range[metric] = (metric_to_fn_and_requirements[metric]["range"](info),
+                             metric_to_fn_and_requirements[metric]["expected_values"](info)
+                             )
+
 
         return MetricValues(metric_values=results,
+                            metric_range=range,
                             batch_size=info.batch_size,
                             total_sample_size=info.total_sample_size)
     except (MetricsException, ModelQueryException) as e:

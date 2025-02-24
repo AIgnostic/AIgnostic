@@ -70,6 +70,7 @@ class MetricValues(BaseModel):
     Receive calculated metric values
     """
     metric_values: dict[str, float]
+    metric_range: dict[str, ((float, float), float)]
     batch_size: int
     total_sample_size: int
     warning_msg: Optional[str] = None
