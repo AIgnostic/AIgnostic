@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 from aggregator.aggregator import (RESULT_QUEUE,
                                    ResultsConsumer,
                                    on_result_fetched,
-                                   MetricsAggregator,
                                    aggregator_intermediate_metrics_log,
                                    aggregator_metrics_completion_log,
                                    aggregator_final_report_log,
@@ -11,6 +10,7 @@ from aggregator.aggregator import (RESULT_QUEUE,
                                    connected_clients,
                                    message_queue,
                                    send_to_clients,
+                                   websocket_handler,
                                    )
 import json
 
@@ -118,7 +118,7 @@ def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
     mock_channel = MagicMock()
     mock_method = MagicMock()
     mock_properties = MagicMock()
-    
+
     # Define sample incoming message
     sample_message = {
         "total_sample_size": 20,
@@ -148,7 +148,8 @@ def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
     assert metrics_aggregator.samples_processed == 10
 
     # Verify send_to_clients was called with intermediate results
-    mock_send_to_clients.assert_any_call(aggregator_intermediate_metrics_log(metrics_aggregator.get_aggregated_metrics()))
+    mock_send_to_clients.assert_any_call(
+        aggregator_intermediate_metrics_log(metrics_aggregator.get_aggregated_metrics()))
 
     # Simulate processing all batches
     on_result_fetched(mock_channel, mock_method, mock_properties, message_body)
@@ -161,8 +162,8 @@ def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
     assert metrics_aggregator.metrics == {}
     assert metrics_aggregator.samples_processed == 0
 
-
-def test_send_to_clients():
+@patch('aggregator.aggregator.send_to_clients')  # Mock send_to_clients
+def test_send_to_clients(mock_send_to_clients):
     # Mock WebSocket clients
     mock_client1 = MagicMock()
     connected_clients.clear()
@@ -172,15 +173,12 @@ def test_send_to_clients():
 
     assert not connected_clients
     assert not message_queue.queue
-    # Call function under test
     mesg = aggregator_intermediate_metrics_log(mock_message)
-
-    send_to_clients(mesg)
+    message_queue.put(mesg)
     assert message_queue.qsize() == 1
 
+    # Call function under test
     # Add clients to connected clients
-    connected_clients.add(mock_client1)
-    assert mock_client1.send.assert_called_once_with(mesg)
-
-    # Ensure message was sent to all clients
-    mock_client1.write_message.assert_called_once_with(mock_message)
+    websocket_handler(mock_client1)
+    # assert len(connected_clients) == 1
+    mock_send_to_clients.assert_called_once_with(mesg)

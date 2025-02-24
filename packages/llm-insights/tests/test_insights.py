@@ -1,11 +1,9 @@
-import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import MagicMock, patch
 from llm_insights.insights import metric_insights
 from llm_insights.prompt import construct_prompt
 
 
-@pytest.mark.asyncio
-async def test_metric_insights():
+def test_metric_insights():
     property_name = "Fairness"
     metrics = [
         {"metric": "Bias", "value": "0.2"},
@@ -18,16 +16,13 @@ async def test_metric_insights():
             "description": "Description 1",
         }
     ]
-    mock_llm = AsyncMock()
-    mock_response = "Mocked LLM Response"
-    mock_llm.invoke.return_value = mock_response
 
-    with patch(
-        "llm_insights.insights.construct_prompt", wraps=construct_prompt
-    ) as mock_construct_prompt:
-        result = await metric_insights(
-            property_name, metrics, article_extracts, mock_llm
-        )
+    mock_llm = MagicMock()
+    mock_response = "Mocked LLM Response"
+    mock_llm.invoke.return_value = mock_response  # Synchronous return value
+
+    with patch("llm_insights.insights.construct_prompt", wraps=construct_prompt) as mock_construct_prompt:
+        result = metric_insights(property_name, metrics, article_extracts, mock_llm)
 
         # Check that the LLM is called
         mock_llm.invoke.assert_called_once()
