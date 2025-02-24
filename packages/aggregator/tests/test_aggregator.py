@@ -1,6 +1,18 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from aggregator.aggregator import ResultsConsumer, RESULT_QUEUE
+from aggregator.aggregator import (RESULT_QUEUE,
+                                   ResultsConsumer,
+                                   on_result_fetched,
+                                   MetricsAggregator,
+                                   aggregator_intermediate_metrics_log,
+                                   aggregator_metrics_completion_log,
+                                   aggregator_final_report_log,
+                                   metrics_aggregator,
+                                   connected_clients,
+                                   message_queue,
+                                   send_to_clients,
+                                   )
+import json
 
 
 @pytest.fixture
@@ -97,3 +109,78 @@ def test_run_keyboard_interrupt(mock_stop, mock_init_queues, mock_connect_to_rab
 
     # Ensure that stop() is called when KeyboardInterrupt occurs
     mock_stop.assert_called_once()
+
+
+@patch('aggregator.aggregator.send_to_clients')  # Mock send_to_clients
+@patch('aggregator.aggregator.aggregate_report')  # Mock report generation
+def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
+    # Mock RabbitMQ parameters
+    mock_channel = MagicMock()
+    mock_method = MagicMock()
+    mock_properties = MagicMock()
+    
+    # Define sample incoming message
+    sample_message = {
+        "total_sample_size": 20,
+        "batch_size": 10,
+        "metric_values": {"accuracy": 0.85, "precision": 0.15}
+    }
+    message_body = json.dumps(sample_message)
+
+    # Reset aggregator state before test
+    metrics_aggregator.metrics = {}
+    metrics_aggregator.samples_processed = 0
+    metrics_aggregator.total_sample_size = 0  # Ensures total size is set
+
+    # Mock the report generation function return value
+    mock_report = {"summary": "Test Report"}
+    mock_aggregate_report.return_value = mock_report
+
+    # Call function under test
+    on_result_fetched(mock_channel, mock_method, mock_properties, message_body)
+
+    # Check if total sample size is set correctly
+    assert metrics_aggregator.total_sample_size == 20
+
+    # Check if batch was aggregated
+    assert "accuracy" in metrics_aggregator.metrics
+    assert "precision" in metrics_aggregator.metrics
+    assert metrics_aggregator.samples_processed == 10
+
+    # Verify send_to_clients was called with intermediate results
+    mock_send_to_clients.assert_any_call(aggregator_intermediate_metrics_log(metrics_aggregator.get_aggregated_metrics()))
+
+    # Simulate processing all batches
+    on_result_fetched(mock_channel, mock_method, mock_properties, message_body)
+
+    # Verify completion and final report messages were sent
+    mock_send_to_clients.assert_any_call(aggregator_metrics_completion_log())
+    mock_send_to_clients.assert_any_call(aggregator_final_report_log(mock_report))
+
+    # Ensure metrics are reset after completion
+    assert metrics_aggregator.metrics == {}
+    assert metrics_aggregator.samples_processed == 0
+
+
+def test_send_to_clients():
+    # Mock WebSocket clients
+    mock_client1 = MagicMock()
+    connected_clients.clear()
+
+    # Mock message
+    mock_message = "Test Message"
+
+    assert not connected_clients
+    assert not message_queue.queue
+    # Call function under test
+    mesg = aggregator_intermediate_metrics_log(mock_message)
+
+    send_to_clients(mesg)
+    assert message_queue.qsize() == 1
+
+    # Add clients to connected clients
+    connected_clients.add(mock_client1)
+    assert mock_client1.send.assert_called_once_with(mesg)
+
+    # Ensure message was sent to all clients
+    mock_client1.write_message.assert_called_once_with(mock_message)
