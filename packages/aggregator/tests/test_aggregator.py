@@ -9,7 +9,6 @@ from aggregator.aggregator import (RESULT_QUEUE,
                                    metrics_aggregator,
                                    connected_clients,
                                    message_queue,
-                                   send_to_clients,
                                    websocket_handler,
                                    )
 import json
@@ -161,6 +160,7 @@ def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
     # Ensure metrics are reset after completion
     assert metrics_aggregator.metrics == {}
     assert metrics_aggregator.samples_processed == 0
+
 
 @patch('aggregator.aggregator.send_to_clients')  # Mock send_to_clients
 def test_send_to_clients(mock_send_to_clients):

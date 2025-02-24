@@ -3,7 +3,6 @@ Next Token Generation model
 """
 from fastapi import FastAPI
 from common.models import ModelResponse, LLMInput, LLMResponse
-from mocks.model.hf_utils import predict as text_classification_predict
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -21,6 +20,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.post("/predict", response_model=ModelResponse)
 def predict(input: LLMInput) -> LLMResponse:

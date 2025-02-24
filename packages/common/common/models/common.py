@@ -57,6 +57,7 @@ class ModelResponse(BaseModel):     # pragma: no cover
     predictions: list[list]
     confidence_scores: Optional[list[list]] = None
 
+
 class LLMInput(ModelInput, BaseModel):
     """
     A model for next token generation
@@ -68,9 +69,10 @@ class LLMInput(ModelInput, BaseModel):
     prompt: str
     max_length: int
 
+
 class LLMResponse(ModelInput, BaseModel):
     """
-    A model for next token generation 
+    A model for next token generation
 
     Attributes:
         response: str - response generated from the model
