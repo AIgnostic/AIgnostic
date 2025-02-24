@@ -1,14 +1,14 @@
 {
-  "name": "aggregator",
+  "name": "user-added-metrics",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "packages/aggregator/aggregator",
+  "sourceRoot": "packages/user-added-metrics/user_added_metrics",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "poetry lock",
-        "cwd": "packages/aggregator"
+        "cwd": "packages/user-added-metrics"
       }
     },
     "add": {
@@ -25,11 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": [
-        "{projectRoot}/dist"
-      ],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "packages/aggregator/dist",
+        "outputPath": "packages/user-added-metrics/dist",
         "publish": false,
         "lockedVersions": true,
         "bundleLocalDependencies": true
@@ -39,22 +37,22 @@
     "lint": {
       "executor": "@nxlv/python:flake8",
       "outputs": [
-        "{workspaceRoot}/reports/aggregator/pylint.txt"
+        "{workspaceRoot}/reports/packages/user-added-metrics/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/aggregator/pylint.txt"
+        "outputFile": "reports/packages/user-added-metrics/pylint.txt"
       },
       "cache": true
     },
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
-        "{workspaceRoot}/reports/aggregator/unittests",
-        "{workspaceRoot}/coverage/aggregator"
+        "{workspaceRoot}/reports/packages/user-added-metrics/unittests",
+        "{workspaceRoot}/coverage/packages/user-added-metrics"
       ],
       "options": {
         "command": "poetry run pytest tests/",
-        "cwd": "packages/aggregator"
+        "cwd": "packages/user-added-metrics"
       },
       "cache": true
     },

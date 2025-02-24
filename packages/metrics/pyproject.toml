@@ -2,7 +2,7 @@
 name = "metrics"
 version = "1.0.0"
 description = "All the metrics we need to evaluate things"
-authors = []
+authors = [ ]
 license = "Proprietary"
 readme = "README.md"
 
@@ -11,28 +11,34 @@ pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
 pytest-html = "^4.1.1"
 
-[[tool.poetry.packages]]
-include = "metrics"
+  [[tool.poetry.packages]]
+  include = "metrics"
 
-[tool.poetry.dependencies]
-python = ">=3.12,<3.13"
-aif360 = "^0.6.1"
+  [tool.poetry.dependencies]
+  python = ">=3.12,<3.13"
+  aif360 = "^0.6.1"
+  flake8 = "7.1.1"
+  autopep8 = "2.3.1"
+  pytest = "8.3.4"
+  pytest-sugar = "1.0.0"
+  pytest-cov = "6.0.0"
+  pytest-html = "4.1.1"
 
-[tool.poetry.dependencies.common]
-path = "../common"
-develop = true
+    [tool.poetry.dependencies.common]
+    path = "../common"
+    develop = true
 
 [tool.coverage.run]
 branch = true
-source = ["metrics"]
+source = [ "metrics" ]
 
 [tool.coverage.report]
-exclude_lines = ["if TYPE_CHECKING:"]
+exclude_lines = [ "if TYPE_CHECKING:" ]
 show_missing = true
 
 [tool.pytest.ini_options]
 addopts = "--cov --cov-report html:'../../coverage/metrics/html' --cov-report xml:'../../coverage/metrics/coverage.xml' --html='../../reports/metrics/unittests/html/index.html' --junitxml='../../reports/metrics/unittests/junit.xml'"
 
 [build-system]
-requires = ["poetry-core"]
+requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"

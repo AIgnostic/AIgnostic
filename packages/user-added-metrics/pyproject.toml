@@ -1,0 +1,32 @@
+[tool.coverage.run]
+branch = true
+source = [ "user_added_metrics" ]
+
+[tool.coverage.report]
+exclude_lines = ['if TYPE_CHECKING:']
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report html:'../../coverage/packages/user-added-metrics/html' --cov-report xml:'../../coverage/packages/user-added-metrics/coverage.xml' --html='../../reports/packages/user-added-metrics/unittests/html/index.html' --junitxml='../../reports/packages/user-added-metrics/unittests/junit.xml'"
+
+[tool.poetry]
+name = "user_added_metrics"
+version = "1.0.0"
+description = "Microservice to deal with user-added metrics"
+authors = [ ]
+license = 'Proprietary'
+readme = 'README.md'
+
+  [[tool.poetry.packages]]
+  include = "user_added_metrics"
+
+  [tool.poetry.dependencies]
+  python = ">=3.12,<3.13"
+
+  [tool.poetry.group.dev.dependencies.metrics]
+  path = "../metrics"
+  develop = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
