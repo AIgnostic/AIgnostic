@@ -41,11 +41,11 @@ develop = true
 path = "packages/mocks"
 develop = true
 
-[tool.poetry.dependencies.report_generation]
+[tool.poetry.dependencies.report-generation]
 path = "packages/report-generation"
 develop = true
 
-[tool.poetry.dependencies.llm_insights]
+[tool.poetry.dependencies.llm-insights]
 path = "packages/llm-insights"
 develop = true
 

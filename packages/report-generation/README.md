@@ -1,3 +1,3 @@
-# report-generation
+# report_generation
 
 Project description here.
