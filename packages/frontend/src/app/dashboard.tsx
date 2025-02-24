@@ -9,14 +9,11 @@ import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
 
-import Grid from '@mui/material/Grid';
 
 interface Metric {
-  metric: string;
-  result: number;
-  legislationResults: string[];
-  llmModelSummary: string[];
+  [metricName: string]: number;
 }
+
 
 interface DashboardProps {
   onComplete: () => void;
@@ -165,6 +162,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
           errorMessage={error.text}
         />
       )}
+
+      <p>{log}</p>
 
       <BorderLinearProgress
         variant="determinate"
