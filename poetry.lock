@@ -1722,6 +1722,7 @@ files = []
 develop = true
 
 [package.dependencies]
+common = {path = "../common", develop = true}
 transformers = "^4.49.0"
 
 [package.source]
@@ -3756,4 +3757,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "7e4efa1a36463a7efa817a40e085423abdea54eb8c1a49e6a1381bfd547720b9"
+content-hash = "b19a742c43e4b6b16b945f16d905dbef1172ce6655563f7956ff0433377b34fe"
