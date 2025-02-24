@@ -43,7 +43,7 @@ async def generate_metrics_from_info(
             dispatch_job(
                 batch_size=BATCH_SIZE,
                 total_sample_size=TOTAL_SAMPLE_SIZE,
-                metric=request.metrics,
+                metrics=request.metrics,
                 model_type=request.model_type,
                 data_url=request.dataset_url,
                 model_url=request.model_url,
