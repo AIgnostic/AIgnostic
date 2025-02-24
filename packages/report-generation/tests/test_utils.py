@@ -243,7 +243,6 @@ def test_generate_report_with_non_existent_metric(mock_dependencies):
         "non-existent metric": {}
     }
 
-
     result = generate_report(metrics_data, api_key="test_key")
 
     assert result[0]["computed_metrics"] == []
