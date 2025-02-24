@@ -15,7 +15,7 @@ common = {path = "../common", develop = true}
 fastapi = "^0.115.8"
 pika = "^1.3.2"
 pydantic = "^2.10.6"
-report_generation = {path = "../report_generation", develop = true}
+report-generation = {path = "../report-generation", develop = true}
 
 [package.source]
 type = "directory"
@@ -1497,7 +1497,7 @@ langsmith-pyo3 = ["langsmith-pyo3 (>=0.1.0rc2,<0.2.0)"]
 pytest = ["pytest (>=7.0.0)", "rich (>=13.9.4,<14.0.0)"]
 
 [[package]]
-name = "llm_insights"
+name = "llm-insights"
 version = "1.0.0"
 description = "LLM Insights"
 optional = false
@@ -1513,7 +1513,7 @@ langchain-google-genai = "^2.0.9"
 
 [package.source]
 type = "directory"
-url = "packages/llm_insights"
+url = "packages/llm-insights"
 
 [[package]]
 name = "markdown-it-py"
@@ -2738,7 +2738,7 @@ files = [
 ]
 
 [[package]]
-name = "report_generation"
+name = "report-generation"
 version = "1.0.0"
 description = "Report Generation "
 optional = false
@@ -2749,12 +2749,12 @@ develop = true
 
 [package.dependencies]
 bs4 = "^0.0.2"
-llm_insights = {path = "../llm_insights", develop = true}
+llm-insights = {path = "../llm-insights", develop = true}
 metrics = {path = "../metrics", develop = true}
 
 [package.source]
 type = "directory"
-url = "packages/report_generation"
+url = "packages/report-generation"
 
 [[package]]
 name = "requests"
@@ -3756,4 +3756,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "ddf9c7e7e41cedc4e29c394e6c27292cc8667b91f85b34b79540ac1ca08b74dc"
+content-hash = "7e4efa1a36463a7efa817a40e085423abdea54eb8c1a49e6a1381bfd547720b9"

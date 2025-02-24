@@ -30,8 +30,8 @@ pika = "^1.3.2"
 path = "../common"
 develop = true
 
-[tool.poetry.dependencies.report_generation]
-path = "../report_generation"
+[tool.poetry.dependencies.report-generation]
+path = "../report-generation"
 develop = true
 
 [build-system]

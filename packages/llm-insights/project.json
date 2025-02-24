@@ -1,14 +1,14 @@
 {
-  "name": "report_generation",
+  "name": "llm-insights",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "projectType": "application",
-  "sourceRoot": "packages/report_generation/report_generation",
+  "projectType": "library",
+  "sourceRoot": "packages/llm-insights/llm_insights",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "poetry lock",
-        "cwd": "packages/report_generation"
+        "cwd": "packages/llm-insights"
       }
     },
     "add": {
@@ -29,7 +29,7 @@
         "{projectRoot}/dist"
       ],
       "options": {
-        "outputPath": "packages/report_generation/dist",
+        "outputPath": "packages/llm-insights/dist",
         "publish": false,
         "lockedVersions": true,
         "bundleLocalDependencies": true
@@ -39,22 +39,22 @@
     "lint": {
       "executor": "@nxlv/python:flake8",
       "outputs": [
-        "{workspaceRoot}/reports/packages/report_generation/pylint.txt"
+        "{workspaceRoot}/reports/packages/llm-insights/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/packages/report_generation/pylint.txt"
+        "outputFile": "reports/packages/llm-insights/pylint.txt"
       },
       "cache": true
     },
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
-        "{workspaceRoot}/reports/packages/report_generation/unittests",
-        "{workspaceRoot}/coverage/packages/report_generation"
+        "{workspaceRoot}/reports/llm-insights/unittests",
+        "{workspaceRoot}/coverage/llm-insights"
       ],
       "options": {
         "command": "poetry run pytest tests/",
-        "cwd": "packages/report_generation"
+        "cwd": "packages/llm-insights"
       },
       "cache": true
     },

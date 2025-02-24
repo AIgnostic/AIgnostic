@@ -1063,7 +1063,7 @@ langsmith-pyo3 = ["langsmith-pyo3 (>=0.1.0rc2,<0.2.0)"]
 pytest = ["pytest (>=7.0.0)", "rich (>=13.9.4,<14.0.0)"]
 
 [[package]]
-name = "llm_insights"
+name = "llm-insights"
 version = "1.0.0"
 description = "LLM Insights"
 optional = false
@@ -1079,7 +1079,7 @@ langchain-google-genai = "^2.0.9"
 
 [package.source]
 type = "directory"
-url = "../llm_insights"
+url = "../llm-insights"
 
 [[package]]
 name = "matplotlib"
@@ -1843,12 +1843,12 @@ develop = true
 
 [package.dependencies]
 bs4 = "^0.0.2"
-llm_insights = {path = "../llm_insights", develop = true}
+llm-insights = {path = "../llm-insights", develop = true}
 metrics = {path = "../metrics", develop = true}
 
 [package.source]
 type = "directory"
-url = "../report_generation"
+url = "../report-generation"
 
 [[package]]
 name = "requests"
@@ -2295,4 +2295,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "bc494913b6242bf741cdcc4d92777b077828a9bbf7d1b20f949d83b75699ad6a"
+content-hash = "2bc5067b4eacd6e195bef36c3b6821590115743b521c087c7012d33753af92b4"
