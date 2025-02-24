@@ -402,7 +402,7 @@ function Homepage() {
                         // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
                       }}
                       disabled={state.isGeneratingReport}
-                      sx={{ mt: 1, mr: 1 }}
+                      sx={{ mt: 1, mr: 1, backgroundColor: theme.palette.secondary.main }}
                     >
                       {' '}
                       Generate Report

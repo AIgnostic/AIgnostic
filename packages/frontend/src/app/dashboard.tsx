@@ -94,6 +94,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
           const doc = generateReportText(data.content);
           console.log(doc);
           doc.save('AIgnostic_Report.pdf');
+          if (error.header === 'Report is being generated') {
+            setShowError(false);
+          }
           break;
         }
         case 'ERROR':
