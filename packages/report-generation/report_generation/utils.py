@@ -3,8 +3,6 @@ from bs4 import BeautifulSoup
 import re
 from .constants import property_to_metrics, property_to_regulations
 from llm_insights.insights import init_llm, metric_insights
-import os
-import dotenv
 
 
 def search_legislation(metric: str) -> list:

@@ -203,7 +203,7 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
         "equal_opportunity_difference": 0.5
     }
 
-    result = generate_report(metrics_data)
+    result = generate_report(metrics_data, api_key="test_key")
 
     assert result[0]["property"] == "adversarial robustness"
     assert result[0]["computed_metrics"] == [{"metric": "fast gradient sign method", "value": 0.6}]
@@ -221,7 +221,7 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
 def test_generate_report_with_empty_metrics(mock_dependencies):
     metrics_data = {}
 
-    result = generate_report(metrics_data)
+    result = generate_report(metrics_data, api_key="test_key")
 
     assert result[0]["computed_metrics"] == []
     assert result[1]["computed_metrics"] == []
@@ -243,7 +243,8 @@ def test_generate_report_with_non_existent_metric(mock_dependencies):
         "non-existent metric": {}
     }
 
-    result = generate_report(metrics_data)
+
+    result = generate_report(metrics_data, api_key="test_key")
 
     assert result[0]["computed_metrics"] == []
     assert result[1]["computed_metrics"] == []
