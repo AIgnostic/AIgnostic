@@ -28,7 +28,7 @@ def init_llm(api_key: str) -> BaseChatModel:
     except Exception as e:
         print(f"Failed to initialize LLM: {e}")
         raise e
-    
+
 
 def metric_insights(
     property_name: str,

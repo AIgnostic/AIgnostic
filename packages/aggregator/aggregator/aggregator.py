@@ -120,7 +120,7 @@ class ResultsConsumer():
             self._channel.start_consuming()  # Blocking call, waits for messages
         except KeyboardInterrupt:
             self.stop()
-        
+
     def stop(self):
         """
         Cleanly shutdown the connection to RabbitMQ.

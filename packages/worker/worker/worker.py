@@ -217,8 +217,6 @@ class Worker():
             print(f"True labels: {true_labels}")
             print(f"Confidence scores: {predictions['confidence_scores']}")
 
-            print(f"True Length: {len(true_labels)}, Predicted Length: {len(predicted_labels)}, Confidence Length: {len(predictions['confidence_scores'])}")
-
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
                 metrics=job.metrics,

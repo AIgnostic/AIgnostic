@@ -189,7 +189,7 @@ def mock_dependencies():
                 "article_title": "Title for Article 1",
                 "description": "Description for Article 1.",
                 "suitable_recitals": ["https://gdpr-info.eu/recitals/no-R1/"]
-            } 
+            }
         ]
         mock_llm_init.return_value = mock.Mock()
         mock_llm_insights.return_value = ""
@@ -202,7 +202,7 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
         "fast_gradient_sign_method": 0.6,
         "equal_opportunity_difference": 0.5
     }
-    
+
     result = generate_report(metrics_data)
 
     assert result[0]["property"] == "adversarial robustness"
@@ -222,7 +222,7 @@ def test_generate_report_with_empty_metrics(mock_dependencies):
     metrics_data = {}
 
     result = generate_report(metrics_data)
-    
+
     assert result[0]["computed_metrics"] == []
     assert result[1]["computed_metrics"] == []
     assert result[2]["computed_metrics"] == []
@@ -244,7 +244,7 @@ def test_generate_report_with_non_existent_metric(mock_dependencies):
     }
 
     result = generate_report(metrics_data)
-    
+
     assert result[0]["computed_metrics"] == []
     assert result[1]["computed_metrics"] == []
     assert result[2]["computed_metrics"] == []

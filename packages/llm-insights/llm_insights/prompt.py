@@ -4,8 +4,8 @@ PROMPT = """
 <goal>
 We want to understand the meaning of various metrics evaluating AI Models in relation to various properties we want
 our model to exhibit.
-These properties are related to various pieces of legislation and we want to understand the implications of these metrics
-in relation to these laws.
+These properties are related to various pieces of legislation and we want to understand
+the implications of these metrics in relation to these laws.
 
 Below you are provided with:
 - The name of the property in question

@@ -8,6 +8,7 @@ import dotenv
 
 dotenv.load_dotenv()
 
+
 def search_legislation(metric: str) -> list:
     """
     Searches for relevant legal sections based on a metric.
@@ -147,8 +148,7 @@ def generate_report(metrics_data: dict) -> list[dict]:
         # TODO: Add LLM insights
         property_result["llm_insights"] = []
 
-
-        try :
+        try:
             llm = init_llm(os.getenv("GOOGLE_API_KEY"))
             mesg = metric_insights(
                 property_name=property,
@@ -159,7 +159,7 @@ def generate_report(metrics_data: dict) -> list[dict]:
                 article_extracts=property_result["legislation_extracts"],
                 llm=llm
             )
-        except Exception as e:
+        except Exception:
             mesg = "Failed to initialize LLM"
 
         property_result["llm_insights"].append(mesg)

@@ -2,14 +2,17 @@ import pytest
 from unittest.mock import MagicMock, patch
 from aggregator.aggregator import ResultsConsumer, RESULT_QUEUE
 
+
 @pytest.fixture
 def consumer():
     return ResultsConsumer(host="test_host")
+
 
 def test_init(consumer):
     assert consumer._host == "test_host"
     assert consumer._connection is None
     assert consumer._channel is None
+
 
 @patch('aggregator.aggregator.connect_to_rabbitmq')
 @patch('aggregator.aggregator.init_queues')
@@ -30,6 +33,7 @@ def test_connect(mock_init_queues, mock_connect_to_rabbitmq, consumer):
     # Add these print statements for debugging
     print(f"mock_connect_to_rabbitmq called: {mock_connect_to_rabbitmq.called}")
     print(f"mock_init_queues called: {mock_init_queues.called}")
+
 
 @patch('aggregator.aggregator.init_queues')
 @patch('aggregator.aggregator.connect_to_rabbitmq')
@@ -54,6 +58,7 @@ def test_run(mock_init_queues, mock_connect_to_rabbitmq, consumer):
         auto_ack=True
     )
     mock_channel.start_consuming.assert_called_once()
+
 
 @patch('aggregator.aggregator.connect_to_rabbitmq')
 @patch('aggregator.aggregator.init_queues')
@@ -84,7 +89,7 @@ def test_run_keyboard_interrupt(mock_stop, mock_init_queues, mock_connect_to_rab
     consumer._channel = mock_channel
 
     mock_callback = MagicMock()
-    
+
     # Simulate `start_consuming` raising a KeyboardInterrupt
     mock_channel.start_consuming.side_effect = KeyboardInterrupt
 

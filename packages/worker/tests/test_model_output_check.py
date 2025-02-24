@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 worker = Worker()
 
+
 def generate_mock_response(json_data: dict):
     """
     Test helper function to generate a mock response object

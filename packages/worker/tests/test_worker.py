@@ -9,6 +9,7 @@ from worker.worker import Worker
 
 worker = Worker()
 
+
 @patch("worker.worker.connect_to_rabbitmq")
 @patch("worker.worker.init_queues")
 def test_connect_worker(mock_init_queues, mock_connect_to_rabbitmq):
@@ -92,7 +93,6 @@ async def test_process_job_success(
          patch.object(worker, "query_model", new_callable=AsyncMock) as mock_query_model, \
          patch.object(worker, "queue_result", new_callable=AsyncMock) as mock_queue_result:
 
-
         mock_fetch_data.return_value = {
             "features": [[1, 2], [3, 4]],
             "labels": [[0], [1]],
@@ -100,7 +100,11 @@ async def test_process_job_success(
         }
         mock_query_model.return_value = {"predictions": [[0], [1]], "confidence_scores": [[0.9], [0.8]]}
 
-        mock_calculate_metrics.return_value = MetricValues(metric_values={"accuracy": 0.95}, batch_size=1, total_sample_size=1)
+        mock_calculate_metrics.return_value = MetricValues(
+            metric_values={"accuracy": 0.95},
+            batch_size=1,
+            total_sample_size=1
+        )
 
         await worker.process_job(job)
 

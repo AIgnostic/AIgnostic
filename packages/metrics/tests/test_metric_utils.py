@@ -82,7 +82,7 @@ def test_query_model_success(mock_post):
     info = CalculateRequest(
         batch_size=1,
         total_sample_size=10,
-        metrics=[], 
+        metrics=[],
         model_url="http://fakeurl.com"
     )
 
@@ -116,7 +116,7 @@ def test_query_model_http_error(mock_post):
     info = CalculateRequest(
         batch_size=1,
         total_sample_size=10,
-        metrics=[], 
+        metrics=[],
         model_url="http://fakeurl.com"
     )
 
