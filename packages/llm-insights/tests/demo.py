@@ -14,8 +14,10 @@ async def main():
 
     mesg = await metric_insights(
         property_name="explainability",
-        metric_name="gradient explanations",
-        metric_value="0.8",
+        metrics=[
+            {"metric": "gradient explanations", "value": "0.8"},
+            {"metric": "feature attribution", "value": "0.75"}
+        ],
         article_extracts=[parsed_data_13, parsed_data_14],
         llm=init_llm(os.getenv("GOOGLE_API_KEY")),
     )

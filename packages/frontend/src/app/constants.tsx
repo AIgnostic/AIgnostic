@@ -3,8 +3,10 @@ import { ConditionAlertFailure, HomepageState } from './types';
 const AIGNOSTIC = 'AIgnostic';
 const HOME = '/AIgnostic';
 
-const MOCK_MODEL_API_URL = 'http://scikit-mock-model-api:5001/predict';
-const MOCK_DATASET_API_URL = 'http://folktables-dataset-api:5000/fetch-datapoints';
+const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5001/predict';
+const MOCK_FINBERT_API_URL = 'http://finbert-mock-model-api:5001/predict';
+const MOCK_FOLKTABLES_DATASET_API_URL = 'http://folktables-dataset-api:5000/fetch-datapoints';
+const MOCK_FINANCIAL_DATASET_API_URL = 'http://financial-dataset-api:5000/fetch-datapoints';
 
 const steps = [
   {
@@ -37,25 +39,48 @@ const RESULTS_URL = 'http://localhost:5002/results';
 
 const generalMetrics = ['Accuracy', 'Precision', 'Recall'];
 
+const binaryClassifierMetrics = ["accuracy",
+"precision",
+"recall",
+"f1 score",
+// "roc auc",
+"statistical parity difference",
+"equal opportunity difference",
+"equalized odds difference",
+"disparate impact",
+"false negative rate difference",
+"negative predictive value",
+"positive predictive value",
+"true positive rate difference",
+// "explanation stability score",
+// "explanation sparsity score",
+// "explanation fidelity score",
+// "ood auroc"
+]
+
+const multiClassClassifierMetrics = [
+  "accuracy",
+  "precision",
+  "recall",
+  "f1 score",
+  // "roc auc",
+  // "explanation stability score",
+  // "explanation sparsity score",
+  // "explanation fidelity score",
+  // "ood auroc",
+]
+
+const regressionMetrics = [
+  "mean absolute error",
+  "mean squared error",
+  "r squared",
+]
+
 const modelTypesToMetrics: { [key: string]: string[] } = {
-  Classification: ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC'],
-  Regression: [
-    'Mean Absolute Error',
-    'Mean Squared Error',
-    'R-squared',
-    'Root Mean Squared Error',
-  ],
-  'Binary Classifier': [
-    'Accuracy',
-    'Precision',
-    'Recall',
-    'F1 Score',
-    'ROC AUC',
-    'Confusion Matrix',
-    'Disparate Impact',
-    'Equal Opportunity Difference',
-  ],
-  'General (Accuracy, Precision, Recall)': generalMetrics,
+  "Binary Classification": binaryClassifierMetrics,
+  "Multi Class Classification": multiClassClassifierMetrics,
+  "Regression": regressionMetrics,
+  // 'General (Accuracy, Precision, Recall)': generalMetrics,
 };
 
 /*
@@ -85,8 +110,10 @@ export {
   steps,
   BACKEND_URL,
   RESULTS_URL,
-  MOCK_MODEL_API_URL,
-  MOCK_DATASET_API_URL,
+  MOCK_SCIKIT_API_URL,
+  MOCK_FINBERT_API_URL,
+  MOCK_FOLKTABLES_DATASET_API_URL,
+  MOCK_FINANCIAL_DATASET_API_URL,
   AIGNOSTIC,
   HOME,
   modelTypesToMetrics,

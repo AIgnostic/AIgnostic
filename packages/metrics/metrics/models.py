@@ -36,6 +36,8 @@ class CalculateRequest(BaseModel):
     :param model_api_key: Optional[str] - API key for accessing the model endpoint.
     """
     metrics: list[str]
+    batch_size: Optional[int] = None
+    total_sample_size: Optional[int] = None
     input_features: Optional[list[list]] = None
     confidence_scores: Optional[list[list]] = None
     true_labels: Optional[list[list]] = None
@@ -68,4 +70,6 @@ class MetricValues(BaseModel):
     Receive calculated metric values
     """
     metric_values: dict[str, float]
+    batch_size: int
+    total_sample_size: int
     warning_msg: Optional[str] = None

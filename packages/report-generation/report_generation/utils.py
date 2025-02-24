@@ -1,8 +1,8 @@
-import json
 import requests
 from bs4 import BeautifulSoup
 import re
 from .constants import property_to_metrics, property_to_regulations
+from llm_insights.insights import init_llm, metric_insights
 
 
 def search_legislation(metric: str) -> list:
@@ -83,20 +83,104 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     return data
 
 
-def generate_report(metrics_data: dict) -> json:
+def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
     """
-    Generates a structured JSON report mapping metrics to legal references.
-    """
-    results = {
-        "extracts": [],
-        "llm insights": []
+    metrics_data:
+    {
+        "metric1": "value1",
+        "metric2": "value2",
+        ...
     }
-    for metric in metrics_data:
-        legislation = search_legislation(metric)
-        for article in legislation:
-            article_number = article.split()[-1]
-            article_content = extract_legislation_text(article_number)
-            parsed_data = parse_legislation_text(article_number,
-                                                 article_content)
-            results["extracts"].append(parsed_data)
+    api_key: Google API key for LLM
+
+    output:
+
+    [
+        "property": fairness
+        "computed_metrics": [
+            {"metric": "metric1", "value": "value1"},
+            {"metric": "metric2", "value": "value2"},
+            ...
+        ],
+        "legislation_extracts": [
+            {
+                "article_number": "10",
+                "article_title": "Processing of personal data relating to criminal convictions and offences",
+                "description": "blah blah",
+                "suitable_recitals": [
+                    "https://gdpr-info.eu/recitals/no-1/",
+                    "https://gdpr-info.eu/recitals/no-2/",
+                    ...
+                ]
+            },
+            ...
+        ]
+        "llm_insights": "blah blah blah"
+    ]
+    """
+
+    results = []
+    computed_metrics = set(metrics_data.keys())
+
+    for property in property_to_metrics.keys():
+        property_result = {}
+        # find the intersection of computed metrics and metrics for the property
+        property_metrics = set([p.replace(" ", "_") for p in property_to_metrics[property]])
+        common_metrics = computed_metrics.intersection(property_metrics)
+        property_result["property"] = property
+        if common_metrics:
+            property_result["computed_metrics"] = [
+                {"metric": metric.replace("_", " "), "value": metrics_data[metric]}
+                for metric in common_metrics
+            ]
+        else:
+            property_result["computed_metrics"] = []
+
+        property_result["legislation_extracts"] = []
+        for regulations in property_to_regulations[property]:
+            article_content = extract_legislation_text(regulations)
+            parsed_data = parse_legislation_text(regulations, article_content)
+            property_result["legislation_extracts"].append(parsed_data)
+
+        # TODO: Add LLM insights
+        property_result["llm_insights"] = []
+
+        try:
+            llm = init_llm(api_key)
+            mesg = metric_insights(
+                property_name=property,
+                metrics=[
+                    {"metric": metric.replace("_", " "), "value": str(metrics_data[metric])}
+                    for metric in common_metrics
+                ],
+                article_extracts=property_result["legislation_extracts"],
+                llm=llm
+            )
+        except Exception:
+            mesg = "Failed to initialize LLM"
+
+        property_result["llm_insights"].append(mesg)
+
+        results.append(property_result)
+
+    print(results)
     return results
+
+
+# def generate_report(metrics_data: dict) -> json:
+#     """
+#     Generates a structured JSON report mapping metrics to legal references.
+#     """
+#     results = {
+#         "extracts": [],
+#         "llm insights": []
+#     }
+#     for metric in metrics_data:
+#         legislation = search_legislation(metric)
+#         for article in legislation:
+#             article_number = article.split()[-1]
+#             article_content = extract_legislation_text(article_number)
+#             parsed_data = parse_legislation_text(article_number,
+#                                                  article_content)
+#             results["extracts"].append(parsed_data)
+#     return results

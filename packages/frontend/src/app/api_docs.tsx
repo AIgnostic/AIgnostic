@@ -17,52 +17,91 @@ import { styles } from './home.styles';
 import { Box } from '@mui/material';
 import { AIGNOSTIC } from './constants';
 import { MarkdownFiles, BackButton } from './types';
+import theme from './theme';
 
 type APIDocsProps = {
   getMarkdownFiles: () => MarkdownFiles; // Injectable function to load markdown files
 };
 
 const APIDocs: React.FC<APIDocsProps> = ({ getMarkdownFiles }) => {
-  
   // Split the markdown into title (h1) and content
   const splitMarkdown = (markdown: string) => {
     // Find the first h1 to use as the title
     const h1Match = markdown.match(/^# (.*?)\n/);
     const title = h1Match ? h1Match[1] : 'No title found';
-    
+
     // Remove the title from the markdown content for the body
     const body = markdown.replace(/^# (.*?)\n/, '');
-    
+
     return { title, body };
   };
-  
+
   const markdownFiles = getMarkdownFiles();
   const mds = Object.values(markdownFiles).map(splitMarkdown);
 
   return (
     <div style={styles.container}>
-      <Box style={styles.container}>
-        <h3 style={styles.logoText}>{AIGNOSTIC} | API Documentation | <BackButton/></h3>
+      <Box
+        sx={{
+          ...styles.container,
+          bgcolor: theme.palette.primary.main,
+          borderRadius: '10px',
+          elevation: 4,
+          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.5)',
+          width: '80%',
+          height: 20,
+          marginBottom: 5,
+        }}
+      >
+        <h3 style={styles.logoText}>{AIGNOSTIC} | API Documentation</h3>
       </Box>
-
 
       {mds.map((md, index) => (
         <Accordion key={index} sx={styles.accordion}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls={`panel${index}-content`} id={`panel${index}-header`}>
-            <h1 style={{fontSize:"20px"}}>{md.title}</h1>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls={`panel${index}-content`}
+            id={`panel${index}-header`}
+          >
+            <h1 style={{ fontSize: '20px' }}>{md.title}</h1>
           </AccordionSummary>
-          <AccordionDetails style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-            <Box style={{width: '80%', overflowWrap: "anywhere"}}>
+          <AccordionDetails
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Box style={{ width: '80%', overflowWrap: 'anywhere' }}>
               <ReactMarkdown
                 children={md.body}
                 components={{
-                    p: ({node, inline, className, children}: {node?: any, inline?: boolean, className?: string, children?: React.ReactNode}) => (
-                      <Typography variant="body1">{children}</Typography>
-                    ),  // Map p to Typography component
-                    
-                    code: ({node, inline, className, children}: {node?: any, inline?: boolean, className?: string, children?: React.ReactNode}) => (
-                      <CodeBox language="python" codeSnippet={String(children)} />
-                    ),  // Map code to CodeBox component
+                  p: ({
+                    node,
+                    inline,
+                    className,
+                    children,
+                  }: {
+                    node?: any;
+                    inline?: boolean;
+                    className?: string;
+                    children?: React.ReactNode;
+                  }) => <Typography variant="body1">{children}</Typography>, // Map p to Typography component
+
+                  code: ({
+                    node,
+                    inline,
+                    className,
+                    children,
+                  }: {
+                    node?: any;
+                    inline?: boolean;
+                    className?: string;
+                    children?: React.ReactNode;
+                  }) => (
+                    <CodeBox language="python" codeSnippet={String(children)} />
+                  ), // Map code to CodeBox component
                 }}
               />
             </Box>

@@ -292,7 +292,7 @@ def roc_auc(info: CalculateRequest) -> float:
     """
     name = "roc_auc"
     is_valid_for_per_class_metrics(name, info.true_labels)
-    return roc_auc_score(info.true_labels, info.predicted_labels)
+    return roc_auc_score(info.true_labels, info.predicted_labels, average="macro", multi_class="ovr")
 
 
 def mean_absolute_error(info: CalculateRequest) -> float:
@@ -730,6 +730,7 @@ def check_all_required_fields_present(info: CalculateRequest):
     :return: None
     """
     for metric in info.metrics:
+        metric = metric.replace(" ", "_")
         if metric not in metric_to_fn_and_requirements:
             raise MetricsException(
                 metric,
@@ -763,9 +764,9 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
 
     # Input validation
     if info.confidence_scores is not None:
-        if info.true_labels is not None:
+        if info.predicted_labels is not None:
             # If confidence scores and labels are both given, ensure they have the same length
-            if info.confidence_scores.shape != info.true_labels.shape:
+            if info.confidence_scores.shape[0] != info.predicted_labels.shape[0]:
                 raise DataInconstencyException(
                     detail="Length mismatch between confidence scores and true labels.",
                 )
@@ -776,13 +777,16 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
         results = {}
 
         for metric in info.metrics:
+            metric = metric.replace(" ", "_")
             current_metric = metric
             if metric not in metric_to_fn_and_requirements.keys():
                 results[metric] = 1
             else:
                 results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
 
-        return MetricValues(metric_values=results)
+        return MetricValues(metric_values=results,
+                            batch_size=info.batch_size,
+                            total_sample_size=info.total_sample_size)
     except (MetricsException, ModelQueryException) as e:
         raise e
     except Exception as e:

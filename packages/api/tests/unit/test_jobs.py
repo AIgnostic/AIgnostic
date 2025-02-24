@@ -19,12 +19,14 @@ def test_dispatch_job(mock_connection):
 
     # Dispatch job
     dispatch_job(
-        batch_size,
-        metrics,
-        data_url,
-        model_url,
-        data_api_key,
-        model_api_key,
+        batch_size=batch_size,
+        total_sample_size=100,
+        metrics=metrics,
+        model_type="binary classification",
+        data_url=data_url,
+        model_url=model_url,
+        data_api_key=data_api_key,
+        model_api_key=model_api_key,
         channel=mock_channel,
     )
 

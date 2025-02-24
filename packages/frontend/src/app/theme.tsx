@@ -1,49 +1,51 @@
 import { createTheme } from '@mui/material/styles';
 
+//rgb(23, 28, 43)
+//rgb(32, 39, 59)
 const theme = createTheme({
-    palette: {
+  palette: {
     primary: {
-        main: '#29438a',
+      main: 'rgb(32, 39, 59)',
     },
     secondary: {
-        main: '#efe6dd',
+      main: '#29648A', // Teal-Blue
     },
     error: {
-        main: '#d32f2f',
+      main: '#d32f2f',
     },
     warning: {
-        main: '#ffa000',
+      main: '#ffa000',
     },
     info: {
-        main: '#0288d1',
+      main: '#0288d1',
     },
     success: {
-        main: '#388e3c',
+      main: '#388e3c',
     },
     background: {
-        default: '#efe6dd',
-        paper: '#efe6dd',
+      default: 'rgb(23, 28, 43)', // Dark Blue-Purple
+      paper: '#464866', // Grayish Blue
     },
     text: {
-        primary: '#333',
-        secondary: '#000',
+      primary: '#FFFFFF', // White text on dark backgrounds
+      secondary: '#AAABB8', // Lighter text variant
     },
-    },
-    typography: {
-    fontFamily: 'Roboto, Arial, sans-serif', // Set global font family
+  },
+  typography: {
+    fontFamily: 'Roboto, Arial, sans-serif',
     h1: {
-        fontSize: '2rem',
-        color: '#333', // Customize color for h1
+      fontSize: '2rem',
+      color: '#FFFFFF',
     },
     h2: {
-        fontSize: '1.5rem',
-        color: '#333', // Customize color for h2
+      fontSize: '1.5rem',
+      color: '#FFFFFF',
     },
     body1: {
-        fontSize: '1rem',
-        color: '#333', // Customize color for body1
+      fontSize: '1rem',
+      color: '#AAABB8',
     },
-    },
+  },
 });
 
 export default theme;
