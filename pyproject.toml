@@ -42,7 +42,7 @@ path = "packages/mocks"
 develop = true
 
 [tool.poetry.dependencies.report_generation]
-path = "packages/report-generation"
+path = "packages/report_generation"
 develop = true
 
 [tool.poetry.dependencies.llm_insights]
