@@ -2738,7 +2738,7 @@ files = [
 ]
 
 [[package]]
-name = "report-generation"
+name = "report_generation"
 version = "1.0.0"
 description = "Report Generation "
 optional = false

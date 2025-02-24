@@ -1,9 +1,9 @@
 [tool.coverage.run]
 branch = true
-source = ["report_generation"]
+source = [ "report_generation" ]
 
 [tool.coverage.report]
-exclude_lines = ["if TYPE_CHECKING:"]
+exclude_lines = [ "if TYPE_CHECKING:" ]
 show_missing = true
 
 [tool.pytest.ini_options]
@@ -13,25 +13,25 @@ addopts = "--cov --cov-report html:'../../coverage/packages/report_generation/ht
 name = "report_generation"
 version = "1.0.0"
 description = "Report Generation "
-authors = []
+authors = [ ]
 license = "Proprietary"
 readme = "README.md"
 
-[[tool.poetry.packages]]
-include = "report_generation"
+  [[tool.poetry.packages]]
+  include = "report_generation"
 
-[tool.poetry.dependencies]
-python = ">=3.12,<3.13"
-bs4 = "^0.0.2"
+  [tool.poetry.dependencies]
+  python = ">=3.12,<3.13"
+  bs4 = "^0.0.2"
 
-[tool.poetry.dependencies.metrics]
-path = "../metrics"
-develop = true
+    [tool.poetry.dependencies.metrics]
+    path = "../metrics"
+    develop = true
 
-[tool.poetry.dependencies.llm_insights]
-path = "../llm_insights"
-develop = true
+    [tool.poetry.dependencies.llm_insights]
+    path = "../llm_insights"
+    develop = true
 
 [build-system]
-requires = ["poetry-core"]
+requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"
