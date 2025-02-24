@@ -18,7 +18,7 @@ import pytest
 
 def test_fgsm_attack():
     """
-    Test perturbations for fgsm attack are coorectly computed given gradeints and epsilon and input
+    Test perturbations for fgsm attack are correctly computed given gradients, epsilon and input
     """
     x = np.array([1, 2, 3])
     grad = np.array([1, -1, 1])
