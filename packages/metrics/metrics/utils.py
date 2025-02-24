@@ -6,6 +6,8 @@ from scipy.spatial.distance import euclidean
 import numpy as np
 import requests
 
+# TODO: Update pydocs for regression tasks
+
 
 def _finite_difference_gradient(info: CalculateRequest,
                                 h: float = 1e-5) -> np.ndarray:
@@ -62,7 +64,8 @@ def _fgsm_attack(x: np.array, gradient: np.array, epsilon: float) -> np.array:
     return x_adv
 
 
-def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.ndarray:
+# TODO: Refactor ESP flag to cleaner alternative (modified to make ESP pass)
+def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=False) -> np.ndarray:
     """
     Compute LIME explanation for a black-box model.
 
@@ -70,6 +73,8 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
         info: information required to compute the explanation including info.input_features,
             confidence_scores, model_url and model_api_key
         kernel_width: Width of the Gaussian kernel for weighting
+        esp: flag indicating if the metric to compute is Explainability Sparsity Score (ESP always
+            uses predictions - not probabilities) # TODO: Check if ESP really does always use predictions
 
     Returns:
         explanation: Linear surrogate model coefficients (d-dimensional array)
@@ -87,13 +92,18 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
         scale=0.1 * np.std(info.input_features, axis=0),
         size=(num_samples, d)
     )
+
+    if not info.regression_flag:
+        # probabilities cannot exceed 1 or be less than 0
+        perturbed_samples = np.clip(perturbed_samples, 0, 1)
+
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
-
+    print(f"Model Response = {response}")
     # Compute model probabilities for perturbed samples
-    probabilities = response.confidence_scores
+    outputs = response.predictions if (info.regression_flag or esp) else response.confidence_scores
 
-    if probabilities is None:
+    if outputs is None:
         raise ModelQueryException(
             detail="Model response does not contain probability scores for outputs",
             status_code=400
@@ -107,7 +117,7 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75) -> np.
 
     # Fit a weighted linear regression model
     reg_model = Ridge(alpha=1.0)
-    reg_model.fit(perturbed_samples - info.input_features, probabilities, sample_weight=weights)
+    reg_model.fit(perturbed_samples - info.input_features, outputs, sample_weight=weights)
     return reg_model.coef_, reg_model
 
 

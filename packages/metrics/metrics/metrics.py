@@ -5,6 +5,8 @@
     For a binary classification problem
 """
 
+# TODO: Update pydocs for regression tasks
+
 from typing import Callable
 from metrics.models import (
     CalculateRequest,
@@ -36,7 +38,7 @@ from metrics.exceptions import (
 from common.models import ModelResponse
 
 task_type_to_metric = {
-    "binary_classification": [
+    "binary_classification": {
         "accuracy",
         "precision",
         "recall",
@@ -54,8 +56,8 @@ task_type_to_metric = {
         "explanation_sparsity_score",
         "explanation_fidelity_score",
         "ood_auroc",
-    ],
-    "multi_class_classification": [
+    },
+    "multi_class_classification": {
         "accuracy",
         "class_precision",
         "precision",
@@ -68,11 +70,14 @@ task_type_to_metric = {
         "explanation_sparsity_score",
         "explanation_fidelity_score",
         "ood_auroc",
-    ],
+    },
     "regression": [
         "mean_absolute_error",
         "mean_squared_error",
         "r_squared",
+        "explanation_stability_score",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
     ],
 }
 
@@ -503,27 +508,32 @@ def explanation_sparsity_score(info: CalculateRequest) -> float:
         and model_api_key.
 
     :return: float - the explanation sparsity score (1 - sparsity_fn(E(x)))
-        where sparsity_fn is || E(x) ||_0 / d - number of non-zero elements in the explanation
-        divided by the total number of features
+        where sparsity_fn is || E(x) ||_0 / d - number of coeffs within one standard deviation
+        of the mean coefficients.
     """
     # Threshold for sparsity - defined arbitrarily for now
     # TODO: get mean and std of the *explanations* element-wise (per feature)
     #  - then check proportion less than 2 sigma from the mean
     # Note unnormalised inputs may have a volatile stability scores due to varying gradients
     # leading to greater variations in mean and std
-    lime_explanation, _ = _lime_explanation(info)
-    mean = np.mean(lime_explanation)
-    std = np.std(lime_explanation)
+    lime_explanation_coeffs, _ = _lime_explanation(info, esp=True)
+    mean = np.mean(lime_explanation_coeffs)
+    std = np.std(lime_explanation_coeffs)
 
-    # Number of coefficients within 2 sigma of the mean
-    count_2_sigma = np.sum(np.abs(lime_explanation - mean) < 2 * std)
+    print(f"info: {info}")
 
-    return 1 - count_2_sigma
+    # Number of coefficients greater than 2 sigma from the mean
+    count_far_from_mean = np.sum(np.abs(lime_explanation_coeffs - mean) > std)
+    print(f"mean: {mean}, std: {std}, count_far_from_mean: {count_far_from_mean}")
+    print(f"coeffs: {lime_explanation_coeffs}")
+    print(f"count: {count_far_from_mean}")
+
+    return 1 - count_far_from_mean / len(lime_explanation_coeffs)
 
 
 def explanation_fidelity_score(info: CalculateRequest) -> float:
     """
-    Calculate the explanation fidelity score for a given model and sample inputs
+    Calculate the explanation fidelity score for a given model and sample inputs.
 
     :param info: CalculateRequest - contains information required to calculate the metric.
         explanation_fidelity_score requires the input_features, confidence_scores, model_url
@@ -531,21 +541,26 @@ def explanation_fidelity_score(info: CalculateRequest) -> float:
 
     :return: float - the explanation fidelity score (1 - 1/N * fidelity_fn(f(x), g(x))) where
         fidelity_fn is the distance function between the model output f(x) and the output of
-        an interpretable approximation g(x) of the model
+        an interpretable approximation g(x) of the model. For classification tasks, confidence_scores
+        (probabilities) are compared instead.
     """
     _, reg_model = _lime_explanation(info)
 
     # regression model predicts *probability* not prediction (after updating lime explanation)
 
     # TODO: Update fidelity_fn implementation after discussion with supervisor
+    # Used L-1 Norm for now -> using L2 norm may mean we have to divide by sqrt(N) instead of N
     def fidelity_fn(x, y) -> float:
-        return np.linalg.norm(x - y)
+        return np.linalg.norm(x - y, 1)
 
-    return 1 - np.mean(
-        fidelity_fn(
-            info.confidence_scores,
-            reg_model.predict(info.input_features)
-        )).item()
+    print(info.confidence_scores)
+    ps = reg_model.predict(info.input_features).reshape(-1, 1)
+    print(ps)
+    print(fidelity_fn(info.confidence_scores, ps))
+    print(f"len info.confidence_scores: {len(info.confidence_scores)}")
+    subtracted = fidelity_fn(info.confidence_scores, ps) / len(info.confidence_scores)
+    print(f"subtracted: {subtracted}")
+    return 1 - subtracted
 
 
 """
@@ -728,6 +743,11 @@ def check_all_required_fields_present(info: CalculateRequest):
                         detail=f"Field {field} is required to calculate metric {metric}."
                     )
     return
+
+
+def check_metrics_are_supported_for_task(info: CalculateRequest):
+    # TODO
+    pass
 
 
 def calculate_metrics(info: CalculateRequest) -> MetricValues:
