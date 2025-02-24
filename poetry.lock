@@ -13,7 +13,7 @@ develop = true
 [package.dependencies]
 common = {path = "../common", develop = true}
 fastapi = "^0.115.8"
-llm_insights = {path = "../llm-insights", develop = true}
+llm_insights = {path = "../llm_insights", develop = true}
 pika = "^1.3.2"
 pydantic = "^2.10.6"
 report-generation = {path = "../report-generation"}
@@ -1513,7 +1513,7 @@ langchain-google-genai = "^2.0.9"
 
 [package.source]
 type = "directory"
-url = "packages/llm-insights"
+url = "packages/llm_insights"
 
 [[package]]
 name = "markdown-it-py"
@@ -3755,4 +3755,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "28229a3a290312402c40d0791820e488d634144d52f22a51db99aa9fefafd649"
+content-hash = "f8cb1a0ae5daa500c468e5360874f99b00a1bb9db69694238ddf2225314c1aea"

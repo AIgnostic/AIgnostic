@@ -46,7 +46,7 @@ path = "packages/report-generation"
 develop = true
 
 [tool.poetry.dependencies.llm_insights]
-path = "packages/llm-insights"
+path = "packages/llm_insights"
 develop = true
 
 [tool.poetry.group.dev.dependencies]
