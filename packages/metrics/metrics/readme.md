@@ -35,3 +35,6 @@ Everything in multi-class classification as well as:
 - Mean Absolute Error
 - Mean Squared Error
 - R-squared
+- Explanation Stability Score (ESS)
+- Explanation Sparsity Score (ESP)
+- Explanation Fidelity Score (FS)
