@@ -28,6 +28,13 @@ async def predict_different(input_data: ModelInput):
         confidence_scores=[[random.random()] for _ in range(len(input_data.features))]
     )
 
+# Any arbitrary sequence should work as the predictions are always the same
+PERFECT_ESP_INPUT_FEATURES = (
+    [[1, 123, 1, 3, 13, 1, 1, -50001, 13444, 1]] * 10
+    + [[0, 1, 0, 4, 2, 1, 10000, 30, 2, 9493]] * 10
+    + [[1, 0, 0, 20000, 3, 1, 80, 40, 1, 9432]] * 10
+)
+
 
 @app.post('/predict-perfect-ESP', response_model=ModelResponse)
 async def predict_esp(input_data: ModelInput):
@@ -39,7 +46,7 @@ async def predict_esp(input_data: ModelInput):
 BIVARIATE_ESP_INPUT_FEATURES = (
     [[0, 1, 0, 4, 2, 1, 10000, 30, 2, 9493]] * 10
     + [[1, 0, 0, 2, 3, 1, 80, 40, 1, 9432]] * 10
-    + [[0, 1, 0, 4, 2, 1, 23331, 30, 2, 1]] * 10 
+    + [[0, 1, 0, 4, 2, 1, 23331, 30, 2, 1]] * 10
 )
 BIVARIATE_ESP_EXPECTED_SCORE = 0.8
 BIVARIATE_ESP_MARGIN = 0.15
@@ -55,23 +62,30 @@ async def predict_bivariate_esp(input_data: ModelInput):
         confidence_scores=confidence_scores
     )
 
+FIDELITY_MARGIN = 0.05
+
 
 @app.post('/predict-perfect-fidelity', response_model=ModelResponse)
 async def predict_fidelity(input_data: ModelInput):
     return ModelResponse(
         # Predictions used for regression
-        predictions=input_data.predictions,
+        predictions=input_data.labels,
         # Confidence scores used for classification
-        confidence_scores=input_data.confidence_scores
+        confidence_scores=[[1]] * len(input_data.features)
     )
+
+BAD_FIDELITY_INPUT_FEATURES = (
+    [[1], [1], [1], [1]]
+)
+BAD_FIDELITY_EXPECTED_SCORE = 0
 
 
 @app.post('/predict-bad-fidelity', response_model=ModelResponse)
 async def predict_bad_fidelity(input_data: ModelInput):
     confidence_scores = []
     # Maximise distance between confidence_scores
-    for p in input_data.confidence_scores:
-        if p < 0.5:
+    for p in input_data.features:
+        if p[0] < 0.5:
             confidence_scores.append([1])
         else:
             confidence_scores.append([0])

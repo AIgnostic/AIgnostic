@@ -516,7 +516,7 @@ def explanation_sparsity_score(info: CalculateRequest) -> float:
     #  - then check proportion less than 2 sigma from the mean
     # Note unnormalised inputs may have a volatile stability scores due to varying gradients
     # leading to greater variations in mean and std
-    lime_explanation_coeffs, _ = _lime_explanation(info, regression=True)
+    lime_explanation_coeffs, _ = _lime_explanation(info, esp=True)
     mean = np.mean(lime_explanation_coeffs)
     std = np.std(lime_explanation_coeffs)
 
@@ -549,15 +549,18 @@ def explanation_fidelity_score(info: CalculateRequest) -> float:
     # regression model predicts *probability* not prediction (after updating lime explanation)
 
     # TODO: Update fidelity_fn implementation after discussion with supervisor
+    # Used L-1 Norm for now -> using L2 norm may mean we have to divide by sqrt(N) instead of N
     def fidelity_fn(x, y) -> float:
-        return np.linalg.norm(x - y)
+        return np.linalg.norm(x - y, 1)
 
-    return 1 - np.mean(
-        fidelity_fn(
-            info.confidence_scores,
-            reg_model.predict(info.input_features)
-        )
-    ).item()
+    print(info.confidence_scores)
+    ps = reg_model.predict(info.input_features).reshape(-1, 1)
+    print(ps)
+    print(fidelity_fn(info.confidence_scores, ps))
+    print(f"len info.confidence_scores: {len(info.confidence_scores)}")
+    subtracted = fidelity_fn(info.confidence_scores, ps) / len(info.confidence_scores)
+    print(f"subtracted: {subtracted}")
+    return 1 - subtracted
 
 
 """

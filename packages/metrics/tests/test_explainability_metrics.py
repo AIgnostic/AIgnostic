@@ -6,10 +6,14 @@ from tests.server_factory import (
     HOST,
     server_configs
 )
-from tests.metric_mocks.mock_model_explaination_metrics import (
+from tests.metric_mocks.mock_model_explanation_metrics import (
+    PERFECT_ESP_INPUT_FEATURES,
     BIVARIATE_ESP_INPUT_FEATURES,
     BIVARIATE_ESP_EXPECTED_SCORE,
-    BIVARIATE_ESP_MARGIN
+    BIVARIATE_ESP_MARGIN,
+    BAD_FIDELITY_INPUT_FEATURES,
+    BAD_FIDELITY_EXPECTED_SCORE,
+    FIDELITY_MARGIN
 )
 server_factory = server_factory  # To suppress lint errors
 
@@ -60,7 +64,7 @@ def test_explanation_sparsity_ideal_case(apply_server_factory):
     metric_name = "explanation_sparsity_score"
     info = CalculateRequest(
         metrics=[metric_name],
-        input_features=[[1, 1]] * 10,
+        input_features=PERFECT_ESP_INPUT_FEATURES,
         confidence_scores=[[0.5]] * 10,
         model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-perfect-ESP",
         model_api_key="None"
@@ -76,7 +80,7 @@ def test_explanation_sparsity_bivariate_case_classification(apply_server_factory
     info = CalculateRequest(
         metrics=[metric_name],
         input_features=BIVARIATE_ESP_INPUT_FEATURES,
-        confidence_scores=[[0.8]]  * 30,
+        confidence_scores=[[0.8]] * 30,
         model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-bivariate-ESP",
         model_api_key="None"
     )
@@ -84,4 +88,37 @@ def test_explanation_sparsity_bivariate_case_classification(apply_server_factory
     assert result.metric_values[metric_name] == pytest.approx(
         BIVARIATE_ESP_EXPECTED_SCORE,
         BIVARIATE_ESP_MARGIN
+    )
+
+
+def test_good_fidelity(apply_server_factory):
+    metric_name = "explanation_fidelity_score"
+    feats = [[0.1, 0.2, 0.3, 0.4, 0.5], [1, 2, 3, 4, 5]]
+    info = CalculateRequest(
+        metrics=[metric_name],
+        input_features=feats,  # Required to be in confidence_score format for testing
+        predictions=[[1], [10]],
+        confidence_scores=[[1], [1]],
+        model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-perfect-fidelity",
+        model_api_key="None"
+    )
+    result = calculate_metrics(info)
+    assert result.metric_values[metric_name] == pytest.approx(1.0, FIDELITY_MARGIN)
+
+
+def test_low_fidelity(apply_server_factory):
+    metric_name = "explanation_fidelity_score"
+    info = CalculateRequest(
+        metrics=[metric_name],
+        input_features=BAD_FIDELITY_INPUT_FEATURES,  # Make input features = confidence scores to enable mock
+                                                     # test to produce maximally bad fidelity score
+        predictions=[[1]] * len(BAD_FIDELITY_INPUT_FEATURES),
+        confidence_scores=BAD_FIDELITY_INPUT_FEATURES,
+        model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-bad-fidelity",
+        model_api_key="None"
+    )
+    result = calculate_metrics(info)
+    assert result.metric_values[metric_name] == pytest.approx(
+        BAD_FIDELITY_EXPECTED_SCORE,
+        FIDELITY_MARGIN
     )

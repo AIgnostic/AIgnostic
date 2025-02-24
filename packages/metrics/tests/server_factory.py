@@ -1,5 +1,5 @@
 from tests.metric_mocks.mock_model_finite_diff_grad import app as finite_diff_grad_app
-from tests.metric_mocks.mock_model_explaination_metrics import app as expl_stability_app
+from tests.metric_mocks.mock_model_explanation_metrics import app as expl_stability_app
 from tests.metric_mocks.mock_model_ood_auroc import app as ood_auroc_app
 from threading import Thread
 import pytest
