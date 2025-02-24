@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from common.models import ModelInput, ModelResponse
 import torch
+# Load model directly
 
 
 def predict(input: ModelInput, model_name: str) -> ModelResponse:
