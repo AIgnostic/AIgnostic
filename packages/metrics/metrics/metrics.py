@@ -734,7 +734,7 @@ def check_all_required_fields_present(metrics: set[str], info: CalculateRequest)
         if metric not in metric_to_fn_and_requirements:
             metrics_to_exceptions[metric] = MetricsComputationException(
                 metric,
-                detail=f"Metric should be supported, but is not mapped to a computation. (Internal Error)"
+                detail="Metric should be supported, but is not mapped to a computation. (Internal Error)"
             )
         else:
             missing_fields = []
@@ -744,7 +744,7 @@ def check_all_required_fields_present(metrics: set[str], info: CalculateRequest)
             if missing_fields:
                 metrics_to_exceptions[metric] = DataProvisionException(
                     detail=f"The following missing fields are required to calculate metric {metric}:\n"
-                            f"{missing_fields}"
+                           f"{missing_fields}"
                 )
     return metrics_to_exceptions
 
@@ -758,21 +758,22 @@ def check_metrics_are_supported_for_task(info: CalculateRequest):
         raise DataProvisionException(
             detail=f"Task {info.task_name} is not supported. Please choose a valid task."
         )
-    
+
     invalid_metrics = set(info.metrics) - task_type_to_metric[info.task_name]
     metrics_to_exceptions = {}
     for metric in invalid_metrics:
-            metrics_to_exceptions[metric] = MetricsComputationException(
-                metric,
-                detail=(
-                    f"Metric {metric} is not supported for {info.task_name} tasks."
-                    " Please only choose valid metrics for the task type."
-                    "\nSupported metrics for this task type are:\n"
-                    f" {task_type_to_metric[info.task_name]}"
-                ),
-                status_code=400
-            )
+        metrics_to_exceptions[metric] = MetricsComputationException(
+            metric,
+            detail=(
+                f"Metric {metric} is not supported for {info.task_name} tasks."
+                " Please only choose valid metrics for the task type."
+                "\nSupported metrics for this task type are:\n"
+                f" {task_type_to_metric[info.task_name]}"
+            ),
+            status_code=400
+        )
     return metrics_to_exceptions
+
 
 def calculate_metrics(info: CalculateRequest) -> MetricValues:
     """

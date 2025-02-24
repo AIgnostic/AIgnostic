@@ -17,7 +17,6 @@ from metrics.metrics import (
 )
 from metrics.exceptions import (
     MetricsComputationException,
-    DataProvisionException,
     DataInconsistencyException
 )
 from metrics.models import CalculateRequest, MetricsPackageExceptionModel
@@ -360,8 +359,8 @@ def test_calculate_metrics_with_missing_information_returns_insufficient_data_er
     assert results.metric_values == {
         "accuracy": MetricsPackageExceptionModel(
             detail="Insufficient data provided to calculate user metrics: "
-                "The following missing fields are required to calculate metric "
-                "accuracy:\n['true_labels', 'predicted_labels']",
+                   "The following missing fields are required to calculate metric "
+                   "accuracy:\n['true_labels', 'predicted_labels']",
             status_code=400,
             exception_type="DataProvisionException",
         )

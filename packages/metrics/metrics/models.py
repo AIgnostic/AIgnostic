@@ -1,5 +1,5 @@
-from pydantic import BaseModel, field_validator, HttpUrl, field_serializer, Field
-from typing import Optional, Any, Union, List
+from pydantic import BaseModel, field_validator, HttpUrl, Field
+from typing import Optional, Any, Union
 from common.utils import nested_list_to_np
 from metrics.exceptions import _MetricsPackageException
 

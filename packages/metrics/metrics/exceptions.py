@@ -16,7 +16,6 @@ class _MetricsPackageException(Exception, ABC):
         self.status_code = status_code
         super().__init__(self.detail)
 
-
     @abstractmethod
     def to_pydantic_model(self) -> dict:
         return {
