@@ -53,7 +53,6 @@ def configure_logging_dev(debug: bool = False):
         debug=debug,
         formatter_stdout=ColoredFormatterDev(),
         formatter_file=CustomFormatterWithFunctionDebugData(LOG_FORMAT_UNCOLOURED),
-        logger_to_customise=logging.getLogger(),
     )
 
 
@@ -63,7 +62,6 @@ def configure_logging_prod(debug: bool = False):
         debug=debug,
         formatter_stdout=ColoredFormatterProd(),
         formatter_file=CustomFormatterWithFunctionDebugData(LOG_FORMAT_UNCOLOURED),
-        logger_to_customise=logging.getLogger(),
     )
 
 
