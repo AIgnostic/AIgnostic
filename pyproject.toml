@@ -17,7 +17,6 @@ uvicorn = "^0.34.0"
 python-dotenv = "^1.0.1"
 folktables = "^0.0.12"
 pydantic = "^2.10.6"
-torch = "^2.6.0"
 
     [tool.poetry.dependencies.api]
     path = "packages/api"
@@ -64,6 +63,11 @@ pytest-cov = "6.0.0"
 pytest-html = "4.1.1"
 pytest-httpserver = "^1.1.0"
 httpx = "^0.28.1"
+
+[[tool.poetry.source]]
+name = "pytorch_cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "supplemental"
 
 [build-system]
 requires = [ "poetry-core==1.1.0" ]

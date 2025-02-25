@@ -39,30 +39,27 @@ folktables = "^0.0.12"
 scikit-learn = "^1.6.1"
 torch = [
     { version = "^2.6.0", source = "pypi", platform = "darwin" },
-    { version = "^2.6.0", source = "pytorch_cpu", platform = "linux" },
-    { version = "^2.6.0", source = "pytorch_cpu", platform = "win32" },
+    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "linux" },
+    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "win32" },
 ]
 
 [tool.poetry.group.train.dependencies]
 torch = [
     { version = "^2.6.0", source = "pypi", platform = "darwin" },
-    { version = "^2.6.0", source = "pytorch_cpu", platform = "linux" },
-    { version = "^2.6.0", source = "pytorch_cpu", platform = "win32" },
+    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "linux" },
+    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "win32" },
 ]
 torchvision = [
     { version = "^0.21.0", source = "pypi", platform = "darwin" },
-    { version = "^0.21.0", source = "pytorch_cpu", platform = "linux" },
-    { version = "^0.21.0", source = "pytorch_cpu", platform = "win32" },
+    { version = "^0.21.0+cpu", source = "pytorch_cpu", platform = "linux" },
+    { version = "^0.21.0+cpu", source = "pytorch_cpu", platform = "win32" },
 ]
 torchaudio = [
     { version = "^2.5.2", source = "pypi", platform = "darwin" },
-    { version = "^2.5.2", source = "pytorch_cpu", platform = "linux" },
-    { version = "^2.5.2", source = "pytorch_cpu", platform = "win32" },
+    { version = "^2.5.2+cpu", source = "pytorch_cpu", platform = "linux" },
+    { version = "^2.5.2+cpu", source = "pytorch_cpu", platform = "win32" },
 ]
 
-[[tool.poetry.source]]
-name = "pypi"
-priority = "primary"
 
 [[tool.poetry.source]]
 name = "pytorch_cpu"
