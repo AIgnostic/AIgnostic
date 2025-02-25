@@ -1,11 +1,14 @@
-# From https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
-# 7-bit C1 ANSI sequences
+# Copyright Kishan Sambhi 2025
+# From gitlab.doc.ic.ac.uk/edtech/search
+
 import logging
 import re
 from typing import Callable
 
 from colorama import Back, Fore, Style
 
+# From https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
+# 7-bit C1 ANSI sequences
 ansi_escape = re.compile(
     r"""
     \x1B  # ESC

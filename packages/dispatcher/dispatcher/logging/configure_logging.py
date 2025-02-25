@@ -1,3 +1,5 @@
+# Copyright Kishan Sambhi 2025
+# From gitlab.doc.ic.ac.uk/edtech/search
 """Configures server logging"""
 
 import logging
