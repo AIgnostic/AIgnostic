@@ -15,6 +15,7 @@ interface Metric {
 
 interface DashboardProps {
   onComplete: () => void;
+  socket: WebSocket | null;
 }
 interface Report {
   property: string;
@@ -24,7 +25,7 @@ interface Report {
 }
 
 // Each item from the websocket is an array of Metric objects.
-const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
   // 'items' holds each item (which is an array of Metric objects) received from the socket.
   const [items, setItems] = useState<Metric[]>([]);
   const [log, setLog] = useState<string>('');
@@ -40,13 +41,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
   const expectedItems = 10;
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:5005');
+    // const socket = new WebSocket('ws://localhost:5005');
 
-    const userId = '1234';
-    socket.onopen = () => {
-      console.log('WebSocket connection established');
-      socket.send(userId.toString());
-    };
+    // const userId = sessionStorage.getItem('userId');
+    // socket.onopen = () => {
+    //   console.log('WebSocket connection established');
+    //   socket.send(userId.toString());
+    // };
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -113,7 +114,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
     return () => {
       socket.close();
     };
-  }, [onComplete]);
+  }, [onComplete, socket]);
 
   // Calculate overall progress as the number of items received divided by the expected total.
   const overallProgress = Math.min(items.length / expectedItems, 1);

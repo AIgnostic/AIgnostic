@@ -62,7 +62,6 @@ services:
 
   # Microservices
   worker_ms:
-    container_name: worker
     image: aignostic/dev
     volumes:
       - .:/app

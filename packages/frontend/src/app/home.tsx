@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { checkURL, generateReportText } from './utils';
 import {
   steps,
@@ -30,8 +30,10 @@ import {
 import { HomepageState } from './types';
 import Dashboard from './dashboard';
 import theme from './theme';
+import { v4 as uuidv4 } from 'uuid';
 
 function Homepage() {
+  const [socket, setSocket] = useState<WebSocket | null>(null);
   const [state, setState] = useState<HomepageState & { dashboardKey: number }>({
     modelURL: '',
     datasetURL: '',
@@ -82,6 +84,43 @@ function Homepage() {
     },
   };
 
+  useEffect(() => {
+    let userId = sessionStorage.getItem('userId');
+    if (!userId) {
+      userId = uuidv4();
+      console.log('Generated new user ID:', userId);
+      sessionStorage.setItem('userId', userId);
+    }
+
+    const connectWebSocket = () => {
+      const newSocket = new WebSocket('ws://localhost:5005');
+      newSocket.onopen = () => {
+        console.log('WebSocket connection established');
+        newSocket.send(userId.toString());
+      };
+      newSocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Received message:', data);
+      };
+
+      newSocket.onclose = () => {
+        console.log('WebSocket connection closed, attempting to reconnect...');
+        setTimeout(connectWebSocket, 1000);
+      };
+
+      setSocket(newSocket);
+      console.log('Connection set');
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (socket) {
+        socket.close();
+      }
+    };
+  }, []);
+
   const setStateWrapper = <K extends keyof typeof state>(
     key: K,
     value: (typeof state)[K]
@@ -107,6 +146,10 @@ function Homepage() {
     }
   };
 
+  const generateUniqueUserID = () => {
+    return Math.random().toString(36).substring(2, 15);
+  };
+
   const handleReset = () => {
     setStateWrapper('activeStep', 0);
   };
@@ -126,6 +169,13 @@ function Homepage() {
       return;
     }
 
+    let userId = sessionStorage.getItem('userId');
+
+    if (!userId) {
+      userId = uuidv4(); // Generate a new user ID if not found
+      sessionStorage.setItem('userId', userId);
+    }
+
     setStateWrapper('isGeneratingReport', true); // Prevent multiple clicks
     setStateWrapper('dashboardKey', state.dashboardKey + 1);
     setStateWrapper('showDashboard', true);
@@ -139,7 +189,7 @@ function Homepage() {
         .filter((metricChip) => metricChip.selected)
         .map((metricChip) => metricChip.label.toLowerCase()),
       model_type: state.selectedModelType.toLowerCase(),
-      user_id: '1234',
+      user_id: userId,
     };
 
     try {
@@ -418,6 +468,7 @@ function Homepage() {
                         onComplete={() => {
                           setStateWrapper('isGeneratingReport', false);
                         }}
+                        socket={socket}
                       />
                     )}
                   </div>
