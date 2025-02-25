@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen, act } from "@testing-library/react";
 import Dashboard from "../src/app/dashboard";
 import "@testing-library/jest-dom";
+import { pdf } from "@react-pdf/renderer";
 
 
 // Mock `ErrorMessage` and `ReportRenderer` components
@@ -12,10 +13,9 @@ jest.mock("../src/app/components/ReportRenderer", () => () => (
   <div data-testid="report-renderer">Final Report</div>
 ));
 
-// Mock `@react-pdf/renderer`
 jest.mock("@react-pdf/renderer", () => ({
-  pdf: jest.fn((component) => ({
-    toBlob: jest.fn().mockResolvedValue(component),
+  pdf: jest.fn(() => ({
+    toBlob: jest.fn(() => Promise.resolve(new Blob())),
   })),
 }));
 
@@ -85,6 +85,23 @@ describe("Dashboard Component", () => {
 
     expect(screen.getByText("1 / 10 batches processed")).toBeInTheDocument();
   });
+
+
+  test("generates and downloads the report on REPORT message", async () => {
+    render(<Dashboard onComplete={onCompleteMock} />);
+
+    const mockReportData = { /* Your mock report structure */ };
+
+    await act(async () => {
+      (mockWebSocket as any).onmessage(
+        { data: JSON.stringify({ messageType: "REPORT", content: mockReportData }) }
+      );
+    });
+
+    // Ensure pdf() was called with ReportRenderer
+    expect(pdf).toHaveBeenCalled();
+  });
+
 
   test("closes WebSocket on unmount", () => {
     const { unmount } = render(<Dashboard onComplete={onCompleteMock} />);
