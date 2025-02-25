@@ -11,6 +11,7 @@ Each worker:
 import os
 from common.models.common import Job
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
+from metrics.models import WorkerResults
 import requests
 from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
@@ -65,7 +66,7 @@ class Worker():
         init_queues(self._channel)
         print("Connection established to RabbitMQ")
 
-    def queue_result(self, result: MetricValues):
+    def queue_result(self, result: WorkerResults): 
         """
         Function to queue the results of a job
         """
@@ -235,7 +236,9 @@ class Worker():
             )
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")
-            self.queue_result(metrics_results)
+            # add user_id to the results
+            worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id)
+            self.queue_result(worker_results)
             return
         except Exception as e:
             raise WorkerException(f"Error while processing data: {e}")

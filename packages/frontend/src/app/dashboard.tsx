@@ -9,11 +9,9 @@ import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
 
-
 interface Metric {
   [metricName: string]: number;
 }
-
 
 interface DashboardProps {
   onComplete: () => void;
@@ -44,8 +42,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
   useEffect(() => {
     const socket = new WebSocket('ws://localhost:5005');
 
+    const userId = 1234;
     socket.onopen = () => {
       console.log('WebSocket connection established');
+      socket.send(userId.toString());
     };
 
     socket.onmessage = (event) => {

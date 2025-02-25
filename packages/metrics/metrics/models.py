@@ -73,3 +73,11 @@ class MetricValues(BaseModel):
     batch_size: int
     total_sample_size: int
     warning_msg: Optional[str] = None
+
+
+class WorkerResults(MetricValues):
+    """
+    Inherit from MetricValues 
+    """
+    
+    user_id: int

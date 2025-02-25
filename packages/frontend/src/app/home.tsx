@@ -139,6 +139,7 @@ function Homepage() {
         .filter((metricChip) => metricChip.selected)
         .map((metricChip) => metricChip.label.toLowerCase()),
       model_type: state.selectedModelType.toLowerCase(),
+      user_id: '1234',
     };
 
     try {
@@ -161,7 +162,6 @@ function Homepage() {
       }
 
       console.log('Job accepted. Waiting for results');
-
     } catch (error: any) {
       console.error('Error while posting to backend:', error.message);
       setStateWrapper('error', true);
@@ -230,11 +230,11 @@ function Homepage() {
                     const handleOnBlur =
                       field.validKey && field.isValid !== undefined
                         ? () => {
-                          setStateWrapper(
-                            field.validKey as keyof typeof state,
-                            checkURL(field.value)
-                          );
-                        }
+                            setStateWrapper(
+                              field.validKey as keyof typeof state,
+                              checkURL(field.value)
+                            );
+                          }
                         : undefined; // Don't do anything for fields that don't need validation onBlur
 
                     const errorProps =
@@ -353,9 +353,9 @@ function Homepage() {
                     ).length === 0
                       ? 'You have not selected any metrics'
                       : state.metricChips
-                        .filter((metricChip) => metricChip.selected)
-                        .map((metricChip) => metricChip.label)
-                        .join(', ')}
+                          .filter((metricChip) => metricChip.selected)
+                          .map((metricChip) => metricChip.label)
+                          .join(', ')}
                   </Typography>
                 </Box>
               )}
@@ -402,7 +402,11 @@ function Homepage() {
                         // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
                       }}
                       disabled={state.isGeneratingReport}
-                      sx={{ mt: 1, mr: 1, backgroundColor: theme.palette.secondary.main }}
+                      sx={{
+                        mt: 1,
+                        mr: 1,
+                        backgroundColor: theme.palette.secondary.main,
+                      }}
                     >
                       {' '}
                       Generate Report

@@ -26,6 +26,7 @@ class Job(BaseModel):   # pragma: no cover
     model_url: str
     data_api_key: str
     model_api_key: str
+    user_id: int
 
 
 class ModelInput(BaseModel):    # pragma: no cover
