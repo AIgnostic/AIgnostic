@@ -10,7 +10,8 @@ from aggregator.aggregator import (RESULT_QUEUE,
                                    connected_clients,
                                    message_queue,
                                    websocket_handler,
-                                   send_to_clients
+                                   send_to_clients,
+                                   aggregate_report
                                    )
 import json
 
@@ -218,3 +219,23 @@ def test_send_to_clients_with_clients():
     # Ensure message is sent to all clients
     mock_client1.send.assert_called_once()
     mock_client2.send.assert_called_once()
+
+
+@patch('aggregator.aggregator.generate_report')
+def test_aggregate_report(mock_generate_report):
+    # Mock metrics data
+    metrics = {
+        "accuracy": 0.85,
+        "precision": 0.15
+    }
+
+    # Mock report generation functions
+    mock_generate_report.return_value = []
+    with patch.dict('os.environ', {'GOOGLE_API_KEY': 'test_value'}):
+        # Call function under test
+        report = aggregate_report(metrics)
+
+        # Ensure report is generated correctly
+        assert "properties" in report
+        assert "info" in report
+        mock_generate_report.assert_called_once_with(metrics, "test_value")
