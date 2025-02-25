@@ -7,7 +7,7 @@ exclude_lines = [ "if TYPE_CHECKING:" ]
 show_missing = true
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/packages/dispatcher/html' --cov-report xml:'../../coverage/packages/dispatcher/coverage.xml' --html='../../reports/packages/dispatcher/unittests/html/index.html' --junitxml='../../reports/packages/dispatcher/unittests/junit.xml'"
+addopts = "--cov --cov-report html:'../../coverage/dispatcher/html' --cov-report xml:'../../coverage/dispatcher/coverage.xml' --html='../../reports/dispatcher/unittests/html/index.html' --junitxml='../../reports/dispatcher/unittests/junit.xml'"
 
 [tool.poetry]
 name = "dispatcher"

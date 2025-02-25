@@ -9,6 +9,6 @@ coverage:
     patch:
       default:
         # basic
-        target: 70% # allow as low as 60% coverage of new code in the patch
+        target: 80% # allow as low as 60% coverage of new code in the patch
         threshold: 10% # allow up to 10% drop in a PR
         base: auto
