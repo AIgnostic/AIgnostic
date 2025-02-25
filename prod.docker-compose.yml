@@ -36,6 +36,8 @@ services:
   worker_ms:
     container_name: worker
     image: ghcr.io/aignostic/worker:latest
+    deploy:
+      replicas: 3
     networks:
       - aignostic_network
     environment:
@@ -55,7 +57,5 @@ services:
       rabbitmq:
         condition: service_healthy
 
-volumes:
-  venv:
 networks:
   aignostic_network:
