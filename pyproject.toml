@@ -23,41 +23,41 @@ torch = [
     { version = "^2.6.0", source = "pypi", platform = "darwin", markers = "sys_platform == 'darwin'" },
 ]
 
-    [tool.poetry.dependencies.api]
-    path = "packages/api"
-    develop = true
+[tool.poetry.dependencies.api]
+path = "packages/api"
+develop = true
 
-    [tool.poetry.dependencies.common]
-    path = "packages/common"
-    develop = true
+[tool.poetry.dependencies.common]
+path = "packages/common"
+develop = true
 
-    [tool.poetry.dependencies.metrics]
-    path = "packages/metrics"
-    develop = true
+[tool.poetry.dependencies.metrics]
+path = "packages/metrics"
+develop = true
 
-    [tool.poetry.dependencies.worker]
-    path = "packages/worker"
-    develop = true
+[tool.poetry.dependencies.worker]
+path = "packages/worker"
+develop = true
 
-    [tool.poetry.dependencies.aggregator]
-    path = "packages/aggregator"
-    develop = true
+[tool.poetry.dependencies.aggregator]
+path = "packages/aggregator"
+develop = true
 
-    [tool.poetry.dependencies.mocks]
-    path = "packages/mocks"
-    develop = true
+[tool.poetry.dependencies.mocks]
+path = "packages/mocks"
+develop = true
 
-    [tool.poetry.dependencies.report-generation]
-    path = "packages/report-generation"
-    develop = true
+[tool.poetry.dependencies.report-generation]
+path = "packages/report-generation"
+develop = true
 
-    [tool.poetry.dependencies.llm-insights]
-    path = "packages/llm-insights"
-    develop = true
+[tool.poetry.dependencies.llm-insights]
+path = "packages/llm-insights"
+develop = true
 
-    [tool.poetry.dependencies.dispatcher]
-    path = "packages/dispatcher"
-    develop = true
+[tool.poetry.dependencies.dispatcher]
+path = "packages/dispatcher"
+develop = true
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "7.1.1"
