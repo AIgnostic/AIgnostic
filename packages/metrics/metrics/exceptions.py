@@ -4,8 +4,8 @@ from warnings import warn
 
 class _MetricsPackageException(Exception, ABC):
     """
-    __MetricsPackageException is the base exception class for the metrics package
-        - it extends Exception as an abstract class and requires a detail field (not empty)
+    _MetricsPackageException is the base exception class for the metrics package
+        - it extends Exception as an abstract class and requires a non-empty detail field
         to describe an error as well as a status code.
     """
     @abstractmethod
@@ -89,7 +89,7 @@ class DataProvisionException(_MetricsPackageException):
 
     # This is a 400 error as metrics is implemented as a microservice
     def __init__(self, detail=None, status_code=400):
-        err_msg = "Insufficient data provided to calculate user metrics"
+        err_msg = "Insufficient or invalid data provided to calculate user metrics"
         if detail:
             err_msg += f": {detail}"
         super().__init__(err_msg, status_code)

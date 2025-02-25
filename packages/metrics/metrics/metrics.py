@@ -32,8 +32,8 @@ import numpy as np
 from metrics.exceptions import (
     MetricsComputationException,
     DataInconsistencyException,
-    ModelQueryException,
-    DataProvisionException
+    DataProvisionException,
+    _MetricsPackageException
 )
 from common.models import ModelResponse
 
@@ -93,9 +93,8 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
     :return: None
     """
     if len(true_labels) == 0:
-        raise MetricsComputationException(
-            metric_name,
-            detail="No labels provided - will lead to division by zero",
+        raise DataProvisionException(
+            detail=f"No labels provided - will lead to division by zero for {metric_name}",
             status_code=400,
         )
     elif len(true_labels[0]) > 1:
@@ -105,8 +104,7 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
             status_code=400,
         )
     elif len(true_labels[0]) == 0:
-        raise MetricsComputationException(
-            metric_name,
+        raise DataProvisionException(
             detail=f"No attributes provided - cannot calculate {metric_name}",
             status_code=400,
         )
@@ -795,7 +793,7 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
 
         # Return an exception in place of the metric result if applicable
         # Approach allows valid metrics to still be calculated
-        except (MetricsComputationException, ModelQueryException) as e:
+        except _MetricsPackageException as e:
             results[metric] = e
         except Exception as e:
             results[metric] = MetricsComputationException(current_metric, detail=str(e))

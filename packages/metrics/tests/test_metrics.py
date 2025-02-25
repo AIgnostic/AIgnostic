@@ -17,7 +17,8 @@ from metrics.metrics import (
 )
 from metrics.exceptions import (
     MetricsComputationException,
-    DataInconsistencyException
+    DataInconsistencyException,
+    DataProvisionException
 )
 from metrics.models import CalculateRequest, MetricsPackageExceptionModel
 import pytest
@@ -46,17 +47,19 @@ def test_accuracy(true_labels, predicted_labels, expected):
 
 
 @pytest.mark.parametrize(
-    "true_labels, exception_message",
+    "true_labels, exception_message, expected_exception_type",
     [
         (
             [[2, 3], [0, 3], [2, 3], [2, 3], [0, 3], [2, 3], [0, 3], [0, 3]],
             "Multiple attributes provided",
+            MetricsComputationException,
         ),
-        ([], "No labels provided"),
+        ([], "No labels provided", DataProvisionException),
     ],
 )
-def test_validity_check_fails(true_labels, exception_message):
-    with pytest.raises(MetricsComputationException) as e:
+def test_multiple_labels_causes_per_class_metrics_to_error(true_labels, exception_message,
+                                                           expected_exception_type):
+    with pytest.raises(expected_exception_type) as e:
         is_valid_for_per_class_metrics("class_precision", true_labels)
     assert exception_message in e.value.detail
 
@@ -380,7 +383,7 @@ def test_calculate_metrics_with_missing_information_returns_insufficient_data_er
     results = calculate_metrics(info)
     assert results.metric_values == {
         "accuracy": MetricsPackageExceptionModel(
-            detail="Insufficient data provided to calculate user metrics: "
+            detail="Insufficient or invalid data provided to calculate user metrics: "
                    "The following missing fields are required to calculate metric "
                    "accuracy:\n['true_labels', 'predicted_labels']",
             status_code=400,

@@ -6,7 +6,7 @@ import pytest
 
 def test_empty_true_labels_returns_metric_exception_for_per_class_metrics():
     """
-    Test that a DataInconsistencyException is raised when the true_labels are not provided for
+    Test that DataProvisionExceptions are raised when the true_labels are not provided
     per-class metrics.
     """
     # Arrange
@@ -18,26 +18,27 @@ def test_empty_true_labels_returns_metric_exception_for_per_class_metrics():
         total_sample_size=10
     )
     results = calculate_metrics(info)
-    assert results.metric_values == {
-        "precision": MetricsPackageExceptionModel(
-            detail="Error during metric calculation (macro_precision): "
-                   "No attributes provided - cannot calculate macro_precision",
-            status_code=400,
-            exception_type="MetricsComputationException"
-        ),
-        "recall": MetricsPackageExceptionModel(
-            detail="Error during metric calculation (macro_recall): "
-                   "No attributes provided - cannot calculate macro_recall",
-            status_code=400,
-            exception_type="MetricsComputationException"
-        ),
-        "f1_score": MetricsPackageExceptionModel(
-            detail="Error during metric calculation (macro_f1): "
-                   "No attributes provided - cannot calculate macro_f1",
-            status_code=400,
-            exception_type="MetricsComputationException"
-        )
-    }
+    assert results.metric_values 
+    assert (
+        isinstance(results.metric_values["precision"], MetricsPackageExceptionModel)
+        and isinstance(results.metric_values["recall"], MetricsPackageExceptionModel)
+        and isinstance(results.metric_values["f1_score"], MetricsPackageExceptionModel)
+    )
+    assert results.metric_values["precision"].detail.endswith(
+        "No attributes provided - cannot calculate macro_precision"
+    )
+    assert results.metric_values["recall"].detail.endswith(
+        "No attributes provided - cannot calculate macro_recall"
+    )
+    assert results.metric_values["f1_score"].detail.endswith(
+        "No attributes provided - cannot calculate macro_f1"
+    )
+    assert results.metric_values["precision"].status_code == 400
+    assert results.metric_values["recall"].status_code == 400
+    assert results.metric_values["f1_score"].status_code == 400
+    assert results.metric_values["precision"].exception_type == "DataProvisionException"
+    assert results.metric_values["recall"].exception_type == "DataProvisionException"
+    assert results.metric_values["f1_score"].exception_type == "DataProvisionException"
 
 
 def test_unknown_task_name_raises_data_prov_error():
@@ -88,3 +89,52 @@ def test_task_incompatible_metric_returns_error():
     )
     assert mse.status_code == 400
     assert mse.exception_type == "MetricsComputationException"
+
+
+def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
+    """
+    Test that when some metrics fail, the pipeline continues to calculate the other metrics.
+    """
+    # Arrange
+    info = CalculateRequest(
+        metrics=[
+            "accuracy",
+            "explanation_stability_score",
+            "mean_squared_error",
+        ],
+        true_labels=[[1], [0]] * 4,
+        predicted_labels=[[1]] * 8,
+        task_name="binary_classification",
+        batch_size=2,
+        total_sample_size=10
+    )
+    results = calculate_metrics(info)
+    assert results.metric_values
+    assert "accuracy" in results.metric_values
+    assert isinstance(
+        results.metric_values["accuracy"],
+        float
+    )
+    assert isinstance(
+        results.metric_values["explanation_stability_score"],
+        MetricsPackageExceptionModel
+    )
+    assert isinstance(
+        results.metric_values["mean_squared_error"],
+        MetricsPackageExceptionModel
+    )
+
+    assert results.metric_values["accuracy"] == 0.5
+    assert (
+        "The following missing fields are required to calculate metric" 
+        in results.metric_values["explanation_stability_score"].detail
+    )
+    assert (
+        "Metric mean_squared_error is not supported for binary_classification tasks"
+        in results.metric_values["mean_squared_error"].detail
+    )
+    assert results.metric_values["explanation_stability_score"].status_code == 400
+    assert results.metric_values["mean_squared_error"].status_code == 400
+    assert results.metric_values["explanation_stability_score"].exception_type == "DataProvisionException"
+    assert results.metric_values["mean_squared_error"].exception_type == "MetricsComputationException"
+
