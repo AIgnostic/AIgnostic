@@ -6,6 +6,14 @@ import '@testing-library/jest-dom';
 import { checkURL } from '../src/app/utils';
 import { modelTypesToMetrics, generalMetrics } from '../src/app/constants';
 
+jest.mock('@react-pdf/renderer', () => ({
+  Document: ({ children }: any) => <div>{children}</div>,
+  Page: ({ children }: any) => <div>{children}</div>,
+  Text: ({ children }: any) => <span>{children}</span>,
+  View: ({ children }: any) => <div>{children}</div>,
+  StyleSheet: { create: (styles: any) => styles },
+}));
+
 describe('Stepper Navigation', () => {
   it('should disable Next state if no API URLs inputted', () => {
     render(<Homepage />);

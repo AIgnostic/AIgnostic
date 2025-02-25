@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import ErrorMessage from './components/ErrorMessage';
-import { generateReportText } from './utils';
 import theme from './theme';
-import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
-import { Metric, ReportPropertySection } from './types';
+import { Metric } from './types';
 import ReportRenderer from './components/ReportRenderer';
 
 

@@ -91,7 +91,7 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                 <View key={index} style={styles.section}>
                     {/* Section Header */}
                     <Text style={styles.header}>
-                        formatUpperCase(section.property)
+                        {formatUpperCase(section.property)}
                     </Text>
 
                     {/* Computed Metrics */}

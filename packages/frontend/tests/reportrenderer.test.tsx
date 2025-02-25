@@ -1,3 +1,9 @@
+import React from 'react';
+import { render } from '@testing-library/react';
+import ReportRenderer from '../src/app/components/ReportRenderer'; // Adjust path as needed
+import { Report } from '../src/app/types';
+
+
 jest.mock('@react-pdf/renderer', () => ({
     Document: ({ children }: any) => <div>{children}</div>,
     Page: ({ children }: any) => <div>{children}</div>,
@@ -5,10 +11,6 @@ jest.mock('@react-pdf/renderer', () => ({
     View: ({ children }: any) => <div>{children}</div>,
     StyleSheet: { create: (styles: any) => styles },
   }));
-import React from 'react';
-import { render } from '@testing-library/react';
-import ReportRenderer from '../src/app/components/ReportRenderer'; // Adjust path as needed
-import { Report } from '../src/app/types';
 
   
 describe('ReportRenderer', () => {

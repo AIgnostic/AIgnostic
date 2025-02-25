@@ -1,9 +1,5 @@
 import { checkURL }from '../src/app/utils';
 import '@testing-library/jest-dom';
-import jsPDF from 'jspdf';
-import { applyStyle } from '../src/app/utils';
-import { reportStyles } from '../src/app/home.styles';
-import { generateReportText } from '../src/app/utils';
 import { MOCK_SCIKIT_API_URL,
          MOCK_FINBERT_API_URL,
          MOCK_FOLKTABLES_DATASET_API_URL,
