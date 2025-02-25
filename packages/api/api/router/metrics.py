@@ -3,8 +3,11 @@ from metrics.models import (
     MetricsInfo,
     MetricValues,
 )
-from metrics.metrics import MetricsException
-from metrics.metrics import calculate_metrics as _calculate_metrics
+from metrics.metrics import (
+    MetricsException,
+    task_type_to_metric,
+    calculate_metrics as _calculate_metrics
+)
 from fastapi import FastAPI, HTTPException
 
 """
@@ -12,22 +15,6 @@ from fastapi import FastAPI, HTTPException
 """
 
 metrics_app = FastAPI()
-
-task_to_metric_map = {
-    "binary_classification": [
-        "disparate_impact",
-        "equal_opportunity_difference",
-        "equalized_odd_difference",
-        "false_negative_rate_difference",
-        "negative_predictive_value",
-        "positive_predictive_value",
-        "statistical_parity_difference",
-        "true_positive_rate_difference",
-    ],
-    "multi_class_classification": [],
-    "regression": [],
-}
-"""Documentation for the metrics service on the API to tell us what metric are supported"""
 
 
 @metrics_app.get("/retrieve-metric-info", response_model=MetricsInfo)
@@ -38,7 +25,7 @@ async def retrieve_info() -> MetricsInfo:
 
     :return: MetricsInfo - contains the mapping from task type to metrics
     """
-    return MetricsInfo(task_to_metric_map=task_to_metric_map)
+    return MetricsInfo(task_to_metric_map=task_type_to_metric)
 
 
 @metrics_app.post("/calculate-metrics", response_model=MetricValues)

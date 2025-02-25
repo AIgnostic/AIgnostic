@@ -37,6 +37,7 @@ from metrics.exceptions import (
 )
 from common.models import ModelResponse
 
+
 task_type_to_metric = {
     "binary_classification": {
         "accuracy",
@@ -80,7 +81,12 @@ task_type_to_metric = {
         "explanation_fidelity_score",
     ],
 }
+"""
+    This mapping of model types to metrics is used to provide information about the types 
+    of metrics that can be calculated for each model type, and is passed to the frontend (TODO?).
 
+    When adding new metrics, ensure that they are added to the appropriate model type.
+"""
 
 def is_valid_for_per_class_metrics(metric_name, true_labels):
     """
@@ -816,9 +822,10 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
                 results[metric] = 1
             else:
                 results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
-            range[metric] = (metric_to_fn_and_requirements[metric]["range"](info),
-                             metric_to_fn_and_requirements[metric]["expected_values"](info)
-                             )
+            range[metric] = (
+                metric_to_fn_and_requirements[metric]["range"](info),
+                metric_to_fn_and_requirements[metric]["expected_values"](info)
+            )
 
 
         return MetricValues(metric_values=results,
