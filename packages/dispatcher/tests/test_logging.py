@@ -1,5 +1,4 @@
 import logging
-import pytest
 from dispatcher.logging.configure_logging import (
     configure_logging,
     configure_logging_dev,

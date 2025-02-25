@@ -1,5 +1,4 @@
 import logging
-import pytest
 from dispatcher.logging.formatters import (
     strip_ansi,
     CustomFormatterWithFunctionDebugData,
