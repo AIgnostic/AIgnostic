@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import jsPDF from 'jspdf';
 import { applyStyle } from '../src/app/utils';
 import { reportStyles } from '../src/app/home.styles';
-import { generateReportText } from '../src/app/utils';
+import { generateReportText, fetchMetricInfo } from '../src/app/utils';
 import { MOCK_SCIKIT_API_URL,
          MOCK_FINBERT_API_URL,
          MOCK_FOLKTABLES_DATASET_API_URL,
@@ -52,6 +52,48 @@ describe('checkURL function', () => {
     });
   });
 });
+
+
+describe('fetchMetricInfo', () => {
+  beforeEach(() => {
+    // Mock fetch globally
+    global.fetch = jest.fn();
+  });
+  
+  afterEach(() => {
+    jest.restoreAllMocks(); // Clean up mocks after each test
+  });
+
+  it('should fetch and return the task_to_metric_map from the backend', async () => {
+    const mockData = {
+      task_to_metric_map: {
+        binary_classification: ['metric_1', 'metric_2'],
+        multi_class_classification: ['metric_1', 'metric_2'],
+        regression: ['metric_1', 'metric_2'],
+      },
+    };
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue(mockData),
+    });
+
+    const taskToMetricMap = await fetchMetricInfo();
+
+    expect(taskToMetricMap).toEqual(mockData.task_to_metric_map);
+  });
+
+  it('should throw an error if the fetch request fails', async () => {
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockRejectedValue(new Error('Failed to fetch')),
+    });
+
+    await expect(fetchMetricInfo()).rejects.toThrow('Failed to fetch');
+  });
+});
+
 
 describe('applyStyle', () => {
   it('should apply the correct font, style, and size to the jsPDF document', () => {

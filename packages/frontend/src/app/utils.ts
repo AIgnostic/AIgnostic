@@ -52,8 +52,6 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
     try {
         const response = await fetch(BACKEND_FETCH_METRIC_INFO_URL);
         const data: MetricInfo = await response.json();
-        console.log(data);
-        console.log(data.task_to_metric_map);
         return data.task_to_metric_map;
     } catch (error) {
         console.error('Error:', error);
