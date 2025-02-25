@@ -97,7 +97,6 @@ class MetricValues(BaseModel):
                 if isinstance(value, _MetricsPackageException):
                     v[key] = value.to_pydantic_model()
         return v
-    
+
     batch_size: int
     total_sample_size: int
-    warning_msg: Optional[str] = None
