@@ -1,0 +1,37 @@
+[tool.coverage.run]
+branch = true
+source = [ "dispatcher" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report html:'../../coverage/dispatcher/html' --cov-report xml:'../../coverage/dispatcher/coverage.xml' --html='../../reports/dispatcher/unittests/html/index.html' --junitxml='../../reports/dispatcher/unittests/junit.xml'"
+
+[tool.poetry]
+name = "dispatcher"
+version = "1.0.0"
+description = "Microservice to handle concurrency control when dispatching evaluations - i.e. only run use max N workers at once for this job"
+authors = [ ]
+license = "Proprietary"
+readme = "README.md"
+
+  [[tool.poetry.packages]]
+  include = "dispatcher"
+
+  [tool.poetry.dependencies]
+  python = ">=3.12,<3.13"
+  colorama = "^0.4.6"
+
+    [tool.poetry.dependencies.redis]
+    extras = [ "hiredis" ]
+    version = "^5.2.1"
+
+    [tool.poetry.dependencies.common]
+    path = "../common"
+    develop = true
+
+[build-system]
+requires = [ "poetry-core" ]
+build-backend = "poetry.core.masonry.api"
