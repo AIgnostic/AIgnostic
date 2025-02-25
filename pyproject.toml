@@ -10,13 +10,14 @@ license = "Proprietary"
 readme = "README.md"
 package-mode = false
 
-  [tool.poetry.dependencies]
-  python = ">=3.12,<3.13"
-  fastapi = "^0.115.8"
-  uvicorn = "^0.34.0"
-  python-dotenv = "^1.0.1"
-  folktables = "^0.0.12"
-  pydantic = "^2.10.6"
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+fastapi = "^0.115.8"
+uvicorn = "^0.34.0"
+python-dotenv = "^1.0.1"
+folktables = "^0.0.12"
+pydantic = "^2.10.6"
+torch = "^2.6.0"
 
     [tool.poetry.dependencies.api]
     path = "packages/api"

@@ -23,6 +23,11 @@ include = "mocks"
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
 transformers = "^4.49.0"
+torch = [
+    { version = "^2.6.0", source = "pypi", platform = "darwin" },
+    { version = "^2.6.0", source = "pytorch_cpu", platform = "linux" },
+    { version = "^2.6.0", source = "pytorch_cpu", platform = "win32" },
+]
 
 [tool.poetry.dependencies.common]
 path = "../common"
@@ -32,24 +37,37 @@ develop = true
 transformers = "^4.49.0"
 folktables = "^0.0.12"
 scikit-learn = "^1.6.1"
-
-[tool.poetry.group.dev.dependencies.torch]
-version = "^2.6.0"
-source = "pytorch_cpu"
-
-[tool.poetry.group.dev.dependencies.torchvision]
-version = "^0.21.0"
-source = "pytorch_cpu"
+torch = [
+    { version = "^2.6.0", source = "pypi", platform = "darwin" },
+    { version = "^2.6.0", source = "pytorch_cpu", platform = "linux" },
+    { version = "^2.6.0", source = "pytorch_cpu", platform = "win32" },
+]
 
 [tool.poetry.group.train.dependencies]
-torch = "^2.6.0"
-torchvision = "^0.21.0"
-torchaudio = "^2.5.2"
+torch = [
+    { version = "^2.6.0", source = "pypi", platform = "darwin" },
+    { version = "^2.6.0", source = "pytorch_cpu", platform = "linux" },
+    { version = "^2.6.0", source = "pytorch_cpu", platform = "win32" },
+]
+torchvision = [
+    { version = "^0.21.0", source = "pypi", platform = "darwin" },
+    { version = "^0.21.0", source = "pytorch_cpu", platform = "linux" },
+    { version = "^0.21.0", source = "pytorch_cpu", platform = "win32" },
+]
+torchaudio = [
+    { version = "^2.5.2", source = "pypi", platform = "darwin" },
+    { version = "^2.5.2", source = "pytorch_cpu", platform = "linux" },
+    { version = "^2.5.2", source = "pytorch_cpu", platform = "win32" },
+]
+
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
 
 [[tool.poetry.source]]
 name = "pytorch_cpu"
 url = "https://download.pytorch.org/whl/cpu"
-priority = "explicit"
+priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]
