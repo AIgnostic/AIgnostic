@@ -7,7 +7,7 @@ class MetricsInfo(BaseModel):
     """
     Format to receive information about types of metrics available
     """
-    tasks_to_metric_map: dict[str, list]
+    task_to_metric_map: dict[str, list]
 
 
 class CalculateRequest(BaseModel):
