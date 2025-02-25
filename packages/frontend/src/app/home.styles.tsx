@@ -84,7 +84,8 @@ const styles = {
       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
       padding: '20px',
       minWidth: '300px',
-      backgroundColor: theme.palette.secondary.main,
+      backgroundColor: theme.palette.primary.main,
+      border: '1px solid #e0e0e0',
     },
   },
 };

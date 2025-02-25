@@ -3,10 +3,12 @@ import { ConditionAlertFailure, HomepageState } from './types';
 const AIGNOSTIC = 'AIgnostic';
 const HOME = '/AIgnostic';
 
-const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5001/predict';
+const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5011/predict';
 const MOCK_FINBERT_API_URL = 'http://finbert-mock-model-api:5001/predict';
-const MOCK_FOLKTABLES_DATASET_API_URL = 'http://folktables-dataset-api:5000/fetch-datapoints';
-const MOCK_FINANCIAL_DATASET_API_URL = 'http://financial-dataset-api:5000/fetch-datapoints';
+const MOCK_FOLKTABLES_DATASET_API_URL =
+  'http://folktables-dataset-api:5010/fetch-datapoints';
+const MOCK_FINANCIAL_DATASET_API_URL =
+  'http://financial-dataset-api:5000/fetch-datapoints';
 
 const steps = [
   {
@@ -39,47 +41,48 @@ const RESULTS_URL = 'http://localhost:5002/results';
 
 const generalMetrics = ['Accuracy', 'Precision', 'Recall'];
 
-const binaryClassifierMetrics = ["accuracy",
-"precision",
-"recall",
-"f1 score",
-// "roc auc",
-"statistical parity difference",
-"equal opportunity difference",
-"equalized odds difference",
-"disparate impact",
-"false negative rate difference",
-"negative predictive value",
-"positive predictive value",
-"true positive rate difference",
-// "explanation stability score",
-// "explanation sparsity score",
-// "explanation fidelity score",
-// "ood auroc"
-]
+const binaryClassifierMetrics = [
+  'accuracy',
+  'precision',
+  'recall',
+  'f1 score',
+  // "roc auc",
+  'statistical parity difference',
+  'equal opportunity difference',
+  'equalized odds difference',
+  'disparate impact',
+  'false negative rate difference',
+  'negative predictive value',
+  'positive predictive value',
+  'true positive rate difference',
+  // "explanation stability score",
+  // "explanation sparsity score",
+  // "explanation fidelity score",
+  // "ood auroc"
+];
 
 const multiClassClassifierMetrics = [
-  "accuracy",
-  "precision",
-  "recall",
-  "f1 score",
+  'accuracy',
+  'precision',
+  'recall',
+  'f1 score',
   // "roc auc",
   // "explanation stability score",
   // "explanation sparsity score",
   // "explanation fidelity score",
   // "ood auroc",
-]
+];
 
 const regressionMetrics = [
-  "mean absolute error",
-  "mean squared error",
-  "r squared",
-]
+  'mean absolute error',
+  'mean squared error',
+  'r squared',
+];
 
 const modelTypesToMetrics: { [key: string]: string[] } = {
-  "Binary Classification": binaryClassifierMetrics,
-  "Multi Class Classification": multiClassClassifierMetrics,
-  "Regression": regressionMetrics,
+  'Binary Classification': binaryClassifierMetrics,
+  'Multi Class Classification': multiClassClassifierMetrics,
+  Regression: regressionMetrics,
   // 'General (Accuracy, Precision, Recall)': generalMetrics,
 };
 

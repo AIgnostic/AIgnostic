@@ -49,70 +49,76 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
     //   socket.send(userId.toString());
     // };
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('Received message:', data);
+    if (socket) {
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Received message:', data);
 
-      switch (data.messageType) {
-        case 'LOG':
-          setLog(data.message);
-          break;
-        case 'METRICS_COMPLETE':
-          setLog(data.message);
-          break;
-        case 'METRICS_INTERMEDIATE':
-          try {
-            // Assume each intermediate message contains one item with multiple metrics.
-            const newItem: Metric[] = data.content.metrics_results;
+        switch (data.messageType) {
+          case 'LOG':
+            setLog(data.message);
+            break;
+          case 'METRICS_COMPLETE':
+            setLog(data.message);
+            break;
+          case 'METRICS_INTERMEDIATE':
+            try {
+              // Assume each intermediate message contains one item with multiple metrics.
+              const newItem: Metric[] = data.content.metrics_results;
 
-            console.log('New item:', newItem);
-            // Append the new item to our list of items.
-            setItems((prevItems) => {
-              const updatedItems = [...prevItems, newItem];
-              if (updatedItems.length >= expectedItems) {
-                setTimeout(onComplete, 0);
-                setShowError(true);
-                setError({
-                  header: 'Report is being generated',
-                  text: 'This may take a few seconds',
-                });
-              }
-              return updatedItems;
-            });
-          } catch (e: any) {
+              console.log('New item:', newItem);
+              // Append the new item to our list of items.
+              setItems((prevItems) => {
+                const updatedItems = [...prevItems, newItem];
+                if (updatedItems.length >= expectedItems) {
+                  setTimeout(onComplete, 0);
+                  setShowError(true);
+                  setError({
+                    header: 'Report is being generated',
+                    text: 'This may take a few seconds',
+                  });
+                }
+                return updatedItems;
+              });
+            } catch (e: any) {
+              setShowError(true);
+              setError({ header: 'Error parsing data:', text: e.message });
+            }
+
+            break;
+          case 'REPORT': {
+            console.log('Results received:', data.content);
+            setReport(data.content);
+            console.log('Report:', data.content);
+            const doc = generateReportText(data.content);
+            console.log(doc);
+            doc.save('AIgnostic_Report.pdf');
+            if (error.header === 'Report is being generated') {
+              setShowError(false);
+            }
+            break;
+          }
+          case 'ERROR':
             setShowError(true);
-            setError({ header: 'Error parsing data:', text: e.message });
-          }
-
-          break;
-        case 'REPORT': {
-          console.log('Results received:', data.content);
-          setReport(data.content);
-          console.log('Report:', data.content);
-          const doc = generateReportText(data.content);
-          console.log(doc);
-          doc.save('AIgnostic_Report.pdf');
-          if (error.header === 'Report is being generated') {
-            setShowError(false);
-          }
-          break;
+            setError({ header: 'Error 500:', text: data.message });
+            break;
+          default:
+            console.log(
+              'Unknown response from server:',
+              data,
+              data.messageType
+            );
+            setShowError(true);
+            setError({
+              header: 'Unknown response from server:',
+              text: data.message,
+            });
         }
-        case 'ERROR':
-          setShowError(true);
-          setError({ header: 'Error 500:', text: data.message });
-          break;
-        default:
-          console.log('Unknown response from server:', data, data.messageType);
-          setShowError(true);
-          setError({
-            header: 'Unknown response from server:',
-            text: data.message,
-          });
-      }
-    };
+      };
+    }
 
     return () => {
-      socket.close();
+      socket?.close();
     };
   }, [onComplete, socket]);
 
