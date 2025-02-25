@@ -18,7 +18,7 @@ def test_empty_true_labels_returns_metric_exception_for_per_class_metrics():
         total_sample_size=10
     )
     results = calculate_metrics(info)
-    assert results.metric_values 
+    assert results.metric_values
     assert (
         isinstance(results.metric_values["precision"], MetricsPackageExceptionModel)
         and isinstance(results.metric_values["recall"], MetricsPackageExceptionModel)
@@ -126,7 +126,7 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
 
     assert results.metric_values["accuracy"] == 0.5
     assert (
-        "The following missing fields are required to calculate metric" 
+        "The following missing fields are required to calculate metric"
         in results.metric_values["explanation_stability_score"].detail
     )
     assert (
@@ -137,4 +137,3 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
     assert results.metric_values["mean_squared_error"].status_code == 400
     assert results.metric_values["explanation_stability_score"].exception_type == "DataProvisionException"
     assert results.metric_values["mean_squared_error"].exception_type == "MetricsComputationException"
-
