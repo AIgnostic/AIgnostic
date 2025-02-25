@@ -139,7 +139,7 @@ RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 connected_clients = set()  # Store multiple WebSocket clients
 message_queue = queue.Queue()  # Store messages until a client connects
 
-metrics_aggregator = MetricsAggregator()#
+metrics_aggregator = MetricsAggregator()
 
 user_aggregators: dict = {} # user_id -> MetricsAggregator
 
@@ -287,8 +287,6 @@ class ConnectionManager:
     def send_to_user(self, user_id, message):
         """Sends a message to the correct user."""
 
-        user_id = str(user_id)
-
         if user_id in self.active_connections:
             print(f"Sending message to user {user_id}")
             websocket = self.active_connections[user_id]
@@ -298,9 +296,9 @@ class ConnectionManager:
             except Exception as e:#
                 print(f"Error sending message to user {user_id}: {e}")
                 self.disconnect(user_id)
-        
-        print("User not connected: {user_id}")
-        print(f"Active connections {self.active_connections}")
+        else : 
+            print(f"User not connected: {user_id}")
+            print(f"Active connections {self.active_connections}")
 
 manager = ConnectionManager()
 

@@ -80,4 +80,4 @@ class WorkerResults(MetricValues):
     Inherit from MetricValues 
     """
     
-    user_id: int
+    user_id: str

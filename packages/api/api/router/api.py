@@ -22,7 +22,7 @@ class ModelEvaluationRequest(BaseModel):
     model_api_key: str
     metrics: list[str]
     model_type: str
-    user_id: int
+    user_id: str
 
 
 @api.post("/evaluate")
@@ -70,7 +70,7 @@ def dispatch_job(
     model_url: HttpUrl,
     data_api_key: str,
     model_api_key: str,
-    user_id: int,
+    user_id: str,
     channel: BlockingChannel,
 ):
     """
