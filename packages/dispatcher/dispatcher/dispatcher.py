@@ -2,6 +2,7 @@ import asyncio
 import logging
 from os import getenv
 
+from common.redis.connect import connect_to_redis
 from pika import BlockingConnection
 import redis.asyncio as redis
 
@@ -21,10 +22,7 @@ REDIS_PORT = getenv("REDIS_PORT", 6379)
 async def redis_connect():
     logger.info("Connecting to Redis...")
     global redis_client
-    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
-    # Attempt to connect to Redis
-    await redis_client.ping()
-    return redis_client
+    redis_client = await connect_to_redis(f"redis://{REDIS_HOST}:{REDIS_PORT}")
 
 
 def rabbitmq_connect():

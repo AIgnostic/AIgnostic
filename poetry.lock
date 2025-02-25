@@ -423,6 +423,7 @@ develop = true
 [package.dependencies]
 pika = "^1.3.2"
 pydantic = "^2.10.6"
+redis = {version = "^5.2.1", extras = ["hiredis"]}
 
 [package.source]
 type = "directory"
@@ -606,6 +607,7 @@ develop = true
 
 [package.dependencies]
 colorama = "^0.4.6"
+common = {path = "../common", develop = true}
 redis = {version = "^5.2.1", extras = ["hiredis"]}
 
 [package.source]
