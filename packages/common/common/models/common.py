@@ -10,13 +10,18 @@ class Job(BaseModel):   # pragma: no cover
     data for the task
 
     :param batch_size: int - the size of the batch to be processed
+    :param total_sample_size: int - the total number of samples used metric evaluation
+    :param metrics: list[str] - the metrics to be calculated
+    :param model_type: str - the type of the model
     :param data_url: str - the URL of the dataset to be validated
     :param model_url: str - the URL of the model to be used
     :param data_api_key: str - the API key for the dataset
     :param model_api_key: str - the API key for the model
     """
     batch_size: int
+    total_sample_size: int
     metrics: list[str]
+    model_type: str
     data_url: str
     model_url: str
     data_api_key: str
@@ -51,3 +56,25 @@ class ModelResponse(BaseModel):     # pragma: no cover
     """
     predictions: list[list]
     confidence_scores: Optional[list[list]] = None
+
+
+class LLMInput(ModelInput, BaseModel):
+    """
+    A model for next token generation
+
+    Attributes:
+        prompt: str - the prompt for the language model
+        max_length: int - the maximum length of the generated sequence
+    """
+    prompt: str
+    max_length: int
+
+
+class LLMResponse(ModelInput, BaseModel):
+    """
+    A model for next token generation
+
+    Attributes:
+        response: str - response generated from the model
+    """
+    response: str

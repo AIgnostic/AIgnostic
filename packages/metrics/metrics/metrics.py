@@ -292,7 +292,7 @@ def roc_auc(info: CalculateRequest) -> float:
     """
     name = "roc_auc"
     is_valid_for_per_class_metrics(name, info.true_labels)
-    return roc_auc_score(info.true_labels, info.predicted_labels)
+    return roc_auc_score(info.true_labels, info.predicted_labels, average="macro", multi_class="ovr")
 
 
 def mean_absolute_error(info: CalculateRequest) -> float:
@@ -789,10 +789,10 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
 
     # Input validation
     if info.confidence_scores is not None:
-        if info.true_labels is not None:
+        if info.predicted_labels is not None:
             # If confidence scores and labels are both given, ensure they have the same length
-            if info.confidence_scores.shape != info.true_labels.shape:
-                raise DataInconsistencyException(
+            if info.confidence_scores.shape[0] != info.predicted_labels.shape[0]:
+                raise DataInconstencyException(
                     detail="Length mismatch between confidence scores and true labels.",
                 )
 
@@ -809,6 +809,7 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
         print(results)
 
     for metric in info.metrics:
+        metric = metric.replace(" ", "_")
         try:
             # Skip the metric if it is known to throw an error
             if metric in results:
@@ -826,4 +827,8 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
         except Exception as e:
             results[metric] = MetricsComputationException(current_metric, detail=str(e))
     print(results)
-    return MetricValues(metric_values=results)
+    return MetricValues(
+        metric_values=results,
+        batch_size=info.batch_size,
+        total_sample_size=info.total_sample_size
+    )

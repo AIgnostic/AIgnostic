@@ -219,9 +219,13 @@ Thumbs.db
 data/*.csv
 data/
 
+# financial phrase bank
+**/FinancialPhraseBank-v1.0/
+
 # ignore test output
 tests/test_log/*
 tests/test_log/
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+packages/mocks/mocks/dataset/FinancialPhraseBank-v1.0/FinancialPhraseBank-v1.0/Sentences_50Agree.txt

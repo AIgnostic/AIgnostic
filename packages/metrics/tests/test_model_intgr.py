@@ -20,6 +20,8 @@ def test_finite_diff_gradient(server_factory):
     metric_name = "finite_diff_grad"
     with server_factory(metric_name):
         info = CalculateRequest(
+            batch_size=1,
+            total_sample_size=10,
             metrics=[metric_name],
             input_features=TEST_INPUT,
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict",
@@ -45,6 +47,8 @@ def test_ood_auroc(server_factory):
         confidence_scores = np.random.uniform(0, 1, 100).tolist()  # 100 ID confidence scores
         confidence_scores = [[score] for score in confidence_scores]
         info = CalculateRequest(
+            batch_size=1,
+            total_sample_size=10,
             metrics=[metric_name],
             input_features=input_data,
             confidence_scores=confidence_scores,

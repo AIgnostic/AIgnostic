@@ -7,6 +7,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
 import Homepage from './home';
 import APIDocs from './api_docs';
+import Dashboard from './dashboard';
 import { MarkdownFiles } from './types';
 
 export function App() {
@@ -21,6 +22,9 @@ export function App() {
         break;
       case `${HOME}/api-docs`:
         document.title = `API Docs | ${AIGNOSTIC}`;
+        break;
+      case `${HOME}/dashboard`:
+        document.title = `Dashboard | ${AIGNOSTIC}`;
         break;
       default:
         document.title = `${AIGNOSTIC}`;
@@ -41,6 +45,7 @@ export function App() {
         <Routes>
           <Route path={`${HOME}/`} element={<Homepage />} />
           <Route path={`${HOME}/api-docs`} element={<APIDocs getMarkdownFiles={defaultMarkdownLoader}/>} />
+          <Route path={`${HOME}/dashboard`} element={<Dashboard />} />
         </Routes>
       </ThemeProvider>
     </div>

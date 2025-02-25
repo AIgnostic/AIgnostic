@@ -22,6 +22,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.frontend
+    image: aignostic/frontend
     container_name: frontend
     volumes:
       - .:/app
@@ -88,6 +89,7 @@ services:
     working_dir: /app/packages/aggregator
     ports:
       - '5002:5002'
+      - '5005:5005'
     networks:
       - aignostic_network
     environment:
@@ -113,6 +115,19 @@ services:
     networks:
       - aignostic_network
     ports:
+      - '5010:5010'
+
+  financial_dataset_api:
+    container_name: financial-dataset-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.dataset.financial_data_server --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
       - '5000:5000'
 
   scikit_mock_model_api:
@@ -122,6 +137,18 @@ services:
       - .:/app
       - venv:/app/.venv
     command: poetry run python3 -u -m mocks.model.scikit_mock --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
+      - '5011:5011'
+  finbert_mock_model_api:
+    container_name: finbert-mock-model-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.model.finbert --host 0.0.0.0 --reload
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network

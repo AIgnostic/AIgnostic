@@ -28,9 +28,11 @@ import {
   Radio,
 } from '@mui/material';
 import { HomepageState } from './types';
+import Dashboard from './dashboard';
+import theme from './theme';
 
 function Homepage() {
-  const [state, setState] = useState<HomepageState>({
+  const [state, setState] = useState<HomepageState & { dashboardKey: number }>({
     modelURL: '',
     datasetURL: '',
     modelAPIKey: '',
@@ -48,6 +50,9 @@ function Homepage() {
     selectedModelType: '',
     error: false,
     errorMessage: { header: '', text: '' },
+    showDashboard: false,
+    dashboardKey: 0, // Added key to force Dashboard remount
+    isGeneratingReport: false,
   });
 
   const getValues = {
@@ -97,6 +102,9 @@ function Homepage() {
 
   const handleBack = () => {
     setStateWrapper('activeStep', state.activeStep - 1);
+    if (state.activeStep === 4) {
+      setStateWrapper('showDashboard', false);
+    }
   };
 
   const handleReset = () => {
@@ -109,6 +117,19 @@ function Homepage() {
       return;
     }
 
+    if (state.isGeneratingReport) {
+      setStateWrapper('error', true);
+      setStateWrapper('errorMessage', {
+        header: 'Report Being Generated',
+        text: 'Please wait for the current report to finish generating.',
+      });
+      return;
+    }
+
+    setStateWrapper('isGeneratingReport', true); // Prevent multiple clicks
+    setStateWrapper('dashboardKey', state.dashboardKey + 1);
+    setStateWrapper('showDashboard', true);
+
     const user_info = {
       dataset_url: state.datasetURL,
       dataset_api_key: state.datasetAPIKey,
@@ -117,6 +138,7 @@ function Homepage() {
       metrics: state.metricChips
         .filter((metricChip) => metricChip.selected)
         .map((metricChip) => metricChip.label.toLowerCase()),
+      model_type: state.selectedModelType.toLowerCase(),
     };
 
     try {
@@ -138,48 +160,10 @@ function Homepage() {
         return;
       }
 
-      console.log('Job accepted. Polling for results...');
+      console.log('Job accepted. Waiting for results');
 
-      // Polling function for results
-      const pollResults = async () => {
-        try {
-          const getResponse = await fetch(RESULTS_URL, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          });
-
-          if (getResponse.status === 204) {
-            console.log('Still processing... polling again.');
-            setTimeout(pollResults, 2000); // Poll again in 2 seconds
-          } else if (getResponse.status === 200) {
-            const data = await getResponse.json();
-            const results = data['results'];
-            console.log('Results received:', results);
-            const doc = generateReportText(results);
-            doc.save('AIgnostic_Report.pdf');
-          } else {
-            const errorData = await getResponse.json();
-            console.error(`Error: ${getResponse.status}`, errorData.detail);
-            setStateWrapper('error', true);
-            setStateWrapper('errorMessage', {
-              header: `Error ${getResponse.status}`,
-              text: errorData.detail,
-            });
-          }
-        } catch (error: any) {
-          console.error('Error during polling:', error.message);
-          setStateWrapper('error', true);
-          setStateWrapper('errorMessage', {
-            header: 'Polling Error',
-            text: error.message,
-          });
-        }
-      };
-
-      // Start polling
-      pollResults();
     } catch (error: any) {
-      console.error('Error during fetch:', error.message);
+      console.error('Error while posting to backend:', error.message);
       setStateWrapper('error', true);
       setStateWrapper('errorMessage', {
         header: 'Submission Error',
@@ -246,11 +230,11 @@ function Homepage() {
                     const handleOnBlur =
                       field.validKey && field.isValid !== undefined
                         ? () => {
-                            setStateWrapper(
-                              field.validKey as keyof typeof state,
-                              checkURL(field.value)
-                            );
-                          }
+                          setStateWrapper(
+                            field.validKey as keyof typeof state,
+                            checkURL(field.value)
+                          );
+                        }
                         : undefined; // Don't do anything for fields that don't need validation onBlur
 
                     const errorProps =
@@ -278,6 +262,12 @@ function Homepage() {
                             ? errorProps?.error
                             : false
                         }
+                        variant="filled"
+                        InputProps={{
+                          sx: {
+                            color: '#fff',
+                          },
+                        }}
                       />
                     );
                   })}
@@ -313,7 +303,7 @@ function Homepage() {
                         <FormControlLabel
                           key={modelType}
                           value={modelType}
-                          control={<Radio color="primary" />}
+                          control={<Radio color="secondary" />}
                           label={modelType}
                         />
                       ))}
@@ -339,7 +329,7 @@ function Homepage() {
                         metricChip.selected = !metricChip.selected;
                         setStateWrapper('metricChips', [...state.metricChips]);
                       }}
-                      color={metricChip.selected ? 'primary' : 'default'}
+                      color={metricChip.selected ? 'secondary' : 'default'}
                       style={{ margin: '5px' }}
                     />
                   ))}
@@ -363,53 +353,70 @@ function Homepage() {
                     ).length === 0
                       ? 'You have not selected any metrics'
                       : state.metricChips
-                          .filter((metricChip) => metricChip.selected)
-                          .map((metricChip) => metricChip.label)
-                          .join(', ')}
+                        .filter((metricChip) => metricChip.selected)
+                        .map((metricChip) => metricChip.label)
+                        .join(', ')}
                   </Typography>
                 </Box>
               )}
 
               <Box sx={{ mb: 2 }}>
                 {index === steps.length - 1 ? (
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      // check that APIs are present and valid
-                      // if not, jump to step 0
-                      if (!state.modelURL || !state.datasetURL) {
-                        if (!state.modelURL) {
-                          setStateWrapper('isModelURLValid', false);
+                  <div>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        // check that APIs are present and valid
+                        // if not, jump to step 0
+                        if (!state.modelURL || !state.datasetURL) {
+                          if (!state.modelURL) {
+                            setStateWrapper('isModelURLValid', false);
+                          }
+                          if (!state.datasetURL) {
+                            setStateWrapper('isDatasetURLValid', false);
+                          }
+                          setStateWrapper('activeStep', 0);
                         }
-                        if (!state.datasetURL) {
-                          setStateWrapper('isDatasetURLValid', false);
-                        }
-                        setStateWrapper('activeStep', 0);
-                      }
 
-                      // check that at least one metric is selected
-                      // if not, jump to step 3
-                      else if (
-                        state.metricChips.filter(
-                          (metricChip) => metricChip.selected
-                        ).length === 0
-                      ) {
-                        setStateWrapper(
-                          'metricsHelperText',
-                          'Please select at least one metric'
-                        );
-                        setStateWrapper('activeStep', 2);
-                      }
-                      // if all checks pass, generate report
-                      else {
-                        handleSubmit();
-                      }
-                    }}
-                    sx={{ mt: 1, mr: 1 }}
-                  >
-                    {' '}
-                    Generate Report
-                  </Button>
+                        // check that at least one metric is selected
+                        // if not, jump to step 3
+                        else if (
+                          state.metricChips.filter(
+                            (metricChip) => metricChip.selected
+                          ).length === 0
+                        ) {
+                          setStateWrapper(
+                            'metricsHelperText',
+                            'Please select at least one metric'
+                          );
+                          setStateWrapper('activeStep', 2);
+                        }
+                        // if all checks pass, generate report
+                        else {
+                          if (!state.isGeneratingReport) {
+                            handleSubmit();
+                          }
+                        }
+
+                        // open dashboard page in new tab
+                        // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
+                      }}
+                      disabled={state.isGeneratingReport}
+                      sx={{ mt: 1, mr: 1, backgroundColor: theme.palette.secondary.main }}
+                    >
+                      {' '}
+                      Generate Report
+                    </Button>
+                    {state.showDashboard && (
+                      // Passing the dashboardKey forces remount when it changes.
+                      <Dashboard
+                        key={state.dashboardKey}
+                        onComplete={() => {
+                          setStateWrapper('isGeneratingReport', false);
+                        }}
+                      />
+                    )}
+                  </div>
                 ) : (
                   <Button
                     variant="contained"
@@ -439,6 +446,9 @@ function Homepage() {
                       (index === 1 && state.selectedModelType === '')
                     }
                     sx={{ mt: 1, mr: 1 }}
+                    style={{
+                      backgroundColor: theme.palette.secondary.main,
+                    }}
                   >
                     {' '}
                     Next
@@ -447,7 +457,7 @@ function Homepage() {
 
                 <Button
                   variant="contained"
-                  disabled={index === 0}
+                  disabled={index === 0 || state.isGeneratingReport}
                   onClick={handleBack}
                   sx={[{ mt: 1, mr: 1 }, styles.secondaryButton]}
                 >

@@ -93,7 +93,12 @@ def test_query_model_success(mock_post):
     """
     # Arrange
     generated_input_features = np.array([[1, 2, 3], [4, 5, 6]])
-    info = CalculateRequest(metrics=[], model_url="http://fakeurl.com")
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=[],
+        model_url="http://fakeurl.com"
+    )
 
     predictions = [[0], [1]]
     confidence_scores = [[0.5], [0.6]]
@@ -130,7 +135,12 @@ def test_query_model_returns_http_error(mock_post):
     """
     # Arrange
     generated_input_features = np.array([[1, 2, 3], [4, 5, 6]])
-    info = CalculateRequest(metrics=[], model_url="http://fakeurl.com")
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=[],
+        model_url="http://fakeurl.com"
+    )
 
     # Mock the response object to simulate an HTTP 404 error
     mock_response = MagicMock()

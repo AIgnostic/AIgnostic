@@ -34,6 +34,8 @@ def test_explanation_stability_similar_scores_result_in_1(apply_server_factory):
 
     # Check similar predictions after perturbation have value close to 1
     info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
         metrics=[metric_name],
         input_features=[[1, 2]],
         confidence_scores=[[0.5]],
@@ -49,6 +51,8 @@ def test_explanation_stability_different_scores_is_not_1(apply_server_factory):
     metric_name = "explanation_stability_score"
     # Check different predictions after perturbation have value close to 0
     info = CalculateRequest(
+        batch_size=6,
+        total_sample_size=100,
         metrics=[metric_name],
         input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
         confidence_scores=[[0.5], [0.6], [0.2], [0.8], [0.9], [0.1]],
@@ -63,6 +67,8 @@ def test_explanation_stability_different_scores_is_not_1(apply_server_factory):
 def test_explanation_sparsity_ideal_case(apply_server_factory):
     metric_name = "explanation_sparsity_score"
     info = CalculateRequest(
+        batch_size=10,
+        total_sample_size=10,
         metrics=[metric_name],
         input_features=PERFECT_ESP_INPUT_FEATURES,
         confidence_scores=[[0.5]] * 10,
@@ -78,6 +84,8 @@ def test_explanation_sparsity_ideal_case(apply_server_factory):
 def test_explanation_sparsity_bivariate_case_classification(apply_server_factory):
     metric_name = "explanation_sparsity_score"
     info = CalculateRequest(
+        batch_size=30,
+        total_sample_size=30,
         metrics=[metric_name],
         input_features=BIVARIATE_ESP_INPUT_FEATURES,
         confidence_scores=[[0.8]] * 30,
@@ -95,6 +103,8 @@ def test_good_fidelity(apply_server_factory):
     metric_name = "explanation_fidelity_score"
     feats = [[0.1, 0.2, 0.3, 0.4, 0.5], [1, 2, 3, 4, 5]]
     info = CalculateRequest(
+        batch_size=2,
+        total_sample_size=2,
         metrics=[metric_name],
         input_features=feats,  # Required to be in confidence_score format for testing
         predictions=[[1], [10]],
@@ -109,6 +119,8 @@ def test_good_fidelity(apply_server_factory):
 def test_low_fidelity(apply_server_factory):
     metric_name = "explanation_fidelity_score"
     info = CalculateRequest(
+        batch_size=4,
+        total_sample_size=4,
         metrics=[metric_name],
         input_features=BAD_FIDELITY_INPUT_FEATURES,  # Make input features = confidence scores to enable mock
                                                      # test to produce maximally bad fidelity score

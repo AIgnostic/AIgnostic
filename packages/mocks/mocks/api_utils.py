@@ -3,7 +3,7 @@ from fastapi.security import APIKeyHeader
 
 api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 
-MOCK_MODEL_API_KEY = "scikit-mock-test-key"
+MOCK_MODEL_API_KEY = "model-api-key"
 MOCK_DATASET_API_KEY = "dataset-api-key"
 
 

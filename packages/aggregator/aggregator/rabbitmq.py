@@ -15,7 +15,7 @@ def get_channel():
 def fastapi_connect_rabbitmq():
     global connection
     global channel
-    connection = connect_to_rabbitmq(host=RABBIT_MQ_HOST, retries=10)
+    connection = connect_to_rabbitmq(host=RABBIT_MQ_HOST, retries=20)
     channel = connection.channel()
     init_queues(channel)
     print("Connection established to RabbitMQ")
