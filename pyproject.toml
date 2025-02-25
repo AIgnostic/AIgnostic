@@ -17,6 +17,7 @@ package-mode = false
   python-dotenv = "^1.0.1"
   folktables = "^0.0.12"
   pydantic = "^2.10.6"
+  celery = "^5.4.0"
 
     [tool.poetry.dependencies.api]
     path = "packages/api"

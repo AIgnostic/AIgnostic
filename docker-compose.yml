@@ -154,6 +154,27 @@ services:
     ports:
       - '5001:5001'
 
+  celery_worker:
+    container_name: celery_worker
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run celery -A aggregator.tasks worker --loglevel=info
+    working_dir: /app/packages/aggregator
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - CELERY_BROKER_URL=pyamqp://guest@rabbitmq//
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      aggregator_ms:
+        condition: service_started
+    links:
+      - rabbitmq
+      - aggregator_ms
 volumes:
   venv:
 networks:
