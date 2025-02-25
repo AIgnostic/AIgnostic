@@ -1,7 +1,7 @@
 from metrics.models import (
     CalculateRequest,
     MetricsInfo,
-    MetricValues,
+    MetricConfig,
 )
 from metrics.metrics import (
     MetricsException,
@@ -28,8 +28,8 @@ async def retrieve_info() -> MetricsInfo:
     return MetricsInfo(task_to_metric_map=task_type_to_metric)
 
 
-@metrics_app.post("/calculate-metrics", response_model=MetricValues)
-async def calculate_metrics(info: CalculateRequest) -> MetricValues:
+@metrics_app.post("/calculate-metrics", response_model=MetricConfig)
+async def calculate_metrics(info: CalculateRequest) -> MetricConfig:
     """
     calculate_metrics, given a request for calculation of certain metrics and information
     necessary for calculation, attempt to calculate and return the metrics and their scores
@@ -37,7 +37,7 @@ async def calculate_metrics(info: CalculateRequest) -> MetricValues:
 
     :param info: CalculateRequest - contains list of metrics to be calculated and additional
     data required for calculation of these metrics.
-    :return: MetricValues - contains the calculated metrics and their scores
+    :return: MetricConfig - contains the calculated metrics and their scores
     """
     try:
         return _calculate_metrics(info)

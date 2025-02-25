@@ -298,9 +298,10 @@ async def test_calculate_metrics():
         "class_recall": 0.75,
     }
     for metric, value in expected_results.items():
-        assert round(results.metric_values[metric], 7) == round(
+        computed_value = results.metric_values[metric].computed_value
+        assert round(computed_value) == round(
             value, 7
-        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+        ), f"Expected {metric} to be {value}, but got {computed_value}"
 
 
 async def test_calculate_performance_metrics():
@@ -329,9 +330,10 @@ async def test_calculate_performance_metrics():
         "macro_f1": 1.0,
     }
     for metric, value in expected_results.items():
-        assert round(results.metric_values[metric], 7) == round(
+        computed_value = results.metric_values[metric].computed_value
+        assert round(computed_value, 7) == round(
             value, 7
-        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+        ), f"Expected {metric} to be {value}, but got {computed_value}"
 
 
 def test_calculate_fairness_metrics():
@@ -366,9 +368,10 @@ def test_calculate_fairness_metrics():
         "true_positive_rate_difference": -0.5,
     }
     for metric, value in expected_results.items():
-        assert round(results.metric_values[metric], 7) == round(
+        computed_value = results.metric_values[metric].computed_value
+        assert round(computed_value, 7) == round(
             value, 7
-        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
+        ), f"Expected {metric} to be {value}, but got {computed_value}"
 
 
 def test_calculate_metrics_with_missing_information_throws_insufficient_data_error():

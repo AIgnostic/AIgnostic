@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator, HttpUrl
-from typing import Optional, Any
+from typing import Optional, Any, Tuple
 from common.utils import nested_list_to_np
 
 
@@ -65,12 +65,21 @@ class CalculateRequest(BaseModel):
         return nested_list_to_np(v)
 
 
-class MetricValues(BaseModel):
+class MetricValue(BaseModel):
     """
-    Receive calculated metric values
+    Represents a metric's computed and ideal values, and its min-max range
+
+    :param true_value: float - The true value of the metric
+    :param ideal_value: float - The ideal value of the metric
+    :param range: Tuple[Optional[float], Optional[float]] - The acceptable range the metric can lie in
     """
-    metric_values: dict[str, float]
-    metric_range: dict[str, ((float, float), float)]
+    computed_value: float
+    ideal_value: float
+    range: Tuple[Optional[float], Optional[float]]
+
+
+class MetricConfig(BaseModel):
+    """Receive calculated metric values and other relevant information"""
+    metric_values: dict[str, MetricValue]
     batch_size: int
     total_sample_size: int
-    warning_msg: Optional[str] = None
