@@ -24,7 +24,49 @@ env:
   IMPAAS_APP_NAME: aignostic
 
 jobs:
+  install: # Mass install all dependencies -> should mean later stages read from cache & if install fails we get one failing job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Poetry before Python because https://github.com/actions/setup-python/issues/765
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Set up Python 3.12 with Poetry
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'poetry'
+
+      - name: Inject export plugin (required by NX)
+        run: poetry self add poetry-plugin-export
+
+      # This enables task distribution via Nx Cloud
+      # Run this command as early as possible, before dependencies are installed
+      # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
+      # Uncomment this line to enable task distribution
+      # - run: npx nx-cloud start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="build"
+
+      # Cache node_modules
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # Insall npm deps so NX works
+      - run: npm ci --legacy-peer-deps
+      - uses: nrwl/nx-set-shas@v4
+
+      - name: Install dependencies using poetry at root
+        run: poetry install -v
+      - name: Install per project dev dependencies
+        run: poetry run npx nx run-many -t install --all --parallel 1
+
   lint:
+    needs:
+      - install
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
@@ -33,6 +75,8 @@ jobs:
       artifact_path: 'dist/'
     secrets: inherit
   test:
+    needs:
+      - install
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
@@ -41,6 +85,8 @@ jobs:
       artifact_path: 'coverage/'
     secrets: inherit
   build:
+    needs:
+      - install
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true

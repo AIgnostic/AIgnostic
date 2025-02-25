@@ -4,5 +4,11 @@ coverage:
       default:
         # basic
         target: auto #default
-        threshold: 10%
+        threshold: 5% # allow up to 5% drop in a PR
         base: auto 
+    patch:
+      default:
+        # basic
+        target: 80% # allow as low as 60% coverage of new code in the patch
+        threshold: 10% # allow up to 10% drop in a PR
+        base: auto
