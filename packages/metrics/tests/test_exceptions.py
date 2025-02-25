@@ -2,6 +2,7 @@ from metrics.models import CalculateRequest, MetricsPackageExceptionModel
 from metrics.metrics import calculate_metrics, check_metrics_are_supported_for_task
 from metrics.exceptions import DataProvisionException
 import pytest
+from metrics.metrics import task_type_to_metric
 
 
 def test_empty_true_labels_returns_metric_exception_for_per_class_metrics():
@@ -95,6 +96,7 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
     """
     Test that when some metrics fail, the pipeline continues to calculate the other metrics.
     """
+    task_type_to_metric["binary_classification"].append("explanation_stability_score")
     # Arrange
     info = CalculateRequest(
         metrics=[

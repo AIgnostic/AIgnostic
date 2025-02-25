@@ -733,7 +733,7 @@ def check_metrics_are_supported_for_task(info: CalculateRequest):
             detail=f"Task {info.task_name} is not supported. Please choose a valid task."
         )
 
-    invalid_metrics = set(info.metrics) - task_type_to_metric[info.task_name]
+    invalid_metrics = set(info.metrics) - set(task_type_to_metric[info.task_name])
     metrics_to_exceptions = {}
     for metric in invalid_metrics:
         metrics_to_exceptions[metric] = MetricsComputationException(
