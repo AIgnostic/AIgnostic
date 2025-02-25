@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import atexit
 from os import getenv
 
 from common.redis.connect import connect_to_redis
@@ -56,8 +57,6 @@ async def main():
     await startup()
     logger.warning("Application logic TODO")
 
-
-import atexit
 
 atexit.register(cleanup)
 

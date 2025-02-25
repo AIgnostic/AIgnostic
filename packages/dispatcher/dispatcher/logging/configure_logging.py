@@ -3,10 +3,6 @@
 """Configures server logging"""
 
 import logging
-import os
-from logging.handlers import TimedRotatingFileHandler
-from os import path
-from socket import gethostname
 
 from dispatcher.logging.formatters import (
     LOG_FORMAT_UNCOLOURED,

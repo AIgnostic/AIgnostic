@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock, AsyncMock
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
-import asyncio
 from common.redis.connect import connect_to_redis
 
 # Tests created with copilot

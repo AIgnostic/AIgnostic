@@ -41,11 +41,11 @@ LOG_LEVEL_COLORS = {
 
 # Standard log format we use
 def get_log_format_dev(log_level_color: str | int) -> str:
-    return f"[{Style.DIM}%(asctime)s{Style.RESET_ALL} {Fore.MAGENTA}%(name)-50s {Fore.CYAN}%(func_lineno)-40s {log_level_color}%(levelname)-8s{LOG_LEVEL_COLORS['RESET']} {Back.RESET}] %(message)s"
+    return f"[{Style.DIM}%(asctime)s{Style.RESET_ALL} {Fore.MAGENTA}%(name)-50s {Fore.CYAN}%(func_lineno)-40s {log_level_color}%(levelname)-8s{LOG_LEVEL_COLORS['RESET']} {Back.RESET}] %(message)s"  # noqa
 
 
 def get_log_format_prod(log_level_color: str | int) -> str:
-    return f"[{Style.DIM}%(asctime)s{Style.RESET_ALL} {Fore.MAGENTA}%(name)-20s {log_level_color}%(levelname)-8s{LOG_LEVEL_COLORS['RESET']} {Back.RESET}] %(message)s"
+    return f"[{Style.DIM}%(asctime)s{Style.RESET_ALL} {Fore.MAGENTA}%(name)-20s {log_level_color}%(levelname)-8s{LOG_LEVEL_COLORS['RESET']} {Back.RESET}] %(message)s"  # noqa
 
 
 LOG_FORMAT_COLOURED = get_log_format_dev("")
