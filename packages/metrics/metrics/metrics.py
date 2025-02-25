@@ -570,8 +570,6 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
 
     :return: float - the estimated OOD AUROC score
     """
-    name = "ood_auroc"
-
     id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
     d: int = id_data.shape[1]                       # Feature dimensionality
 

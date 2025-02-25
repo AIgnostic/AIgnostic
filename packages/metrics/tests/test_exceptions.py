@@ -3,6 +3,7 @@ from metrics.metrics import calculate_metrics, check_metrics_are_supported_for_t
 from metrics.exceptions import DataProvisionException
 import pytest
 
+
 def test_empty_true_labels_returns_metric_exception_for_per_class_metrics():
     """
     Test that a DataInconsistencyException is raised when the true_labels are not provided for
@@ -20,19 +21,19 @@ def test_empty_true_labels_returns_metric_exception_for_per_class_metrics():
     assert results.metric_values == {
         "precision": MetricsPackageExceptionModel(
             detail="Error during metric calculation (macro_precision): "
-                    "No attributes provided - cannot calculate macro_precision",
+                   "No attributes provided - cannot calculate macro_precision",
             status_code=400,
             exception_type="MetricsComputationException"
         ),
         "recall": MetricsPackageExceptionModel(
             detail="Error during metric calculation (macro_recall): "
-                    "No attributes provided - cannot calculate macro_recall",
+                   "No attributes provided - cannot calculate macro_recall",
             status_code=400,
             exception_type="MetricsComputationException"
         ),
         "f1_score": MetricsPackageExceptionModel(
             detail="Error during metric calculation (macro_f1): "
-                    "No attributes provided - cannot calculate macro_f1",
+                   "No attributes provided - cannot calculate macro_f1",
             status_code=400,
             exception_type="MetricsComputationException"
         )
@@ -59,7 +60,7 @@ def test_unknown_task_name_raises_data_prov_error():
             "Please choose a valid task."
         )
         assert exc_info.value.status_code == 400
-    
+
 
 def test_task_incompatible_metric_returns_error():
     """
@@ -85,5 +86,5 @@ def test_task_incompatible_metric_returns_error():
         " Please only choose valid metrics for the task type.\nSupported metrics "
         "for this task type are:\n"
     )
-    assert mse.status_code==400
-    assert mse.exception_type=="MetricsComputationException"
+    assert mse.status_code == 400
+    assert mse.exception_type == "MetricsComputationException"
