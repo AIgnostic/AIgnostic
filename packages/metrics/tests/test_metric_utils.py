@@ -129,7 +129,7 @@ def test_query_model_success(mock_post):
     assert response.confidence_scores == confidence_scores
 
 
-def test_query_model_http_error(mock_post):
+def test_query_model_returns_http_error(mock_post):
     """
     Assert a ModelQueryException is raised when the model API returns an HTTP error.
     """

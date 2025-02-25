@@ -4,7 +4,7 @@ from metrics.models import (
     MetricConfig,
 )
 from metrics.metrics import (
-    MetricsException,
+    MetricsComputationException,
     task_type_to_metric,
     calculate_metrics as _calculate_metrics
 )
@@ -41,5 +41,5 @@ async def calculate_metrics(info: CalculateRequest) -> MetricConfig:
     """
     try:
         return _calculate_metrics(info)
-    except MetricsException as e:
+    except MetricsComputationException as e:
         raise HTTPException(status_code=500, detail=e.detail)
