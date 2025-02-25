@@ -4,7 +4,7 @@ import { generateReportText } from './utils';
 import theme from './theme';
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
-import { Metric, ReportSection } from './types';
+import { Metric, ReportPropertySection } from './types';
 import ReportRenderer from './components/ReportRenderer';
 
 
@@ -79,7 +79,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
           break;
         case 'REPORT': {
           const generateReport = async () => {
-            window.open(URL.createObjectURL(await pdf(<ReportRenderer report={data.content} />).toBlob()), '_blank');
             console.log('Results received:', data.content);
             setReport(data.content);
             console.log('Report:', data.content);

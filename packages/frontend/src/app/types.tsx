@@ -3,12 +3,18 @@ import { Button } from '@mui/material';
 
 export type MarkdownFiles = Record<string, string>;
 
-export interface ReportSection {
+export interface ReportPropertySection {
   property: string;
   computed_metrics: { metric: string; value: string }[];
   legislation_extracts: LegislationExtract[];
-  llm_insights: any[]; // TODO: Define this type, refactor llm to only pass back content
+  llm_insights: string[];
 }
+
+export interface Report {
+  info: {[key: string]: any};
+  properties: ReportPropertySection[];
+}
+  
 
 export interface LegislationExtract {
   article_number: number;
