@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, AsyncMock
 
-from dispatcher.dispatcher import startup, cleanup, connection, redis_client
+from dispatcher.dispatcher import startup, cleanup
 
 
 @pytest.mark.asyncio
