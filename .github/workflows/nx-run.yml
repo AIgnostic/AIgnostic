@@ -66,7 +66,7 @@ jobs:
         run: poetry install -v
       - name: Install per project dev dependencies
         if: ${{ inputs.run_poetry_install }}
-        run: poetry run npx nx run-many -t install --all --parallel
+        run: poetry run npx nx run-many -t install --all --parallel 1
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
