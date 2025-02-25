@@ -22,8 +22,6 @@ class CalculateRequest(BaseModel):
         "binary_classification", "multi_class_classification", "regression".
     :param input_data: Optional[list[list]] - 2D list of input data where each nested list
         corresponds to one row of data.
-    :param batch_size: Optional[int] - Number of samples in a batch.
-    :param total_sample_size: Optional[int] - Total number of samples.
     :param confidence_scores: Optional[list[list]] - 2D list of probabilities where each nested
         list corresponds to one row of data - indicates the probability of a given output prediction
         and all other possible outputs

@@ -96,16 +96,19 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
         raise MetricsComputationException(
             metric_name,
             detail="No labels provided - will lead to division by zero",
+            status_code=400,
         )
     elif len(true_labels[0]) > 1:
         raise MetricsComputationException(
             metric_name,
             detail=f"Multiple attributes provided - cannot calculate {metric_name}",
+            status_code=400,
         )
     elif len(true_labels[0]) == 0:
         raise MetricsComputationException(
             metric_name,
             detail=f"No attributes provided - cannot calculate {metric_name}",
+            status_code=400,
         )
     return
 
@@ -137,17 +140,14 @@ def _calculate_precision(metric_name, true_labels, predicted_labels, target_clas
     :raises MetricsException: if the input is invalid for the given metric
     :return: float - the precision score for the given class
     """
-    try:
-        target_reshaped = np.full_like(true_labels, target_class)
-        tp = np.count_nonzero(
-            (true_labels == target_reshaped) & (predicted_labels == target_reshaped)
-        )
-        fp = np.count_nonzero(
-            (true_labels != target_reshaped) & (predicted_labels == target_reshaped)
-        )
-        return tp / (tp + fp) if (tp + fp) != 0 else 0
-    except (ValueError, TypeError, ZeroDivisionError) as e:
-        raise MetricsComputationException(metric_name, detail=str(e))
+    target_reshaped = np.full_like(true_labels, target_class)
+    tp = np.count_nonzero(
+        (true_labels == target_reshaped) & (predicted_labels == target_reshaped)
+    )
+    fp = np.count_nonzero(
+        (true_labels != target_reshaped) & (predicted_labels == target_reshaped)
+    )
+    return tp / (tp + fp) if (tp + fp) != 0 else 0
 
 
 def class_precision(info: CalculateRequest) -> float:
@@ -199,17 +199,14 @@ def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
     :raises MetricsException: if the input is invalid for the given metric
     :return: float - the recall score for the given class
     """
-    try:
-        target_reshaped = np.full_like(true_labels, target_class)
-        tp = np.count_nonzero(
-            (true_labels == target_reshaped) & (predicted_labels == target_reshaped)
-        )
-        fn = np.count_nonzero(
-            (true_labels == target_reshaped) & (predicted_labels != target_reshaped)
-        )
-        return tp / (tp + fn) if (tp + fn) != 0 else 0
-    except (ValueError, TypeError, ZeroDivisionError) as e:
-        raise MetricsComputationException(metric_name, detail=str(e))
+    target_reshaped = np.full_like(true_labels, target_class)
+    tp = np.count_nonzero(
+        (true_labels == target_reshaped) & (predicted_labels == target_reshaped)
+    )
+    fn = np.count_nonzero(
+        (true_labels == target_reshaped) & (predicted_labels != target_reshaped)
+    )
+    return tp / (tp + fn) if (tp + fn) != 0 else 0
 
 
 def class_recall(info: CalculateRequest) -> float:
@@ -384,39 +381,33 @@ def equalized_odds_difference(info: CalculateRequest) -> float:
     name = "equalized_odds_difference"
     is_valid_for_per_class_metrics(name, info.true_labels)
 
-    if info.true_labels is None or info.predicted_labels is None or info.protected_attr is None:
-        raise ValueError("Missing required fields: true_labels, predicted_labels, or protected_attr")
-
     labels = info.true_labels
     predictions = info.predicted_labels
     groups = np.array(info.protected_attr)
 
     def rate(target_label, group):
         """Compute TPR or FPR based on the target class and group."""
-        try:
-            # Select only data belonging to the current group (group mask)
-            group_mask = (groups == group)
+        # Select only data belonging to the current group (group mask)
+        group_mask = (groups == group)
 
-            # Filter the labels, predictions, and groups for the current group
-            group_labels = labels[group_mask]
-            group_predictions = predictions[group_mask]
+        # Filter the labels, predictions, and groups for the current group
+        group_labels = labels[group_mask]
+        group_predictions = predictions[group_mask]
 
-            if target_label == 1:
-                # True Positive Rate (TPR) -> TP / (TP + FN)
-                tp = np.count_nonzero((group_labels == 1) & (group_predictions == 1))
-                fn = np.count_nonzero((group_labels == 1) & (group_predictions == 0))
-                total = tp + fn
-            else:
-                # False Positive Rate (FPR) -> FP / (FP + TN)
-                fp = np.count_nonzero((group_labels == 0) & (group_predictions == 1))
-                tn = np.count_nonzero((group_labels == 0) & (group_predictions == 0))
-                total = fp + tn
+        if target_label == 1:
+            # True Positive Rate (TPR) -> TP / (TP + FN)
+            tp = np.count_nonzero((group_labels == 1) & (group_predictions == 1))
+            fn = np.count_nonzero((group_labels == 1) & (group_predictions == 0))
+            total = tp + fn
+        else:
+            # False Positive Rate (FPR) -> FP / (FP + TN)
+            fp = np.count_nonzero((group_labels == 0) & (group_predictions == 1))
+            tn = np.count_nonzero((group_labels == 0) & (group_predictions == 0))
+            total = fp + tn
 
-            if total == 0:
-                return 0.0
-            return tp / total if target_label == 1 else fp / total
-        except ZeroDivisionError as e:
-            raise MetricsComputationException(name, detail=str(e))
+        if total == 0:
+            return 0.0
+        return tp / total if target_label == 1 else fp / total
 
     fpr_1 = rate(0, 1)  # False positive rate for group 1
     fpr_0 = rate(0, 0)  # False positive rate for group 0
@@ -581,12 +572,6 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     """
     name = "ood_auroc"
 
-    if info.input_features is None:
-        raise MetricsComputationException(name, detail="Input data is required.")
-
-    if info.confidence_scores is None:
-        raise MetricsComputationException(name, detail="Confidence scores are required.")
-
     id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
     d: int = id_data.shape[1]                       # Feature dimensionality
 
@@ -600,12 +585,6 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     response: ModelResponse = _query_model(ood_data, info)
 
     # Get confidence scores for OOD samples
-    if response.confidence_scores is None:
-        raise ModelQueryException(
-            name,
-            detail="Model response did not contain confidence scores, which are required.",
-            status_code=500,
-        )
     ood_scores: list[list] = response.confidence_scores
 
     # Construct labels: 1 for ID, 0 for OOD
@@ -614,9 +593,8 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     # Flatten the confidence scores for both ID and OOD samples
     scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
 
-    # Check if lengths match
-    if len(labels) != len(scores):
-        raise MetricsComputationException(name, detail="Length mismatch between labels and scores.")
+    # Assert lengths match
+    assert len(labels) == len(scores), "Length mismatch between labels and scores in OOD-AUROC calculation."
 
     return roc_auc_score(labels, scores)
 
@@ -815,10 +793,7 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
             if metric in results:
                 continue
             current_metric = metric
-            if metric not in metric_to_fn_and_requirements.keys():
-                results[metric] = 1
-            else:
-                results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
+            results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
 
         # Return an exception in place of the metric result if applicable
         # Approach allows valid metrics to still be calculated
