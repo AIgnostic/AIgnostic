@@ -5,7 +5,7 @@ export type MarkdownFiles = Record<string, string>;
 
 export interface ReportSection {
   property: string;
-  computed_metrics: { metric: string; result: string }[];
+  computed_metrics: { metric: string; value: string }[];
   legislation_extracts: LegislationExtract[];
   llm_insights: any[]; // TODO: Define this type, refactor llm to only pass back content
 }
