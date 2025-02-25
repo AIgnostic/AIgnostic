@@ -595,6 +595,20 @@ docs = ["ipython", "matplotlib", "numpydoc", "sphinx"]
 tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
+name = "dispatcher"
+version = "1.0.0"
+description = "Microservice to handle concurrency control when dispatching evaluations - i.e. only run use max N workers at once for this job"
+optional = false
+python-versions = ">=3.12,<3.13"
+groups = ["main"]
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "packages/dispatcher"
+
+[[package]]
 name = "dnspython"
 version = "2.7.0"
 description = "DNS toolkit"
@@ -3757,4 +3771,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "b19a742c43e4b6b16b945f16d905dbef1172ce6655563f7956ff0433377b34fe"
+content-hash = "9c4e00a186ec476a566ed0414a7a50d073dee868c8e4d49781525921a2acdc2b"
