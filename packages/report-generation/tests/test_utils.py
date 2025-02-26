@@ -199,17 +199,39 @@ def mock_dependencies():
 
 def test_generate_report_with_valid_metrics(mock_dependencies):
     metrics_data = {
-        "fast_gradient_sign_method": 0.6,
-        "equal_opportunity_difference": 0.5
+        "fast_gradient_sign_method": {
+            "value": 0.6,
+            "ideal_value": 1,
+            "range": (0, 1)
+        },
+        "equal_opportunity_difference": {
+            "value": 0.5,
+            "ideal_value": 0,
+            "range": (-1, 1)
+        }
     }
 
     result = generate_report(metrics_data, api_key="test_key")
 
     assert result[0]["property"] == "adversarial robustness"
-    assert result[0]["computed_metrics"] == [{"metric": "fast gradient sign method", "value": 0.6}]
+    assert result[0]["computed_metrics"] == [{
+        "metric": "fast gradient sign method",
+        "info": {
+            "value": 0.6,
+            "ideal_value": 1,
+            "range": (0, 1)
+        }
+    }]
 
     assert result[2]["property"] == "fairness"
-    assert result[2]["computed_metrics"] == [{"metric": "equal opportunity difference", "value": 0.5}]
+    assert result[2]["computed_metrics"] == [{
+        "metric": "equal opportunity difference",
+        "info": {
+            "value": 0.5,
+            "ideal_value": 0,
+            "range": (-1, 1)
+        }
+    }]
     assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
     assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
     assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["fairness"])
