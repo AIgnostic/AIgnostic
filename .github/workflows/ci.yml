@@ -147,25 +147,30 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: 'Docker Stack Deploy Service'
-        uses: cssnr/stack-deploy-action@v1
+      - name: Deploy Services
+        uses: kitconcept/docker-stack-deploy@v1.0.1
         with:
-          name: 'aignostic'
-          file: './swarm/app.docker-compose.yml'
-          host: ${{ secrets.DIGITAL_OCEAN_HOST }}
-          port: ${{ secrets.DIGITAL_OCEAN_USER }}
-          user: ${{ secrets.DIGITAL_OCEAN_USER }}
-          ssh_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
+          remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
+          remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+          stack_file: './swarm/services.docker-compose.yml'
+          stack_name: 'aignostic'
       - name: Wait for services to start
         run: sleep 10
-      # - name: Deploy Apps
-      #   uses: kitconcept/docker-stack-deploy@v1.0.1
-      #   with:
-      #     remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
-      #     remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
-      #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
-      #     stack_file: './swarm/app.docker-compose.yml'
-      #     stack_name: 'aignostic'
+      - name: Deploy Apps
+        uses: kitconcept/docker-stack-deploy@v1.0.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
+          remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
+          remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+          stack_file: './swarm/app.docker-compose.yml'
+          stack_name: 'aignostic'
   deploy-gh-pages:
     needs:
       - lint
