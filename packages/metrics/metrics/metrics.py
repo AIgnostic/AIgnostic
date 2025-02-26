@@ -10,7 +10,6 @@
 from typing import Callable
 from metrics.models import (
     CalculateRequest,
-    MetricValues,
 )
 from metrics.utils import (
     _query_model,
@@ -35,7 +34,7 @@ from metrics.exceptions import (
     DataProvisionException,
     _MetricsPackageException
 )
-from common.models import ModelResponse
+from common.models.common import ModelResponse, MetricValues
 
 task_type_to_metric = {
     "binary_classification": {

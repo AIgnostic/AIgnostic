@@ -106,17 +106,14 @@ class JobType(str, Enum):
     ERROR = "ERROR"
 
 
-class WorkerException(Exception):
-    def __init__(self, detail: str, status_code: int = 500):
-        """Custom exception class for workers
-
-        Args:
-            detail (str): Description of error that occured
-            status_code (int, optional): HTTP status code to report back to the client. Defaults to 500.
-        """
-        self.detail = detail
-        self.status_code = status_code
-        super().__init__(self.detail)
+class WorkerError(BaseModel):
+    """
+    WorkerError pydantic model represents the structure of the errors found on the results queue
+    i.e. what worker sends to the queue
+    and what aggregator picks up from the queue
+    """
+    error: str
+    status_code: int
 
 
 class MetricValues(BaseModel):
@@ -144,4 +141,4 @@ class AggregatorJob(BaseModel):
     and what aggregator picks up from the queue
     """
     job_type: JobType
-    content: Union[MetricValues, WorkerException]
+    content: Union[MetricValues, WorkerError]

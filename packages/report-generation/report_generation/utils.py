@@ -153,9 +153,10 @@ def add_llm_insights(metrics_data: list[dict], api_key: str) -> list[dict]:
     metrics_data: output of get_legislation_extracts
     api_key: Google API key for LLM
     """
-    metrics_data["llm_insights"] = []
 
     for property in metrics_data:
+        
+        property["llm_insights"] = []
 
         try:
             llm = init_llm(api_key)

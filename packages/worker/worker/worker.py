@@ -24,7 +24,20 @@ from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
 
 from pika.adapters.blocking_connection import BlockingChannel
 
-from common.models.common import AggregatorJob, JobType, WorkerException
+from common.models.common import AggregatorJob, JobType, WorkerError
+
+
+class WorkerException(Exception):
+    def __init__(self, detail: str, status_code: int = 500):
+        """Custom exception class for workers
+
+        Args:
+            detail (str): Description of error that occured
+            status_code (int, optional): HTTP status code to report back to the client. Defaults to 500.
+        """
+        self.detail = detail
+        self.status_code = status_code
+        super().__init__(self.detail)
 
 
 connection = None
@@ -62,10 +75,10 @@ class Worker():
         self._channel.basic_publish(
             exchange="",
             routing_key=RESULT_QUEUE,
-            body=json.dumps(job.dict())
+            body=job.model_dump_json()
         )
 
-    def queue_error(self, error: WorkerException):
+    def queue_error(self, error: WorkerError):
         """
         Function to queue an error message
         """
@@ -73,7 +86,7 @@ class Worker():
         self._channel.basic_publish(
             exchange="",
             routing_key=RESULT_QUEUE,
-            body=json.dumps(job.dict())
+            body=job.model_dump_json()
         )
 
     def close(self):
@@ -231,8 +244,7 @@ class Worker():
         except WorkerException as e:
             # known/caught error
             # should be sent back to user
-            self.queue_error(e.detail)
-            print(f"Error processing job: {e.detail}")
+            self.queue_error(WorkerError(e.detail, status_code=e.status_code))
         except Exception as e:
             # unknown/uncaught error
             # should be raised to be dealt with

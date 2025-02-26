@@ -5,9 +5,10 @@ import queue
 import websockets.sync.server
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
-from aggregator.models import AggregatorMessage, MessageType, AggregatorJob, JobType
 from report_generation.utils import get_legislation_extracts, add_llm_insights
-
+from common.models.common import MetricValues, WorkerError, AggregatorMessage, MessageType, AggregatorJob, JobType
+from metrics.models import MetricsPackageExceptionModel
+from typing import Union
 
 def aggregator_metrics_completion_log():
     return AggregatorMessage(
@@ -54,11 +55,25 @@ class MetricsAggregator():
     def set_total_sample_size(self, total_sample_size):
         self.total_sample_size = total_sample_size
 
-    def aggregate_new_batch(self, batch_metrics_results, batch_size):
+    def aggregate_new_batch(self, batch_metrics_results: dict[str, Union[MetricsPackageExceptionModel, float]], batch_size):
         for metric, value in batch_metrics_results.items():
             if metric not in self.metrics:
                 # First time encountering this metric, initialize with the first batch value
-                self.metrics[metric] = {"value": value, "count": batch_size}
+                if isinstance(value, MetricsPackageExceptionModel):
+                    # if some error occurred for the metric,
+                    # set the metric to error state
+                    self.metrics[metric] = {"error": value}
+                    continue
+                else:
+                    self.metrics[metric] = {"value": value, "count": batch_size}
+            elif isinstance(value, MetricsPackageExceptionModel):
+                # if some error occurred for the metric,
+                # set the metric to error state
+                self.metrics[metric]["error"] = value
+                continue
+            elif self.metrics.get(metric, {}).get("error"):
+                # skip if the metric is already in an error state
+                continue
             else:
                 # Update the running average incrementally
                 prev_value = self.metrics[metric]["value"]
@@ -75,11 +90,16 @@ class MetricsAggregator():
         """
             Returns the aggregated metrics as a dictionary
             i.e. { metric1: value1, metric2: value2, ... }
+
+            value may be an error
         """
 
         results = {}
         for metric, data in self.metrics.items():
-            results[metric] = data["value"]
+            if data.get("error"):
+                results[metric] = data["error"]
+            else:
+                results[metric] = data["value"]
         return results
 
 
@@ -137,12 +157,12 @@ message_queue = queue.Queue()  # Store messages until a client connects
 metrics_aggregator = MetricsAggregator()
 
 
-def process_batch_result(result_data):
+def process_batch_result(result_data : MetricValues):
     """Handles batch results from worker i.e. aggregating intermediate metric results"""
     if (metrics_aggregator.total_sample_size == 0):
-        metrics_aggregator.set_total_sample_size(result_data["total_sample_size"])
+        metrics_aggregator.set_total_sample_size(result_data.total_sample_size)
 
-    metrics_aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
+    metrics_aggregator.aggregate_new_batch(result_data.metric_values, result_data.batch_size)
 
     aggregates = metrics_aggregator.get_aggregated_metrics()
 
@@ -166,6 +186,10 @@ def process_batch_result(result_data):
         report_json = aggregate_report(aggregates)
 
         send_to_clients(aggregator_final_report_log(report_json))
+        send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
+                                        message="Report successfully generated",
+                                        statusCode=200,
+                                        content=None))
 
 
 def process_error_result(error_data):
@@ -201,9 +225,9 @@ def on_result_fetched(ch, method, properties, body):
     print(f"Received job: {job}")
 
     if (job.job_type == JobType.RESULT):
-        process_batch_result(job.content)
+        process_batch_result(result_data=job.content)
     elif (job.job_type == JobType.ERROR):
-        process_error_result(job.content)
+        process_error_result(error=job.content)
     else:
         raise ValueError(f"Invalid job type: {job.job_type}")
 
@@ -221,8 +245,8 @@ def send_to_clients(message: AggregatorMessage):
 
     for client in connected_clients:
         try:
-            client.send(json.dumps(message.dict()))
-            print(f"Sent message to client: {json.dumps(message.dict())}")
+            client.send(message.model_dump_json())
+            print(f"Sent message to client: {message.model_dump_json()}")
         except Exception as e:
             print(f"Error sending message to client: {e}")
             disconnected_clients.add(client)  # Mark client for removal

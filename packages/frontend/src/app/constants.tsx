@@ -52,8 +52,8 @@ const binaryClassifierMetrics = ["accuracy",
 "negative predictive value",
 "positive predictive value",
 "true positive rate difference",
-// "explanation stability score",
-// "explanation sparsity score",
+"explanation stability score",
+"explanation sparsity score",
 // "explanation fidelity score",
 // "ood auroc"
 ]

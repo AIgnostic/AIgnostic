@@ -11,9 +11,13 @@ import LinearProgress, {
 
 
 interface Metric {
-  [metricName: string]: number;
+  [metricName: string]: number | MetricError;
 }
 
+interface MetricError {
+  status_code: number;
+  error: string;
+}
 
 interface DashboardProps {
   onComplete: () => void;
@@ -214,7 +218,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
                       <h3>{key}</h3>
                     </div>
                     <div>
-                      <p>Metric: {value}</p>
+                      <p>Metric: { 
+                      typeof value === 'object' && value.status_code != 200 ? 
+                      "Something went wrong while processing this metric. Hover for more detail" :  // error
+                      value as number  // actual value
+                      }</p>
                     </div>
                   </div>
                 ))}
