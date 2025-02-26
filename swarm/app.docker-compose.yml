@@ -32,6 +32,21 @@ services:
     environment:
       - RABBITMQ_HOST=rabbitmq
 
+  # Reverse proxy
+  reverse_proxy:
+    image: nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /opt/aignostic/nginx/prod.nginx.conf:/etc/nginx/conf.d/prod.conf
+      - /etc/letsencrypt/live/aignostic.docsoc.co.uk/fullchain.pem:/opt/nginx/certs/fullchain.pem
+      - /etc/letsencrypt/live/aignostic.docsoc.co.uk/privkey.pem:/opt/nginx/certs/privkey.key
+    networks:
+      - aignostic_network
+    depends_on:
+      - api_router
+
 networks:
   aignostic_network:
     driver: overlay
