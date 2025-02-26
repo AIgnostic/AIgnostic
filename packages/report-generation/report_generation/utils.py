@@ -87,7 +87,7 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
     """
     metrics_data:
     {
-        "metric1": "value1",
+        "metric1": whole dict,
         "metric2": "value2",
         ...
     }
@@ -98,7 +98,7 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
     [
         "property": fairness
         "computed_metrics": [
-            {"metric": "metric1", "value": "value1"},
+            {"metric": "metric1", "info": { "value": x, "ideal_value": y, "range": (0, 1) } },
             {"metric": "metric2", "value": "value2"},
             ...
         ],
@@ -130,7 +130,7 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
         property_result["property"] = property
         if common_metrics:
             property_result["computed_metrics"] = [
-                {"metric": metric.replace("_", " "), "value": metrics_data[metric]}
+                {"metric": metric.replace("_", " "), "info": metrics_data[metric]}
                 for metric in common_metrics
             ]
         else:
@@ -165,22 +165,3 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
 
     print(results)
     return results
-
-
-# def generate_report(metrics_data: dict) -> json:
-#     """
-#     Generates a structured JSON report mapping metrics to legal references.
-#     """
-#     results = {
-#         "extracts": [],
-#         "llm insights": []
-#     }
-#     for metric in metrics_data:
-#         legislation = search_legislation(metric)
-#         for article in legislation:
-#             article_number = article.split()[-1]
-#             article_content = extract_legislation_text(article_number)
-#             parsed_data = parse_legislation_text(article_number,
-#                                                  article_content)
-#             results["extracts"].append(parsed_data)
-#     return results
