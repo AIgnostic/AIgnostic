@@ -3,7 +3,8 @@ import jsPDF from "jspdf";
 import { MOCK_SCIKIT_API_URL,
          MOCK_FINBERT_API_URL,
          MOCK_FOLKTABLES_DATASET_API_URL,
-         MOCK_FINANCIAL_DATASET_API_URL} from "./constants"
+         MOCK_FINANCIAL_DATASET_API_URL,
+         BACKEND_FETCH_METRIC_INFO_URL} from "./constants"
 
 function checkURL(url: string): boolean {
 
@@ -28,9 +29,38 @@ function checkURL(url: string): boolean {
     }
 };
 
+// retrieves a dictionary mapping task types to the metrics that can be computed for them
+// returns a dictionary with the following structure:
+// {
+//     "binary_classification": ["metric_1", "metric_2", ...],
+//     "multi_class_classification": ["metric_1", "metric_2", ...],
+//     "regression": ["metric_1", "metric_2", ...],
+//     ...
+// }
+
+export interface TaskToMetricMap {
+    [taskType: string]: string[];
+}
+
+export interface MetricInfo {
+    task_to_metric_map : TaskToMetricMap;
+}
+
+async function fetchMetricInfo(): Promise<TaskToMetricMap> {
+    try {
+        const response = await fetch(BACKEND_FETCH_METRIC_INFO_URL);
+        const data: MetricInfo = await response.json();
+        return data.task_to_metric_map;
+    } catch (error) {
+        console.error('Error:', error);
+        throw error; // Rethrow the error so the caller can handle it
+    }
+}
+
+
 function applyStyle(doc: jsPDF, style: any) {
     doc.setFont(style.font, style.style);
     doc.setFontSize(style.size);
 }
 
-export {checkURL, applyStyle };
+export {checkURL, applyStyle, fetchMetricInfo };

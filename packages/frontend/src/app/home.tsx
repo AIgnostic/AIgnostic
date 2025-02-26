@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { checkURL, generateReportText } from './utils';
 import {
   steps,
-  BACKEND_URL,
+  BACKEND_EVALUATE_URL,
   RESULTS_URL,
   modelTypesToMetrics,
-  generalMetrics,
   activeStepToInputConditions,
 } from './constants';
 import Title from './components/title';
@@ -41,11 +40,7 @@ function Homepage() {
     isDatasetURLValid: true,
     activeStep: 0,
     selectedItem: '',
-    metricChips: generalMetrics.map((metric) => ({
-      id: metric,
-      label: metric,
-      selected: true,
-    })),
+    metricChips: [],
     metricsHelperText: '',
     selectedModelType: '',
     error: false,
@@ -143,7 +138,7 @@ function Homepage() {
 
     try {
       // Send POST request to backend server
-      const postResponse = await fetch(BACKEND_URL, {
+      const postResponse = await fetch(BACKEND_EVALUATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(user_info),
@@ -172,17 +167,14 @@ function Homepage() {
     }
   };
 
-  // Placeholder for the dropdown items
-  const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
-  const [selectedItem, setSelectedItem] = useState('');
-
   function handleModelTypeChange(value: string) {
     if (value in modelTypesToMetrics) {
       setStateWrapper(
         'metricChips',
         modelTypesToMetrics[value].map((metric) => ({
           id: metric,
-          label: metric,
+          value: metric,  
+          label: metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
           selected: true,
         }))
       );
@@ -283,16 +275,7 @@ function Homepage() {
                     <RadioGroup
                       value={state.selectedModelType}
                       onChange={(event) => {
-                        setStateWrapper(
-                          'metricChips',
-                          modelTypesToMetrics[event.target.value].map(
-                            (metric) => ({
-                              id: metric,
-                              label: metric,
-                              selected: true,
-                            })
-                          )
-                        );
+                        handleModelTypeChange(event.target.value);
                         setStateWrapper(
                           'selectedModelType',
                           event.target.value
@@ -304,7 +287,7 @@ function Homepage() {
                           key={modelType}
                           value={modelType}
                           control={<Radio color="secondary" />}
-                          label={modelType}
+                          label={modelType.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
                         />
                       ))}
                     </RadioGroup>

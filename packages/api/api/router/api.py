@@ -5,7 +5,8 @@ import json
 from fastapi.responses import JSONResponse
 from pika.adapters.blocking_connection import BlockingChannel
 from common.rabbitmq.constants import JOB_QUEUE
-
+from metrics.metrics import task_type_to_metric
+from metrics.models import MetricsInfo
 
 api = APIRouter()
 BATCH_SIZE = 50
@@ -57,6 +58,19 @@ async def generate_metrics_from_info(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error dispatching jobs - {e}")
+
+
+@api.get("/retrieve-metric-info", response_model=MetricsInfo)
+async def retrieve_info() -> MetricsInfo:
+    """
+    Retrieve information about the types of tasks expected / supported by the library
+    as well as all the metrics that can be calculated for each task type.
+
+    :return: MetricsInfo - contains the mapping from task type to metrics
+    """
+    print("Retrieving metrics info")
+
+    return MetricsInfo(task_to_metric_map=task_type_to_metric)
 
 
 def dispatch_job(

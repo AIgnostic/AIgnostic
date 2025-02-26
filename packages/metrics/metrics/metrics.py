@@ -38,7 +38,7 @@ from metrics.exceptions import (
 from common.models import ModelResponse
 
 task_type_to_metric = {
-    "binary_classification": {
+    "binary_classification": [
         "accuracy",
         "precision",
         "recall",
@@ -52,12 +52,12 @@ task_type_to_metric = {
         "negative_predictive_value",
         "positive_predictive_value",
         "true_positive_rate_difference",
-        "explanation_stability_score",
-        "explanation_sparsity_score",
-        "explanation_fidelity_score",
-        "ood_auroc",
-    },
-    "multi_class_classification": {
+        # "explanation_stability_score",
+        # "explanation_sparsity_score",
+        # "explanation_fidelity_score",
+        # "ood_auroc",
+    ],
+    "multi_class_classification": [
         "accuracy",
         "class_precision",
         "precision",
@@ -66,18 +66,18 @@ task_type_to_metric = {
         "class_f1_score",
         "f1_score",
         "roc_auc",
-        "explanation_stability_score",
-        "explanation_sparsity_score",
-        "explanation_fidelity_score",
-        "ood_auroc",
-    },
+        # "explanation_stability_score",
+        # "explanation_sparsity_score",
+        # "explanation_fidelity_score",
+        # "ood_auroc",
+    ],
     "regression": [
         "mean_absolute_error",
         "mean_squared_error",
         "r_squared",
-        "explanation_stability_score",
-        "explanation_sparsity_score",
-        "explanation_fidelity_score",
+        # "explanation_stability_score",
+        # "explanation_sparsity_score",
+        # "explanation_fidelity_score",
     ],
 }
 
@@ -733,7 +733,7 @@ def check_metrics_are_supported_for_task(info: CalculateRequest):
             detail=f"Task {info.task_name} is not supported. Please choose a valid task."
         )
 
-    invalid_metrics = set(info.metrics) - task_type_to_metric[info.task_name]
+    invalid_metrics = set(info.metrics) - set(task_type_to_metric[info.task_name])
     metrics_to_exceptions = {}
     for metric in invalid_metrics:
         metrics_to_exceptions[metric] = MetricsComputationException(
