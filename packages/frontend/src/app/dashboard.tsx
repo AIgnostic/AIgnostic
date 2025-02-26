@@ -5,12 +5,11 @@ import { styled } from '@mui/material/styles';
 import { Metric } from './types';
 import ReportRenderer from './components/ReportRenderer';
 
-
 import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
 import { pdf } from '@react-pdf/renderer';
-
+import { WEBSOCKET_URL } from './constants';
 
 interface DashboardProps {
   onComplete: () => void;
@@ -33,7 +32,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
   const expectedItems = 10;
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:5005');
+    const socket = new WebSocket(WEBSOCKET_URL);
 
     socket.onopen = () => {
       console.log('WebSocket connection established');
@@ -80,7 +79,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
             console.log('Results received:', data.content);
             setReport(data.content);
             console.log('Report:', data.content);
-            const blob = await pdf(<ReportRenderer report={data.content} />).toBlob();
+            const blob = await pdf(
+              <ReportRenderer report={data.content} />
+            ).toBlob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;

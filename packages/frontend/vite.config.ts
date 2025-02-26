@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   root: __dirname,
-  base: '/AIgnostic/',
+  base: '/',
   cacheDir: '../node_modules/.vite/frontend',
   server: {
     port: 4200,

@@ -1,9 +1,15 @@
-import { checkURL }from '../src/app/utils';
+import { checkURL } from '../src/app/utils';
 import '@testing-library/jest-dom';
-import { MOCK_SCIKIT_API_URL,
-         MOCK_FINBERT_API_URL,
-         MOCK_FOLKTABLES_DATASET_API_URL,
-         MOCK_FINANCIAL_DATASET_API_URL} from '../src/app/constants';
+import {
+  MOCK_SCIKIT_API_URL,
+  MOCK_FINBERT_API_URL,
+  MOCK_FOLKTABLES_DATASET_API_URL,
+  MOCK_FINANCIAL_DATASET_API_URL,
+  MOCK_FINBERT_API_URL_PROD,
+  MOCK_FINANCIAL_DATASET_API_URL_PROD,
+  MOCK_FOLKTABLES_DATASET_API_URL_PROD,
+  MOCK_SCIKIT_API_URL_PROD,
+} from '../src/app/constants';
 
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {
@@ -21,6 +27,12 @@ describe('checkURL function', () => {
       MOCK_FINBERT_API_URL,
       MOCK_FOLKTABLES_DATASET_API_URL,
       MOCK_FINANCIAL_DATASET_API_URL,
+
+      // Prod
+      MOCK_SCIKIT_API_URL_PROD,
+      MOCK_FINBERT_API_URL_PROD,
+      MOCK_FOLKTABLES_DATASET_API_URL_PROD,
+      MOCK_FINANCIAL_DATASET_API_URL_PROD,
     ];
 
     validUrls.forEach((url) => {
