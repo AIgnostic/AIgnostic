@@ -1,27 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import ErrorMessage from './components/ErrorMessage';
-import { generateReportText } from './utils';
 import theme from './theme';
-import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
+import { Metric } from './types';
+import ReportRenderer from './components/ReportRenderer';
+
+import { pdf } from '@react-pdf/renderer';
 
 import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
 
-interface Metric {
-  [metricName: string]: number;
-}
-
 interface DashboardProps {
   onComplete: () => void;
   socket: WebSocket | null;
-}
-interface Report {
-  property: string;
-  computedMetrics: { metric: string; result: string }[];
-  legislationExtracts: string[];
-  llmInsights: string[];
 }
 
 // Each item from the websocket is an array of Metric objects.
@@ -41,17 +33,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
   const expectedItems = 10;
 
   useEffect(() => {
-    // const socket = new WebSocket('ws://localhost:5005');
-
-    // const userId = sessionStorage.getItem('userId');
-    // socket.onopen = () => {
-    //   console.log('WebSocket connection established');
-    //   socket.send(userId.toString());
-    // };
-
     if (socket) {
       socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        const sanitizedData = event.data.replace(/NaN/g, 'null');
+        const data = JSON.parse(sanitizedData);
         console.log('Received message:', data);
 
         switch (data.messageType) {
@@ -87,15 +72,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
 
             break;
           case 'REPORT': {
-            console.log('Results received:', data.content);
-            setReport(data.content);
-            console.log('Report:', data.content);
-            const doc = generateReportText(data.content);
-            console.log(doc);
-            doc.save('AIgnostic_Report.pdf');
-            if (error.header === 'Report is being generated') {
-              setShowError(false);
-            }
+            const generateReport = async () => {
+              console.log('Results received:', data.content);
+              setReport(data.content);
+              console.log('Report:', data.content);
+              const blob = await pdf(
+                <ReportRenderer report={data.content} />
+              ).toBlob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'AIgnostic_Report.pdf'; // Set the file name
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              if (error.header === 'Report is being generated') {
+                setShowError(false);
+              }
+            };
+            generateReport();
             break;
           }
           case 'ERROR':
@@ -115,11 +111,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
             });
         }
       };
-    }
 
-    return () => {
-      socket?.close();
-    };
+      return () => {
+        socket?.close();
+      };
+    }
   }, [onComplete, socket]);
 
   // Calculate overall progress as the number of items received divided by the expected total.

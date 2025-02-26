@@ -172,7 +172,7 @@ def test_parse_legislation_text_with_empty_content():
     assert result == expected_output
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def mock_dependencies():
     with mock.patch(EXTRACT) as mock_extract, \
          mock.patch(PARSE) as mock_parse, \

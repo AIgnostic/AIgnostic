@@ -7,8 +7,7 @@ from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 from common.models.aggregator_models import AggregatorMessage, MessageType
 from report_generation.utils import generate_report
-
-
+import time
 
 def aggregator_metrics_completion_log():
     return AggregatorMessage(
@@ -44,8 +43,6 @@ def aggregator_intermediate_metrics_log(metrics):
         statusCode=202,
         content={"metrics_results": metrics}
     )
-
-
 
 
 class MetricsAggregator():
@@ -137,42 +134,8 @@ class ResultsConsumer():
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 connected_clients = set()  # Store multiple WebSocket clients
 message_queue = queue.Queue()  # Store messages until a client connects
-
-metrics_aggregator = MetricsAggregator()
-
 user_aggregators: dict = {} # user_id -> MetricsAggregator
 
-
-
-# def on_result_fetched(ch, method, properties, body):
-#     """Handles incoming messages and waits for at least one client before sending."""
-#     global connected_clients
-#     result_data = json.loads(body)
-#     print(f"Received result: {result_data}")
-
-#     if (metrics_aggregator.total_sample_size == 0):
-#         metrics_aggregator.set_total_sample_size(result_data["total_sample_size"])
-
-#     metrics_aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
-
-#     aggregates = metrics_aggregator.get_aggregated_metrics()
-
-#     send_to_clients(aggregator_intermediate_metrics_log(aggregates))
-#     print(f"{metrics_aggregator.samples_processed} / {metrics_aggregator.total_sample_size} Processed")
-
-#     if (metrics_aggregator.samples_processed == metrics_aggregator.total_sample_size):
-#         print("Finished processing all batches")
-#         # All batches have now been processed, send completion message
-#         metrics_aggregator.samples_processed = 0
-#         metrics_aggregator.metrics = {}
-
-#         send_to_clients(aggregator_metrics_completion_log())
-
-#         print("Creating and sending final report")
-#         # generate a report and send to the frontend
-#         report_json = aggregate_report(aggregates)
-
-#         send_to_clients(aggregator_final_report_log(report_json))
 
 def on_result_fetched(ch, method, properties, body):
     result_data = json.loads(body)
@@ -191,7 +154,6 @@ def on_result_fetched(ch, method, properties, body):
     aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
 
     aggregates = aggregator.get_aggregated_metrics()
-
     # send the intermediate metrics to the user
     manager.send_to_user(user_id, aggregator_intermediate_metrics_log(aggregates))  
     print(f"{aggregator.samples_processed} / {aggregator.total_sample_size} Processed for user {user_id}")
@@ -204,18 +166,28 @@ def on_result_fetched(ch, method, properties, body):
         # send completion message
         manager.send_to_user(user_id, aggregator_metrics_completion_log())
 
-        report_thread = threading.Thread(target=generate_and_send_report, args=(user_id, aggregates))
+        report_thread = threading.Thread(target=generate_and_send_report, args=(user_id, aggregates, aggregator))
         report_thread.start()
 
         # cleanup completed aggregator  
         del user_aggregators[user_id]
 
 
+def aggregator_generate_report(aggregates, aggregator):
+    """Generates a report based on the aggregated metrics."""
+    report_properties_section = generate_report(aggregates, os.getenv("GOOGLE_API_KEY"))
+    report_info_section = {
+        # TODO: Update with codecarbon info and calls to model from metrics
+        "calls_to_model": aggregator.total_sample_size,
+        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+    }
+    report_json = {"properties": report_properties_section, "info": report_info_section}
+    return report_json
 
-def generate_and_send_report(user_id, aggregates):
+def generate_and_send_report(user_id, aggregates, aggregator):
     """Generates the report and sends it without blocking the main process."""
     try:
-        report_json = generate_report(aggregates, os.getenv("GOOGLE_API_KEY"))
+        report_json = aggregator_generate_report(aggregates, aggregator)
         manager.send_to_user(user_id, aggregator_final_report_log(report_json))
     except Exception as e:
         print(f"Error generating report for user {user_id}: {e}")

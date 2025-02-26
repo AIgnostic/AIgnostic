@@ -30,15 +30,15 @@ from aif360.datasets import BinaryLabelDataset
 import pandas as pd
 import numpy as np
 from metrics.exceptions import (
-    MetricsException,
-    DataInconstencyException,
-    ModelQueryException,
-    InsufficientDataProvisionException
+    MetricsComputationException,
+    DataInconsistencyException,
+    DataProvisionException,
+    _MetricsPackageException
 )
 from common.models import ModelResponse
 
 task_type_to_metric = {
-    "binary_classification": {
+    "binary_classification": [
         "accuracy",
         "precision",
         "recall",
@@ -52,12 +52,12 @@ task_type_to_metric = {
         "negative_predictive_value",
         "positive_predictive_value",
         "true_positive_rate_difference",
-        "explanation_stability_score",
-        "explanation_sparsity_score",
-        "explanation_fidelity_score",
-        "ood_auroc",
-    },
-    "multi_class_classification": {
+        # "explanation_stability_score",
+        # "explanation_sparsity_score",
+        # "explanation_fidelity_score",
+        # "ood_auroc",
+    ],
+    "multi_class_classification": [
         "accuracy",
         "class_precision",
         "precision",
@@ -66,18 +66,18 @@ task_type_to_metric = {
         "class_f1_score",
         "f1_score",
         "roc_auc",
-        "explanation_stability_score",
-        "explanation_sparsity_score",
-        "explanation_fidelity_score",
-        "ood_auroc",
-    },
+        # "explanation_stability_score",
+        # "explanation_sparsity_score",
+        # "explanation_fidelity_score",
+        # "ood_auroc",
+    ],
     "regression": [
         "mean_absolute_error",
         "mean_squared_error",
         "r_squared",
-        "explanation_stability_score",
-        "explanation_sparsity_score",
-        "explanation_fidelity_score",
+        # "explanation_stability_score",
+        # "explanation_sparsity_score",
+        # "explanation_fidelity_score",
     ],
 }
 
@@ -93,19 +93,20 @@ def is_valid_for_per_class_metrics(metric_name, true_labels):
     :return: None
     """
     if len(true_labels) == 0:
-        raise MetricsException(
-            metric_name,
-            detail="No labels provided - will lead to division by zero",
+        raise DataProvisionException(
+            detail=f"No labels provided - will lead to division by zero for {metric_name}",
+            status_code=400,
         )
     elif len(true_labels[0]) > 1:
-        raise MetricsException(
+        raise MetricsComputationException(
             metric_name,
             detail=f"Multiple attributes provided - cannot calculate {metric_name}",
+            status_code=400,
         )
     elif len(true_labels[0]) == 0:
-        raise MetricsException(
-            metric_name,
+        raise DataProvisionException(
             detail=f"No attributes provided - cannot calculate {metric_name}",
+            status_code=400,
         )
     return
 
@@ -137,17 +138,14 @@ def _calculate_precision(metric_name, true_labels, predicted_labels, target_clas
     :raises MetricsException: if the input is invalid for the given metric
     :return: float - the precision score for the given class
     """
-    try:
-        target_reshaped = np.full_like(true_labels, target_class)
-        tp = np.count_nonzero(
-            (true_labels == target_reshaped) & (predicted_labels == target_reshaped)
-        )
-        fp = np.count_nonzero(
-            (true_labels != target_reshaped) & (predicted_labels == target_reshaped)
-        )
-        return tp / (tp + fp) if (tp + fp) != 0 else 0
-    except (ValueError, TypeError, ZeroDivisionError) as e:
-        raise MetricsException(metric_name, detail=str(e))
+    target_reshaped = np.full_like(true_labels, target_class)
+    tp = np.count_nonzero(
+        (true_labels == target_reshaped) & (predicted_labels == target_reshaped)
+    )
+    fp = np.count_nonzero(
+        (true_labels != target_reshaped) & (predicted_labels == target_reshaped)
+    )
+    return tp / (tp + fp) if (tp + fp) != 0 else 0
 
 
 def class_precision(info: CalculateRequest) -> float:
@@ -199,17 +197,14 @@ def _calculate_recall(metric_name, true_labels, predicted_labels, target_class):
     :raises MetricsException: if the input is invalid for the given metric
     :return: float - the recall score for the given class
     """
-    try:
-        target_reshaped = np.full_like(true_labels, target_class)
-        tp = np.count_nonzero(
-            (true_labels == target_reshaped) & (predicted_labels == target_reshaped)
-        )
-        fn = np.count_nonzero(
-            (true_labels == target_reshaped) & (predicted_labels != target_reshaped)
-        )
-        return tp / (tp + fn) if (tp + fn) != 0 else 0
-    except (ValueError, TypeError, ZeroDivisionError) as e:
-        raise MetricsException(metric_name, detail=str(e))
+    target_reshaped = np.full_like(true_labels, target_class)
+    tp = np.count_nonzero(
+        (true_labels == target_reshaped) & (predicted_labels == target_reshaped)
+    )
+    fn = np.count_nonzero(
+        (true_labels == target_reshaped) & (predicted_labels != target_reshaped)
+    )
+    return tp / (tp + fn) if (tp + fn) != 0 else 0
 
 
 def class_recall(info: CalculateRequest) -> float:
@@ -384,39 +379,33 @@ def equalized_odds_difference(info: CalculateRequest) -> float:
     name = "equalized_odds_difference"
     is_valid_for_per_class_metrics(name, info.true_labels)
 
-    if info.true_labels is None or info.predicted_labels is None or info.protected_attr is None:
-        raise ValueError("Missing required fields: true_labels, predicted_labels, or protected_attr")
-
     labels = info.true_labels
     predictions = info.predicted_labels
     groups = np.array(info.protected_attr)
 
     def rate(target_label, group):
         """Compute TPR or FPR based on the target class and group."""
-        try:
-            # Select only data belonging to the current group (group mask)
-            group_mask = (groups == group)
+        # Select only data belonging to the current group (group mask)
+        group_mask = (groups == group)
 
-            # Filter the labels, predictions, and groups for the current group
-            group_labels = labels[group_mask]
-            group_predictions = predictions[group_mask]
+        # Filter the labels, predictions, and groups for the current group
+        group_labels = labels[group_mask]
+        group_predictions = predictions[group_mask]
 
-            if target_label == 1:
-                # True Positive Rate (TPR) -> TP / (TP + FN)
-                tp = np.count_nonzero((group_labels == 1) & (group_predictions == 1))
-                fn = np.count_nonzero((group_labels == 1) & (group_predictions == 0))
-                total = tp + fn
-            else:
-                # False Positive Rate (FPR) -> FP / (FP + TN)
-                fp = np.count_nonzero((group_labels == 0) & (group_predictions == 1))
-                tn = np.count_nonzero((group_labels == 0) & (group_predictions == 0))
-                total = fp + tn
+        if target_label == 1:
+            # True Positive Rate (TPR) -> TP / (TP + FN)
+            tp = np.count_nonzero((group_labels == 1) & (group_predictions == 1))
+            fn = np.count_nonzero((group_labels == 1) & (group_predictions == 0))
+            total = tp + fn
+        else:
+            # False Positive Rate (FPR) -> FP / (FP + TN)
+            fp = np.count_nonzero((group_labels == 0) & (group_predictions == 1))
+            tn = np.count_nonzero((group_labels == 0) & (group_predictions == 0))
+            total = fp + tn
 
-            if total == 0:
-                return 0.0
-            return tp / total if target_label == 1 else fp / total
-        except ZeroDivisionError as e:
-            raise MetricsException(name, detail=str(e))
+        if total == 0:
+            return 0.0
+        return tp / total if target_label == 1 else fp / total
 
     fpr_1 = rate(0, 1)  # False positive rate for group 1
     fpr_0 = rate(0, 0)  # False positive rate for group 0
@@ -579,14 +568,6 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
 
     :return: float - the estimated OOD AUROC score
     """
-    name = "ood_auroc"
-
-    if info.input_features is None:
-        raise MetricsException(name, detail="Input data is required.")
-
-    if info.confidence_scores is None:
-        raise MetricsException(name, detail="Confidence scores are required.")
-
     id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
     d: int = id_data.shape[1]                       # Feature dimensionality
 
@@ -600,12 +581,6 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     response: ModelResponse = _query_model(ood_data, info)
 
     # Get confidence scores for OOD samples
-    if response.confidence_scores is None:
-        raise ModelQueryException(
-            name,
-            detail="Model response did not contain confidence scores, which are required.",
-            status_code=500,
-        )
     ood_scores: list[list] = response.confidence_scores
 
     # Construct labels: 1 for ID, 0 for OOD
@@ -614,9 +589,8 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     # Flatten the confidence scores for both ID and OOD samples
     scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
 
-    # Check if lengths match
-    if len(labels) != len(scores):
-        raise MetricsException(name, detail="Length mismatch between labels and scores.")
+    # Assert lengths match
+    assert len(labels) == len(scores), "Length mismatch between labels and scores in OOD-AUROC calculation."
 
     return roc_auc_score(labels, scores)
 
@@ -720,7 +694,7 @@ metric_to_fn_and_requirements = {
 }
 
 
-def check_all_required_fields_present(info: CalculateRequest):
+def check_all_required_fields_present(metrics: set[str], info: CalculateRequest):
     """
     check_all_required_fields_present ensures that all the required fields are present in the
     CalculateRequest object.
@@ -729,25 +703,50 @@ def check_all_required_fields_present(info: CalculateRequest):
 
     :return: None
     """
-    for metric in info.metrics:
-        metric = metric.replace(" ", "_")
+    metrics_to_exceptions = {}
+    for metric in metrics:
         if metric not in metric_to_fn_and_requirements:
-            raise MetricsException(
+            metrics_to_exceptions[metric] = MetricsComputationException(
                 metric,
-                detail=f"Metric {metric} is not supported."
+                detail="Metric should be supported, but is not mapped to a computation. (Internal Error)"
             )
         else:
+            missing_fields = []
             for field in metric_to_fn_and_requirements[metric]["required_inputs"]:
                 if not hasattr(info, field) or getattr(info, field) is None:
-                    raise InsufficientDataProvisionException(
-                        detail=f"Field {field} is required to calculate metric {metric}."
-                    )
-    return
+                    missing_fields.append(field)
+            if missing_fields:
+                metrics_to_exceptions[metric] = DataProvisionException(
+                    detail=f"The following missing fields are required to calculate metric {metric}:\n"
+                           f"{missing_fields}"
+                )
+    return metrics_to_exceptions
 
 
 def check_metrics_are_supported_for_task(info: CalculateRequest):
-    # TODO
-    pass
+    """
+    check_metrics_are_supported_for_task ensures that the metrics requested are supported
+    for the task type provided.
+    """
+    if info.task_name not in task_type_to_metric:
+        raise DataProvisionException(
+            detail=f"Task {info.task_name} is not supported. Please choose a valid task."
+        )
+
+    invalid_metrics = set(info.metrics) - set(task_type_to_metric[info.task_name])
+    metrics_to_exceptions = {}
+    for metric in invalid_metrics:
+        metrics_to_exceptions[metric] = MetricsComputationException(
+            metric,
+            detail=(
+                f"Metric {metric} is not supported for {info.task_name} tasks."
+                " Please only choose valid metrics for the task type."
+                "\nSupported metrics for this task type are:\n"
+                f" {task_type_to_metric[info.task_name]}"
+            ),
+            status_code=400
+        )
+    return metrics_to_exceptions
 
 
 def calculate_metrics(info: CalculateRequest) -> MetricValues:
@@ -767,27 +766,40 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
         if info.predicted_labels is not None:
             # If confidence scores and labels are both given, ensure they have the same length
             if info.confidence_scores.shape[0] != info.predicted_labels.shape[0]:
-                raise DataInconstencyException(
+                raise DataInconsistencyException(
                     detail="Length mismatch between confidence scores and true labels.",
                 )
 
-    check_all_required_fields_present(info)
+    results = {}
 
-    try:
-        results = {}
+    if info.task_name:
+        # Add all metrics to results if they raise an exception
+        results = check_metrics_are_supported_for_task(info)
+        print(results)
+        results = results | check_all_required_fields_present(
+            set(info.metrics) - set(results.keys()),
+            info
+        )
+        print(results)
 
-        for metric in info.metrics:
-            metric = metric.replace(" ", "_")
+    for metric in info.metrics:
+        metric = metric.replace(" ", "_")
+        try:
+            # Skip the metric if it is known to throw an error
+            if metric in results:
+                continue
             current_metric = metric
-            if metric not in metric_to_fn_and_requirements.keys():
-                results[metric] = 1
-            else:
-                results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
+            results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
 
-        return MetricValues(metric_values=results,
-                            batch_size=info.batch_size,
-                            total_sample_size=info.total_sample_size)
-    except (MetricsException, ModelQueryException) as e:
-        raise e
-    except Exception as e:
-        raise MetricsException(current_metric, detail=str(e))
+        # Return an exception in place of the metric result if applicable
+        # Approach allows valid metrics to still be calculated
+        except _MetricsPackageException as e:
+            results[metric] = e
+        except Exception as e:
+            results[metric] = MetricsComputationException(current_metric, detail=str(e))
+    print(results)
+    return MetricValues(
+        metric_values=results,
+        batch_size=info.batch_size,
+        total_sample_size=info.total_sample_size
+    )
