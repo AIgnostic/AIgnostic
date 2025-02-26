@@ -12,6 +12,17 @@ import {
   BACKEND_FETCH_METRIC_INFO_URL,
 } from './constants';
 
+async function fetchMetricInfo(): Promise<TaskToMetricMap> {
+  try {
+    const response = await fetch(BACKEND_FETCH_METRIC_INFO_URL);
+    const data: MetricInfo = await response.json();
+    return data.task_to_metric_map;
+  } catch (error) {
+    console.error('Error:', error);
+    throw error; // Rethrow the error so the caller can handle it
+  }
+}
+
 function checkURL(url: string): boolean {
   const validURLS = [
     MOCK_SCIKIT_API_URL,
@@ -58,17 +69,6 @@ export interface TaskToMetricMap {
 
 export interface MetricInfo {
   task_to_metric_map: TaskToMetricMap;
-}
-
-async function fetchMetricInfo(): Promise<TaskToMetricMap> {
-  try {
-    const response = await fetch(BACKEND_FETCH_METRIC_INFO_URL);
-    const data: MetricInfo = await response.json();
-    return data.task_to_metric_map;
-  } catch (error) {
-    console.error('Error:', error);
-    throw error; // Rethrow the error so the caller can handle it
-  }
 }
 
 function applyStyle(doc: jsPDF, style: any) {
