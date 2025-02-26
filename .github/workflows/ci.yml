@@ -171,36 +171,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      # - name: Deploy Services
-      #   uses: kitconcept/docker-stack-deploy@v1.0.1
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
-      #     remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
-      #     remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
-      #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
-      #     stack_file: './swarm/services.docker-compose.yml'
-      #     stack_name: 'aignostic'
-      # - name: Deploy Apps
-      #   uses: kitconcept/docker-stack-deploy@v1.0.1
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
-      #     remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
-      #     remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
-      #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
-      #     stack_file: './swarm/app.docker-compose.yml'
-      #     stack_name: 'aignostic'
-      # - name: Prepare SSH
-      #   uses: webfactory/ssh-agent@v0.9.0
-      #   with:
-      #     ssh-private-key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
       - name: Make SSH Directory
         run: mkdir -p ~/.ssh
       - name: Commit SSH Key
-        run: echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
+        run: |
+          touch ~/.ssh/id_ecdsa
+          chmod 644 ~/.ssh/id_ecdsa
+          echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
       - name: Commit SSH Config
         run: |
           echo "Host aignostic" > ~/.ssh/config
@@ -216,41 +193,35 @@ jobs:
 
   deploy-docker-mocks:
     # UNCOMMENT IT ALL BELOW
-    needs:
-      - docker-mocks
+    # needs:
+    #   - docker-mocks
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      DOCKER_HOST: ssh://aignostic@aignostic
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      # - name: Deploy Services
-      #   uses: kitconcept/docker-stack-deploy@v1.0.1
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
-      #     remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
-      #     remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
-      #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
-      #     stack_file: './swarm/services.docker-compose.yml'
-      #     stack_name: 'aignostic'
-      # - name: Deploy Apps
-      #   uses: kitconcept/docker-stack-deploy@v1.0.1
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
-      #     remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
-      #     remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
-      #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
-      #     stack_file: './swarm/mocks.docker-compose.yml'
-      #     stack_name: 'aignostic-mocks'
-      - name: Prepare SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+      - name: Make SSH Directory
+        run: mkdir -p ~/.ssh
+      - name: Commit SSH Key
+        run: |
+          touch ~/.ssh/id_ecdsa
+          chmod 644 ~/.ssh/id_ecdsa
+          echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
+      - name: Commit SSH Config
+        run: |
+          echo "Host aignostic" > ~/.ssh/config
+          echo "   HostName ${{ secrets.DIGITAL_OCEAN_HOST }}" >> ~/.ssh/config
+          echo "   User aignostic" >> ~/.ssh/config
+          echo "   IdentityFile ~/.ssh/id_ecdsa" >> ~/.ssh/config
+      - name: Add SSH Known Hosts
+        run: ssh-keyscan -H ${{ secrets.DIGITAL_OCEAN_HOST }} >> ~/.ssh/known_hosts
+      - name: Wait for SSH to work
+        run: ssh aignostic@aignostic "echo 'Hello from the other side'"
       - name: Deploy Stack
         run: docker stack deploy -c ./swarm/mocks.docker-compose.yml aignostic-mocks
+
   deploy-gh-pages:
     needs:
       - lint
