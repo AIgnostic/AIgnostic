@@ -183,7 +183,7 @@ class Worker():
         # strip the label from the datapoint
         try:
             features = data["features"]
-            labels = data["labels"]
+            true_labels = data["labels"]
             group_ids = data["group_ids"]
         except KeyError:
             raise WorkerException("KeyError occurred during data processing")
@@ -195,7 +195,7 @@ class Worker():
         # TODO: Refactor to use pydantic models
         predictions = await self.query_model(
             job.model_url,
-            {"features": features, "labels": labels, "group_ids": group_ids},
+            {"features": features, "labels": true_labels, "group_ids": group_ids},
             job.model_api_key,
         )
 
@@ -203,15 +203,15 @@ class Worker():
             predicted_labels = predictions["predictions"]
 
             print(f"Predicted labels: {predicted_labels}")
-            print(f"True labels: {labels}")
+            print(f"True labels: {true_labels}")
             print(f"Metrics to compute: {job.metrics}")
 
             # some preprocessing for FinBERT
             # TODO: Need to sort out how to handle this properly
-            if job.model_type == "binary classification":
-                predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, labels)
-            elif job.model_type == "multi class classification":
-                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, labels)
+            if job.model_type == "binary_classification":
+                predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, true_labels)
+            elif job.model_type == "multi_class_classification":
+                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, true_labels)
 
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
