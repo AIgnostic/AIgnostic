@@ -147,6 +147,15 @@ jobs:
       build_target: 'mocks'
     secrets: inherit
 
+  # Build nginx reverse proxy
+  docker-nginx:
+    # Build base image first to enable caching
+    uses: ./.github/workflows/docker.yml
+    with:
+      image_tag: 'nginx_reverse_proxy'
+      build_target: 'nginx_reverse_proxy'
+    secrets: inherit
+
   deploy-docker-stack:
     # UNCOMMENT IT ALL BELOW
     needs:

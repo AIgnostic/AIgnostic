@@ -109,3 +109,9 @@ USER appuser
 # Metadata
 LABEL org.opencontainers.image.source="https://github.com/AIgnostic/AIgnostic"
 
+
+######## SEPARATE: Nginx
+FROM nginx:latest AS nginx_reverse_proxy
+COPY ./swarm/nginx/prod.nginx.conf /etc/nginx/conf.d/prod.conf
+# Done!
+
