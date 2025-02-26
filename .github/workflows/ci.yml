@@ -149,10 +149,10 @@ jobs:
 
   deploy-docker-stack:
     # UNCOMMENT IT ALL BELOW
-    # needs:
-    #   - docker-api # if we didn't build a container, don't do this!
-    #   - docker-worker
-    #   - docker-aggregator
+    needs:
+      - docker-api # if we didn't build a container, don't do this!
+      - docker-worker
+      - docker-aggregator
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
