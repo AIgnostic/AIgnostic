@@ -2,9 +2,14 @@ import React, { useEffect, useState } from 'react';
 import ErrorMessage from './components/ErrorMessage';
 import theme from './theme';
 import { styled } from '@mui/material/styles';
+<<<<<<< HEAD
 import { Metric } from './types';
 import ReportRenderer from './components/ReportRenderer';
 import MetricBar from './components/MetricBar';
+=======
+import Tooltip from '@mui/material/Tooltip';
+
+>>>>>>> 6049b29 ((Feat): Add tooltips to erroring metrics (not working) [tsv22])
 
 import LinearProgress, {
   linearProgressClasses,
