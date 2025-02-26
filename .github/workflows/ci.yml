@@ -199,6 +199,8 @@ jobs:
           ssh-private-key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
       - name: Commit SSH Key
         run: echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
+      - name: Read SSH File
+        run: cat ~/.ssh/config
       - name: Commit SSH Cofig
         run: echo "Host aignostic
           HostName ${{ secrets.DIGITAL_OCEAN_HOST }}
