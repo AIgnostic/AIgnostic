@@ -7,6 +7,7 @@ from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 from common.models.aggregator_models import AggregatorMessage, MessageType
 from report_generation.utils import generate_report
+import time
 
 
 def aggregator_metrics_completion_log():
@@ -14,7 +15,7 @@ def aggregator_metrics_completion_log():
         messageType=MessageType.METRICS_COMPLETE,
         message="Metrics processing complete - all batches successfully processed",
         statusCode=200,
-        content=None
+        content=None,
     )
 
 
@@ -23,7 +24,7 @@ def aggregator_error_log(error):
         messageType=MessageType.ERROR,
         message="Error processing metrics",
         statusCode=500,
-        content=error
+        content=error,
     )
 
 
@@ -32,7 +33,7 @@ def aggregator_final_report_log(report):
         messageType=MessageType.REPORT,
         message="Final report successfully generated",
         statusCode=200,
-        content=report
+        content=report,
     )
 
 
@@ -41,11 +42,11 @@ def aggregator_intermediate_metrics_log(metrics):
         messageType=MessageType.METRICS_INTERMEDIATE,
         message="Batch successfully processed - intermediate metrics successfully generated",
         statusCode=202,
-        content={"metrics_results": metrics}
+        content={"metrics_results": metrics},
     )
 
 
-class MetricsAggregator():
+class MetricsAggregator:
     def __init__(self):
         self.metrics = {}
         self.samples_processed = 0
@@ -55,10 +56,15 @@ class MetricsAggregator():
         self.total_sample_size = total_sample_size
 
     def aggregate_new_batch(self, batch_metrics_results, batch_size):
-        for metric, value in batch_metrics_results.items():
+        for metric, metric_value_obj in batch_metrics_results.items():
             if metric not in self.metrics:
                 # First time encountering this metric, initialize with the first batch value
-                self.metrics[metric] = {"value": value, "count": batch_size}
+                self.metrics[metric] = {
+                    "value": metric_value_obj["computed_value"],
+                    "ideal_value": metric_value_obj["ideal_value"],
+                    "range": metric_value_obj["range"],
+                    "count": batch_size
+                }
             else:
                 # Update the running average incrementally
                 prev_value = self.metrics[metric]["value"]
@@ -66,24 +72,41 @@ class MetricsAggregator():
 
                 # Compute new weighted average
                 new_count = prev_count + batch_size
-                self.metrics[metric]["value"] = (prev_value * prev_count + value * batch_size) / new_count
+                new_value = (prev_value * prev_count + metric_value_obj["computed_value"] * batch_size) / new_count
+                self.metrics[metric]["value"] = new_value
                 self.metrics[metric]["count"] = new_count  # Update the total count
 
         self.samples_processed += batch_size
 
     def get_aggregated_metrics(self):
         """
-            Returns the aggregated metrics as a dictionary
-            i.e. { metric1: value1, metric2: value2, ... }
+        Returns the aggregated metrics as a dictionary.
+        Example:
+        {
+            "metric1": {
+                "value": value1,
+                "ideal_value": ideal_value1,
+                "range": range1
+            },
+            "metric2": {
+                "value": value2,
+                "ideal_value": ideal_value2,
+                "range": range2
+            },
+            ...
+        }
         """
-
         results = {}
         for metric, data in self.metrics.items():
-            results[metric] = data["value"]
+            results[metric] = {
+                "value": data["value"],
+                "ideal_value": data["ideal_value"],
+                "range": data["range"]
+            }
         return results
 
 
-class ResultsConsumer():
+class ResultsConsumer:
 
     def __init__(self, host="localhost"):
         """Create a new instance of the consumer class, passing in the AMQP
@@ -115,7 +138,11 @@ class ResultsConsumer():
         """
         self.connect()
         try:
-            self._channel.basic_consume(queue=RESULT_QUEUE, on_message_callback=on_message_callback, auto_ack=True)
+            self._channel.basic_consume(
+                queue=RESULT_QUEUE,
+                on_message_callback=on_message_callback,
+                auto_ack=True,
+            )
             print("Waiting for messages...")
             self._channel.start_consuming()  # Blocking call, waits for messages
         except KeyboardInterrupt:
@@ -142,22 +169,25 @@ def on_result_fetched(ch, method, properties, body):
     global connected_clients
     result_data = json.loads(body)
     print(f"Received result: {result_data}")
+    print(f"Type of result_data: {type(result_data)}")
 
-    if (metrics_aggregator.total_sample_size == 0):
+    if metrics_aggregator.total_sample_size == 0:
         metrics_aggregator.set_total_sample_size(result_data["total_sample_size"])
 
-    metrics_aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
+    metrics_aggregator.aggregate_new_batch(
+        result_data["metric_values"], result_data["batch_size"]
+    )
 
     aggregates = metrics_aggregator.get_aggregated_metrics()
 
     send_to_clients(aggregator_intermediate_metrics_log(aggregates))
-    print(f"{metrics_aggregator.samples_processed} / {metrics_aggregator.total_sample_size} Processed")
+    print(
+        f"{metrics_aggregator.samples_processed} / {metrics_aggregator.total_sample_size} Processed"
+    )
 
-    if (metrics_aggregator.samples_processed == metrics_aggregator.total_sample_size):
+    if metrics_aggregator.samples_processed == metrics_aggregator.total_sample_size:
         print("Finished processing all batches")
         # All batches have now been processed, send completion message
-        metrics_aggregator.samples_processed = 0
-        metrics_aggregator.metrics = {}
 
         send_to_clients(aggregator_metrics_completion_log())
 
@@ -167,16 +197,33 @@ def on_result_fetched(ch, method, properties, body):
 
         send_to_clients(aggregator_final_report_log(report_json))
 
+        # Reset the aggregator for the next batch
+        metrics_aggregator.samples_processed = 0
+        metrics_aggregator.metrics = {}
+
+
+def get_api_key():
+    # if GOOGLE_API_KEY_FILE is set, read the key from the file
+    if os.getenv("GOOGLE_API_KEY_FILE"):
+        with open(os.getenv("GOOGLE_API_KEY_FILE")) as f:
+            return f.read().strip()
+    return os.getenv("GOOGLE_API_KEY")
+
 
 def aggregate_report(metrics: dict):
     """
-        Generates a report to send to the frontend
-        By collating the metrics, and pulling information from the report generator
+    Generates a report to send to the frontend
+    By collating the metrics, and pulling information from the report generator
     """
 
-    report_json = generate_report(metrics, os.getenv("GOOGLE_API_KEY"))
+    report_properties_sections = generate_report(metrics, get_api_key())
+    report_info_section = {
+        # TODO: Update with codecarbon info and calls to model from metrics
+        "calls_to_model": metrics_aggregator.total_sample_size,
+        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
+    }
 
-    return report_json
+    return {"properties": report_properties_sections, "info": report_info_section}
 
 
 def send_to_clients(message: AggregatorMessage):
@@ -192,8 +239,8 @@ def send_to_clients(message: AggregatorMessage):
 
     for client in connected_clients:
         try:
-            client.send(json.dumps(message.dict()))
-            print(f"Sent message to client: {json.dumps(message.dict())}")
+            client.send(message.model_dump_json())
+            print(f"Sent message to client: {message.model_dump_json()}")
         except Exception as e:
             print(f"Error sending message to client: {e}")
             disconnected_clients.add(client)  # Mark client for removal
@@ -230,9 +277,10 @@ def start_websocket_server():
     server.serve_forever()  # Blocking call
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Load environment variables
     from dotenv import load_dotenv
+
     load_dotenv()
 
     # Start WebSocket server in a separate thread

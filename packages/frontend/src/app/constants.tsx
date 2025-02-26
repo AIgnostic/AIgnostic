@@ -1,12 +1,24 @@
+import { IS_PROD } from './env';
 import { ConditionAlertFailure, HomepageState } from './types';
+import { fetchMetricInfo } from './utils';
 
 const AIGNOSTIC = 'AIgnostic';
-const HOME = '/AIgnostic';
+const HOME = '/';
 
 const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5001/predict';
 const MOCK_FINBERT_API_URL = 'http://finbert-mock-model-api:5001/predict';
-const MOCK_FOLKTABLES_DATASET_API_URL = 'http://folktables-dataset-api:5000/fetch-datapoints';
-const MOCK_FINANCIAL_DATASET_API_URL = 'http://financial-dataset-api:5000/fetch-datapoints';
+const MOCK_FOLKTABLES_DATASET_API_URL =
+  'http://folktables-dataset-api:5000/fetch-datapoints';
+const MOCK_FINANCIAL_DATASET_API_URL =
+  'http://financial-dataset-api:5000/fetch-datapoints';
+
+// PROD URL
+const MOCK_SCIKIT_API_URL_PROD = 'http://scikit_mock_model_api:5011/predict';
+const MOCK_FINBERT_API_URL_PROD = 'http://finbert_mock_model_api:5001/predict';
+const MOCK_FOLKTABLES_DATASET_API_URL_PROD =
+  'http://folktables_dataset_api:5010/fetch-datapoints';
+const MOCK_FINANCIAL_DATASET_API_URL_PROD =
+  'http://financial_dataset_api:5000/fetch-datapoints';
 
 const steps = [
   {
@@ -34,54 +46,31 @@ const steps = [
   },
 ];
 
-const BACKEND_URL = 'http://localhost:8000/evaluate';
-const RESULTS_URL = 'http://localhost:5002/results';
+const BACKEND_EVALUATE_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/evaluate'
+  : 'http://localhost:8000/evaluate';
+const RESULTS_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/results'
+  : 'http://localhost:5002/results';
+const WEBSOCKET_URL = IS_PROD
+  ? 'wss://aignostic-api.docsoc.co.uk/aggregator/ws'
+  : 'ws://localhost:5005';
+const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/retrieve-metric-info'
+  : 'http://localhost:8000/retrieve-metric-info';
 
-const generalMetrics = ['Accuracy', 'Precision', 'Recall'];
+let modelTypesToMetrics: { [key: string]: string[] } = {};
 
-const binaryClassifierMetrics = ["accuracy",
-"precision",
-"recall",
-"f1 score",
-// "roc auc",
-"statistical parity difference",
-"equal opportunity difference",
-"equalized odds difference",
-"disparate impact",
-"false negative rate difference",
-"negative predictive value",
-"positive predictive value",
-"true positive rate difference",
-// "explanation stability score",
-// "explanation sparsity score",
-// "explanation fidelity score",
-// "ood auroc"
-]
+export async function initializeModelTypesToMetrics() {
+  try {
+    modelTypesToMetrics = await fetchMetricInfo();
+  } catch (error) {
+    console.error('Failed to fetch metric info:', error);
+  }
+}
 
-const multiClassClassifierMetrics = [
-  "accuracy",
-  "precision",
-  "recall",
-  "f1 score",
-  // "roc auc",
-  // "explanation stability score",
-  // "explanation sparsity score",
-  // "explanation fidelity score",
-  // "ood auroc",
-]
-
-const regressionMetrics = [
-  "mean absolute error",
-  "mean squared error",
-  "r squared",
-]
-
-const modelTypesToMetrics: { [key: string]: string[] } = {
-  "Binary Classification": binaryClassifierMetrics,
-  "Multi Class Classification": multiClassClassifierMetrics,
-  "Regression": regressionMetrics,
-  // 'General (Accuracy, Precision, Recall)': generalMetrics,
-};
+// Call the initialization function
+initializeModelTypesToMetrics();
 
 /*
   These conditions indicate the requirements for the user to proceed the next step
@@ -108,7 +97,8 @@ const activeStepToInputConditions: { [key: number]: ConditionAlertFailure } = {
 
 export {
   steps,
-  BACKEND_URL,
+  BACKEND_EVALUATE_URL,
+  BACKEND_FETCH_METRIC_INFO_URL,
   RESULTS_URL,
   MOCK_SCIKIT_API_URL,
   MOCK_FINBERT_API_URL,
@@ -117,6 +107,10 @@ export {
   AIGNOSTIC,
   HOME,
   modelTypesToMetrics,
-  generalMetrics,
   activeStepToInputConditions,
+  WEBSOCKET_URL,
+  MOCK_SCIKIT_API_URL_PROD,
+  MOCK_FINBERT_API_URL_PROD,
+  MOCK_FOLKTABLES_DATASET_API_URL_PROD,
+  MOCK_FINANCIAL_DATASET_API_URL_PROD,
 };

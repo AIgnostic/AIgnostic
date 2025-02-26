@@ -23,14 +23,41 @@ COPY ./package-lock.json /app
 RUN npm ci
 
 COPY ./nx.json /app
-# Have to copy everything as any subset may be needed
-COPY ./packages /app/packages
-COPY ./poetry.lock /app
-COPY ./poetry.toml /app
-COPY ./pyproject.toml /app
+# Have to copy these manually - means we can change code without rebuilding it all as deps didn't change
+COPY ./packages/aggregator/pyproject.toml ./packages/aggregator/poetry.toml ./packages/aggregator/poetry.lock ./packages/aggregator/README.md /app/packages/aggregator/
+COPY ./packages/aggregator/aggregator/__init__.py /app/packages/aggregator/aggregator/
+
+COPY ./packages/api/pyproject.toml ./packages/api/poetry.toml ./packages/api/poetry.lock ./packages/api/README.md /app/packages/api/
+COPY ./packages/api/api/__init__.py /app/packages/api/api/
+
+COPY ./packages/common/pyproject.toml ./packages/common/poetry.toml ./packages/common/poetry.lock ./packages/common/README.md /app/packages/common/
+COPY ./packages/common/common/__init__.py /app/packages/common/common/
+
+COPY ./packages/llm-insights/pyproject.toml ./packages/llm-insights/poetry.toml ./packages/llm-insights/poetry.lock ./packages/llm-insights/README.md /app/packages/llm-insights/
+COPY ./packages/llm-insights/llm_insights/__init__.py /app/packages/llm-insights/llm_insights/
+
+COPY ./packages/metrics/pyproject.toml ./packages/metrics/poetry.toml ./packages/metrics/poetry.lock ./packages/metrics/README.md /app/packages/metrics/
+COPY ./packages/metrics/metrics/__init__.py /app/packages/metrics/metrics/
+
+COPY ./packages/mocks/pyproject.toml ./packages/mocks/poetry.toml ./packages/mocks/poetry.lock ./packages/mocks/README.md /app/packages/mocks/
+COPY ./packages/mocks/mocks/__init__.py /app/packages/mocks/mocks/
+
+COPY ./packages/report-generation/pyproject.toml ./packages/report-generation/poetry.toml ./packages/report-generation/poetry.lock ./packages/report-generation/README.md /app/packages/report-generation/
+COPY ./packages/report-generation/report_generation/__init__.py /app/packages/report-generation/report_generation/
+
+COPY ./packages/worker/pyproject.toml ./packages/worker/poetry.toml ./packages/worker/poetry.lock ./packages/worker/README.md /app/packages/worker/
+COPY ./packages/worker/worker/__init__.py /app/packages/worker/worker/
+
+COPY ./packages/dispatcher/pyproject.toml ./packages/dispatcher/poetry.toml ./packages/dispatcher/poetry.lock ./packages/dispatcher/README.md /app/packages/dispatcher/
+COPY ./packages/dispatcher/dispatcher/__init__.py /app/packages/dispatcher/dispatcher/
+
+COPY ./poetry.lock ./poetry.toml ./pyproject.toml /app/
 
 # Run poetry install at root
 RUN poetry install -v --only=main
+
+# Copy source
+COPY ./packages /app/packages
 
 # Copy venv & application code to new image
 # Second stage: runtime
@@ -39,21 +66,15 @@ FROM python:3.12-slim AS python-prod-base
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy only the necessary files from the builder stage
-COPY --from=builder /app/packages /app/packages
-COPY --from=builder /app/.venv /app/.venv
-
 # Create a non-root user and switch to it
 RUN useradd -m appuser
 
-# Change ownership
-RUN chown -R appuser /app
+# Copy only the necessary files from the builder stage
+COPY --from=builder --chown=appuser:appuser /app/packages /app/packages
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
 # Switch
 USER appuser
-
-# Expose the port the app runs on
-EXPOSE 8000
 
 # SO that we can use one image to build each python package,
 # we specify them all here as different stages with their appropriat start commands
@@ -71,8 +92,45 @@ CMD ["/app/.venv/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", 
 
 FROM python-prod-base AS aggregator
 WORKDIR /app/packages/aggregator
-CMD ["/app/.venv/bin/python", "-m", "uvicorn", "aggregator.aggregator:aggregator_app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/.venv/bin/python", "-m", "aggregator.aggregator"]
 
 FROM python-prod-base AS worker
 WORKDIR /app/packages/worker
 CMD ["/app/.venv/bin/python", "-m", "worker.worker"]
+
+# Mocks has an extra build command
+FROM builder AS mocks-build
+# Some extra files are needed to make nx behave
+COPY ./eslint.config.cjs ./jest.config.ts ./jest.preset.js /app/
+# Run install
+RUN poetry run npx nx install mocks --args="--only=main,dev"
+
+# Now build mocks production -> copy paste of code above with mocks builder instead
+# Copy venv & application code to new image
+# Second stage: runtime
+FROM mocks-build AS mocks
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Create a non-root user and switch to it
+RUN useradd -m appuser
+
+# Copy only the necessary files from the builder stage
+COPY --from=builder --chown=appuser:appuser /app/packages /app/packages
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+
+# Switch
+USER appuser
+
+# Unzip financial data
+RUN cd /app/packages/mocks/mocks/dataset && unzip -o FinancialPhraseBank-v1.0.zip
+
+# Metadata
+LABEL org.opencontainers.image.source="https://github.com/AIgnostic/AIgnostic"
+
+######## SEPARATE: Nginx
+FROM nginx:latest AS nginx_reverse_proxy
+COPY ./swarm/nginx/prod.nginx.conf /etc/nginx/conf.d/prod.conf
+# Done!
+

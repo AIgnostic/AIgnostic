@@ -24,49 +24,7 @@ env:
   IMPAAS_APP_NAME: aignostic
 
 jobs:
-  install: # Mass install all dependencies -> should mean later stages read from cache & if install fails we get one failing job
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Poetry before Python because https://github.com/actions/setup-python/issues/765
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-      - name: Set up Python 3.12 with Poetry
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'poetry'
-
-      - name: Inject export plugin (required by NX)
-        run: poetry self add poetry-plugin-export
-
-      # This enables task distribution via Nx Cloud
-      # Run this command as early as possible, before dependencies are installed
-      # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
-      # Uncomment this line to enable task distribution
-      # - run: npx nx-cloud start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="build"
-
-      # Cache node_modules
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      # Insall npm deps so NX works
-      - run: npm ci --legacy-peer-deps
-      - uses: nrwl/nx-set-shas@v4
-
-      - name: Install dependencies using poetry at root
-        run: poetry install -v
-      - name: Install per project dev dependencies
-        run: poetry run npx nx run-many -t install --all --parallel 1
-
   lint:
-    needs:
-      - install
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
@@ -75,8 +33,6 @@ jobs:
       artifact_path: 'dist/'
     secrets: inherit
   test:
-    needs:
-      - install
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
@@ -85,8 +41,6 @@ jobs:
       artifact_path: 'coverage/'
     secrets: inherit
   build:
-    needs:
-      - install
     uses: ./.github/workflows/nx-run.yml
     with:
       run_poetry_install: true
@@ -96,63 +50,151 @@ jobs:
     secrets: inherit
 
   docker-base:
+    # Note that docker base strictly speaking doesn't matter if it is pushed
+    # when the rest of the build failed as not used in prod
+    # so we can save a bit of time by doing it whilst lint/test/etc run
     # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
-    needs:
-      - lint
-      - test
-      - build
     with:
       image_tag: 'python-prod-base'
       build_target: 'python-prod-base'
+      push_image: false # since really want we want is build cache
     secrets: inherit
 
   docker-aggregator:
-    # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
     needs:
       - docker-base
+      - lint
+      - test
+      - build
     with:
       image_tag: 'aggregator'
       build_target: 'aggregator'
     secrets: inherit
 
   docker-api:
-    # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
     needs:
       - docker-base
+      - lint
+      - test
+      - build
     with:
       image_tag: 'api'
       build_target: 'api'
     secrets: inherit
 
   docker-worker:
-    # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
     needs:
       - docker-base
+      - lint
+      - test
+      - build
     with:
       image_tag: 'worker'
       build_target: 'worker'
     secrets: inherit
 
-  deploy-tsuru:
+  docker-mocks:
+    uses: ./.github/workflows/docker.yml
+    needs:
+      - docker-base
+      - lint
+      - test
+      - build
+    with:
+      image_tag: 'mocks'
+      build_target: 'mocks'
+    secrets: inherit
+
+  # Build nginx reverse proxy
+  docker-nginx:
+    # Build base image first to enable caching
+    uses: ./.github/workflows/docker.yml
+    with:
+      image_tag: 'nginx_reverse_proxy'
+      build_target: 'nginx_reverse_proxy'
+    secrets: inherit
+
+  deploy-docker-stack:
+    # UNCOMMENT IT ALL BELOW
     needs:
       - docker-api # if we didn't build a container, don't do this!
+      - docker-worker
+      - docker-aggregator
+      - docker-nginx
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
-      TSURU_TOKEN: ${{ secrets.IMPAAS_DEPLOY_TOKEN }}
+      DOCKER_HOST: ssh://aignostic@aignostic
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Install tsuru CLI
-        run: curl -fsSL "https://tsuru.io/get" | bash
-      - name: Add impaas target
-        run: tsuru target add impaas https://impaas.uk -s
-      - name: Deploy app
-        run: tsuru app deploy -i ${{ env.REGISTRY }}/aignostic/api:latest -a ${{ env.IMPAAS_APP_NAME }}
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Make SSH Directory
+        run: mkdir -p ~/.ssh
+      - name: Commit SSH Key
+        run: |
+          touch ~/.ssh/id_ecdsa
+          chmod 600 ~/.ssh/id_ecdsa
+          echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
+      - name: Commit SSH Config
+        run: |
+          echo "Host aignostic" > ~/.ssh/config
+          echo "   HostName ${{ secrets.DIGITAL_OCEAN_HOST }}" >> ~/.ssh/config
+          echo "   User aignostic" >> ~/.ssh/config
+          echo "   IdentityFile ~/.ssh/id_ecdsa" >> ~/.ssh/config
+      - name: Add SSH Known Hosts
+        run: ssh-keyscan -H ${{ secrets.DIGITAL_OCEAN_HOST }} >> ~/.ssh/known_hosts
+      - name: Wait for SSH to work
+        run: ssh aignostic@aignostic "echo 'Hello from the other side'"
+      - name: Deploy Stack
+        run: docker stack deploy --with-registry-auth -c ./swarm/app.docker-compose.yml aignostic
+
+  deploy-docker-mocks:
+    # UNCOMMENT IT ALL BELOW
+    needs:
+      - docker-mocks
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_HOST: ssh://aignostic@aignostic
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Make SSH Directory
+        run: mkdir -p ~/.ssh
+      - name: Commit SSH Key
+        run: |
+          touch ~/.ssh/id_ecdsa
+          chmod 600 ~/.ssh/id_ecdsa
+          echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
+      - name: Commit SSH Config
+        run: |
+          echo "Host aignostic" > ~/.ssh/config
+          echo "   HostName ${{ secrets.DIGITAL_OCEAN_HOST }}" >> ~/.ssh/config
+          echo "   User aignostic" >> ~/.ssh/config
+          echo "   IdentityFile ~/.ssh/id_ecdsa" >> ~/.ssh/config
+      - name: Add SSH Known Hosts
+        run: ssh-keyscan -H ${{ secrets.DIGITAL_OCEAN_HOST }} >> ~/.ssh/known_hosts
+      - name: Wait for SSH to work
+        run: ssh aignostic@aignostic "echo 'Hello from the other side'"
+      - name: Deploy Stack
+        run: docker stack deploy --with-registry-auth -c ./swarm/mocks.docker-compose.yml aignostic-mocks
+
   deploy-gh-pages:
     needs:
       - lint

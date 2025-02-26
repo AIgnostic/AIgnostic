@@ -1,10 +1,39 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Homepage from '../src/app/home';
-import { steps } from '../src/app/constants';
+import {
+  steps,
+  modelTypesToMetrics,
+  initializeModelTypesToMetrics,
+  activeStepToInputConditions,
+} from '../src/app/constants';
 import '@testing-library/jest-dom';
 import { checkURL } from '../src/app/utils';
-import { modelTypesToMetrics, generalMetrics } from '../src/app/constants';
+
+// mock modelTypesToMetrics
+jest.mock('../src/app/constants', () => ({
+  __esModule: true,
+  modelTypesToMetrics: {
+    'Binary Classification': ['Metric1', 'Metric2'],
+  },
+  steps: jest.requireActual('../src/app/constants').steps,
+  activeStepToInputConditions: jest.requireActual('../src/app/constants')
+    .activeStepToInputConditions,
+  initializeModelTypesToMetrics: jest.fn(),
+  WEBSOCKET_URL: 'ws://localhost:8000/ws',
+}));
+
+beforeAll(async () => {
+  await initializeModelTypesToMetrics();
+});
+
+jest.mock('@react-pdf/renderer', () => ({
+  Document: ({ children }: any) => <div>{children}</div>,
+  Page: ({ children }: any) => <div>{children}</div>,
+  Text: ({ children }: any) => <span>{children}</span>,
+  View: ({ children }: any) => <div>{children}</div>,
+  StyleSheet: { create: (styles: any) => styles },
+}));
 
 describe('Stepper Navigation', () => {
   it('should disable Next state if no API URLs inputted', () => {
@@ -52,6 +81,7 @@ jest.mock('../src/app/utils', () => ({
   __esModule: true,
   checkURL: jest.fn(),
   generateReportText: jest.fn(),
+  fetchMetricInfo: jest.fn(),
 }));
 
 describe('Form Validation', () => {
@@ -222,23 +252,6 @@ describe('Model Type Selection', () => {
     fireEvent.click(screen.getAllByText('Next')[0]);
     const expectedMetrics = modelTypesToMetrics['Binary Classification'];
     expectedMetrics.forEach((metric) => {
-      expect(screen.getByText(metric)).toBeInTheDocument();
-    });
-  });
-
-  it('should reset metricChips to generalMetrics if selected model type is not in modelTypesToMetrics', () => {
-    render(<Homepage />);
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    fireEvent.click(screen.getAllByText('Next')[0]);
-
-    generalMetrics.forEach((metric) => {
       expect(screen.getByText(metric)).toBeInTheDocument();
     });
   });

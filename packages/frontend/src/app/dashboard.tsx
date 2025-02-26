@@ -1,28 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import ErrorMessage from './components/ErrorMessage';
-import { generateReportText } from './utils';
 import theme from './theme';
-import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
+import { Metric } from './types';
+import ReportRenderer from './components/ReportRenderer';
 
 import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
-
-
-interface Metric {
-  [metricName: string]: number;
-}
-
+import { pdf } from '@react-pdf/renderer';
+import { WEBSOCKET_URL } from './constants';
 
 interface DashboardProps {
   onComplete: () => void;
-}
-interface Report {
-  property: string;
-  computedMetrics: { metric: string; result: string }[];
-  legislationExtracts: string[];
-  llmInsights: string[];
 }
 
 // Each item from the websocket is an array of Metric objects.
@@ -42,7 +32,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
   const expectedItems = 10;
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:5005');
+    const socket = new WebSocket(WEBSOCKET_URL);
 
     socket.onopen = () => {
       console.log('WebSocket connection established');
@@ -85,15 +75,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
 
           break;
         case 'REPORT': {
-          console.log('Results received:', data.content);
-          setReport(data.content);
-          console.log('Report:', data.content);
-          const doc = generateReportText(data.content);
-          console.log(doc);
-          doc.save('AIgnostic_Report.pdf');
-          if (error.header === 'Report is being generated') {
-            setShowError(false);
-          }
+          const generateReport = async () => {
+            console.log('Results received:', data.content);
+            setReport(data.content);
+            console.log('Report:', data.content);
+            const blob = await pdf(
+              <ReportRenderer report={data.content} />
+            ).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'AIgnostic_Report.pdf'; // Set the file name
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            if (error.header === 'Report is being generated') {
+              setShowError(false);
+            }
+          };
+          generateReport();
           break;
         }
         case 'ERROR':
@@ -190,7 +191,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
                 key={itemIndex}
                 style={{ ...metricCardStyle, flex: '1 1 calc(33.333% - 16px)' }}
               >
-                {Object.entries(item).map(([key, value], metricIndex) => (
+                {Object.entries(item).map(([metric_name, metric_info], metricIndex) => (
                   <div
                     key={metricIndex}
                     style={{
@@ -211,10 +212,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
                         marginBottom: '8px',
                       }}
                     >
-                      <h3>{key}</h3>
+                      <h3>{metric_name}</h3>
                     </div>
                     <div>
-                      <p>Metric: {value}</p>
+                      <p>Metric: {metric_info.value}</p>
+                      <p>Ideal value: {metric_info.ideal_value}</p>
+                      <p>Range: {metric_info.range[0]} - {metric_info.range[1]}</p>
                     </div>
                   </div>
                 ))}
