@@ -47,10 +47,10 @@ const steps = [
 ];
 
 const BACKEND_EVALUATE_URL = IS_PROD
-  ? 'https:/aignostic-api.docsoc.co.uk/evaluate'
+  ? 'https://aignostic-api.docsoc.co.uk/evaluate'
   : 'http://localhost:8000/evaluate';
 const RESULTS_URL = IS_PROD
-  ? 'https:/aignostic-api.docsoc.co.uk/results'
+  ? 'https://aignostic-api.docsoc.co.uk/results'
   : 'http://localhost:5002/results';
 const WEBSOCKET_URL = IS_PROD
   ? 'wss://aignostic-api.docsoc.co.uk/aggregator/ws'
