@@ -176,7 +176,7 @@ jobs:
       - name: Commit SSH Key
         run: |
           touch ~/.ssh/id_ecdsa
-          chmod 644 ~/.ssh/id_ecdsa
+          chmod 600 ~/.ssh/id_ecdsa
           echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
       - name: Commit SSH Config
         run: |
@@ -207,7 +207,7 @@ jobs:
       - name: Commit SSH Key
         run: |
           touch ~/.ssh/id_ecdsa
-          chmod 644 ~/.ssh/id_ecdsa
+          chmod 600 ~/.ssh/id_ecdsa
           echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
       - name: Commit SSH Config
         run: |
