@@ -43,10 +43,13 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
         "article_number": article,
         "article_title": "",
         "description": "",
-        "suitable_recitals": []
+        "suitable_recitals": [],
     }
-    text_lines = [re.sub(r'\s+', ' ', line.strip())
-                  for line in article_content.split("\n") if line.strip()]
+    text_lines = [
+        re.sub(r"\s+", " ", line.strip())
+        for line in article_content.split("\n")
+        if line.strip()
+    ]
 
     i = 0
     while i < len(text_lines):
@@ -58,21 +61,21 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
             i += 1
 
         # Extract Description
-        elif ("Suitable Recitals" not in line and
-              not line.startswith("Art.") and
-              "GDPR" not in line):
+        elif (
+            "Suitable Recitals" not in line
+            and not line.startswith("Art.")
+            and "GDPR" not in line
+        ):
             data["description"] += line + " "
 
         # Extract Suitable Recitals
         elif "Suitable Recitals" in line:
             i += 1
             while i < len(text_lines) and not text_lines[i].startswith("Art."):
-                match = re.search(r'\b(\d+)\b', text_lines[i])
+                match = re.search(r"\b(\d+)\b", text_lines[i])
                 if match:
                     recital_number = match.group(1)
-                    recital_link = (
-                        f"https://gdpr-info.eu/recitals/no-{recital_number}/"
-                    )
+                    recital_link = f"https://gdpr-info.eu/recitals/no-{recital_number}/"
                     data["suitable_recitals"].append(recital_link)
                 i += 1
             break
@@ -125,7 +128,9 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
     for property in property_to_metrics.keys():
         property_result = {}
         # find the intersection of computed metrics and metrics for the property
-        property_metrics = set([p.replace(" ", "_") for p in property_to_metrics[property]])
+        property_metrics = set(
+            [p.replace(" ", "_") for p in property_to_metrics[property]]
+        )
         common_metrics = computed_metrics.intersection(property_metrics)
         property_result["property"] = property
         if common_metrics:
@@ -150,20 +155,23 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
             mesg = metric_insights(
                 property_name=property,
                 metrics=[
-                    {"metric": metric.replace("_", " "), "value": str(metrics_data[metric])}
+                    {
+                        "metric": metric.replace("_", " "),
+                        "value": str(metrics_data[metric]),
+                    }
                     for metric in common_metrics
                 ],
                 article_extracts=property_result["legislation_extracts"],
-                llm=llm
+                llm=llm,
             ).content
-        except Exception:
-            mesg = "Failed to initialize LLM"
+        except Exception as e:
+            mesg = "Failed to initialize LLM: {}".format(str(e))
 
         property_result["llm_insights"].append(mesg)
 
         results.append(property_result)
 
-    print(results)
+    # print(results)
     return results
 
 
