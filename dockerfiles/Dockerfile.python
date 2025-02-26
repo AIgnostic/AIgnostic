@@ -70,7 +70,8 @@ WORKDIR /app
 RUN useradd -m appuser
 
 # Copy only the necessary files from the builder stage
-COPY --from=builder --chown=appuser:appuser /app/packages /app/.venv /app/
+COPY --from=builder --chown=appuser:appuser /app/packages /app/packages
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
 # Switch
 USER appuser
@@ -116,7 +117,8 @@ WORKDIR /app
 RUN useradd -m appuser
 
 # Copy only the necessary files from the builder stage
-COPY --from=builder --chown=appuser:appuser /app/packages /app/.venv /app/
+COPY --from=builder --chown=appuser:appuser /app/packages /app/packages
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
 # Switch
 USER appuser
