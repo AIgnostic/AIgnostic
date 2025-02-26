@@ -6,7 +6,18 @@ import numpy as np
 from rouge import Rouge
 import editdistance
 from metrics.models import CalculateRequest
-from metrics.exceptions import MetricsComputationException, InvalidParameterException 
+from metrics.exceptions import (
+    MetricsComputationException,
+    InvalidParameterException,
+    ModelQueryException
+)
+from metrics.utils import (
+    _query_model
+)
+from common.models import ModelResponse
+from scipy.spatial.distance import euclidean
+from sklearn.linear_model import Ridge
+
 
 def generate_synonym_perturbations(sentence: str):
     """
@@ -157,20 +168,14 @@ def ntg_lime(info: CalculateRequest):
     # Binary -> Bernoulli Noise
     # Assume numeric values for now
     # TODO: Add support for categorical features
-    perturbed_samples = info.input_features + np.random.normal(
-        scale=0.1 * np.std(info.input_features, axis=0),
-        size=(num_samples, d)
-    )
-
-    if not info.regression_flag:
-        # probabilities cannot exceed 1 or be less than 0
-        perturbed_samples = np.clip(perturbed_samples, 0, 1)
+    perturb_sentences = np.vectorize(generate_synonym_perturbations)
+    perturbed_samples = np.array(perturb_sentences(info.input_features))
 
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
-    print(f"Model Response = {response}")
-    # Compute model probabilities for perturbed samples
-    outputs = response.predictions if (info.regression_flag or esp) else response.confidence_scores
+
+    # Use probabilities if the output is a classification model, otherwise use regression outputs directly
+    outputs = response.predictions if info.regression_flag else response.confidence_scores
 
     if outputs is None:
         raise ModelQueryException(
@@ -182,6 +187,7 @@ def ntg_lime(info: CalculateRequest):
     distances = np.array([euclidean(info.input_features[i], sample) for i, sample in enumerate(perturbed_samples)])
 
     epsilon = 1e-10     # Small constant for numerical stability (avoid division by zero)
+    kernel_width = np.sqrt(info.input_features.shape[0]) * 0.75
     weights = np.exp(-distances ** 2 / (2 * kernel_width ** 2)) + epsilon
 
     # Fit a weighted linear regression model
