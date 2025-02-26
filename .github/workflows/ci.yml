@@ -159,13 +159,15 @@ jobs:
 
   deploy-docker-stack:
     # UNCOMMENT IT ALL BELOW
-    needs:
-      - docker-api # if we didn't build a container, don't do this!
-      - docker-worker
-      - docker-aggregator
-      - docker-nginx
+    # needs:
+    #   - docker-api # if we didn't build a container, don't do this!
+    #   - docker-worker
+    #   - docker-aggregator
+    #   - docker-nginx
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      DOCKER_HOST: ssh://${{ secrets.DIGITAL_OCEAN_USER }}@${{ secrets.DIGITAL_OCEAN_HOST }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -180,17 +182,24 @@ jobs:
       #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
       #     stack_file: './swarm/services.docker-compose.yml'
       #     stack_name: 'aignostic'
-      - name: Deploy Apps
-        uses: kitconcept/docker-stack-deploy@v1.0.1
+      # - name: Deploy Apps
+      #   uses: kitconcept/docker-stack-deploy@v1.0.1
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+      #     remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
+      #     remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
+      #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+      #     stack_file: './swarm/app.docker-compose.yml'
+      #     stack_name: 'aignostic'
+      - name: Prepare SSH
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
-          remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
-          remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
-          stack_file: './swarm/app.docker-compose.yml'
-          stack_name: 'aignostic'
+          ssh-private-key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+      - name: Deploy Stack
+        run: docker stack deploy -c ./swarm/app.docker-compose.yml aignostic
+
   deploy-docker-mocks:
     # UNCOMMENT IT ALL BELOW
     needs:
@@ -211,17 +220,23 @@ jobs:
       #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
       #     stack_file: './swarm/services.docker-compose.yml'
       #     stack_name: 'aignostic'
-      - name: Deploy Apps
-        uses: kitconcept/docker-stack-deploy@v1.0.1
+      # - name: Deploy Apps
+      #   uses: kitconcept/docker-stack-deploy@v1.0.1
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+      #     remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
+      #     remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
+      #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+      #     stack_file: './swarm/mocks.docker-compose.yml'
+      #     stack_name: 'aignostic-mocks'
+      - name: Prepare SSH
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
-          remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
-          remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
-          stack_file: './swarm/mocks.docker-compose.yml'
-          stack_name: 'aignostic-mocks'
+          ssh-private-key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+      - name: Deploy Stack
+        run: docker stack deploy -c ./swarm/mocks.docker-compose.yml aignostic-mocks
   deploy-gh-pages:
     needs:
       - lint
