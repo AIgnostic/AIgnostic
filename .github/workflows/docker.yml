@@ -14,6 +14,11 @@ on:
         required: false
         type: string
         default: './dockerfiles/Dockerfile.python'
+      push_image:
+        description: 'Push the image to the registry'
+        required: false
+        type: boolean
+        default: true
 
 env:
   REGISTRY: ghcr.io
@@ -58,7 +63,7 @@ jobs:
         with:
           context: .
           file: ${{ inputs.dockerfile }}
-          push: true
+          push: ${{ inputs.push_image }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # no-cache: true

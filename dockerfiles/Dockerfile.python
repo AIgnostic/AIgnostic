@@ -82,8 +82,6 @@ COPY ./poetry.lock /app
 COPY ./poetry.toml /app
 COPY ./pyproject.toml /app
 
-RUN ls -la ./packages/common
-
 # Run poetry install at root
 RUN poetry install -v --only=main
 
