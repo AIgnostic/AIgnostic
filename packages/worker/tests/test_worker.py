@@ -2,7 +2,7 @@ import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from common.models.common import Job
-from common.models import MetricValues
+from common.models import MetricConfig, MetricValue
 
 
 from worker.worker import Worker
@@ -61,7 +61,17 @@ def test_fetch_job_no_job():
 
 def test_queue_result():
     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
-        result = MetricValues(metric_values={"accuracy": 0.95}, batch_size=1, total_sample_size=1)
+        result = MetricConfig(
+            metric_values={
+                "accuracy": MetricValue(
+                    computed_value=0.95,
+                    ideal_value=1,
+                    range=(0, 1)
+                )
+            },
+            batch_size=1,
+            total_sample_size=1
+        )
         worker.queue_result(result)
         mock_channel.basic_publish.assert_called_once()
 
@@ -100,8 +110,14 @@ async def test_process_job_success(
         }
         mock_query_model.return_value = {"predictions": [[0], [1]], "confidence_scores": [[0.9], [0.8]]}
 
-        mock_calculate_metrics.return_value = MetricValues(
-            metric_values={"accuracy": 0.95},
+        mock_calculate_metrics.return_value = MetricConfig(
+            metric_values={
+                "accuracy": MetricValue(
+                    computed_value=0.95,
+                    ideal_value=1,
+                    range=(0, 1)
+                )
+            },
             batch_size=1,
             total_sample_size=1
         )

@@ -20,9 +20,12 @@ def test_integration_results_consumer_and_metrics_aggregator():
 
     # Simulating messages received in the queue
     test_messages = [
-        (b"{'accuracy': 0.8, 'loss': 0.5}, 10"),
-        (b"{'accuracy': 0.9, 'loss': 0.4}, 20"),
-        (b"{'accuracy': 0.85, 'loss': 0.45}, 15")
+        (b"{'accuracy': {'computed_value': 0.8, 'ideal_value': 1.0, 'range': 0.2}, "
+         b"'loss': {'computed_value': 0.5, 'ideal_value': 0.0, 'range': 0.5}}, 10"),
+        (b"{'accuracy': {'computed_value': 0.9, 'ideal_value': 1.0, 'range': 0.1}, "
+         b"'loss': {'computed_value': 0.4, 'ideal_value': 0.0, 'range': 0.4}}, 20"),
+        (b"{'accuracy': {'computed_value': 0.85, 'ideal_value': 1.0, 'range': 0.15}, "
+         b"'loss': {'computed_value': 0.45, 'ideal_value': 0.0, 'range': 0.45}}, 15")
     ]
 
     # Mock RabbitMQ's basic_consume and simulate message consumption
@@ -46,5 +49,5 @@ def test_integration_results_consumer_and_metrics_aggregator():
 
     aggregated_metrics = aggregator.get_aggregated_metrics()
 
-    assert abs(aggregated_metrics["accuracy"] - expected_metrics["accuracy"]) < 1e-5
-    assert abs(aggregated_metrics["loss"] - expected_metrics["loss"]) < 1e-5
+    assert abs(aggregated_metrics["accuracy"]["value"] - expected_metrics["accuracy"]) < 1e-5
+    assert abs(aggregated_metrics["loss"]["value"] - expected_metrics["loss"]) < 1e-5
