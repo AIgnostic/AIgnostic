@@ -40,8 +40,8 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - /etc/letsencrypt/live/aignostic.docsoc.co.uk/fullchain.pem:/opt/nginx/certs/fullchain.pem
-      - /etc/letsencrypt/live/aignostic.docsoc.co.uk/privkey.pem:/opt/nginx/certs/privkey.key
+      - /etc/letsencrypt/live/api.aignostic.docsoc.co.uk/fullchain.pem:/opt/nginx/certs/fullchain.pem
+      - /etc/letsencrypt/live/api.aignostic.docsoc.co.uk/privkey.pem:/opt/nginx/certs/privkey.key
     networks:
       - aignostic_network
     depends_on:
