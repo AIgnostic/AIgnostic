@@ -193,19 +193,22 @@ jobs:
       #     remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
       #     stack_file: './swarm/app.docker-compose.yml'
       #     stack_name: 'aignostic'
-      - name: Prepare SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+      # - name: Prepare SSH
+      #   uses: webfactory/ssh-agent@v0.9.0
+      #   with:
+      #     ssh-private-key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
       - name: Commit SSH Key
         run: echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
-
-      - name: Commit SSH Cofig
+      - name: Commit SSH Config
         run: |
           echo "Host aignostic" > ~/.ssh/config
           echo "   HostName ${{ secrets.DIGITAL_OCEAN_HOST }}" >> ~/.ssh/config
           echo "   User aignostic" >> ~/.ssh/config
           echo "   IdentityFile ~/.ssh/id_ecdsa" >> ~/.ssh/config
+      - name: Add SSH Known Hosts
+        run: ssh-keyscan -H ${{ secrets.DIGITAL_OCEAN_HOST }} >> ~/.ssh/known_hosts
+      - name: TEST
+        run: ssh aignostic@aignostic "echo 'Hello from the other side'"
       - name: Read SSH File
         run: cat ~/.ssh/config
       - name: Deploy Stack
