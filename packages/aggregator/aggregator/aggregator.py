@@ -150,6 +150,7 @@ def on_result_fetched(ch, method, properties, body):
     global connected_clients
     result_data = json.loads(body)
     print(f"Received result: {result_data}")
+    print(f"Type of result_data: {type(result_data)}")
 
     if (metrics_aggregator.total_sample_size == 0):
         metrics_aggregator.set_total_sample_size(result_data["total_sample_size"])
