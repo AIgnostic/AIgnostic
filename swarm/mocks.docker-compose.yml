@@ -1,4 +1,5 @@
 # File to deploy mocks as stack "aignostic-mocks" to allow us to test prod
+version: '3.8'
 services:
   ####
   # Mock servers to test against
