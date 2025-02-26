@@ -413,54 +413,56 @@ function Homepage() {
               <Box sx={{ mb: 2 }}>
                 {index === steps.length - 1 ? (
                   <div>
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        // check that APIs are present and valid
-                        // if not, jump to step 0
-                        if (!state.modelURL || !state.datasetURL) {
-                          if (!state.modelURL) {
-                            setStateWrapper('isModelURLValid', false);
+                    {!state.showDashboard && (
+                      <Button
+                        variant="contained"
+                        onClick={() => {
+                          // check that APIs are present and valid
+                          // if not, jump to step 0
+                          if (!state.modelURL || !state.datasetURL) {
+                            if (!state.modelURL) {
+                              setStateWrapper('isModelURLValid', false);
+                            }
+                            if (!state.datasetURL) {
+                              setStateWrapper('isDatasetURLValid', false);
+                            }
+                            setStateWrapper('activeStep', 0);
                           }
-                          if (!state.datasetURL) {
-                            setStateWrapper('isDatasetURLValid', false);
-                          }
-                          setStateWrapper('activeStep', 0);
-                        }
 
-                        // check that at least one metric is selected
-                        // if not, jump to step 3
-                        else if (
-                          state.metricChips.filter(
-                            (metricChip) => metricChip.selected
-                          ).length === 0
-                        ) {
-                          setStateWrapper(
-                            'metricsHelperText',
-                            'Please select at least one metric'
-                          );
-                          setStateWrapper('activeStep', 2);
-                        }
-                        // if all checks pass, generate report
-                        else {
-                          if (!state.isGeneratingReport) {
-                            handleSubmit();
+                          // check that at least one metric is selected
+                          // if not, jump to step 3
+                          else if (
+                            state.metricChips.filter(
+                              (metricChip) => metricChip.selected
+                            ).length === 0
+                          ) {
+                            setStateWrapper(
+                              'metricsHelperText',
+                              'Please select at least one metric'
+                            );
+                            setStateWrapper('activeStep', 2);
                           }
-                        }
+                          // if all checks pass, generate report
+                          else {
+                            if (!state.isGeneratingReport) {
+                              handleSubmit();
+                            }
+                          }
 
-                        // open dashboard page in new tab
-                        // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
-                      }}
-                      disabled={state.isGeneratingReport}
-                      sx={{
-                        mt: 1,
-                        mr: 1,
-                        backgroundColor: theme.palette.secondary.main,
-                      }}
-                    >
-                      {' '}
-                      Generate Report
-                    </Button>
+                          // open dashboard page in new tab
+                          // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
+                        }}
+                        disabled={state.isGeneratingReport}
+                        sx={{
+                          mt: 1,
+                          mr: 1,
+                          backgroundColor: theme.palette.secondary.main,
+                        }}
+                      >
+                        {' '}
+                        Generate Report
+                      </Button>
+                    )}
                     {state.showDashboard && (
                       // Passing the dashboardKey forces remount when it changes.
                       <Dashboard

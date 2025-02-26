@@ -7,7 +7,6 @@ from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 from common.models.aggregator_models import AggregatorMessage, MessageType
 from report_generation.utils import generate_report
-from aggregator.tasks import generate_report_async
 
 
 
@@ -205,29 +204,13 @@ def on_result_fetched(ch, method, properties, body):
         # send completion message
         manager.send_to_user(user_id, aggregator_metrics_completion_log())
 
-        # report_thread = threading.Thread(target=generate_and_send_report, args=(user_id, aggregates))
-        # report_thread.start()
-        task = generate_report_async.delay(aggregates)
+        report_thread = threading.Thread(target=generate_and_send_report, args=(user_id, aggregates))
+        report_thread.start()
 
-        # Check when the task is done and send the result to the user
-        def wait_for_report():
-            report_json = task.get()
-            manager.send_to_user(user_id, aggregator_final_report_log(report_json))
-
-        threading.Thread(target=wait_for_report).start()
         # cleanup completed aggregator  
         del user_aggregators[user_id]
 
 
-# def aggregate_report(metrics: dict):
-#     """
-#         Generates a report to send to the frontend
-#         By collating the metrics, and pulling information from the report generator
-#     """
-
-#     report_json = generate_report(metrics, os.getenv("GOOGLE_API_KEY"))
-
-#     return report_json
 
 def generate_and_send_report(user_id, aggregates):
     """Generates the report and sends it without blocking the main process."""
@@ -260,30 +243,6 @@ def send_to_clients(message: AggregatorMessage):
 
     # Remove disconnected clients
     connected_clients.difference_update(disconnected_clients)
-
-
-# def websocket_handler(websocket):
-#     """Handles WebSocket connections and sends any queued messages upon connection."""
-#     global connected_clients
-#     print("New WebSocket connection")
-#     connected_clients.add(websocket)
-
-#     # Send any stored messages when the first client connects
-#     while not message_queue.empty():
-#         message = message_queue.get()
-#         print("Sending queued message to new client")
-#         send_to_clients(message)
-
-#     try:
-#         for _ in websocket:  # Keep connection open
-#             pass
-#     except Exception as e:
-#         print(f"WebSocket connection closed: {e}")
-#     finally:
-#         print("Client disconnected")
-#         connected_clients.remove(websocket)  # Remove on disconnect
-
-
 
 
 class ConnectionManager:

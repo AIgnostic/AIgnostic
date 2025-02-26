@@ -64,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
           case 'METRICS_INTERMEDIATE':
             try {
               // Assume each intermediate message contains one item with multiple metrics.
-              const newItem: Metric[] = data.content.metrics_results;
+              const newItem: Metric = data.content.metrics_results;
 
               console.log('New item:', newItem);
               // Append the new item to our list of items.
