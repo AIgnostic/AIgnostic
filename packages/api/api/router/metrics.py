@@ -26,6 +26,9 @@ task_to_metric_map = {
     ],
     "multi_class_classification": [],
     "regression": [],
+    "next_token_generation": [
+        "fast_gradient_sign_method",
+    ],
 }
 """Documentation for the metrics service on the API to tell us what metric are supported"""
 

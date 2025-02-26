@@ -4,6 +4,7 @@ from mocks.model.huggingface_binclassifier import app as huggingface_app
 from mocks.model.scikit_mock import app as scikit_app
 from mocks.model.finbert import app as finbert_app
 from mocks.model.mock import app as mock_app
+from mocks.model.next_token_gen_1 import app as llama
 from folktables import ACSDataSource, ACSEmployment
 import pandas as pd
 import pytest
@@ -15,6 +16,7 @@ huggingface_mock = TestClient(huggingface_app)
 scikit_mock = TestClient(scikit_app)
 basic_mock = TestClient(mock_app)
 finbert_mock = TestClient(finbert_app)
+llama = TestClient(mock_app)
 
 
 def test_non_existent_endpoint_throws_error():
@@ -197,3 +199,22 @@ def test_probabilities_sum_to_one():
         assert confidence_scores[0] <= 1, "Probability score is greater than 1"
         assert confidence_scores[0] >= 0, "Probability score is less than 0"
         assert sum(confidence_scores) == pytest.approx(1), "Confidence scores do not sum to 1"
+
+# def test_single_token_generation():
+#     """Test if the API generates a single token correctly."""
+#     payload = {
+#         "prompt": "Hello, how are",
+#         "max_length": 1
+#     }
+
+#     response = llama.post("/predict", json=payload)
+    
+#     # Assertions
+#     assert response.status_code == 200  # Ensure response is successful
+#     json_data = response.json()
+    
+#     assert "response" in json_data  # Ensure response contains generated token
+#     assert isinstance(json_data["response"], str)  # Ensure it's a string
+#     assert len(json_data["response"].strip()) > 0  # Ensure it's not empty
+
+#     print(f"Generated Token: {json_data['response']}")  # Debugging output

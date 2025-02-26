@@ -17,11 +17,7 @@ uvicorn = "^0.34.0"
 python-dotenv = "^1.0.1"
 folktables = "^0.0.12"
 pydantic = "^2.10.6"
-torch = [
-    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "linux", markers = "sys_platform != 'darwin'" },
-    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "win32", markers = "sys_platform != 'darwin'" },
-    { version = "^2.6.0", source = "pypi", platform = "darwin", markers = "sys_platform == 'darwin'" },
-]
+
 
 [tool.poetry.dependencies.api]
 path = "packages/api"

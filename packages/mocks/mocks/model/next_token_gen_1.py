@@ -1,13 +1,15 @@
 """
-Next Token Generation model
+Single Token Generation Model
 """
 from fastapi import FastAPI
-from common.models import ModelResponse, LLMInput, LLMResponse
+from pydantic import BaseModel
+from common.models import LLMInput, LLMResponse
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
 
+# Load model and tokenizer
 name = "neuralmagic/Llama-2-7b-chat-quantized.w8a8"
-
 tokenizer = AutoTokenizer.from_pretrained(name)
 model = AutoModelForCausalLM.from_pretrained(name)
 app = FastAPI()
@@ -22,34 +24,30 @@ app.add_middleware(
 )
 
 
-@app.post("/predict", response_model=ModelResponse)
+@app.post("/predict", response_model=LLMResponse)
 def predict(input: LLMInput) -> LLMResponse:
-    messages = input.prompt
-    input_ids = tokenizer.apply_chat_template(
-        messages,
-        add_generation_prompt=True,
-        return_tensors="pt"
-    ).to(model.device)
+    """
+    Given a prompt, generate a *single token* and return the response.
+    """
+    # Tokenise the input prompt
+    input_ids = tokenizer(input.prompt, return_tensors="pt").input_ids.to(model.device)
 
-    terminators = [
-        tokenizer.eos_token_id,
-        tokenizer.convert_tokens_to_ids("<|eot_id|>")
-    ]
-
-    outputs = model.generate(
+    # Generate only one token
+    output = model.generate(
         input_ids,
-        max_new_tokens=256,
-        eos_token_id=terminators,
-        do_sample=True,
-        temperature=0.6,
-        top_p=0.9,
+        max_new_tokens=1,  # Single token generation
+        do_sample=True,  # Enable sampling for diversity
+        temperature=0.6,  # Control randomness
+        top_p=0.9  # Top-p nucleus sampling
     )
-    response = outputs[0][input_ids.shape[-1]:]
-    response = tokenizer.decode(response, skip_special_tokens=True)
 
-    return LLMResponse()
+    # Extract the newly generated token
+    new_token_id = output[0][-1].item()
+    new_token = tokenizer.decode(new_token_id, skip_special_tokens=True)
+
+    return LLMResponse(response=new_token)  # Return only the generated single token
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5013)
+    uvicorn.run(app, host="0.0.0.0", port=5020)
