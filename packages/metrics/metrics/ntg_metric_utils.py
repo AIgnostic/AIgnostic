@@ -168,8 +168,8 @@ def ntg_lime(info: CalculateRequest):
     # Binary -> Bernoulli Noise
     # Assume numeric values for now
     # TODO: Add support for categorical features
-    perturb_sentences = np.vectorize(generate_synonym_perturbations)
-    perturbed_samples = np.array(perturb_sentences(info.input_features))
+    average_sentence_length = np.mean([len(sentence.split()) for sentence in info.input_features])
+    perturbed_samples = generate_masked_sequences(info.input_features, num_masked_per_sentence=average_sentence_length / 4)
 
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
@@ -194,3 +194,7 @@ def ntg_lime(info: CalculateRequest):
     reg_model = Ridge(alpha=1.0)
     reg_model.fit(perturbed_samples - info.input_features, outputs, sample_weight=weights)
     return reg_model.coef_, reg_model
+
+
+# TODO: Implement a method to convert sentences to a fixed-length embedding space for semantic comparison. e.g. SONAR
+    

@@ -404,7 +404,7 @@ def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], float]
 """
 
 
-def explanation_stability_score(info: CalculateRequest) -> float:
+def explanation_stability_score(info: CalculateRequest, lime_fn=_lime_explanation) -> float:
     """
     Calculate the explanation stability score for a given model and sample inputs
 
@@ -415,7 +415,7 @@ def explanation_stability_score(info: CalculateRequest) -> float:
     :return: float - the explanation stability score (1 - 1/N * sum(distance_fn(E(x), E(x')))
         where distance_fn is the distance function between two explanations E(x) and E(x')
     """
-    lime_actual, _ = _lime_explanation(info)
+    lime_actual, _ = lime_fn(info)
 
     # Calculate gradients for perturbation
     gradients = _finite_difference_gradient(info, 0.01)
@@ -426,7 +426,7 @@ def explanation_stability_score(info: CalculateRequest) -> float:
     info.input_features = info.input_features + perturbation
 
     # Obtain perturbed lime output
-    lime_perturbed, _ = _lime_explanation(info)
+    lime_perturbed, _ = lime_fn(info)
 
     # use cosine-similarity for now but can be replaced with model-provider function later
     # TODO: Took absolute value of cosine similarity - verify if this is correct
@@ -434,7 +434,7 @@ def explanation_stability_score(info: CalculateRequest) -> float:
     return 1 - np.mean(diff).item()
 
 
-def explanation_sparsity_score(info: CalculateRequest) -> float:
+def explanation_sparsity_score(info: CalculateRequest, lime_fn=_lime_explanation) -> float:
     """
     Calculate the explanation sparsity score for a given model and sample inputs
 
@@ -451,7 +451,7 @@ def explanation_sparsity_score(info: CalculateRequest) -> float:
     #  - then check proportion less than 2 sigma from the mean
     # Note unnormalised inputs may have a volatile stability scores due to varying gradients
     # leading to greater variations in mean and std
-    lime_explanation_coeffs, _ = _lime_explanation(info, esp=True)
+    lime_explanation_coeffs, _ = lime_fn(info, esp=True)
     mean = np.mean(lime_explanation_coeffs)
     std = np.std(lime_explanation_coeffs)
 
@@ -461,7 +461,7 @@ def explanation_sparsity_score(info: CalculateRequest) -> float:
     return 1 - count_far_from_mean / len(lime_explanation_coeffs)
 
 
-def explanation_fidelity_score(info: CalculateRequest) -> float:
+def explanation_fidelity_score(info: CalculateRequest, lime_fn=_lime_explanation) -> float:
     """
     Calculate the explanation fidelity score for a given model and sample inputs.
 
@@ -474,7 +474,7 @@ def explanation_fidelity_score(info: CalculateRequest) -> float:
         an interpretable approximation g(x) of the model. For classification tasks, confidence_scores
         (probabilities) are compared instead.
     """
-    _, reg_model = _lime_explanation(info)
+    _, reg_model = lime_fn(info)
 
     # regression model predicts *probability* not prediction (after updating lime explanation)
 

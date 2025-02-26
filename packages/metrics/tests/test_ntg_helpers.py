@@ -51,3 +51,6 @@ def test_invalid_mask_probability_raises_invalid_parameter_exception():
     sentences = np.array([["This is a test sentence"], ["It was the best of times. It was the worst of times."]])
     with pytest.raises(InvalidParameterException) as e:
         generate_masked_sequences(sentences, mask_prob=0, num_masked_per_sentence=10)
+
+
+# TODO: Add lime tests for regression and classification for ntg_lime

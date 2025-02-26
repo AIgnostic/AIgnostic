@@ -1934,7 +1934,10 @@ develop = true
 aif360 = "^0.6.1"
 bert-score = "^0.3.13"
 common = {path = "../common", develop = true}
+editdistance = "^0.8.1"
 nltk = "^3.9.1"
+rouge = "^1.0.1"
+sonar = "^0.5.0"
 
 [package.source]
 type = "directory"
@@ -3573,15 +3576,15 @@ test = ["Cython", "array-api-strict (>=2.0,<2.1.1)", "asv", "gmpy2", "hypothesis
 
 [[package]]
 name = "setuptools"
-version = "75.8.1"
+version = "75.8.2"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
 files = [
-    {file = "setuptools-75.8.1-py3-none-any.whl", hash = "sha256:3bc32c0b84c643299ca94e77f834730f126efd621de0cc1de64119e0e17dab1f"},
-    {file = "setuptools-75.8.1.tar.gz", hash = "sha256:65fb779a8f28895242923582eadca2337285f0891c2c9e160754df917c3d2530"},
+    {file = "setuptools-75.8.2-py3-none-any.whl", hash = "sha256:558e47c15f1811c1fa7adbd0096669bf76c1d3f433f58324df69f3f5ecac4e8f"},
+    {file = "setuptools-75.8.2.tar.gz", hash = "sha256:4880473a969e5f23f2a2be3646b2dfd84af9028716d398e46192f84bc36900d2"},
 ]
 
 [package.extras]
@@ -3631,6 +3634,22 @@ files = [
     {file = "sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2"},
     {file = "sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"},
 ]
+
+[[package]]
+name = "sonar"
+version = "0.5.0"
+description = "Sonar: Tool to profile usage of HPC resources by regularly probing processes"
+optional = false
+python-versions = "*"
+groups = ["main"]
+markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
+files = [
+    {file = "sonar-0.5.0-py2.py3-none-any.whl", hash = "sha256:3e32f72f12fff68cddf4b4935c4e874e72ca4d482e60bcac18d83918b872147a"},
+    {file = "sonar-0.5.0.tar.gz", hash = "sha256:4e2ca5c2b8bbfb9000332a7662ce858947876bde2c3b7ce807fbb55a7c7c9107"},
+]
+
+[package.dependencies]
+tqdm = "*"
 
 [[package]]
 name = "soupsieve"

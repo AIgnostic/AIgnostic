@@ -2247,6 +2247,21 @@ files = [
 ]
 
 [[package]]
+name = "sonar"
+version = "0.5.0"
+description = "Sonar: Tool to profile usage of HPC resources by regularly probing processes"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "sonar-0.5.0-py2.py3-none-any.whl", hash = "sha256:3e32f72f12fff68cddf4b4935c4e874e72ca4d482e60bcac18d83918b872147a"},
+    {file = "sonar-0.5.0.tar.gz", hash = "sha256:4e2ca5c2b8bbfb9000332a7662ce858947876bde2c3b7ce807fbb55a7c7c9107"},
+]
+
+[package.dependencies]
+tqdm = "*"
+
+[[package]]
 name = "sympy"
 version = "1.13.1"
 description = "Computer algebra system (CAS) in Python"
@@ -2524,4 +2539,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "8fa1254f38e943ad760b56c8653d8aa18e93b92364de8028ffbb558e36cff621"
+content-hash = "9a1ad96ef5b7bc76e44a067f9fe066e4c956706793307509078630f845bdaf8e"
