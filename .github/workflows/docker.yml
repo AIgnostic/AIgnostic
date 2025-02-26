@@ -54,8 +54,7 @@ jobs:
             type=ref,event=tag
             type=ref,event=pr
             type=sha
-            type=raw,value=latest
-      # READD ,enable={{is_default_branch}} above before mergge
+            type=raw,value=latest,enable={{is_default_branch}}
       # Build tags with the tags we setup in the previous step
       - name: Build and push Docker image
         id: push
