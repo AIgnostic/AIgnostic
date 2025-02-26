@@ -1,18 +1,20 @@
 import pytest
-from unittest.mock import MagicMock, patch
-from aggregator.aggregator import (RESULT_QUEUE,
-                                   ResultsConsumer,
-                                   on_result_fetched,
-                                   aggregator_intermediate_metrics_log,
-                                   aggregator_metrics_completion_log,
-                                   aggregator_final_report_log,
-                                   metrics_aggregator,
-                                   connected_clients,
-                                   message_queue,
-                                   websocket_handler,
-                                   send_to_clients,
-                                   aggregate_report
-                                   )
+from unittest.mock import MagicMock, patch, mock_open
+from aggregator.aggregator import (
+    RESULT_QUEUE,
+    ResultsConsumer,
+    on_result_fetched,
+    aggregator_intermediate_metrics_log,
+    aggregator_metrics_completion_log,
+    aggregator_final_report_log,
+    metrics_aggregator,
+    connected_clients,
+    message_queue,
+    websocket_handler,
+    send_to_clients,
+    aggregate_report,
+    get_api_key,
+)
 import json
 
 
@@ -27,8 +29,8 @@ def test_init(consumer):
     assert consumer._channel is None
 
 
-@patch('aggregator.aggregator.connect_to_rabbitmq')
-@patch('aggregator.aggregator.init_queues')
+@patch("aggregator.aggregator.connect_to_rabbitmq")
+@patch("aggregator.aggregator.init_queues")
 def test_connect(mock_init_queues, mock_connect_to_rabbitmq, consumer):
     mock_connection = MagicMock()
     mock_channel = MagicMock()
@@ -48,8 +50,8 @@ def test_connect(mock_init_queues, mock_connect_to_rabbitmq, consumer):
     print(f"mock_init_queues called: {mock_init_queues.called}")
 
 
-@patch('aggregator.aggregator.init_queues')
-@patch('aggregator.aggregator.connect_to_rabbitmq')
+@patch("aggregator.aggregator.init_queues")
+@patch("aggregator.aggregator.connect_to_rabbitmq")
 def test_run(mock_init_queues, mock_connect_to_rabbitmq, consumer):
     mock_connection = MagicMock()
     mock_channel = MagicMock()
@@ -66,15 +68,13 @@ def test_run(mock_init_queues, mock_connect_to_rabbitmq, consumer):
     consumer.run(on_message_callback=mock_callback)
 
     mock_channel.basic_consume.assert_called_once_with(
-        queue=RESULT_QUEUE,
-        on_message_callback=mock_callback,
-        auto_ack=True
+        queue=RESULT_QUEUE, on_message_callback=mock_callback, auto_ack=True
     )
     mock_channel.start_consuming.assert_called_once()
 
 
-@patch('aggregator.aggregator.connect_to_rabbitmq')
-@patch('aggregator.aggregator.init_queues')
+@patch("aggregator.aggregator.connect_to_rabbitmq")
+@patch("aggregator.aggregator.init_queues")
 def test_stop(mock_init_queues, mock_connect_to_rabbitmq, consumer):
     mock_connection = MagicMock()
     mock_channel = MagicMock()
@@ -87,10 +87,12 @@ def test_stop(mock_init_queues, mock_connect_to_rabbitmq, consumer):
     mock_connection.close.assert_called_once()
 
 
-@patch('aggregator.aggregator.connect_to_rabbitmq')
-@patch('aggregator.aggregator.init_queues')
-@patch.object(ResultsConsumer, 'stop')  # Mock stop to prevent real shutdown
-def test_run_keyboard_interrupt(mock_stop, mock_init_queues, mock_connect_to_rabbitmq, consumer):
+@patch("aggregator.aggregator.connect_to_rabbitmq")
+@patch("aggregator.aggregator.init_queues")
+@patch.object(ResultsConsumer, "stop")  # Mock stop to prevent real shutdown
+def test_run_keyboard_interrupt(
+    mock_stop, mock_init_queues, mock_connect_to_rabbitmq, consumer
+):
     mock_connection = MagicMock()
     mock_channel = MagicMock()
 
@@ -112,8 +114,8 @@ def test_run_keyboard_interrupt(mock_stop, mock_init_queues, mock_connect_to_rab
     mock_stop.assert_called_once()
 
 
-@patch('aggregator.aggregator.send_to_clients')  # Mock send_to_clients
-@patch('aggregator.aggregator.aggregate_report')  # Mock report generation
+@patch("aggregator.aggregator.send_to_clients")  # Mock send_to_clients
+@patch("aggregator.aggregator.aggregate_report")  # Mock report generation
 def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
     # Mock RabbitMQ parameters
     mock_channel = MagicMock()
@@ -124,7 +126,7 @@ def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
     sample_message = {
         "total_sample_size": 20,
         "batch_size": 10,
-        "metric_values": {"accuracy": 0.85, "precision": 0.15}
+        "metric_values": {"accuracy": 0.85, "precision": 0.15},
     }
     message_body = json.dumps(sample_message)
 
@@ -150,7 +152,8 @@ def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
 
     # Verify send_to_clients was called with intermediate results
     mock_send_to_clients.assert_any_call(
-        aggregator_intermediate_metrics_log(metrics_aggregator.get_aggregated_metrics()))
+        aggregator_intermediate_metrics_log(metrics_aggregator.get_aggregated_metrics())
+    )
 
     # Simulate processing all batches
     on_result_fetched(mock_channel, mock_method, mock_properties, message_body)
@@ -164,7 +167,7 @@ def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
     assert metrics_aggregator.samples_processed == 0
 
 
-@patch('aggregator.aggregator.send_to_clients')  # Mock send_to_clients
+@patch("aggregator.aggregator.send_to_clients")  # Mock send_to_clients
 def test_websocket_handler(mock_send_to_clients):
     # Mock WebSocket clients
     mock_client1 = MagicMock()
@@ -221,17 +224,14 @@ def test_send_to_clients_with_clients():
     mock_client2.send.assert_called_once()
 
 
-@patch('aggregator.aggregator.generate_report')
+@patch("aggregator.aggregator.generate_report")
 def test_aggregate_report(mock_generate_report):
     # Mock metrics data
-    metrics = {
-        "accuracy": 0.85,
-        "precision": 0.15
-    }
+    metrics = {"accuracy": 0.85, "precision": 0.15}
 
     # Mock report generation functions
     mock_generate_report.return_value = []
-    with patch.dict('os.environ', {'GOOGLE_API_KEY': 'test_value'}):
+    with patch.dict("os.environ", {"GOOGLE_API_KEY": "test_value"}):
         # Call function under test
         report = aggregate_report(metrics)
 
@@ -239,3 +239,23 @@ def test_aggregate_report(mock_generate_report):
         assert "properties" in report
         assert "info" in report
         mock_generate_report.assert_called_once_with(metrics, "test_value")
+
+
+@patch.dict("os.environ", {"GOOGLE_API_KEY": "test_api_key"})
+def test_get_api_key_from_env():
+    api_key = get_api_key()
+    assert api_key == "test_api_key"
+
+
+@patch("builtins.open", new_callable=mock_open, read_data="file_api_key")
+@patch.dict("os.environ", {"GOOGLE_API_KEY_FILE": "/path/to/api_key_file"})
+def test_get_api_key_from_file(mock_file):
+    api_key = get_api_key()
+    mock_file.assert_called_once_with("/path/to/api_key_file")
+    assert api_key == "file_api_key"
+
+
+@patch.dict("os.environ", {}, clear=True)
+def test_get_api_key_no_key():
+    api_key = get_api_key()
+    assert api_key is None

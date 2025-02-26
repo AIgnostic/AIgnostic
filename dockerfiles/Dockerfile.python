@@ -23,14 +23,72 @@ COPY ./package-lock.json /app
 RUN npm ci
 
 COPY ./nx.json /app
-# Have to copy everything as any subset may be needed
-COPY ./packages /app/packages
+# Have to copy thee manually - means we can change code without rebuilding it all as deps didn't change
+COPY ./packages/aggregator/pyproject.toml /app/packages/aggregator/pyproject.toml
+COPY ./packages/aggregator/poetry.toml /app/packages/aggregator/poetry.toml
+COPY ./packages/aggregator/poetry.lock /app/packages/aggregator/poetry.lock
+COPY ./packages/aggregator/aggregator/__init__.py /app/packages/aggregator/aggregator/__init__.py
+COPY ./packages/aggregator/README.md /app/packages/aggregator/README.md
+
+COPY ./packages/api/pyproject.toml /app/packages/api/pyproject.toml
+COPY ./packages/api/poetry.toml /app/packages/api/poetry.toml
+COPY ./packages/api/poetry.lock /app/packages/api/poetry.lock
+COPY ./packages/api/api/__init__.py /app/packages/api/api/__init__.py 
+COPY ./packages/api/README.md /app/packages/api/README.md
+
+COPY ./packages/common/pyproject.toml /app/packages/common/pyproject.toml   
+COPY ./packages/common/poetry.toml /app/packages/common/poetry.toml
+COPY ./packages/common/poetry.lock /app/packages/common/poetry.lock
+COPY ./packages/common/common/__init__.py /app/packages/common/common/__init__.py
+COPY ./packages/common/README.md /app/packages/common/README.md
+
+COPY ./packages/llm-insights/pyproject.toml /app/packages/llm-insights/pyproject.toml
+COPY ./packages/llm-insights/poetry.toml /app/packages/llm-insights/poetry.toml
+COPY ./packages/llm-insights/poetry.lock /app/packages/llm-install/poetry.lock
+COPY ./packages/llm-insights/llm_insights/__init__.py /app/packages/llm-insights/llm_insights/__init__.py
+COPY ./packages/llm-insights/README.md /app/packages/llm-insights/README.md
+
+COPY ./packages/metrics/pyproject.toml /app/packages/metrics/pyproject.toml
+COPY ./packages/metrics/poetry.toml /app/packages/metrics/poetry.toml
+COPY ./packages/metrics/poetry.lock /app/packages/metrics/poetry.lock
+COPY ./packages/metrics/metrics/__init__.py /app/packages/metrics/metrics/__init__.py
+COPY ./packages/metrics/README.md /app/packages/metrics/README.md
+
+COPY ./packages/mocks/pyproject.toml /app/packages/mocks/pyproject.toml
+COPY ./packages/mocks/poetry.toml /app/packages/mocks/poetry.toml
+COPY ./packages/mocks/poetry.lock /app/packages/mocks/poetry.lock
+COPY ./packages/mocks/mocks/__init__.py /app/packages/mocks/mocks/__init__.py
+COPY ./packages/mocks/README.md /app/packages/mocks/README.md
+
+COPY ./packages/report-generation/pyproject.toml /app/packages/report-generation/pyproject.toml
+COPY ./packages/report-generation/poetry.toml /app/packages/report-generation/poetry.toml
+COPY ./packages/report-generation/poetry.lock /app/packages/report-generation/poetry.lock
+COPY ./packages/report-generation/report_generation/__init__.py /app/packages/report-generation/report_generation/__init__.py
+COPY ./packages/report-generation/README.md /app/packages/report-generation/README.md
+
+COPY ./packages/worker/pyproject.toml /app/packages/worker/pyproject.toml
+COPY ./packages/worker/poetry.toml /app/packages/worker/poetry.toml
+COPY ./packages/worker/poetry.lock /app/packages/worker/poetry.lock
+COPY ./packages/worker/worker/__init__.py /app/packages/worker/worker/__init__.py
+COPY ./packages/worker/README.md /app/packages/worker/README.md
+
+COPY ./packages/dispatcher/pyproject.toml /app/packages/dispatcher/pyproject.toml
+COPY ./packages/dispatcher/poetry.toml /app/packages/dispatcher/poetry.toml
+COPY ./packages/dispatcher/poetry.lock /app/packages/dispatcher/poetry.lock
+COPY ./packages/dispatcher/dispatcher/__init__.py /app/packages/dispatcher/dispatcher/__init__.py
+COPY ./packages/dispatcher/README.md /app/packages/dispatcher/README.md
+
 COPY ./poetry.lock /app
 COPY ./poetry.toml /app
 COPY ./pyproject.toml /app
 
+RUN ls -la ./packages/common
+
 # Run poetry install at root
 RUN poetry install -v --only=main
+
+# Copy source
+COPY ./packages /app/packages
 
 # Copy venv & application code to new image
 # Second stage: runtime

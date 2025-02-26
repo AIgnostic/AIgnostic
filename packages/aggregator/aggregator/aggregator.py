@@ -181,17 +181,25 @@ def on_result_fetched(ch, method, properties, body):
         metrics_aggregator.metrics = {}
 
 
+def get_api_key():
+    # if GOOGLE_API_KEY_FILE is set, read the key from the file
+    if os.getenv("GOOGLE_API_KEY_FILE"):
+        with open(os.getenv("GOOGLE_API_KEY_FILE")) as f:
+            return f.read().strip()
+    return os.getenv("GOOGLE_API_KEY")
+
+
 def aggregate_report(metrics: dict):
     """
     Generates a report to send to the frontend
     By collating the metrics, and pulling information from the report generator
     """
 
-    report_properties_sections = generate_report(metrics, os.getenv("GOOGLE_API_KEY"))
+    report_properties_sections = generate_report(metrics, get_api_key())
     report_info_section = {
         # TODO: Update with codecarbon info and calls to model from metrics
         "calls_to_model": metrics_aggregator.total_sample_size,
-        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
     }
 
     return {"properties": report_properties_sections, "info": report_info_section}

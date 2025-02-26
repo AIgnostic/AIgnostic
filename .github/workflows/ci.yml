@@ -96,53 +96,59 @@ jobs:
     secrets: inherit
 
   docker-base:
+    # Note that docker base strictly speaking doesn't matter if it is pushed
+    # when the rest of the build failed as not used in prod
+    # so we can save a bit of time by doing it whilst lint/test/etc run
     # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
-    # Put needs back before merge, just wanted to go a little faster
-    # needs:
-    #   - lint
-    #   - test
-    #   - build
     with:
       image_tag: 'python-prod-base'
       build_target: 'python-prod-base'
     secrets: inherit
 
   docker-aggregator:
-    # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
     needs:
       - docker-base
+      - lint
+      - test
+      - build
     with:
       image_tag: 'aggregator'
       build_target: 'aggregator'
     secrets: inherit
 
   docker-api:
-    # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
     needs:
       - docker-base
+      - lint
+      - test
+      - build
     with:
       image_tag: 'api'
       build_target: 'api'
     secrets: inherit
 
   docker-worker:
-    # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
     needs:
       - docker-base
+      - lint
+      - test
+      - build
     with:
       image_tag: 'worker'
       build_target: 'worker'
     secrets: inherit
 
   docker-mocks:
-    # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
     needs:
       - docker-base
+      - lint
+      - test
+      - build
     with:
       image_tag: 'mocks'
       build_target: 'mocks'

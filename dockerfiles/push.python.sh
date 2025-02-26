@@ -1,4 +1,5 @@
-images=(python-prod-base api worker nginx_reverse_proxy)
+# images=(python-prod-base aggregator api worker mocks nginx_reverse_proxy)
+images=(aggregator)
 IMG_NAMESPACE=ghcr.io/aignostic
 
 for target in "${images[@]}"
