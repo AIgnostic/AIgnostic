@@ -6,8 +6,10 @@ const HOME = '/AIgnostic';
 
 const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5001/predict';
 const MOCK_FINBERT_API_URL = 'http://finbert-mock-model-api:5001/predict';
-const MOCK_FOLKTABLES_DATASET_API_URL = 'http://folktables-dataset-api:5000/fetch-datapoints';
-const MOCK_FINANCIAL_DATASET_API_URL = 'http://financial-dataset-api:5000/fetch-datapoints';
+const MOCK_FOLKTABLES_DATASET_API_URL =
+  'http://folktables-dataset-api:5000/fetch-datapoints';
+const MOCK_FINANCIAL_DATASET_API_URL =
+  'http://financial-dataset-api:5000/fetch-datapoints';
 
 const steps = [
   {
@@ -35,9 +37,18 @@ const steps = [
   },
 ];
 
-const BACKEND_EVALUATE_URL = 'http://localhost:8000/evaluate';
-const RESULTS_URL = 'http://localhost:5002/results';
-const BACKEND_FETCH_METRIC_INFO_URL = 'http://localhost:8000/retrieve-metric-info';
+const BACKEND_EVALUATE_URL = import.meta.env.PROD
+  ? 'https://api.aignostic.docsoc.co.uk'
+  : 'http://localhost:8000/evaluate';
+const RESULTS_URL = import.meta.env.PROD
+  ? 'https://api.aignostic.docsoc.co.uk'
+  : 'http://localhost:5002/results';
+const WEBSOCKET_URL = import.meta.env.PROD
+  ? 'wss://api.aignostic.docsoc.co.uk/aggregator/ws'
+  : 'ws://localhost:5005';
+const BACKEND_FETCH_METRIC_INFO_URL = import.meta.env.PROD
+  ? 'https://api.aignostic.docsoc.co.uk'
+  : 'http://localhost:8000/retrieve-metric-info';
 
 let modelTypesToMetrics: { [key: string]: string[] } = {};
 
@@ -88,4 +99,5 @@ export {
   HOME,
   modelTypesToMetrics,
   activeStepToInputConditions,
+  WEBSOCKET_URL,
 };
