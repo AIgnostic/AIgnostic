@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import ErrorMessage from './components/ErrorMessage';
 import { generateReportText } from './utils';
 import theme from './theme';
-import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
+import Tooltip from '@mui/material/Tooltip';
+
 
 import LinearProgress, {
   linearProgressClasses,
@@ -218,11 +219,24 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
                       <h3>{key}</h3>
                     </div>
                     <div>
-                      <p>Metric: { 
-                      typeof value === 'object' && value.status_code != 200 ? 
-                      "Something went wrong while processing this metric. Hover for more detail" :  // error
-                      value as number  // actual value
-                      }</p>
+                      {
+                      // Check if the metric is an error
+                      typeof value === 'object' && value.status_code != 200 ?
+                      
+                      // Error text
+                      // with tooltip for more detail
+                      <Tooltip title={value.error} arrow>
+                        <div style={{ cursor: 'pointer' }}>
+                          {`Metric ${key}: Something went wrong while processing this metric. Hover for more detail` }
+                        </div>
+                      </Tooltip>
+                       
+                       : 
+                      
+                      // Regular metric text
+                      <p>{`Metric ${key}: ${value}`}</p>
+                      
+                      }
                     </div>
                   </div>
                 ))}
