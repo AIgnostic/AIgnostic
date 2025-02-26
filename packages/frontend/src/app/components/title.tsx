@@ -3,6 +3,8 @@ import { Box, Button } from '@mui/material';
 import { styles } from '../home.styles';
 import { HOME } from '../constants';
 import theme from '../theme';
+
+
 const Title = () => (
   <Box style={styles.container}>
     <Box

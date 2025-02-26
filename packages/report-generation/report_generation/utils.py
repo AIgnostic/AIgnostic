@@ -155,7 +155,7 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
                 ],
                 article_extracts=property_result["legislation_extracts"],
                 llm=llm
-            )
+            ).content
         except Exception:
             mesg = "Failed to initialize LLM"
 
