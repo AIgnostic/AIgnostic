@@ -98,10 +98,11 @@ jobs:
   docker-base:
     # Build base image first to enable caching
     uses: ./.github/workflows/docker.yml
-    needs:
-      - lint
-      - test
-      - build
+    # Put needs back before merge, just wanted to go a little faster
+    # needs:
+    #   - lint
+    #   - test
+    #   - build
     with:
       image_tag: 'python-prod-base'
       build_target: 'python-prod-base'
