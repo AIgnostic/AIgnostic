@@ -18,7 +18,7 @@ import metrics.metrics as metrics_lib
 import json
 from typing import Optional
 import asyncio
-from common.models import CalculateRequest, MetricValues
+from common.models import CalculateRequest, MetricConfig
 import random
 
 from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
@@ -66,12 +66,12 @@ class Worker():
         init_queues(self._channel)
         print("Connection established to RabbitMQ")
 
-    def queue_result(self, result: WorkerResults): 
+    def queue_result(self, result: MetricConfig):
         """
         Function to queue the results of a job
         """
         self._channel.basic_publish(
-            exchange="", routing_key=RESULT_QUEUE, body=json.dumps(dict(result))
+            exchange="", routing_key=RESULT_QUEUE, body=result.model_dump_json()
         )
         print("Result: ", result)
 
@@ -176,7 +176,7 @@ class Worker():
                 f"Could not parse model response - {e}; response = {response.text}"
             )
 
-    async def process_job(self, job: Job) -> MetricValues:
+    async def process_job(self, job: Job):
 
         # fetch data from datasetURL
         data: dict = await self.fetch_data(job.data_url, job.data_api_key, job.batch_size)

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { checkURL, generateReportText } from './utils';
+import { checkURL } from './utils';
 import {
   steps,
   BACKEND_EVALUATE_URL,
   RESULTS_URL,
   modelTypesToMetrics,
   activeStepToInputConditions,
+  WEBSOCKET_URL,
 } from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
@@ -88,7 +89,7 @@ function Homepage() {
     }
 
     const connectWebSocket = () => {
-      const newSocket = new WebSocket('ws://localhost:5005');
+      const newSocket = new WebSocket(WEBSOCKET_URL);
       newSocket.onopen = () => {
         console.log('WebSocket connection established');
         newSocket.send(userId.toString());
@@ -223,8 +224,10 @@ function Homepage() {
         'metricChips',
         modelTypesToMetrics[value].map((metric) => ({
           id: metric,
-          value: metric,  
-          label: metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
+          value: metric,
+          label: metric
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (char) => char.toUpperCase()),
           selected: true,
         }))
       );
@@ -337,7 +340,9 @@ function Homepage() {
                           key={modelType}
                           value={modelType}
                           control={<Radio color="secondary" />}
-                          label={modelType.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                          label={modelType
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, (char) => char.toUpperCase())}
                         />
                       ))}
                     </RadioGroup>

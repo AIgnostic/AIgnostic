@@ -5,11 +5,10 @@ import { styled } from '@mui/material/styles';
 import { Metric } from './types';
 import ReportRenderer from './components/ReportRenderer';
 
-import { pdf } from '@react-pdf/renderer';
-
 import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
+import { pdf } from '@react-pdf/renderer';
 
 interface DashboardProps {
   onComplete: () => void;
@@ -193,34 +192,40 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
                 key={itemIndex}
                 style={{ ...metricCardStyle, flex: '1 1 calc(33.333% - 16px)' }}
               >
-                {Object.entries(item).map(([key, value], metricIndex) => (
-                  <div
-                    key={metricIndex}
-                    style={{
-                      border: `3px solid ${theme.palette.background.paper}`,
-                      marginBottom: '8px',
-                      backgroundColor: theme.palette.background.default,
-                      padding: '16px',
-                      borderRadius: '8px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    }}
-                  >
+                {Object.entries(item).map(
+                  ([metric_name, metric_info], metricIndex) => (
                     <div
+                      key={metricIndex}
                       style={{
-                        backgroundColor: theme.palette.background.paper,
-                        border: `1px solid #fff`,
-                        padding: '8px 16px',
-                        borderRadius: '8px',
+                        border: `3px solid ${theme.palette.background.paper}`,
                         marginBottom: '8px',
+                        backgroundColor: theme.palette.background.default,
+                        padding: '16px',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                       }}
                     >
-                      <h3>{key}</h3>
+                      <div
+                        style={{
+                          backgroundColor: theme.palette.background.paper,
+                          border: `1px solid #fff`,
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          marginBottom: '8px',
+                        }}
+                      >
+                        <h3>{metric_name}</h3>
+                      </div>
+                      <div>
+                        <p>Metric: {metric_info.value}</p>
+                        <p>Ideal value: {metric_info.ideal_value}</p>
+                        <p>
+                          Range: {metric_info.range[0]} - {metric_info.range[1]}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p>Metric: {value}</p>
-                    </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             );
           })

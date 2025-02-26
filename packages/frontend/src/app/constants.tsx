@@ -1,8 +1,9 @@
+import { IS_PROD } from './env';
 import { ConditionAlertFailure, HomepageState } from './types';
 import { fetchMetricInfo } from './utils';
 
 const AIGNOSTIC = 'AIgnostic';
-const HOME = '/AIgnostic';
+const HOME = '/';
 
 const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5011/predict';
 const MOCK_FINBERT_API_URL = 'http://finbert-mock-model-api:5001/predict';
@@ -10,6 +11,14 @@ const MOCK_FOLKTABLES_DATASET_API_URL =
   'http://folktables-dataset-api:5010/fetch-datapoints';
 const MOCK_FINANCIAL_DATASET_API_URL =
   'http://financial-dataset-api:5000/fetch-datapoints';
+
+// PROD URL
+const MOCK_SCIKIT_API_URL_PROD = 'http://scikit_mock_model_api:5011/predict';
+const MOCK_FINBERT_API_URL_PROD = 'http://finbert_mock_model_api:5001/predict';
+const MOCK_FOLKTABLES_DATASET_API_URL_PROD =
+  'http://folktables_dataset_api:5010/fetch-datapoints';
+const MOCK_FINANCIAL_DATASET_API_URL_PROD =
+  'http://financial_dataset_api:5000/fetch-datapoints';
 
 const steps = [
   {
@@ -37,10 +46,18 @@ const steps = [
   },
 ];
 
-const BACKEND_EVALUATE_URL = 'http://localhost:8000/evaluate';
-const RESULTS_URL = 'http://localhost:5002/results';
-const BACKEND_FETCH_METRIC_INFO_URL =
-  'http://localhost:8000/retrieve-metric-info';
+const BACKEND_EVALUATE_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/evaluate'
+  : 'http://localhost:8000/evaluate';
+const RESULTS_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/results'
+  : 'http://localhost:5002/results';
+const WEBSOCKET_URL = IS_PROD
+  ? 'wss://aignostic-api.docsoc.co.uk/aggregator/ws'
+  : 'ws://localhost:5005';
+const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/retrieve-metric-info'
+  : 'http://localhost:8000/retrieve-metric-info';
 
 let modelTypesToMetrics: { [key: string]: string[] } = {};
 
@@ -91,4 +108,9 @@ export {
   HOME,
   modelTypesToMetrics,
   activeStepToInputConditions,
+  WEBSOCKET_URL,
+  MOCK_SCIKIT_API_URL_PROD,
+  MOCK_FINBERT_API_URL_PROD,
+  MOCK_FOLKTABLES_DATASET_API_URL_PROD,
+  MOCK_FINANCIAL_DATASET_API_URL_PROD,
 };

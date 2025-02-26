@@ -24,8 +24,18 @@ describe('ReportRenderer', () => {
             {
                 property: 'Fairness',
                 computed_metrics: [
-                    { metric: 'Bias Score', value: '0.12' },
-                    { metric: 'Demographic Parity', value: '0.87' }
+                    {
+                        metric: 'Bias Score',
+                        value: '0.12',
+                        ideal_value: '0.0',
+                        range: ['0.0', '1.0']
+                    },
+                    {
+                        metric: 'Demographic Parity',
+                        value: '0.87',
+                        ideal_value: '1.0',
+                        range: ['0.0', '1.0']
+                    }
                 ],
                 legislation_extracts: [
                     { article_number: 5, 
@@ -55,11 +65,19 @@ describe('ReportRenderer', () => {
     });
 
     it('renders property sections correctly', () => {
-        const { getByText } = render(<ReportRenderer report={sampleReport} />);
+        const { getByText, getAllByText } = render(<ReportRenderer report={sampleReport} />);
         expect(getByText('Fairness')).toBeTruthy();
         expect(getByText('Computed Metrics')).toBeTruthy();
+
         expect(getByText('• Bias Score: 0.12')).toBeTruthy();
+        expect(getByText('• Ideal Value: 0.0')).toBeTruthy();
+
         expect(getByText('• Demographic Parity: 0.87')).toBeTruthy();
+        expect(getByText('• Ideal Value: 1.0')).toBeTruthy();
+
+        const rangeElements = getAllByText('• Range: 0.0 - 1.0');
+        expect(rangeElements.length).toBe(2);
+
         expect(getByText('Relevant Legislation Extracts')).toBeTruthy();
         expect(getByText('• Article 5 [Fair AI Act]: AI systems must be unbiased.')).toBeTruthy();
         expect(getByText('LLM Insights')).toBeTruthy();
