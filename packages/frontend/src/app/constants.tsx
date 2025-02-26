@@ -3,7 +3,7 @@ import { ConditionAlertFailure, HomepageState } from './types';
 import { fetchMetricInfo } from './utils';
 
 const AIGNOSTIC = 'AIgnostic';
-const HOME = '/AIgnostic';
+const HOME = '/';
 
 const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5001/predict';
 const MOCK_FINBERT_API_URL = 'http://finbert-mock-model-api:5001/predict';
