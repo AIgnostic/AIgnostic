@@ -171,6 +171,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Make SSH Directory
         run: mkdir -p ~/.ssh
       - name: Commit SSH Key
@@ -189,7 +195,7 @@ jobs:
       - name: Wait for SSH to work
         run: ssh aignostic@aignostic "echo 'Hello from the other side'"
       - name: Deploy Stack
-        run: docker stack deploy -c ./swarm/app.docker-compose.yml aignostic
+        run: docker stack deploy --with-registry-auth -c ./swarm/app.docker-compose.yml aignostic
 
   deploy-docker-mocks:
     # UNCOMMENT IT ALL BELOW
@@ -202,6 +208,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Make SSH Directory
         run: mkdir -p ~/.ssh
       - name: Commit SSH Key
@@ -220,7 +232,7 @@ jobs:
       - name: Wait for SSH to work
         run: ssh aignostic@aignostic "echo 'Hello from the other side'"
       - name: Deploy Stack
-        run: docker stack deploy -c ./swarm/mocks.docker-compose.yml aignostic-mocks
+        run: docker stack deploy --with-registry-auth -c ./swarm/mocks.docker-compose.yml aignostic-mocks
 
   deploy-gh-pages:
     needs:

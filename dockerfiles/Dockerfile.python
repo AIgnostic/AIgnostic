@@ -103,7 +103,7 @@ COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 USER appuser
 
 # Unzip financial data
-RUN cd /app/packages/mocks/mocks/dataset && unzip FinancialPhraseBank-v1.0.zip
+RUN cd /app/packages/mocks/mocks/dataset && unzip -o FinancialPhraseBank-v1.0.zip
 
 # Metadata
 LABEL org.opencontainers.image.source="https://github.com/AIgnostic/AIgnostic"
