@@ -6,7 +6,6 @@ from aggregator.aggregator import (RESULT_QUEUE, MetricsAggregator,
                                    on_result_fetched,
                                    aggregator_intermediate_metrics_log,
                                    aggregator_metrics_completion_log,
-                                   aggregator_final_report_log,
                                    connected_clients,
                                    message_queue,
                                    websocket_handler,
@@ -21,7 +20,9 @@ import json
 def consumer():
     return ResultsConsumer(host="test_host")
 
+
 metrics_aggregator = MetricsAggregator()
+
 
 @pytest.fixture(autouse=True)
 def reset_state():
@@ -32,6 +33,7 @@ def reset_state():
     connected_clients.clear()
     while not message_queue.empty():
         message_queue.get()
+
 
 def test_init(consumer):
     assert consumer._host == "test_host"
@@ -170,10 +172,10 @@ def test_on_result_fetched(mock_generate_report, mock_send_to_user):
     # final_called = any(call[0][1] == aggregator_final_report_log(mock_report) for call in calls)
     assert completion_called, "Completion log was not sent."
     # assert final_called, "Final report log was not sent."
-
     # Ensure the per-user aggregator is cleaned up after completion.
     assert "user123" not in user_aggregators, "Aggregator for user123 should be removed after processing."
-    
+
+
 @patch('aggregator.aggregator.manager.send_to_user')
 def test_websocket_handler(mock_send_to_user):
     # Create a dummy websocket that returns a user_id and supports iteration.

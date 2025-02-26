@@ -42,13 +42,13 @@ describe("Dashboard Component", () => {
   });
 
   test("renders progress bar and waiting message initially", () => {
-    render(<Dashboard onComplete={onCompleteMock} />);
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
     expect(screen.getByText("0 / 10 batches processed")).toBeInTheDocument();
     expect(screen.getByText("Waiting for messages...")).toBeInTheDocument();
   });
 
   test("updates log on LOG message", async () => {
-    render(<Dashboard onComplete={onCompleteMock} />);
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket}/>);
 
     await act(async () => {
       (mockWebSocket.onmessage as any)({
@@ -60,7 +60,7 @@ describe("Dashboard Component", () => {
   });
 
   test("displays error message on ERROR event", async () => {
-    render(<Dashboard onComplete={onCompleteMock} />);
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
 
     await act(async () => {
       (mockWebSocket.onmessage as any)({
@@ -72,7 +72,7 @@ describe("Dashboard Component", () => {
   });
 
   test("processes METRICS_INTERMEDIATE messages and updates progress", async () => {
-    render(<Dashboard onComplete={onCompleteMock} />);
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket}/>);
 
     await act(async () => {
       (mockWebSocket.onmessage as any)({
@@ -88,7 +88,7 @@ describe("Dashboard Component", () => {
 
 
   test("generates and downloads the report on REPORT message", async () => {
-    render(<Dashboard onComplete={onCompleteMock} />);
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket}/>);
 
     const mockReportData = { /* Your mock report structure */ };
 
@@ -104,7 +104,7 @@ describe("Dashboard Component", () => {
 
 
   test("closes WebSocket on unmount", () => {
-    const { unmount } = render(<Dashboard onComplete={onCompleteMock} />);
+    const { unmount } = render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
     unmount();
     expect(mockWebSocket.close).toHaveBeenCalled();
   });

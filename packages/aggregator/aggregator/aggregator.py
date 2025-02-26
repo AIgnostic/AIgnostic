@@ -9,6 +9,7 @@ from common.models.aggregator_models import AggregatorMessage, MessageType
 from report_generation.utils import generate_report
 import time
 
+
 def aggregator_metrics_completion_log():
     return AggregatorMessage(
         messageType=MessageType.METRICS_COMPLETE,
@@ -132,9 +133,12 @@ class ResultsConsumer():
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
-connected_clients = set()  # Store multiple WebSocket clients
-message_queue = queue.Queue()  # Store messages until a client connects
-user_aggregators: dict = {} # user_id -> MetricsAggregator
+# Store multiple WebSocket clients
+connected_clients = set()
+# Store messages until a client connects
+message_queue = queue.Queue()
+# user_id -> MetricsAggregator
+user_aggregators: dict = {}
 
 
 def on_result_fetched(ch, method, properties, body):
@@ -146,7 +150,7 @@ def on_result_fetched(ch, method, properties, body):
     if user_id not in user_aggregators:
         user_aggregators[user_id] = MetricsAggregator()
 
-    aggregator : MetricsAggregator = user_aggregators[user_id]
+    aggregator: MetricsAggregator = user_aggregators[user_id]
 
     if aggregator.total_sample_size == 0:
         aggregator.set_total_sample_size(result_data["total_sample_size"])
@@ -155,7 +159,7 @@ def on_result_fetched(ch, method, properties, body):
 
     aggregates = aggregator.get_aggregated_metrics()
     # send the intermediate metrics to the user
-    manager.send_to_user(user_id, aggregator_intermediate_metrics_log(aggregates))  
+    manager.send_to_user(user_id, aggregator_intermediate_metrics_log(aggregates))
     print(f"{aggregator.samples_processed} / {aggregator.total_sample_size} Processed for user {user_id}")
 
     # if all batches have been processed, send final result
@@ -169,7 +173,7 @@ def on_result_fetched(ch, method, properties, body):
         report_thread = threading.Thread(target=generate_and_send_report, args=(user_id, aggregates, aggregator))
         report_thread.start()
 
-        # cleanup completed aggregator  
+        # cleanup completed aggregator
         del user_aggregators[user_id]
 
 
@@ -183,6 +187,7 @@ def aggregator_generate_report(aggregates, aggregator):
     }
     report_json = {"properties": report_properties_section, "info": report_info_section}
     return report_json
+
 
 def generate_and_send_report(user_id, aggregates, aggregator):
     """Generates the report and sends it without blocking the main process."""
@@ -219,7 +224,7 @@ def send_to_clients(message: AggregatorMessage):
 
 class ConnectionManager:
     def __init__(self):
-        self.active_connections = {} # user_id -> connection
+        self.active_connections = {}
 
     def connect(self, user_id, websocket):
         """Stores a Websocket connection for a specific user"""
@@ -227,7 +232,7 @@ class ConnectionManager:
 
     def disconnect(self, user_id):
         """Removes a Websocket connection for a specific user"""
-        if user_id in self.active_connections: 
+        if user_id in self.active_connections:
             del self.active_connections[user_id]
 
     def send_to_user(self, user_id, message):
@@ -239,14 +244,16 @@ class ConnectionManager:
             try:
                 websocket.send(json.dumps(message.dict()))
                 print(f"Sent message to user {user_id}: {json.dumps(message.dict())}")
-            except Exception as e:#
+            except Exception as e:
                 print(f"Error sending message to user {user_id}: {e}")
                 self.disconnect(user_id)
-        else : 
+        else:
             print(f"User not connected: {user_id}")
             print(f"Active connections {self.active_connections}")
 
+
 manager = ConnectionManager()
+
 
 def websocket_handler(websocket):
     """Handles Websocket connections and assigns them to users"""
@@ -257,14 +264,14 @@ def websocket_handler(websocket):
         # register this user
         manager.connect(user_id, websocket)
 
-        for _ in websocket: # keep connection open
+        for _ in websocket:
+            # keep connection open
             pass
     except Exception as e:
         print(f"Websocket connection closed: {e}")
     finally:
         print(f"User {user_id} disconnected")
         manager.disconnect(user_id)
-
 
 
 def start_websocket_server():
