@@ -78,7 +78,18 @@ describe("Dashboard Component", () => {
       (mockWebSocket.onmessage as any)({
         data: JSON.stringify({
           messageType: "METRICS_INTERMEDIATE",
-          content: { metrics_results: { accuracy: 0.75, precision: 0.5 } },
+          content: { metrics_results: { 
+            accuracy: {
+              value: 0.75,
+              ideal_value:0.85,
+              range:[0, 1]         
+            }, 
+            precision: {
+              value: 0.75,
+              ideal_value:0.85,
+              range:[0, 1]
+            },
+          } },
         }),
       });
     });

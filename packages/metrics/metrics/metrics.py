@@ -10,7 +10,8 @@
 from typing import Callable
 from metrics.models import (
     CalculateRequest,
-    MetricValues,
+    MetricValue,
+    MetricConfig,
 )
 from metrics.utils import (
     _query_model,
@@ -36,6 +37,7 @@ from metrics.exceptions import (
     _MetricsPackageException
 )
 from common.models import ModelResponse
+
 
 task_type_to_metric = {
     "binary_classification": [
@@ -80,6 +82,13 @@ task_type_to_metric = {
         # "explanation_fidelity_score",
     ],
 }
+"""
+    This mapping of model types to metrics is used to provide information about the types
+    of metrics that can be calculated for each model type, and is passed to the frontend
+    for selection of metrics based on the model type.
+
+    When adding new metrics, ensure that they are added to the appropriate model type.
+"""
 
 
 def is_valid_for_per_class_metrics(metric_name, true_labels):
@@ -595,52 +604,86 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     return roc_auc_score(labels, scores)
 
 
+# Define metric properties for aif360 fairness metrics
+metric_properties = {
+    "statistical_parity_difference": {"range": (-1, 1), "ideal_value": 0},
+    "equal_opportunity_difference": {"range": (-1, 1), "ideal_value": 0},
+    "disparate_impact": {"range": (0, None), "ideal_value": 1},
+    "false_negative_rate_difference": {"range": (-1, 1), "ideal_value": 0},
+    "negative_predictive_value": {"range": (0, 1), "ideal_value": 0.8},
+    "positive_predictive_value": {"range": (0, 1), "ideal_value": 0.8},
+    "true_positive_rate_difference": {"range": (-1, 1), "ideal_value": 0}
+}
+
+
 """ Mapping of metric names to their corresponding functions and required inputs"""
 metric_to_fn_and_requirements = {
     # Performance metrics
     "accuracy": {
         "function": accuracy,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     "class_precision": {
         "function": class_precision,
-        "required_inputs": ["true_labels", "predicted_labels", "target_class"]
+        "required_inputs": ["true_labels", "predicted_labels", "target_class"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     "precision": {
         "function": macro_precision,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     "class_recall": {
         "function": class_recall,
-        "required_inputs": ["true_labels", "predicted_labels", "target_class"]
+        "required_inputs": ["true_labels", "predicted_labels", "target_class"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     "recall": {
         "function": macro_recall,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     "class_f1_score": {
         "function": class_f1,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     "f1_score": {
         "function": macro_f1,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     "roc_auc": {
         "function": roc_auc,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     "mean_absolute_error": {
         "function": mean_absolute_error,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, None),
+        "ideal_value": 0
     },
     "mean_squared_error": {
         "function": mean_squared_error,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (0, None),
+        "ideal_value": 0
     },
     "r_squared": {
         "function": r_squared,
-        "required_inputs": ["true_labels", "predicted_labels"]
+        "required_inputs": ["true_labels", "predicted_labels"],
+        "range": (None, 1),
+        "ideal_value": 0.7
     },
 
     # Fairness metrics
@@ -655,41 +698,46 @@ metric_to_fn_and_requirements = {
                 "protected_attr",
                 "privileged_groups",
                 "unprivileged_groups"
-            ]
+            ],
+            "range": metric_properties[metric_name]["range"],
+            "ideal_value": metric_properties[metric_name]["ideal_value"]
         }
-        for metric_name in [
-            "statistical_parity_difference",
-            "equal_opportunity_difference",
-            "disparate_impact",
-            "false_negative_rate_difference",
-            "negative_predictive_value",
-            "positive_predictive_value",
-            "true_positive_rate_difference",
-        ]
+        for metric_name in metric_properties
     },
     "equalized_odds_difference": {
         "function": equalized_odds_difference,
-        "required_inputs": ["true_labels", "predicted_labels", "protected_attr"]
+        "required_inputs": ["true_labels", "predicted_labels", "protected_attr"],
+        "range": (-1, 1),
+        "ideal_value": 0
     },
+
 
     # Explainability metrics
     "explanation_stability_score": {
         "function": explanation_stability_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     "explanation_sparsity_score": {
         "function": explanation_sparsity_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "ideal_value": 0.7
     },
     "explanation_fidelity_score": {
         "function": explanation_fidelity_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "ideal_value": 0.85
     },
 
     # Uncertainty metrics
     "ood_auroc": {
         "function": ood_auroc,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"]
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "ideal_value": 0.85
     },
 }
 
@@ -749,7 +797,7 @@ def check_metrics_are_supported_for_task(info: CalculateRequest):
     return metrics_to_exceptions
 
 
-def calculate_metrics(info: CalculateRequest) -> MetricValues:
+def calculate_metrics(info: CalculateRequest) -> MetricConfig:
     """
     calculate_metrics, given a request for calculation of certain metrics and information
     necessary for calculation, attempt to calculate and return the metrics and their scores
@@ -757,7 +805,7 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
 
     :param info: CalculateRequest - contains list of metrics to be calculated and additional
     data required for calculation of these metrics.
-    :return: MetricValues - contains the calculated metrics and their scores
+    :return: MetricConfig - contains the calculated metrics and their scores
     """
     current_metric = "calculate_metrics"
 
@@ -772,24 +820,34 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
 
     results = {}
 
+    # Add all metrics to results if they raise an exception
     if info.task_name:
-        # Add all metrics to results if they raise an exception
         results = check_metrics_are_supported_for_task(info)
-        print(results)
         results = results | check_all_required_fields_present(
             set(info.metrics) - set(results.keys()),
             info
         )
-        print(results)
 
     for metric in info.metrics:
+        # Replace spaces with underscores in metric names to map to function names
         metric = metric.replace(" ", "_")
         try:
             # Skip the metric if it is known to throw an error
             if metric in results:
                 continue
+
+            # Store the current metric name for error handling
             current_metric = metric
-            results[metric] = metric_to_fn_and_requirements[metric]["function"](info)
+
+            # Call the function for the metric and store the result
+            metric_result = metric_to_fn_and_requirements[metric]["function"](info)
+
+            # Store the result in the results object
+            results[metric] = MetricValue(
+                computed_value=metric_result,
+                ideal_value=metric_to_fn_and_requirements[metric]["ideal_value"],
+                range=metric_to_fn_and_requirements[metric]["range"]
+            )
 
         # Return an exception in place of the metric result if applicable
         # Approach allows valid metrics to still be calculated
@@ -797,8 +855,7 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
             results[metric] = e
         except Exception as e:
             results[metric] = MetricsComputationException(current_metric, detail=str(e))
-    print(results)
-    return MetricValues(
+    return MetricConfig(
         metric_values=results,
         batch_size=info.batch_size,
         total_sample_size=info.total_sample_size

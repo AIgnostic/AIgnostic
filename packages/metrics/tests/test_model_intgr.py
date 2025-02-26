@@ -57,7 +57,7 @@ def test_ood_auroc(server_factory):
         )
 
         result = calculate_metrics(info)
-        result = result.metric_values["ood_auroc"]
+        result = result.metric_values["ood_auroc"].computed_value
 
         assert isinstance(result, float), f"Expected AUROC to be a float, but got {type(result)}"
         assert 0.0 <= result <= 1.0, f"Expected AUROC to be between 0.0 and 1.0, but got {result}"

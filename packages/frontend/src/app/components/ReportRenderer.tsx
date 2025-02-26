@@ -99,9 +99,17 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                         <View>
                             <Text style={styles.subsection}>Computed Metrics</Text>
                             {section.computed_metrics.map((metric, idx) => (
-                                <Text key={idx} style={styles.bulletPoint}>
-                                    • {metric.metric}: {metric.value}
-                                </Text>
+                                <View key={idx}>
+                                    <Text style={styles.bulletPoint}>
+                                        • {metric.metric}: {metric.value}
+                                    </Text>
+                                    <Text style={styles.bulletPoint}>
+                                        • Ideal Value: {metric.ideal_value}
+                                    </Text>
+                                    <Text style={styles.bulletPoint}>
+                                        • Range: {metric.range[0]} - {metric.range[1]}
+                                    </Text>
+                                </View>
                             ))}
                         </View>
                     )}

@@ -114,7 +114,7 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
     assert results.metric_values
     assert "accuracy" in results.metric_values
     assert isinstance(
-        results.metric_values["accuracy"],
+        results.metric_values["accuracy"].computed_value,
         float
     )
     assert isinstance(
@@ -126,7 +126,7 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
         MetricsPackageExceptionModel
     )
 
-    assert results.metric_values["accuracy"] == 0.5
+    assert results.metric_values["accuracy"].computed_value == 0.5
     assert (
         "The following missing fields are required to calculate metric"
         in results.metric_values["explanation_stability_score"].detail

@@ -191,7 +191,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
                 key={itemIndex}
                 style={{ ...metricCardStyle, flex: '1 1 calc(33.333% - 16px)' }}
               >
-                {Object.entries(item).map(([key, value], metricIndex) => (
+                {Object.entries(item).map(([metric_name, metric_info], metricIndex) => (
                   <div
                     key={metricIndex}
                     style={{
@@ -212,10 +212,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
                         marginBottom: '8px',
                       }}
                     >
-                      <h3>{key}</h3>
+                      <h3>{metric_name}</h3>
                     </div>
                     <div>
-                      <p>Metric: {value}</p>
+                      <p>Metric: {metric_info.value}</p>
+                      <p>Ideal value: {metric_info.ideal_value}</p>
+                      <p>Range: {metric_info.range[0]} - {metric_info.range[1]}</p>
                     </div>
                   </div>
                 ))}

@@ -56,10 +56,15 @@ class MetricsAggregator:
         self.total_sample_size = total_sample_size
 
     def aggregate_new_batch(self, batch_metrics_results, batch_size):
-        for metric, value in batch_metrics_results.items():
+        for metric, metric_value_obj in batch_metrics_results.items():
             if metric not in self.metrics:
                 # First time encountering this metric, initialize with the first batch value
-                self.metrics[metric] = {"value": value, "count": batch_size}
+                self.metrics[metric] = {
+                    "value": metric_value_obj["computed_value"],
+                    "ideal_value": metric_value_obj["ideal_value"],
+                    "range": metric_value_obj["range"],
+                    "count": batch_size
+                }
             else:
                 # Update the running average incrementally
                 prev_value = self.metrics[metric]["value"]
@@ -67,22 +72,37 @@ class MetricsAggregator:
 
                 # Compute new weighted average
                 new_count = prev_count + batch_size
-                self.metrics[metric]["value"] = (
-                    prev_value * prev_count + value * batch_size
-                ) / new_count
+                new_value = (prev_value * prev_count + metric_value_obj["computed_value"] * batch_size) / new_count
+                self.metrics[metric]["value"] = new_value
                 self.metrics[metric]["count"] = new_count  # Update the total count
 
         self.samples_processed += batch_size
 
     def get_aggregated_metrics(self):
         """
-        Returns the aggregated metrics as a dictionary
-        i.e. { metric1: value1, metric2: value2, ... }
+        Returns the aggregated metrics as a dictionary.
+        Example:
+        {
+            "metric1": {
+                "value": value1,
+                "ideal_value": ideal_value1,
+                "range": range1
+            },
+            "metric2": {
+                "value": value2,
+                "ideal_value": ideal_value2,
+                "range": range2
+            },
+            ...
+        }
         """
-
         results = {}
         for metric, data in self.metrics.items():
-            results[metric] = data["value"]
+            results[metric] = {
+                "value": data["value"],
+                "ideal_value": data["ideal_value"],
+                "range": data["range"]
+            }
         return results
 
 
@@ -149,6 +169,7 @@ def on_result_fetched(ch, method, properties, body):
     global connected_clients
     result_data = json.loads(body)
     print(f"Received result: {result_data}")
+    print(f"Type of result_data: {type(result_data)}")
 
     if metrics_aggregator.total_sample_size == 0:
         metrics_aggregator.set_total_sample_size(result_data["total_sample_size"])
@@ -218,8 +239,8 @@ def send_to_clients(message: AggregatorMessage):
 
     for client in connected_clients:
         try:
-            client.send(json.dumps(message.dict()))
-            print(f"Sent message to client: {json.dumps(message.dict())}")
+            client.send(message.model_dump_json())
+            print(f"Sent message to client: {message.model_dump_json()}")
         except Exception as e:
             print(f"Error sending message to client: {e}")
             disconnected_clients.add(client)  # Mark client for removal
