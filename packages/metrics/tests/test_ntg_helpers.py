@@ -1,4 +1,4 @@
-from metrics.next_token_gen_metrics import generate_synonym_perturbations
+from metrics.ntg_metric_utils import generate_synonym_perturbations
 
 
 def test_generate_synonym_perturbations_produces_perturbations():

@@ -22,6 +22,8 @@ torch = [
     { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "win32", markers = "sys_platform != 'darwin'" },
     { version = "^2.6.0", source = "pypi", platform = "darwin", markers = "sys_platform == 'darwin'" },
 ]
+rouge = "^1.0.1"
+editdistance = "^0.8.1"
 
 [tool.poetry.dependencies.api]
 path = "packages/api"

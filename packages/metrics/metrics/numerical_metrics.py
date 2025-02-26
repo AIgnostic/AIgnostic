@@ -455,13 +455,8 @@ def explanation_sparsity_score(info: CalculateRequest) -> float:
     mean = np.mean(lime_explanation_coeffs)
     std = np.std(lime_explanation_coeffs)
 
-    print(f"info: {info}")
-
     # Number of coefficients greater than 2 sigma from the mean
     count_far_from_mean = np.sum(np.abs(lime_explanation_coeffs - mean) > std)
-    print(f"mean: {mean}, std: {std}, count_far_from_mean: {count_far_from_mean}")
-    print(f"coeffs: {lime_explanation_coeffs}")
-    print(f"count: {count_far_from_mean}")
 
     return 1 - count_far_from_mean / len(lime_explanation_coeffs)
 
@@ -488,13 +483,8 @@ def explanation_fidelity_score(info: CalculateRequest) -> float:
     def fidelity_fn(x, y) -> float:
         return np.linalg.norm(x - y, 1)
 
-    print(info.confidence_scores)
     ps = reg_model.predict(info.input_features).reshape(-1, 1)
-    print(ps)
-    print(fidelity_fn(info.confidence_scores, ps))
-    print(f"len info.confidence_scores: {len(info.confidence_scores)}")
     subtracted = fidelity_fn(info.confidence_scores, ps) / len(info.confidence_scores)
-    print(f"subtracted: {subtracted}")
     return 1 - subtracted
 
 

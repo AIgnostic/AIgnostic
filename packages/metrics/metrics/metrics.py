@@ -263,12 +263,10 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
     if info.task_name:
         # Add all metrics to results if they raise an exception
         results = check_metrics_are_supported_for_task(info)
-        print(results)
         results = results | check_all_required_fields_present(
             set(info.metrics) - set(results.keys()),
             info
         )
-        print(results)
 
     for metric in info.metrics:
         metric = metric.replace(" ", "_")
@@ -285,7 +283,6 @@ def calculate_metrics(info: CalculateRequest) -> MetricValues:
             results[metric] = e
         except Exception as e:
             results[metric] = MetricsComputationException(current_metric, detail=str(e))
-    print(results)
     return MetricValues(
         metric_values=results,
         batch_size=info.batch_size,
