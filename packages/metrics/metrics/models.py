@@ -116,5 +116,4 @@ class WorkerResults(MetricConfig):
     """
     Inherit from MetricConfig
     """
-    
     user_id: str
