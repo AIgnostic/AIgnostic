@@ -167,7 +167,7 @@ jobs:
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
-      DOCKER_HOST: ssh://${{ secrets.DIGITAL_OCEAN_USER }}@${{ secrets.DIGITAL_OCEAN_HOST }}
+      DOCKER_HOST: ssh://aignostic@68.183.252.96
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
