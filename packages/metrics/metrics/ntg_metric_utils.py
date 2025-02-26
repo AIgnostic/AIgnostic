@@ -3,8 +3,9 @@ from nltk.corpus import wordnet as wn
 from nltk.translate.bleu_score import sentence_bleu
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
-from rouge import Rouge, get_scores
+from rouge import Rouge
 import editdistance
+
 
 def generate_synonym_perturbations(sentence: str):
     """
@@ -12,7 +13,7 @@ def generate_synonym_perturbations(sentence: str):
     """
     # Download WordNet data if not already present
     nltk.download('wordnet')
-    
+
     words = sentence.split()
     perturbations = []
     for i, word in enumerate(words):
@@ -32,9 +33,8 @@ def compute_sentence_cosine_similarities(embeddings_target: np.array, embeddings
     """
     Given two sentence embeddings, calculate the cosine similarity between their word vectors.
 
-    :param embedding_target: np.array - Sentence embedding for the target sentence (1D np.array)
     :param embedding_perturbed: np.array - Sentence embedding for the perturbed sentence (1D np.array)
-    
+
     :return: np.array - Cosine similarity between the sentence embeddings
     """
     return cosine_similarity(embeddings_target, embeddings_perturbed)
@@ -46,7 +46,7 @@ def compute_batch_sentence_bleu(target_sentences: list[str], perturbed_sentences
 
     :param target_sentences: list[str] - List of target sentences
     :param perturbed_sentences: list[str] - List of perturbed sentences
-    
+
     :return: list[float] - List of BLEU scores
     """
     bleu_scores = []
@@ -61,7 +61,7 @@ def compute_batch_rouge_scores(target_sentences: list[str], perturbed_sentences:
 
     :param target_sentences: list[str] - List of target sentences
     :param perturbed_sentences: list[str] - List of perturbed sentences
-    
+
     :return: list[float] - List of ROUGE scores
     """
     rouge = Rouge()
@@ -75,7 +75,7 @@ def compute_edit_distances(target_sentences: list[str], perturbed_sentences: lis
 
     :param target_sentences: list[str] - List of target sentences
     :param perturbed_sentences: list[str] - List of perturbed sentences
-    
+
     :return: list[int] - List of edit distances
     """
     edit_distances = []

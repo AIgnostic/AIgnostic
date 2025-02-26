@@ -17,7 +17,6 @@ from metrics.exceptions import (
     DataProvisionException,
     _MetricsPackageException
 )
-from common.models import ModelResponse
 from metrics.numerical_metrics import (
     accuracy,
     macro_precision,
