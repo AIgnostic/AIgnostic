@@ -47,16 +47,16 @@ const steps = [
 ];
 
 const BACKEND_EVALUATE_URL = IS_PROD
-  ? 'https://api.aignostic.docsoc.co.uk/evaluate'
+  ? 'https:/aignostic-api.docsoc.co.uk/evaluate'
   : 'http://localhost:8000/evaluate';
 const RESULTS_URL = IS_PROD
-  ? 'https://api.aignostic.docsoc.co.uk/results'
+  ? 'https:/aignostic-api.docsoc.co.uk/results'
   : 'http://localhost:5002/results';
 const WEBSOCKET_URL = IS_PROD
   ? 'wss://aignostic-api.docsoc.co.uk/aggregator/ws'
   : 'ws://localhost:5005';
 const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
-  ? 'https://api.aignostic.docsoc.co.uk/retrieve-metric-info'
+  ? 'https://aignostic-api.docsoc.co.uk/retrieve-metric-info'
   : 'http://localhost:8000/retrieve-metric-info';
 
 let modelTypesToMetrics: { [key: string]: string[] } = {};
