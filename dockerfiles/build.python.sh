@@ -2,7 +2,7 @@
 
 # python-prod-base is used to build the rest
 # images=(python-prod-base aggregator api worker mocks nginx_reverse_proxy)
-images=(aggregator)
+images=(python-prod-base api aggregator worker mocks nginx_reverse_proxy)
 IMG_NAMESPACE=ghcr.io/aignostic
 
 for target in "${images[@]}"

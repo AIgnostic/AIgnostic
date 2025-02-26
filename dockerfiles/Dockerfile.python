@@ -23,64 +23,19 @@ COPY ./package-lock.json /app
 RUN npm ci
 
 COPY ./nx.json /app
-# Have to copy thee manually - means we can change code without rebuilding it all as deps didn't change
-COPY ./packages/aggregator/pyproject.toml /app/packages/aggregator/pyproject.toml
-COPY ./packages/aggregator/poetry.toml /app/packages/aggregator/poetry.toml
-COPY ./packages/aggregator/poetry.lock /app/packages/aggregator/poetry.lock
-COPY ./packages/aggregator/aggregator/__init__.py /app/packages/aggregator/aggregator/__init__.py
-COPY ./packages/aggregator/README.md /app/packages/aggregator/README.md
+# Have to copy these manually - means we can change code without rebuilding it all as deps didn't change
+COPY ./packages/aggregator/pyproject.toml ./packages/aggregator/poetry.toml ./packages/aggregator/poetry.lock ./packages/aggregator/aggregator/__init__.py ./packages/aggregator/README.md /app/packages/aggregator/
+COPY ./packages/api/pyproject.toml ./packages/api/poetry.toml ./packages/api/poetry.lock ./packages/api/api/__init__.py ./packages/api/README.md /app/packages/api/
+COPY ./packages/common/pyproject.toml ./packages/common/poetry.toml ./packages/common/poetry.lock ./packages/common/common/__init__.py ./packages/common/README.md /app/packages/common/
+COPY ./packages/llm-insights/pyproject.toml ./packages/llm-insights/poetry.toml ./packages/llm-insights/poetry.lock ./packages/llm-insights/llm_insights/__init__.py ./packages/llm-insights/README.md /app/packages/llm-insights/
+COPY ./packages/metrics/pyproject.toml ./packages/metrics/poetry.toml ./packages/metrics/poetry.lock ./packages/metrics/metrics/__init__.py ./packages/metrics/README.md /app/packages/metrics/
+COPY ./packages/mocks/pyproject.toml ./packages/mocks/poetry.toml ./packages/mocks/poetry.lock ./packages/mocks/mocks/__init__.py ./packages/mocks/README.md /app/packages/mocks/
+COPY ./packages/report-generation/pyproject.toml ./packages/report-generation/poetry.toml ./packages/report-generation/poetry.lock ./packages/report-generation/report_generation/__init__.py ./packages/report-generation/README.md /app/packages/report-generation/
+COPY ./packages/worker/pyproject.toml ./packages/worker/poetry.toml ./packages/worker/poetry.lock ./packages/worker/worker/__init__.py ./packages/worker/README.md /app/packages/worker/
+COPY ./packages/dispatcher/pyproject.toml ./packages/dispatcher/poetry.toml ./packages/dispatcher/poetry.lock ./packages/dispatcher/dispatcher/__init__.py ./packages/dispatcher/README.md /app/packages/dispatcher/
 
-COPY ./packages/api/pyproject.toml /app/packages/api/pyproject.toml
-COPY ./packages/api/poetry.toml /app/packages/api/poetry.toml
-COPY ./packages/api/poetry.lock /app/packages/api/poetry.lock
-COPY ./packages/api/api/__init__.py /app/packages/api/api/__init__.py 
-COPY ./packages/api/README.md /app/packages/api/README.md
 
-COPY ./packages/common/pyproject.toml /app/packages/common/pyproject.toml   
-COPY ./packages/common/poetry.toml /app/packages/common/poetry.toml
-COPY ./packages/common/poetry.lock /app/packages/common/poetry.lock
-COPY ./packages/common/common/__init__.py /app/packages/common/common/__init__.py
-COPY ./packages/common/README.md /app/packages/common/README.md
-
-COPY ./packages/llm-insights/pyproject.toml /app/packages/llm-insights/pyproject.toml
-COPY ./packages/llm-insights/poetry.toml /app/packages/llm-insights/poetry.toml
-COPY ./packages/llm-insights/poetry.lock /app/packages/llm-install/poetry.lock
-COPY ./packages/llm-insights/llm_insights/__init__.py /app/packages/llm-insights/llm_insights/__init__.py
-COPY ./packages/llm-insights/README.md /app/packages/llm-insights/README.md
-
-COPY ./packages/metrics/pyproject.toml /app/packages/metrics/pyproject.toml
-COPY ./packages/metrics/poetry.toml /app/packages/metrics/poetry.toml
-COPY ./packages/metrics/poetry.lock /app/packages/metrics/poetry.lock
-COPY ./packages/metrics/metrics/__init__.py /app/packages/metrics/metrics/__init__.py
-COPY ./packages/metrics/README.md /app/packages/metrics/README.md
-
-COPY ./packages/mocks/pyproject.toml /app/packages/mocks/pyproject.toml
-COPY ./packages/mocks/poetry.toml /app/packages/mocks/poetry.toml
-COPY ./packages/mocks/poetry.lock /app/packages/mocks/poetry.lock
-COPY ./packages/mocks/mocks/__init__.py /app/packages/mocks/mocks/__init__.py
-COPY ./packages/mocks/README.md /app/packages/mocks/README.md
-
-COPY ./packages/report-generation/pyproject.toml /app/packages/report-generation/pyproject.toml
-COPY ./packages/report-generation/poetry.toml /app/packages/report-generation/poetry.toml
-COPY ./packages/report-generation/poetry.lock /app/packages/report-generation/poetry.lock
-COPY ./packages/report-generation/report_generation/__init__.py /app/packages/report-generation/report_generation/__init__.py
-COPY ./packages/report-generation/README.md /app/packages/report-generation/README.md
-
-COPY ./packages/worker/pyproject.toml /app/packages/worker/pyproject.toml
-COPY ./packages/worker/poetry.toml /app/packages/worker/poetry.toml
-COPY ./packages/worker/poetry.lock /app/packages/worker/poetry.lock
-COPY ./packages/worker/worker/__init__.py /app/packages/worker/worker/__init__.py
-COPY ./packages/worker/README.md /app/packages/worker/README.md
-
-COPY ./packages/dispatcher/pyproject.toml /app/packages/dispatcher/pyproject.toml
-COPY ./packages/dispatcher/poetry.toml /app/packages/dispatcher/poetry.toml
-COPY ./packages/dispatcher/poetry.lock /app/packages/dispatcher/poetry.lock
-COPY ./packages/dispatcher/dispatcher/__init__.py /app/packages/dispatcher/dispatcher/__init__.py
-COPY ./packages/dispatcher/README.md /app/packages/dispatcher/README.md
-
-COPY ./poetry.lock /app
-COPY ./poetry.toml /app
-COPY ./pyproject.toml /app
+COPY ./poetry.lock ./poetry.toml ./pyproject.toml /app/
 
 # Run poetry install at root
 RUN poetry install -v --only=main
@@ -99,11 +54,7 @@ WORKDIR /app
 RUN useradd -m appuser
 
 # Copy only the necessary files from the builder stage
-COPY --from=builder --chown=appuser:appuser /app/packages /app/packages
-COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
-
-# # Change ownership
-# RUN chown -R appuser /app
+COPY --from=builder --chown=appuser:appuser /app/packages /app/.venv /app/
 
 # Switch
 USER appuser
@@ -130,13 +81,10 @@ FROM python-prod-base AS worker
 WORKDIR /app/packages/worker
 CMD ["/app/.venv/bin/python", "-m", "worker.worker"]
 
-
 # Mocks has an extra build command
 FROM builder AS mocks-build
 # Some extra files are needed to make nx behave
-COPY ./eslint.config.cjs /app
-COPY ./jest.config.ts /app
-COPY ./jest.preset.js /app
+COPY ./eslint.config.cjs ./jest.config.ts ./jest.preset.js /app/
 # Run install
 RUN poetry run npx nx install mocks --args="--only=main,dev"
 
@@ -152,8 +100,7 @@ WORKDIR /app
 RUN useradd -m appuser
 
 # Copy only the necessary files from the builder stage
-COPY --from=builder --chown=appuser:appuser /app/packages /app/packages
-COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+COPY --from=builder --chown=appuser:appuser /app/packages /app/.venv /app/
 
 # Switch
 USER appuser
@@ -163,7 +110,6 @@ RUN cd /app/packages/mocks/mocks/dataset && unzip -o FinancialPhraseBank-v1.0.zi
 
 # Metadata
 LABEL org.opencontainers.image.source="https://github.com/AIgnostic/AIgnostic"
-
 
 ######## SEPARATE: Nginx
 FROM nginx:latest AS nginx_reverse_proxy
