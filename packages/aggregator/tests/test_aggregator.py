@@ -16,7 +16,7 @@ from aggregator.aggregator import (RESULT_QUEUE,
 import json
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def consumer():
     return ResultsConsumer(host="test_host")
 
