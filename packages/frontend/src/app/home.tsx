@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { checkURL, generateReportText } from './utils';
+import { checkURL } from './utils';
 import {
   steps,
   BACKEND_EVALUATE_URL,

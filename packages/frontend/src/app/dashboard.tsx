@@ -4,6 +4,7 @@ import theme from './theme';
 import { styled } from '@mui/material/styles';
 import { Metric } from './types';
 import ReportRenderer from './components/ReportRenderer';
+import MetricBar from './components/MetricBar';
 
 import LinearProgress, {
   linearProgressClasses,
@@ -215,9 +216,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
                       <h3>{metric_name}</h3>
                     </div>
                     <div>
-                      <p>Metric: {metric_info.value}</p>
-                      <p>Ideal value: {metric_info.ideal_value}</p>
-                      <p>Range: {metric_info.range[0]} - {metric_info.range[1]}</p>
+                    
+                      <MetricBar 
+                        min={metric_info.range[0]} 
+                        max={metric_info.range[1]}
+                        value={metric_info.value}
+                        idealValue={metric_info.ideal_value}
+                        label="" 
+                      />
                     </div>
                   </div>
                 ))}
