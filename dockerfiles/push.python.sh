@@ -1,4 +1,4 @@
-images=(python-prod-base api worker)
+images=(python-prod-base api worker nginx_reverse_proxy)
 IMG_NAMESPACE=ghcr.io/aignostic
 
 for target in "${images[@]}"

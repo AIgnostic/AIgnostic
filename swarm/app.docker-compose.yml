@@ -32,6 +32,9 @@ services:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
+      - GOOGLE_API_KEY_FILE=/run/secrets/google_ai_api_key
+    secrets:
+      - google_ai_api_key # Google AI API key
 
   # Reverse proxy
   reverse_proxy:
@@ -52,3 +55,7 @@ networks:
     driver: overlay
     attachable: true
     name: aignostic
+
+secrets:
+  google_ai_api_key:
+    external: true
