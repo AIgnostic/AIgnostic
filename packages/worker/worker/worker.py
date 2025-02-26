@@ -70,7 +70,7 @@ class Worker():
         Function to queue the results of a job
         """
         self._channel.basic_publish(
-            exchange="", routing_key=RESULT_QUEUE, body=json.dumps(result.model_dump_json())
+            exchange="", routing_key=RESULT_QUEUE, body=result.model_dump_json()
         )
         print("Result: ", result)
 
