@@ -137,22 +137,34 @@ jobs:
       build_target: 'worker'
     secrets: inherit
 
-  deploy-tsuru:
+  deploy-docker-stack:
     needs:
       - docker-api # if we didn't build a container, don't do this!
-    if: github.ref == 'refs/heads/main'
+      - docker-worker
+      - docker-aggregator
+    # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    env:
-      TSURU_TOKEN: ${{ secrets.IMPAAS_DEPLOY_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Install tsuru CLI
-        run: curl -fsSL "https://tsuru.io/get" | bash
-      - name: Add impaas target
-        run: tsuru target add impaas https://impaas.uk -s
-      - name: Deploy app
-        run: tsuru app deploy -i ${{ env.REGISTRY }}/aignostic/api:latest -a ${{ env.IMPAAS_APP_NAME }}
+      - name: Deploy Services
+        uses: kitconcept/docker-stack-deploy@v1.0.1
+        with:
+          remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
+          remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
+          remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+          stack_file: './swarm/services.docker-compose.yml'
+          stack_name: 'aignostic'
+      - name: Wait for services to start
+        run: sleep 10
+      - name: Deploy Apps
+        uses: kitconcept/docker-stack-deploy@v1.0.1
+        with:
+          remote_host: ${{ secrets.DIGITAL_OCEAN_HOST }}
+          remote_user: ${{ secrets.DIGITAL_OCEAN_USER }}
+          remote_private_key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+          stack_file: './swarm/app.docker-compose.yml'
+          stack_name: 'aignostic'
   deploy-gh-pages:
     needs:
       - lint
