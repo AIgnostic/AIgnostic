@@ -81,20 +81,3 @@ class MetricsPackageExceptionModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-
-class MetricValues(BaseModel):
-    """
-    Receive calculated metric values
-    """
-    metric_values: dict[str, Union[MetricsPackageExceptionModel, float]]
-
-    @field_validator('metric_values', mode='before')
-    def convert_exception_to_model(cls, v):
-        if isinstance(v, dict):
-            for key, value in v.items():
-                if isinstance(value, _MetricsPackageException):
-                    v[key] = value.to_pydantic_model()
-        return v
-
-    batch_size: int
-    total_sample_size: int

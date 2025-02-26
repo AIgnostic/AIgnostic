@@ -83,7 +83,7 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     return data
 
 
-def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
+def get_legislation_extracts(metrics_data: dict) -> list[dict] :
     """
     metrics_data:
     {
@@ -115,7 +115,6 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
             },
             ...
         ]
-        "llm_insights": "blah blah blah"
     ]
     """
 
@@ -142,45 +141,33 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
             parsed_data = parse_legislation_text(regulations, article_content)
             property_result["legislation_extracts"].append(parsed_data)
 
-        # TODO: Add LLM insights
-        property_result["llm_insights"] = []
+        results.append(property_result)
+
+    return results
+
+
+
+def add_llm_insights(metrics_data: list[dict], api_key: str) -> list[dict]:
+    """
+    Adds LLM insights to the metrics data.
+    metrics_data: output of get_legislation_extracts
+    api_key: Google API key for LLM
+    """
+    metrics_data["llm_insights"] = []
+
+    for property in metrics_data:
 
         try:
             llm = init_llm(api_key)
             mesg = metric_insights(
-                property_name=property,
-                metrics=[
-                    {"metric": metric.replace("_", " "), "value": str(metrics_data[metric])}
-                    for metric in common_metrics
-                ],
-                article_extracts=property_result["legislation_extracts"],
+                property_name=property["property"],
+                metrics=property["computed_metrics"],
+                article_extracts=property["legislation_extracts"],
                 llm=llm
             )
         except Exception:
             mesg = "Failed to initialize LLM"
 
-        property_result["llm_insights"].append(mesg)
+        property["llm_insights"].append(mesg)
 
-        results.append(property_result)
-
-    print(results)
-    return results
-
-
-# def generate_report(metrics_data: dict) -> json:
-#     """
-#     Generates a structured JSON report mapping metrics to legal references.
-#     """
-#     results = {
-#         "extracts": [],
-#         "llm insights": []
-#     }
-#     for metric in metrics_data:
-#         legislation = search_legislation(metric)
-#         for article in legislation:
-#             article_number = article.split()[-1]
-#             article_content = extract_legislation_text(article_number)
-#             parsed_data = parse_legislation_text(article_number,
-#                                                  article_content)
-#             results["extracts"].append(parsed_data)
-#     return results
+    return metrics_data

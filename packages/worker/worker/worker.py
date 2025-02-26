@@ -24,23 +24,12 @@ from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
 
 from pika.adapters.blocking_connection import BlockingChannel
 
+from common.models.common import AggregatorJob, JobType, WorkerException
+
 
 connection = None
 channel: BlockingChannel = None
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
-
-
-class WorkerException(Exception):
-    def __init__(self, detail: str, status_code: int = 500):
-        """Custom exception class for workers
-
-        Args:
-            detail (str): Description of error that occured
-            status_code (int, optional): HTTP status code to report back to the client. Defaults to 500.
-        """
-        self.detail = detail
-        self.status_code = status_code
-        super().__init__(self.detail)
 
 
 class Worker():
@@ -69,17 +58,22 @@ class Worker():
         """
         Function to queue the results of a job
         """
+        job = AggregatorJob(job_type=JobType.RESULT, content=result)
         self._channel.basic_publish(
-            exchange="", routing_key=RESULT_QUEUE, body=json.dumps(dict(result))
+            exchange="",
+            routing_key=RESULT_QUEUE,
+            body=json.dumps(job.dict())
         )
-        print("Result: ", result)
 
-    def queue_error(self, error: str):
+    def queue_error(self, error: WorkerException):
         """
         Function to queue an error message
         """
+        job = AggregatorJob(job_type=JobType.ERROR, content=error)
         self._channel.basic_publish(
-            exchange="", routing_key=RESULT_QUEUE, body=json.dumps({"error": error})
+            exchange="",
+            routing_key=RESULT_QUEUE,
+            body=json.dumps(job.dict())
         )
 
     def close(self):
@@ -100,7 +94,7 @@ class Worker():
                 raise WorkerException(f"Invalid job format: {e}", status_code=400)
         return None
 
-    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> dict:
+    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> tuple:
         """
         Helper function to fetch data from the dataset API
 
@@ -129,8 +123,12 @@ class Worker():
             # Parse the response JSON
             data = response.json()
 
+            features = data["features"]
+            labels = data["labels"]
+            group_ids = data["group_ids"]
+
             # Return the data
-            return data
+            return (features, labels, group_ids)
         except Exception as e:
             raise WorkerException(f"Error while fetching data: {e}")
 
@@ -175,44 +173,32 @@ class Worker():
                 f"Could not parse model response - {e}; response = {response.text}"
             )
 
-    async def process_job(self, job: Job) -> MetricValues:
-
-        # fetch data from datasetURL
-        data: dict = await self.fetch_data(job.data_url, job.data_api_key, job.batch_size)
-
-        # strip the label from the datapoint
-        try:
-            features = data["features"]
-            labels = data["labels"]
-            group_ids = data["group_ids"]
-        except KeyError:
-            raise WorkerException("KeyError occurred during data processing")
-        except Exception:
-            raise WorkerException("Error while processing data")
-
-        # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
-
-        # TODO: Refactor to use pydantic models
-        predictions = await self.query_model(
-            job.model_url,
-            {"features": features, "labels": labels, "group_ids": group_ids},
-            job.model_api_key,
-        )
+    async def process_job(self, job: Job):
 
         try:
+            # fetch data from datasetURL
+            features, true_labels, group_ids = await self.fetch_data(job.data_url, job.data_api_key, job.batch_size)
+
+            # query model at modelURL
+            # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
+            # TODO: Refactor to use pydantic models
+            predictions = await self.query_model(
+                job.model_url,
+                {"features": features, "labels": true_labels, "group_ids": group_ids},
+                job.model_api_key,
+            )
+
             predicted_labels = predictions["predictions"]
-
-            print(f"Predicted labels: {predicted_labels}")
-            print(f"True labels: {labels}")
-            print(f"Metrics to compute: {job.metrics}")
 
             # some preprocessing for FinBERT
             # TODO: Need to sort out how to handle this properly
+            # as this is redundant if the output labels are already numeric
             if job.model_type == "binary classification":
-                predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, labels)
+                predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, true_labels)
             elif job.model_type == "multi class classification":
-                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, labels)
+                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, true_labels)
 
+            print(f"Metrics to compute: {job.metrics}")
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
             print(f"Confidence scores: {predictions['confidence_scores']}")
@@ -233,12 +219,24 @@ class Worker():
                 model_url=job.model_url,
                 model_api_key=job.model_api_key,
             )
+
+            # Calculate metrics
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")
+
+            # Save the batch results to result queue
+            # To be processed by aggregator
             self.queue_result(metrics_results)
             return
+        except WorkerException as e:
+            # known/caught error
+            # should be sent back to user
+            self.queue_error(e.detail)
+            print(f"Error processing job: {e.detail}")
         except Exception as e:
-            raise WorkerException(f"Error while processing data: {e}")
+            # unknown/uncaught error
+            # should be raised to be dealt with
+            raise WorkerException(f"Unhandled error while processing job: {e}")
 
     def run(self):
         self.connect()

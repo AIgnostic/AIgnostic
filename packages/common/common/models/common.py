@@ -1,7 +1,10 @@
-from pydantic import BaseModel  # , field_validator
-from typing import Optional
-# from common.utils import nested_list_to_np
-
+from pydantic import BaseModel, field_validator
+from typing import Any, Union, Optional
+from pydantic import BaseModel
+from abc import ABC
+from enum import Enum
+from metrics.models import MetricsPackageExceptionModel
+from metrics.exceptions import _MetricsPackageException
 
 class Job(BaseModel):   # pragma: no cover
     """
@@ -78,3 +81,67 @@ class LLMResponse(ModelInput, BaseModel):
         response: str - response generated from the model
     """
     response: str
+
+
+class AggregatorMessage(BaseModel, ABC):
+    messageType: str
+    message: str
+    statusCode: int
+    content: Any
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class MessageType(str, Enum):
+    LOG = "LOG"
+    ERROR = "ERROR"
+    METRICS_INTERMEDIATE = "METRICS_INTERMEDIATE"
+    METRICS_COMPLETE = "METRICS_COMPLETE"
+    REPORT = "REPORT"
+
+
+class JobType(str, Enum):
+    RESULT = "RESULT"
+    ERROR = "ERROR"
+
+
+class WorkerException(Exception):
+    def __init__(self, detail: str, status_code: int = 500):
+        """Custom exception class for workers
+
+        Args:
+            detail (str): Description of error that occured
+            status_code (int, optional): HTTP status code to report back to the client. Defaults to 500.
+        """
+        self.detail = detail
+        self.status_code = status_code
+        super().__init__(self.detail)
+
+
+class MetricValues(BaseModel):
+    """
+    Receive calculated metric values
+    """
+    metric_values: dict[str, Union[MetricsPackageExceptionModel, float]]
+
+    @field_validator('metric_values', mode='before')
+    def convert_exception_to_model(cls, v):
+        if isinstance(v, dict):
+            for key, value in v.items():
+                if isinstance(value, _MetricsPackageException):
+                    v[key] = value.to_pydantic_model()
+        return v
+
+    batch_size: int
+    total_sample_size: int
+
+
+class AggregatorJob(BaseModel):
+    """
+    AggregatorJob pydantic model represents the structure of the jobs found on the results queue
+    i.e. what worker sends to the queue
+    and what aggregator picks up from the queue
+    """
+    job_type: JobType
+    content: Union[MetricValues, WorkerException]

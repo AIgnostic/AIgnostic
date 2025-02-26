@@ -5,8 +5,8 @@ import queue
 import websockets.sync.server
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
-from common.models.aggregator_models import AggregatorMessage, MessageType
-from report_generation.utils import generate_report
+from aggregator.models import AggregatorMessage, MessageType, AggregatorJob, JobType
+from report_generation.utils import get_legislation_extracts, add_llm_insights
 
 
 def aggregator_metrics_completion_log():
@@ -137,12 +137,8 @@ message_queue = queue.Queue()  # Store messages until a client connects
 metrics_aggregator = MetricsAggregator()
 
 
-def on_result_fetched(ch, method, properties, body):
-    """Handles incoming messages and waits for at least one client before sending."""
-    global connected_clients
-    result_data = json.loads(body)
-    print(f"Received result: {result_data}")
-
+def process_batch_result(result_data):
+    """Handles batch results from worker i.e. aggregating intermediate metric results"""
     if (metrics_aggregator.total_sample_size == 0):
         metrics_aggregator.set_total_sample_size(result_data["total_sample_size"])
 
@@ -162,10 +158,19 @@ def on_result_fetched(ch, method, properties, body):
         send_to_clients(aggregator_metrics_completion_log())
 
         print("Creating and sending final report")
+        send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
+                                      message="Generating final report - this may take a few minutes",
+                                      statusCode=200,
+                                      content=None))
         # generate a report and send to the frontend
         report_json = aggregate_report(aggregates)
 
         send_to_clients(aggregator_final_report_log(report_json))
+
+
+def process_error_result(error_data):
+    """Handles error results from worker"""
+    send_to_clients(aggregator_error_log(error_data))
 
 
 def aggregate_report(metrics: dict):
@@ -173,10 +178,34 @@ def aggregate_report(metrics: dict):
         Generates a report to send to the frontend
         By collating the metrics, and pulling information from the report generator
     """
-
-    report_json = generate_report(metrics, os.getenv("GOOGLE_API_KEY"))
+    send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
+                                      message="Fetching Legislation Extracts",
+                                      statusCode=200,
+                                      content=None))
+    report_json = get_legislation_extracts(metrics)
+    send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
+                                      message="Adding LLM Insights",
+                                      statusCode=200,
+                                      content=None))
+    report_json = add_llm_insights(report_json, os.getenv("GOOGLE_API_KEY"))
 
     return report_json
+
+
+def on_result_fetched(ch, method, properties, body):
+    """Handles incoming messages and waits for at least one client before sending."""
+    global connected_clients
+    body = json.loads(body)
+    job = AggregatorJob(**body)
+
+    print(f"Received job: {job}")
+
+    if (job.job_type == JobType.RESULT):
+        process_batch_result(job.content)
+    elif (job.job_type == JobType.ERROR):
+        process_error_result(job.content)
+    else:
+        raise ValueError(f"Invalid job type: {job.job_type}")
 
 
 def send_to_clients(message: AggregatorMessage):
@@ -206,6 +235,10 @@ def websocket_handler(websocket):
     """Handles WebSocket connections and sends any queued messages upon connection."""
     global connected_clients
     print("New WebSocket connection")
+    send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
+                                      message="Processing Metrics",
+                                      statusCode=200,
+                                      content="Processing batches..."))
     connected_clients.add(websocket)
 
     # Send any stored messages when the first client connects
