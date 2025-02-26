@@ -123,7 +123,18 @@ def test_on_result_fetched(mock_aggregate_report, mock_send_to_clients):
     sample_message = {
         "total_sample_size": 20,
         "batch_size": 10,
-        "metric_values": {"accuracy": 0.85, "precision": 0.15}
+        "metric_values": {
+            "accuracy": {
+                "computed_value": 0.85,
+                "ideal_value": 1.0,
+                "range": [0.0, 1.0]
+            },
+            "precision": {
+                "computed_value": 0.15,
+                "ideal_value": 1.0,
+                "range": [0.0, 1.0]
+            }
+        }
     }
     message_body = json.dumps(sample_message)
 

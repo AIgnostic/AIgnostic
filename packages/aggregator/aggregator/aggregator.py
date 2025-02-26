@@ -71,24 +71,38 @@ class MetricsAggregator():
 
                 # Compute new weighted average
                 new_count = prev_count + batch_size
-                self.metrics[metric]["value"] = (prev_value * prev_count + metric_value_obj["computed_value"] * batch_size) / new_count
+                new_value = (prev_value * prev_count + metric_value_obj["computed_value"] * batch_size) / new_count
+                self.metrics[metric]["value"] = new_value
                 self.metrics[metric]["count"] = new_count  # Update the total count
 
         self.samples_processed += batch_size
 
     def get_aggregated_metrics(self):
         """
-            Return metrics object 
-            # Returns the aggregated metrics as a dictionary
-            # i.e. { metric1: value1, metric2: value2, ... }
+        Returns the aggregated metrics as a dictionary.
+        Example:
+        {
+            "metric1": {
+                "value": value1,
+                "ideal_value": ideal_value1,
+                "range": range1
+            },
+            "metric2": {
+                "value": value2,
+                "ideal_value": ideal_value2,
+                "range": range2
+            },
+            ...
+        }
         """
-
-        # results = {}
-        # for metric, data in self.metrics.items():
-            # results[metric] = data["value"]
-        # return results
-
-        return self.metrics
+        results = {}
+        for metric, data in self.metrics.items():
+            results[metric] = {
+                "value": data["value"],
+                "ideal_value": data["ideal_value"],
+                "range": data["range"]
+            }
+        return results
 
 
 class ResultsConsumer():
