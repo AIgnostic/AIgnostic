@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # python-prod-base is used to build the rest
-images=(python-prod-base aggregator api worker)
+images=(python-prod-base aggregator api worker mocks)
 IMG_NAMESPACE=ghcr.io/aignostic
 
 for target in "${images[@]}"

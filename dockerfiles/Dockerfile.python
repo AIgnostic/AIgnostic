@@ -39,21 +39,18 @@ FROM python:3.12-slim AS python-prod-base
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy only the necessary files from the builder stage
-COPY --from=builder /app/packages /app/packages
-COPY --from=builder /app/.venv /app/.venv
-
 # Create a non-root user and switch to it
 RUN useradd -m appuser
 
-# Change ownership
-RUN chown -R appuser /app
+# Copy only the necessary files from the builder stage
+COPY --from=builder --chown=appuser:appuser /app/packages /app/packages
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+
+# # Change ownership
+# RUN chown -R appuser /app
 
 # Switch
 USER appuser
-
-# Expose the port the app runs on
-EXPOSE 8000
 
 # SO that we can use one image to build each python package,
 # we specify them all here as different stages with their appropriat start commands
@@ -76,3 +73,39 @@ CMD ["/app/.venv/bin/python", "-m", "aggregator.aggregator"]
 FROM python-prod-base AS worker
 WORKDIR /app/packages/worker
 CMD ["/app/.venv/bin/python", "-m", "worker.worker"]
+
+
+# Mocks has an extra build command
+FROM builder AS mocks-build
+# Some extra files are needed to make nx behave
+COPY ./eslint.config.cjs /app
+COPY ./jest.config.ts /app
+COPY ./jest.preset.js /app
+# Run install
+RUN poetry run npx nx install mocks --args="--only=main,dev"
+
+# Now build mocks production -> copy paste of code above with mocks builder instead
+# Copy venv & application code to new image
+# Second stage: runtime
+FROM mocks-build AS mocks
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Create a non-root user and switch to it
+RUN useradd -m appuser
+
+# Copy only the necessary files from the builder stage
+COPY --from=builder --chown=appuser:appuser /app/packages /app/packages
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+
+
+# Change ownership
+# RUN chown -R appuser /app
+
+# Switch
+USER appuser
+
+# Metadata
+LABEL org.opencontainers.image.source="https://github.com/AIgnostic/AIgnostic"
+

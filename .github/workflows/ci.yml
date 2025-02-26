@@ -137,7 +137,18 @@ jobs:
       build_target: 'worker'
     secrets: inherit
 
+  docker-mocks:
+    # Build base image first to enable caching
+    uses: ./.github/workflows/docker.yml
+    needs:
+      - docker-base
+    with:
+      image_tag: 'mocks'
+      build_target: 'mocks'
+    secrets: inherit
+
   deploy-docker-stack:
+    # UNCOMMENT IT ALL BELOW
     # needs:
     #   - docker-api # if we didn't build a container, don't do this!
     #   - docker-worker
