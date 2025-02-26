@@ -109,7 +109,12 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
         property_result["property"] = property
         if common_metrics:
             property_result["computed_metrics"] = [
-                {"metric": metric.replace("_", " "), "info": metrics_data[metric]}
+                {
+                    "metric": metric.replace("_", " "), 
+                    "value": round(metrics_data[metric]["value"], 3),
+                    "ideal_value": round(metrics_data[metric]["ideal_value"], 3),
+                    "range": metrics_data[metric]["range"],
+                }
                 for metric in common_metrics
             ]
         else:

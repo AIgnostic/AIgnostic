@@ -101,6 +101,8 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                             {section.computed_metrics.map((metric, idx) => (
                                 <Text key={idx} style={styles.bulletPoint}>
                                     • {metric.metric}: {metric.value}
+                                    • Ideal Value: {metric.ideal_value}
+                                    • Range: {metric.range[0]} - {metric.range[1]}
                                 </Text>
                             ))}
                         </View>

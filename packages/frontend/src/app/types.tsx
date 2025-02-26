@@ -5,7 +5,12 @@ export type MarkdownFiles = Record<string, string>;
 
 export interface ReportPropertySection {
   property: string;
-  computed_metrics: { metric: string; value: string }[];
+  computed_metrics: {
+      metric: string;
+      ideal_value: string;
+      range: string[];
+      value: string; 
+}[];
   legislation_extracts: LegislationExtract[];
   llm_insights: string[];
 }
