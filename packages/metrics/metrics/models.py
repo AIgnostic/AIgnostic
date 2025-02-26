@@ -92,7 +92,7 @@ class MetricValue(BaseModel):
     """
     computed_value: float
     ideal_value: float
-    range: Tuple[Optional[float], Optional[float]]
+    range: Tuple[Optional[float], Optional[float]] = (None, None)
 
 
 class MetricConfig(BaseModel):
