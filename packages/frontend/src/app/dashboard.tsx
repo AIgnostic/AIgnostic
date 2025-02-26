@@ -1,28 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import ErrorMessage from './components/ErrorMessage';
-import { generateReportText } from './utils';
 import theme from './theme';
-import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
+import { Metric } from './types';
+import ReportRenderer from './components/ReportRenderer';
+
 
 import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
-
-
-interface Metric {
-  [metricName: string]: number;
-}
+import { pdf } from '@react-pdf/renderer';
 
 
 interface DashboardProps {
   onComplete: () => void;
-}
-interface Report {
-  property: string;
-  computedMetrics: { metric: string; result: string }[];
-  legislationExtracts: string[];
-  llmInsights: string[];
 }
 
 // Each item from the websocket is an array of Metric objects.
@@ -85,15 +76,24 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
 
           break;
         case 'REPORT': {
-          console.log('Results received:', data.content);
-          setReport(data.content);
-          console.log('Report:', data.content);
-          const doc = generateReportText(data.content);
-          console.log(doc);
-          doc.save('AIgnostic_Report.pdf');
-          if (error.header === 'Report is being generated') {
-            setShowError(false);
-          }
+          const generateReport = async () => {
+            console.log('Results received:', data.content);
+            setReport(data.content);
+            console.log('Report:', data.content);
+            const blob = await pdf(<ReportRenderer report={data.content} />).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'AIgnostic_Report.pdf'; // Set the file name
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            if (error.header === 'Report is being generated') {
+              setShowError(false);
+            }
+          };
+          generateReport();
           break;
         }
         case 'ERROR':
