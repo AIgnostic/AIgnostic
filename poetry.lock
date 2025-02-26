@@ -654,6 +654,88 @@ trio = ["trio (>=0.23)"]
 wmi = ["wmi (>=1.5.1)"]
 
 [[package]]
+name = "editdistance"
+version = "0.8.1"
+description = "Fast implementation of the edit distance (Levenshtein distance)"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
+files = [
+    {file = "editdistance-0.8.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:adeb705f32b93accc74960d227875abff150ee42d676e428536361fe5f8f5388"},
+    {file = "editdistance-0.8.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:3de77951b105d0972deec7684a0b3d1a9dee69c9b5d34f6e2acc0d76cd4a1c52"},
+    {file = "editdistance-0.8.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:5e88efb052d45e924606c305cb833a80579dca3e8e4ff01309d50ba2c1c0bbd5"},
+    {file = "editdistance-0.8.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0247e7a1e9c66ea75211a97e725366bff19a52aac2c838ed5f90025630e976dd"},
+    {file = "editdistance-0.8.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:67d143429a49ab552411505f550a0fb4285a1d4336e096804d233ec495ac20fc"},
+    {file = "editdistance-0.8.1-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ca9d3be2b10e5d44a950a4bd1e84bca9ebbecd364bce0cf5693bf8224c78eaef"},
+    {file = "editdistance-0.8.1-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:5c72aa1df8535f2e2b3d8773a1a7da091bc1a7e52bb396e7e48d375ba687e7b2"},
+    {file = "editdistance-0.8.1-cp310-cp310-musllinux_1_1_i686.whl", hash = "sha256:9a606c34a2a6cc190e4fffc856b36333cdcf1f1fab5b22bd3088e585c22d6ca0"},
+    {file = "editdistance-0.8.1-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:5af173d442ffac33b7c7990132f97f88818a3abf4b21c0c702a7022df37c0c5c"},
+    {file = "editdistance-0.8.1-cp310-cp310-win32.whl", hash = "sha256:fd64b58f5a7b59afd9d75982aaeeacd2a98498bf472fa0360c122ffe6ea4c871"},
+    {file = "editdistance-0.8.1-cp310-cp310-win_amd64.whl", hash = "sha256:6c7c62c3cae45ca1fa01bb2722b297b9de1e3a244ac44cfba88bdcb488fe6aee"},
+    {file = "editdistance-0.8.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:486105603a273d73d12a54f347dffa70ab281749d7c3879658b377bc49e4b98c"},
+    {file = "editdistance-0.8.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:fad081f5f86a175c1a09a4e9e45b95c9349e454c21e181e842e01c85f1f536fc"},
+    {file = "editdistance-0.8.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:8cb78e125f6759398885a775f5eed07c2bb72b2f86da43e674c6b6a3335b273b"},
+    {file = "editdistance-0.8.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3778ca60aa89def9144b70e330bcec5330c7da1d69cb28c612e90b84510a1d3d"},
+    {file = "editdistance-0.8.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fba945eaa0436cf40bc53d7e299dc537c7c71353379a095b7459ff4af910da33"},
+    {file = "editdistance-0.8.1-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:877f2a0d801f32bc1a1878901ffb947b974361e849c66e314a7f1d786a446b58"},
+    {file = "editdistance-0.8.1-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:e79d351ca40a6ead5f3763253fd7521572ee0d3e5d42538630e56d10f48db481"},
+    {file = "editdistance-0.8.1-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:70ed382b3052a51161bad0149d4665003bf3b949fce0b01bf1253a4cc1a88239"},
+    {file = "editdistance-0.8.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:a529bfb384c4000775d76739c4e64f73337f0f5a3784933b1321b577a62bed4e"},
+    {file = "editdistance-0.8.1-cp311-cp311-win32.whl", hash = "sha256:b082232429e731f181af7f7d2bcf79da6ca8fadd04e9086c11e2973f7d330c81"},
+    {file = "editdistance-0.8.1-cp311-cp311-win_amd64.whl", hash = "sha256:cef1a4359252a49f2c4718e64e9d40027d9d951b289d045bdb278656e59f6af8"},
+    {file = "editdistance-0.8.1-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:b04af61b3fcdd287a07c15b6ae3b02af01c5e3e9c3aca76b8c1d13bd266b6f57"},
+    {file = "editdistance-0.8.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:18fc8b6eaae01bfd9cf999af726c1e8dcf667d120e81aa7dbd515bea7427f62f"},
+    {file = "editdistance-0.8.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:6a87839450a5987028738d061ffa5ef6a68bac2ddc68c9147a8aae9806629c7f"},
+    {file = "editdistance-0.8.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:24b5f9c9673c823d91b5973d0af8b39f883f414a55ade2b9d097138acd10f31e"},
+    {file = "editdistance-0.8.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c59248eabfad603f0fba47b0c263d5dc728fb01c2b6b50fb6ca187cec547fdb3"},
+    {file = "editdistance-0.8.1-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:84e239d88ff52821cf64023fabd06a1d9a07654f364b64bf1284577fd3a79d0e"},
+    {file = "editdistance-0.8.1-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:2f7f71698f83e8c83839ac0d876a0f4ef996c86c5460aebd26d85568d4afd0db"},
+    {file = "editdistance-0.8.1-cp312-cp312-musllinux_1_1_i686.whl", hash = "sha256:04e229d6f4ce0c12abc9f4cd4023a5b5fa9620226e0207b119c3c2778b036250"},
+    {file = "editdistance-0.8.1-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:e16721636da6d6b68a2c09eaced35a94f4a4a704ec09f45756d4fd5e128ed18d"},
+    {file = "editdistance-0.8.1-cp312-cp312-win32.whl", hash = "sha256:87533cf2ebc3777088d991947274cd7e1014b9c861a8aa65257bcdc0ee492526"},
+    {file = "editdistance-0.8.1-cp312-cp312-win_amd64.whl", hash = "sha256:09f01ed51746d90178af7dd7ea4ebb41497ef19f53c7f327e864421743dffb0a"},
+    {file = "editdistance-0.8.1-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:0b6f52a9d7d434f6882db3dc0340e42da6f177644c23f6a02a739b6247a14b82"},
+    {file = "editdistance-0.8.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:d5b413aeb8fe3f77a9e95485fcb64ce84e6b14bcd368124d38bd0062167b3456"},
+    {file = "editdistance-0.8.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:4ba571e8b6796ad34faeb8581ddc311c35946b2fc183eaebfef59e12ea3538b3"},
+    {file = "editdistance-0.8.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:616e361e932a85ee1f7091fcb8f7e4619681592c1a0cca251dfd26976dd58254"},
+    {file = "editdistance-0.8.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cf200104ed4923d4f51ca543bc8488732a31a17848058e65bcba855a7eee2bd2"},
+    {file = "editdistance-0.8.1-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:387d3bb45befbf8514eb8d17180307580efe4ebaa40ad8b2c14eb04c52ad18a0"},
+    {file = "editdistance-0.8.1-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:8e4ea90e92f0e3494bdddad45928393094c258aeef9e4def81a39c3429df0e19"},
+    {file = "editdistance-0.8.1-cp38-cp38-musllinux_1_1_i686.whl", hash = "sha256:5d746ecbf7db7fe0f93ba6971ac43225aac877818a3c2003d41436fee9b33905"},
+    {file = "editdistance-0.8.1-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:d789a8ef6fe7cb287ff199381bbd62e9fb2ba4b1e69db817b761d9b42bf8ca7b"},
+    {file = "editdistance-0.8.1-cp38-cp38-win32.whl", hash = "sha256:dbbf050fece6c78838a8a95fa4e9a4132023c3d85138870ac83c9dc1dfbfe513"},
+    {file = "editdistance-0.8.1-cp38-cp38-win_amd64.whl", hash = "sha256:1c49df0717f64a2c8869edc32c01ba9a22ba20b6cc482876c1067e3a92a6cb2d"},
+    {file = "editdistance-0.8.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:4d8e9a3e65a68c13dcadc1d2caca620f1716a8d02f2602047e0721b509161ec7"},
+    {file = "editdistance-0.8.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:7994a6a0a6ae92db87c144e12f1549ca0e50f43c6cc64e32c628e7af6b9c74b6"},
+    {file = "editdistance-0.8.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:dbe0cbc15466e9b7fbf73e34bdcae11cb0c2acd09a60ef4740f2172f9aa5e751"},
+    {file = "editdistance-0.8.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bc5f0c7f12a3a3bf2d129e2900deaaa5e47203ef61918343ddc4b6c03e50f089"},
+    {file = "editdistance-0.8.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:98572c662fd7d425ff24acb8197ad4be7849558a48aebbc60012090bfda4dce9"},
+    {file = "editdistance-0.8.1-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3b35c647a8a17b77441e7b6111b74ae1016851589109e1efc990d27225b3217b"},
+    {file = "editdistance-0.8.1-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:2f56c0e006f6b5207985c1bdd62e1873e66bb06a60849cad32716cad1bb3ae40"},
+    {file = "editdistance-0.8.1-cp39-cp39-musllinux_1_1_i686.whl", hash = "sha256:d6bc5a827b262dc9b0d03cfd821682334ce1280520edf6385dc1730e390b5201"},
+    {file = "editdistance-0.8.1-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:ad68a2357664e45823b38c9f67a315ff9771263ec502a710057b78c6ca6fcfcd"},
+    {file = "editdistance-0.8.1-cp39-cp39-win32.whl", hash = "sha256:16b3e413c020e42b2ef2d4ba01386ead43007217f0bdd704e90474ace90d2023"},
+    {file = "editdistance-0.8.1-cp39-cp39-win_amd64.whl", hash = "sha256:331f1a8d3a753858a9d689c0bcd79ad1959e0df464bb6c22cb263cfb6da208e4"},
+    {file = "editdistance-0.8.1-pp310-pypy310_pp73-macosx_10_9_x86_64.whl", hash = "sha256:a4a90c6b03094c07358572027a8d0a13cca7450b1aa6caca98a5f1fa4f0b8961"},
+    {file = "editdistance-0.8.1-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:510a4f9ced348a4fd89ae2e102357d4d801a771e29bb2bc2f130a1692193407f"},
+    {file = "editdistance-0.8.1-pp310-pypy310_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:4787fa7228ba6a34b430066d174320f011d605015baa7299c2c4911e6ea6bd46"},
+    {file = "editdistance-0.8.1-pp310-pypy310_pp73-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ee02601375073afccd6b4d811129ce1cb696d47db734784d8dbd1fddcea75447"},
+    {file = "editdistance-0.8.1-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:bc7ad9f9a20e6f351523de77c59249f005242e3f317b5de45d02c378d24f6531"},
+    {file = "editdistance-0.8.1-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:7743895df48482fa5a7136543d6bde72e6c10c78a4a4b772fcddda48f792ef68"},
+    {file = "editdistance-0.8.1-pp38-pypy38_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d9f139d921aff07deb2c9e592fe23d994af0e59267962a20c062cd66750a0ca4"},
+    {file = "editdistance-0.8.1-pp38-pypy38_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:493587829de3e500bdf34f03f5ab12501867b911acc838e1d04047a3f8941aad"},
+    {file = "editdistance-0.8.1-pp38-pypy38_pp73-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:16c521157f5d29bf2cb20472482de8450722685d27a6dd801ff1e80cb13a1fd1"},
+    {file = "editdistance-0.8.1-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:2a956eb9584d9e8d165bddd9091791924648071c3cdb1e03ec94b1320c2edefd"},
+    {file = "editdistance-0.8.1-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:8131acb6b5170382b8b74efab92df8739ac591dc841314e0153af63c4493cb43"},
+    {file = "editdistance-0.8.1-pp39-pypy39_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f182e5e1d2a446138cab085409395c62af36eb1abcbe8cfacb083febfeafd5ce"},
+    {file = "editdistance-0.8.1-pp39-pypy39_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7f4f19a829aff230377041acb77afec73becbebafe35b7e322be00cdb3122ddb"},
+    {file = "editdistance-0.8.1-pp39-pypy39_pp73-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b978c5927100a57791131dd2418040f4e5d33970d37b97a84c1a530ec481f557"},
+    {file = "editdistance-0.8.1-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:0c96a8e981f385f0b7392d047c5caab8e0b24f94b71120787fd78241efc34237"},
+    {file = "editdistance-0.8.1.tar.gz", hash = "sha256:d1cdf80a5d5014b0c9126a69a42ce55a457b457f6986ff69ca98e4fe4d2d8fed"},
+]
+
+[[package]]
 name = "email-validator"
 version = "2.2.0"
 description = "A robust email address syntax and deliverability validation library."
@@ -905,15 +987,15 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "google-ai-generativelanguage"
-version = "0.6.15"
+version = "0.6.16"
 description = "Google Ai Generativelanguage API client library"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
 files = [
-    {file = "google_ai_generativelanguage-0.6.15-py3-none-any.whl", hash = "sha256:5a03ef86377aa184ffef3662ca28f19eeee158733e45d7947982eb953c6ebb6c"},
-    {file = "google_ai_generativelanguage-0.6.15.tar.gz", hash = "sha256:8f6d9dc4c12b065fe2d0289026171acea5183ebf2d0b11cefe12f3821e159ec3"},
+    {file = "google_ai_generativelanguage-0.6.16-py3-none-any.whl", hash = "sha256:b53c736b8ebed75fe040d48740b0a15370d75e7dbc72249fb7acd2c9171bc072"},
+    {file = "google_ai_generativelanguage-0.6.16.tar.gz", hash = "sha256:494f73c44dede1fd6853e579efe590f139d0654481d2a5bdadfc415ec5351d3d"},
 ]
 
 [package.dependencies]
@@ -951,26 +1033,6 @@ grpcgcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
-name = "google-api-python-client"
-version = "2.161.0"
-description = "Google API Client Library for Python"
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
-files = [
-    {file = "google_api_python_client-2.161.0-py2.py3-none-any.whl", hash = "sha256:9476a5a4f200bae368140453df40f9cda36be53fa7d0e9a9aac4cdb859a26448"},
-    {file = "google_api_python_client-2.161.0.tar.gz", hash = "sha256:324c0cce73e9ea0a0d2afd5937e01b7c2d6a4d7e2579cdb6c384f9699d6c9f37"},
-]
-
-[package.dependencies]
-google-api-core = ">=1.31.5,<2.0.dev0 || >2.3.0,<3.0.0.dev0"
-google-auth = ">=1.32.0,<2.24.0 || >2.24.0,<2.25.0 || >2.25.0,<3.0.0.dev0"
-google-auth-httplib2 = ">=0.2.0,<1.0.0"
-httplib2 = ">=0.19.0,<1.dev0"
-uritemplate = ">=3.0.1,<5"
-
-[[package]]
 name = "google-auth"
 version = "2.38.0"
 description = "Google Authentication Library"
@@ -995,48 +1057,6 @@ pyjwt = ["cryptography (>=38.0.3)", "pyjwt (>=2.0)"]
 pyopenssl = ["cryptography (>=38.0.3)", "pyopenssl (>=20.0.0)"]
 reauth = ["pyu2f (>=0.1.5)"]
 requests = ["requests (>=2.20.0,<3.0.0.dev0)"]
-
-[[package]]
-name = "google-auth-httplib2"
-version = "0.2.0"
-description = "Google Authentication Library: httplib2 transport"
-optional = false
-python-versions = "*"
-groups = ["main"]
-markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
-files = [
-    {file = "google-auth-httplib2-0.2.0.tar.gz", hash = "sha256:38aa7badf48f974f1eb9861794e9c0cb2a0511a4ec0679b1f886d108f5640e05"},
-    {file = "google_auth_httplib2-0.2.0-py2.py3-none-any.whl", hash = "sha256:b65a0a2123300dd71281a7bf6e64d65a0759287df52729bdd1ae2e47dc311a3d"},
-]
-
-[package.dependencies]
-google-auth = "*"
-httplib2 = ">=0.19.0"
-
-[[package]]
-name = "google-generativeai"
-version = "0.8.4"
-description = "Google Generative AI High level API client library and tools."
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
-files = [
-    {file = "google_generativeai-0.8.4-py3-none-any.whl", hash = "sha256:e987b33ea6decde1e69191ddcaec6ef974458864d243de7191db50c21a7c5b82"},
-]
-
-[package.dependencies]
-google-ai-generativelanguage = "0.6.15"
-google-api-core = "*"
-google-api-python-client = "*"
-google-auth = ">=2.15.0"
-protobuf = "*"
-pydantic = "*"
-tqdm = "*"
-typing-extensions = "*"
-
-[package.extras]
-dev = ["Pillow", "absl-py", "black", "ipython", "nose2", "pandas", "pytype", "pyyaml"]
 
 [[package]]
 name = "googleapis-common-protos"
@@ -1299,22 +1319,6 @@ asyncio = ["anyio (>=4.0,<5.0)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
 trio = ["trio (>=0.22.0,<1.0)"]
-
-[[package]]
-name = "httplib2"
-version = "0.22.0"
-description = "A comprehensive HTTP client library."
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-groups = ["main"]
-markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
-files = [
-    {file = "httplib2-0.22.0-py3-none-any.whl", hash = "sha256:14ae0a53c1ba8f3d37e9e27cf37eabb0fb9980f435ba405d546948b009dd64dc"},
-    {file = "httplib2-0.22.0.tar.gz", hash = "sha256:d7a10bc5ef5ab08322488bde8c726eeee5c8618723fdb399597ec58f3d82df81"},
-]
-
-[package.dependencies]
-pyparsing = {version = ">=2.4.2,<3.0.0 || >3.0.0,<3.0.1 || >3.0.1,<3.0.2 || >3.0.2,<3.0.3 || >3.0.3,<4", markers = "python_version > \"3.0\""}
 
 [[package]]
 name = "httptools"
@@ -1618,15 +1622,15 @@ files = [
 
 [[package]]
 name = "langchain-core"
-version = "0.3.39"
+version = "0.3.40"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
 files = [
-    {file = "langchain_core-0.3.39-py3-none-any.whl", hash = "sha256:00f35e15e5f21d77320b3f8b816a1bf5de0b40b7809cd625dc3813b850a87fb2"},
-    {file = "langchain_core-0.3.39.tar.gz", hash = "sha256:97d49eccb1dea057b2efadae178bcc5e6472caa69c171fa4508fa6fb45f44c0e"},
+    {file = "langchain_core-0.3.40-py3-none-any.whl", hash = "sha256:9f31358741f10a13db8531e8288b8a5ae91904018c5c2e6f739d6645a98fca03"},
+    {file = "langchain_core-0.3.40.tar.gz", hash = "sha256:893a238b38491967c804662c1ec7c3e6ebaf223d1125331249c3cf3862ff2746"},
 ]
 
 [package.dependencies]
@@ -1643,20 +1647,20 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-google-genai"
-version = "2.0.10"
+version = "2.0.11"
 description = "An integration package connecting Google's genai package and LangChain"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
 files = [
-    {file = "langchain_google_genai-2.0.10-py3-none-any.whl", hash = "sha256:964a7542fd11fdec7592052b4eaef383227f7c4fa4d754a455e4bf0634f4ad28"},
-    {file = "langchain_google_genai-2.0.10.tar.gz", hash = "sha256:b51067b468853856f275bb7b1a85dbaf4467b59fe67e35fcd614fc0d744c810e"},
+    {file = "langchain_google_genai-2.0.11-py3-none-any.whl", hash = "sha256:c98b18524a78fcc7084ba5ac69ea6a1a69b0b693255de68245b98bbbc3f08e87"},
+    {file = "langchain_google_genai-2.0.11.tar.gz", hash = "sha256:ff6997eee872f0732036129173f4c1740b03fbb1f13251805d51d6c08bf8b34d"},
 ]
 
 [package.dependencies]
 filetype = ">=1.2.0,<2.0.0"
-google-generativeai = ">=0.8.0,<0.9.0"
+google-ai-generativelanguage = ">=0.6.16,<0.7.0"
 langchain-core = ">=0.3.37,<0.4.0"
 pydantic = ">=2,<3"
 
@@ -1906,6 +1910,7 @@ develop = true
 [package.dependencies]
 aif360 = "^0.6.1"
 common = {path = "../common", develop = true}
+nltk = "^3.9.1"
 
 [package.source]
 type = "directory"
@@ -1973,6 +1978,33 @@ doc = ["intersphinx-registry", "myst-nb (>=1.1)", "numpydoc (>=1.8.0)", "pillow 
 example = ["cairocffi (>=1.7)", "contextily (>=1.6)", "igraph (>=0.11)", "momepy (>=0.7.2)", "osmnx (>=1.9)", "scikit-learn (>=1.5)", "seaborn (>=0.13)"]
 extra = ["lxml (>=4.6)", "pydot (>=3.0.1)", "pygraphviz (>=1.14)", "sympy (>=1.10)"]
 test = ["pytest (>=7.2)", "pytest-cov (>=4.0)"]
+
+[[package]]
+name = "nltk"
+version = "3.9.1"
+description = "Natural Language Toolkit"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
+files = [
+    {file = "nltk-3.9.1-py3-none-any.whl", hash = "sha256:4fa26829c5b00715afe3061398a8989dc643b92ce7dd93fb4585a70930d168a1"},
+    {file = "nltk-3.9.1.tar.gz", hash = "sha256:87d127bd3de4bd89a4f81265e5fa59cb1b199b27440175370f7417d2bc7ae868"},
+]
+
+[package.dependencies]
+click = "*"
+joblib = "*"
+regex = ">=2021.8.3"
+tqdm = "*"
+
+[package.extras]
+all = ["matplotlib", "numpy", "pyparsing", "python-crfsuite", "requests", "scikit-learn", "scipy", "twython"]
+corenlp = ["requests"]
+machine-learning = ["numpy", "python-crfsuite", "scikit-learn", "scipy"]
+plot = ["matplotlib"]
+tgrep = ["pyparsing"]
+twitter = ["twython"]
 
 [[package]]
 name = "numpy"
@@ -3324,6 +3356,22 @@ rich = ">=13.7.1"
 typing-extensions = ">=4.12.2"
 
 [[package]]
+name = "rouge"
+version = "1.0.1"
+description = "Full Python ROUGE Score Implementation (not a wrapper)"
+optional = false
+python-versions = "*"
+groups = ["main"]
+markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
+files = [
+    {file = "rouge-1.0.1-py3-none-any.whl", hash = "sha256:28d118536e8c774dc47d1d15ec266479b4dd0914c4672ce117d4002789bdc644"},
+    {file = "rouge-1.0.1.tar.gz", hash = "sha256:12b48346ca47d6bcf3c45061f315452b9ccec0620ee895ec85b7efc3d54aae34"},
+]
+
+[package.dependencies]
+six = "*"
+
+[[package]]
 name = "rsa"
 version = "4.9"
 description = "Pure-Python RSA implementation"
@@ -3501,15 +3549,15 @@ test = ["Cython", "array-api-strict (>=2.0,<2.1.1)", "asv", "gmpy2", "hypothesis
 
 [[package]]
 name = "setuptools"
-version = "75.8.0"
+version = "75.8.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\""
 files = [
-    {file = "setuptools-75.8.0-py3-none-any.whl", hash = "sha256:e3982f444617239225d675215d51f6ba05f845d4eec313da4418fdbb56fb27e3"},
-    {file = "setuptools-75.8.0.tar.gz", hash = "sha256:c5afc8f407c626b8313a86e10311dd3f661c6cd9c09d4bf8c15c0e11f9f2b0e6"},
+    {file = "setuptools-75.8.1-py3-none-any.whl", hash = "sha256:3bc32c0b84c643299ca94e77f834730f126efd621de0cc1de64119e0e17dab1f"},
+    {file = "setuptools-75.8.1.tar.gz", hash = "sha256:65fb779a8f28895242923582eadca2337285f0891c2c9e160754df917c3d2530"},
 ]
 
 [package.extras]
@@ -4013,19 +4061,6 @@ files = [
 style = "1.1.0"
 
 [[package]]
-name = "uritemplate"
-version = "4.1.1"
-description = "Implementation of RFC 6570 URI Templates"
-optional = false
-python-versions = ">=3.6"
-groups = ["main"]
-markers = "sys_platform == \"linux\" or sys_platform == \"win32\" or sys_platform == \"darwin\" or sys_platform != \"linux\" and sys_platform != \"win32\" and sys_platform != \"darwin\""
-files = [
-    {file = "uritemplate-4.1.1-py2.py3-none-any.whl", hash = "sha256:830c08b8d99bdd312ea4ead05994a38e8936266f84b9a7878232db50b044e02e"},
-    {file = "uritemplate-4.1.1.tar.gz", hash = "sha256:4346edfc5c3b79f694bccd6d6099a322bbeb628dbf2cd86eea55a456ce5124f0"},
-]
-
-[[package]]
 name = "urllib3"
 version = "2.3.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -4446,4 +4481,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "8b9fc055702a84e9429877e9c898e57809c5d333ca12d529ae1f6b7c048c22fb"
+content-hash = "b9d6ad3e34e7a5ce4664902d3f794a1b5bcf5f260f7d43d260f984d3fb94deff"
