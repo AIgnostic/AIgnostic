@@ -1,3 +1,4 @@
+import { IS_PROD } from './env';
 import { ConditionAlertFailure, HomepageState } from './types';
 import { fetchMetricInfo } from './utils';
 
@@ -37,17 +38,17 @@ const steps = [
   },
 ];
 
-const BACKEND_EVALUATE_URL = import.meta.env.PROD
-  ? 'https://api.aignostic.docsoc.co.uk'
+const BACKEND_EVALUATE_URL = IS_PROD
+  ? 'https://api.aignostic.docsoc.co.uk/evaluate'
   : 'http://localhost:8000/evaluate';
-const RESULTS_URL = import.meta.env.PROD
-  ? 'https://api.aignostic.docsoc.co.uk'
+const RESULTS_URL = IS_PROD
+  ? 'https://api.aignostic.docsoc.co.uk/results'
   : 'http://localhost:5002/results';
-const WEBSOCKET_URL = import.meta.env.PROD
+const WEBSOCKET_URL = IS_PROD
   ? 'wss://api.aignostic.docsoc.co.uk/aggregator/ws'
   : 'ws://localhost:5005';
-const BACKEND_FETCH_METRIC_INFO_URL = import.meta.env.PROD
-  ? 'https://api.aignostic.docsoc.co.uk'
+const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
+  ? 'https://api.aignostic.docsoc.co.uk/retrieve-metric-info'
   : 'http://localhost:8000/retrieve-metric-info';
 
 let modelTypesToMetrics: { [key: string]: string[] } = {};

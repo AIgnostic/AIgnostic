@@ -162,6 +162,7 @@ jobs:
       - docker-api # if we didn't build a container, don't do this!
       - docker-worker
       - docker-aggregator
+      - docker-nginx
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
