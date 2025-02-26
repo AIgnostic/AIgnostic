@@ -71,7 +71,7 @@ CMD ["/app/.venv/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", 
 
 FROM python-prod-base AS aggregator
 WORKDIR /app/packages/aggregator
-CMD ["/app/.venv/bin/python", "-m", "uvicorn", "aggregator.aggregator:aggregator_app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/.venv/bin/python", "-m", "aggregator.aggregator"]
 
 FROM python-prod-base AS worker
 WORKDIR /app/packages/worker

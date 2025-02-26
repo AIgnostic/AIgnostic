@@ -1,21 +1,5 @@
 services:
   ###
-  # Services
-  ###
-  rabbitmq:
-    image: rabbitmq:3-management
-    expose:
-      - 5672
-      - 15672
-    networks:
-      - aignostic_network
-    healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 10s
-      timeout: 10s
-      retries: 5
-
-  ###
   # Backend services
   ###
   # Api Router
@@ -28,9 +12,6 @@ services:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
 
   # Microservices
   worker_ms:
@@ -42,9 +23,6 @@ services:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
 
   aggregator_ms:
     container_name: aggregator
@@ -53,9 +31,9 @@ services:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
 
 networks:
   aignostic_network:
+    driver: overlay
+    attachable: true
+    name: aignostic
