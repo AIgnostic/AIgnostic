@@ -3,41 +3,49 @@ import Slider from "@mui/material/Slider";
 import { Box, Typography } from "@mui/material";
 import theme from "../theme";
 
+
 interface MetricBarProps {
-  min?: number;
-  max?: number;
-  value: number;
-  idealValue: number;
+  min?: string | null;
+  max?:  string | null;
+  actual: string;
+  ideal: string;
   label?: string;
 }
 
 const MetricBar: React.FC<MetricBarProps> = ({
-  min = 0,
-  max = 1,
-  value,
-  idealValue,
+  min = "0",
+  max = "0",
+  actual,
+  ideal,
   label = "",
 }) => {
-  const minLabel = min === -Infinity ? "-∞" : min;
-  if (min === -Infinity) {
-    min = idealValue - Math.abs(idealValue - value) * 2;
+
+
+  var minValue = min === null ? -Infinity : parseFloat(min as string)
+  var maxValue = max === null ? Infinity : parseFloat(max as string)
+  const value = parseFloat(actual);
+  const idealValue = parseFloat(ideal);
+
+  const minLabel = minValue === -Infinity ? "-∞" : minValue;
+  if (minValue === -Infinity) {
+    minValue = idealValue - Math.abs(idealValue - value) * 2;
   }
 
-  const maxLabel = max === Infinity ? "∞" : max;
-  if (max === Infinity) {
-    max = idealValue + Math.abs(idealValue - value) * 2;
+  const maxLabel = maxValue === Infinity ? "∞" : maxValue;
+  if (maxValue === Infinity) {
+    maxValue = idealValue + Math.abs(idealValue - value) * 2;
   }
 
   const marks = [
-    { value: min, label: `${minLabel}` }, // First marker (red)
+    { value: minValue, label: `${minLabel}` }, // First marker (red)
     { value: idealValue, label: "" }, // Ideal marker (green)
     { value: value, label: value.toFixed(2) }, // Actual marker (white)
-    { value: max, label: `${maxLabel}` }, // Last marker (blue)
+    { value: maxValue, label: `${maxLabel}` }, // Last marker (blue)
   ];
 
   // Calculate percentage positions for gradient stops
-  const idealPercent = ((idealValue - min) / (max - min)) * 100;
-  const valuePercent = ((value - min) / (max - min)) * 100;
+  const idealPercent = ((idealValue - minValue) / (maxValue - minValue)) * 100;
+  const valuePercent = ((value - minValue) / (maxValue - minValue)) * 100;
   const barColor = value > idealValue ? "rgb(114, 232, 139)" : "rgb(220, 59, 59)"
 
 
@@ -48,9 +56,9 @@ const MetricBar: React.FC<MetricBarProps> = ({
       </Typography>
       <Box sx={{ position: "relative", width: "100%" }}>
         <Slider
-          value={[min, max]}
-          min={min}
-          max={max}
+          value={[minValue, maxValue]}
+          min={minValue}
+          max={maxValue}
           disabled
           valueLabelDisplay="off"
           marks={marks}

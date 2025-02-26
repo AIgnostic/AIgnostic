@@ -88,7 +88,7 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     return data
 
 
-def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
+def get_legislation_extracts(metrics_data: dict) -> list[dict] :
     """
     Generates a comprehensive report based on the provided metrics data and API key.
 
@@ -113,49 +113,58 @@ def generate_report(metrics_data: dict, api_key: str) -> list[dict]:
             [p.replace(" ", "_") for p in property_to_metrics[property]]
         )
         common_metrics = computed_metrics.intersection(property_metrics)
+        print("Setting property")
         property_result["property"] = property
+
+        print("Setting computed metrics")
         if common_metrics:
             property_result["computed_metrics"] = [
                 {
                     "metric": metric.replace("_", " "),
-                    "value": round(metrics_data[metric]["value"], 3),
-                    "ideal_value": round(metrics_data[metric]["ideal_value"], 3),
-                    "range": metrics_data[metric]["range"],
+                    "value": 0 if metrics_data[metric]["error"] else round(metrics_data[metric]["value"], 3),
+                    "ideal_value": None if metrics_data[metric]["error"] else round(metrics_data[metric]["ideal_value"], 3),
+                    "range": None if metrics_data[metric]["error"] else metrics_data[metric]["range"],
+                    "error": metrics_data[metric]["error"] if metrics_data[metric]["error"] else None,
                 }
                 for metric in common_metrics
             ]
         else:
             property_result["computed_metrics"] = []
 
+        print("Setting legislation extracts")
         property_result["legislation_extracts"] = []
         for regulations in property_to_regulations[property]:
             article_content = extract_legislation_text(regulations)
             parsed_data = parse_legislation_text(regulations, article_content)
             property_result["legislation_extracts"].append(parsed_data)
 
-        # TODO: Add LLM insights
-        property_result["llm_insights"] = []
+        results.append(property_result)
 
+    return results
+
+
+
+def add_llm_insights(metrics_data: list[dict], api_key: str) -> list[dict]:
+    """
+    Adds LLM insights to the metrics data.
+    metrics_data: output of get_legislation_extracts
+    api_key: Google API key for LLM
+    """
+
+    for property in metrics_data:
+        property["llm_insights"] = []
         try:
             llm = init_llm(api_key)
             mesg = metric_insights(
                 property_name=property,
-                metrics=[
-                    {
-                        "metric": metric.replace("_", " "),
-                        "value": str(metrics_data[metric]),
-                    }
-                    for metric in common_metrics
-                ],
-                article_extracts=property_result["legislation_extracts"],
+                metrics=property["computed_metrics"],
+                article_extracts=property["legislation_extracts"],
                 llm=llm,
             ).content
         except Exception as e:
             mesg = "Failed to initialize LLM: {}".format(str(e))
 
-        property_result["llm_insights"].append(mesg)
-
-        results.append(property_result)
+        property["llm_insights"].append(mesg)
 
     # print(results)
-    return results
+    return metrics_data

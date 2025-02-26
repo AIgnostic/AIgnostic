@@ -54,7 +54,7 @@ task_type_to_metric = {
         "negative_predictive_value",
         "positive_predictive_value",
         "true_positive_rate_difference",
-        # "explanation_stability_score",
+        "explanation_stability_score",
         # "explanation_sparsity_score",
         # "explanation_fidelity_score",
         # "ood_auroc",
