@@ -18,6 +18,9 @@ include = "metrics"
 python = ">=3.12,<3.13"
 aif360 = "^0.6.1"
 nltk = "^3.9.1"
+bert-score = "^0.3.13"
+rouge = "^1.0.1"
+editdistance = "^0.8.1"
 
 [tool.poetry.dependencies.common]
 path = "../common"
