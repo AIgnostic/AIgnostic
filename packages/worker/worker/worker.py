@@ -236,8 +236,7 @@ class Worker():
         except WorkerException as e:
             # known/caught error
             # should be sent back to user
-            self.queue_error(e.detail)
-            print(f"Error processing job: {e.detail}")
+            self.queue_error(WorkerError(e.detail, status_code=e.status_code))
         except Exception as e:
             # unknown/uncaught error
             # should be raised to be dealt with

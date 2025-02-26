@@ -9,7 +9,9 @@ import time
 from common.models import AggregatorMessage, MessageType, JobType, AggregatorJob, WorkerError
 from metrics.models import WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
-
+from common.models.common import MetricValues, WorkerError, AggregatorMessage, MessageType, AggregatorJob, JobType
+from metrics.models import MetricsPackageExceptionModel
+from typing import Union
 
 def aggregator_metrics_completion_log():
     return AggregatorMessage(
@@ -291,9 +293,9 @@ def on_result_fetched(ch, method, properties, body):
     print(f"Received job: {job}")
 
     if (job.job_type == JobType.RESULT):
-        process_batch_result(job.content)
+        process_batch_result(result_data=job.content)
     elif (job.job_type == JobType.ERROR):
-        process_error_result(job.content)
+        process_error_result(error=job.content)
     else:
         raise ValueError(f"Invalid job type: {job.job_type}")
 
