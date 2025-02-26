@@ -15,7 +15,7 @@ def aggregator_metrics_completion_log():
         messageType=MessageType.METRICS_COMPLETE,
         message="Metrics processing complete - all batches successfully processed",
         statusCode=200,
-        content=None
+        content=None,
     )
 
 
@@ -24,7 +24,7 @@ def aggregator_error_log(error):
         messageType=MessageType.ERROR,
         message="Error processing metrics",
         statusCode=500,
-        content=error
+        content=error,
     )
 
 
@@ -33,7 +33,7 @@ def aggregator_final_report_log(report):
         messageType=MessageType.REPORT,
         message="Final report successfully generated",
         statusCode=200,
-        content=report
+        content=report,
     )
 
 
@@ -42,11 +42,11 @@ def aggregator_intermediate_metrics_log(metrics):
         messageType=MessageType.METRICS_INTERMEDIATE,
         message="Batch successfully processed - intermediate metrics successfully generated",
         statusCode=202,
-        content={"metrics_results": metrics}
+        content={"metrics_results": metrics},
     )
 
 
-class MetricsAggregator():
+class MetricsAggregator:
     def __init__(self):
         self.metrics = {}
         self.samples_processed = 0
@@ -67,15 +67,17 @@ class MetricsAggregator():
 
                 # Compute new weighted average
                 new_count = prev_count + batch_size
-                self.metrics[metric]["value"] = (prev_value * prev_count + value * batch_size) / new_count
+                self.metrics[metric]["value"] = (
+                    prev_value * prev_count + value * batch_size
+                ) / new_count
                 self.metrics[metric]["count"] = new_count  # Update the total count
 
         self.samples_processed += batch_size
 
     def get_aggregated_metrics(self):
         """
-            Returns the aggregated metrics as a dictionary
-            i.e. { metric1: value1, metric2: value2, ... }
+        Returns the aggregated metrics as a dictionary
+        i.e. { metric1: value1, metric2: value2, ... }
         """
 
         results = {}
@@ -84,7 +86,7 @@ class MetricsAggregator():
         return results
 
 
-class ResultsConsumer():
+class ResultsConsumer:
 
     def __init__(self, host="localhost"):
         """Create a new instance of the consumer class, passing in the AMQP
@@ -116,7 +118,11 @@ class ResultsConsumer():
         """
         self.connect()
         try:
-            self._channel.basic_consume(queue=RESULT_QUEUE, on_message_callback=on_message_callback, auto_ack=True)
+            self._channel.basic_consume(
+                queue=RESULT_QUEUE,
+                on_message_callback=on_message_callback,
+                auto_ack=True,
+            )
             print("Waiting for messages...")
             self._channel.start_consuming()  # Blocking call, waits for messages
         except KeyboardInterrupt:
@@ -144,17 +150,21 @@ def on_result_fetched(ch, method, properties, body):
     result_data = json.loads(body)
     print(f"Received result: {result_data}")
 
-    if (metrics_aggregator.total_sample_size == 0):
+    if metrics_aggregator.total_sample_size == 0:
         metrics_aggregator.set_total_sample_size(result_data["total_sample_size"])
 
-    metrics_aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
+    metrics_aggregator.aggregate_new_batch(
+        result_data["metric_values"], result_data["batch_size"]
+    )
 
     aggregates = metrics_aggregator.get_aggregated_metrics()
 
     send_to_clients(aggregator_intermediate_metrics_log(aggregates))
-    print(f"{metrics_aggregator.samples_processed} / {metrics_aggregator.total_sample_size} Processed")
+    print(
+        f"{metrics_aggregator.samples_processed} / {metrics_aggregator.total_sample_size} Processed"
+    )
 
-    if (metrics_aggregator.samples_processed == metrics_aggregator.total_sample_size):
+    if metrics_aggregator.samples_processed == metrics_aggregator.total_sample_size:
         print("Finished processing all batches")
         # All batches have now been processed, send completion message
 
@@ -171,17 +181,25 @@ def on_result_fetched(ch, method, properties, body):
         metrics_aggregator.metrics = {}
 
 
+def get_api_key():
+    # if GOOGLE_API_KEY_FILE is set, read the key from the file
+    if os.getenv("GOOGLE_API_KEY_FILE"):
+        with open(os.getenv("GOOGLE_API_KEY_FILE")) as f:
+            return f.read().strip()
+    return os.getenv("GOOGLE_API_KEY")
+
+
 def aggregate_report(metrics: dict):
     """
-        Generates a report to send to the frontend
-        By collating the metrics, and pulling information from the report generator
+    Generates a report to send to the frontend
+    By collating the metrics, and pulling information from the report generator
     """
 
-    report_properties_sections = generate_report(metrics, os.getenv("GOOGLE_API_KEY"))
+    report_properties_sections = generate_report(metrics, get_api_key())
     report_info_section = {
         # TODO: Update with codecarbon info and calls to model from metrics
         "calls_to_model": metrics_aggregator.total_sample_size,
-        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
     }
 
     return {"properties": report_properties_sections, "info": report_info_section}
@@ -238,9 +256,10 @@ def start_websocket_server():
     server.serve_forever()  # Blocking call
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Load environment variables
     from dotenv import load_dotenv
+
     load_dotenv()
 
     # Start WebSocket server in a separate thread

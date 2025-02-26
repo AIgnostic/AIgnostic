@@ -1,7 +1,12 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Homepage from '../src/app/home';
-import { steps, modelTypesToMetrics, initializeModelTypesToMetrics, activeStepToInputConditions } from '../src/app/constants';
+import {
+  steps,
+  modelTypesToMetrics,
+  initializeModelTypesToMetrics,
+  activeStepToInputConditions,
+} from '../src/app/constants';
 import '@testing-library/jest-dom';
 import { checkURL } from '../src/app/utils';
 
@@ -12,8 +17,10 @@ jest.mock('../src/app/constants', () => ({
     'Binary Classification': ['Metric1', 'Metric2'],
   },
   steps: jest.requireActual('../src/app/constants').steps,
-  activeStepToInputConditions: jest.requireActual('../src/app/constants').activeStepToInputConditions,
+  activeStepToInputConditions: jest.requireActual('../src/app/constants')
+    .activeStepToInputConditions,
   initializeModelTypesToMetrics: jest.fn(),
+  WEBSOCKET_URL: 'ws://localhost:8000/ws',
 }));
 
 beforeAll(async () => {
@@ -74,6 +81,7 @@ jest.mock('../src/app/utils', () => ({
   __esModule: true,
   checkURL: jest.fn(),
   generateReportText: jest.fn(),
+  fetchMetricInfo: jest.fn(),
 }));
 
 describe('Form Validation', () => {

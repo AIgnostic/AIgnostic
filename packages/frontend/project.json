@@ -8,7 +8,7 @@
   "targets": {
     "build": {
       "options": {
-        "base": "/AIgnostic/"
+        "base": "/"
       }
     },
     "test": {

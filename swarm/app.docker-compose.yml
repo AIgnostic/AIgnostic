@@ -1,20 +1,5 @@
+version: '3.8'
 services:
-  ###
-  # Services
-  ###
-  rabbitmq:
-    image: rabbitmq:3-management
-    expose:
-      - 5672
-      - 15672
-    networks:
-      - aignostic_network
-    healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 10s
-      timeout: 10s
-      retries: 5
-
   ###
   # Backend services
   ###
@@ -28,21 +13,17 @@ services:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
 
   # Microservices
   worker_ms:
     container_name: worker
     image: ghcr.io/aignostic/worker:latest
+    deploy:
+      replicas: 3
     networks:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
 
   aggregator_ms:
     container_name: aggregator
@@ -51,11 +32,30 @@ services:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+      - GOOGLE_API_KEY_FILE=/run/secrets/google_ai_api_key
+    secrets:
+      - google_ai_api_key # Google AI API key
 
-volumes:
-  venv:
+  # Reverse proxy
+  reverse_proxy:
+    image: ghcr.io/aignostic/nginx_reverse_proxy:latest
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/letsencrypt/live/aignostic-api.docsoc.co.uk/fullchain.pem:/opt/nginx/certs/fullchain.pem
+      - /etc/letsencrypt/live/aignostic-api.docsoc.co.uk/privkey.pem:/opt/nginx/certs/privkey.key
+    networks:
+      - aignostic_network
+    depends_on:
+      - api_router
+
 networks:
   aignostic_network:
+    driver: overlay
+    attachable: true
+    name: aignostic
+
+secrets:
+  google_ai_api_key:
+    external: true

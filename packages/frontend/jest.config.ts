@@ -5,9 +5,13 @@ const config = {
   preset: '../../jest.preset.js',
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
-    '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['@nx/react/babel'] }],
+    '^.+\\.[tj]sx?$': ['babel-jest', { configFile: './babel.config.jest.js' }],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  moduleNameMapper: {
+    // WARNING: If you have another file called env, it will also mock to the same place!
+    './env': '<rootDir>/tests/__mocks__/env.ts',
+  },
   collectCoverage: true,
   coverageDirectory: '../../coverage/frontend',
   coverageReporters: ['clover', 'json', 'lcov', 'text', 'json-summary', 'html'],
