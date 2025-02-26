@@ -46,6 +46,5 @@ services:
 
 networks:
   aignostic_network:
-    driver: overlay
-    attachable: true
+    external: true
     name: aignostic
