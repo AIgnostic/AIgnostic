@@ -7,6 +7,7 @@ from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 from common.models.aggregator_models import AggregatorMessage, MessageType
 from report_generation.utils import generate_report
+import time
 
 
 def aggregator_metrics_completion_log():
@@ -179,8 +180,6 @@ def on_result_fetched(ch, method, properties, body):
     if (metrics_aggregator.samples_processed == metrics_aggregator.total_sample_size):
         print("Finished processing all batches")
         # All batches have now been processed, send completion message
-        metrics_aggregator.samples_processed = 0
-        metrics_aggregator.metrics = {}
 
         send_to_clients(aggregator_metrics_completion_log())
 
@@ -190,6 +189,10 @@ def on_result_fetched(ch, method, properties, body):
 
         send_to_clients(aggregator_final_report_log(report_json))
 
+        # Reset the aggregator for the next batch
+        metrics_aggregator.samples_processed = 0
+        metrics_aggregator.metrics = {}
+
 
 def aggregate_report(metrics: dict):
     """
@@ -197,9 +200,14 @@ def aggregate_report(metrics: dict):
         By collating the metrics, and pulling information from the report generator
     """
 
-    report_json = generate_report(metrics, os.getenv("GOOGLE_API_KEY"))
+    report_properties_sections = generate_report(metrics, os.getenv("GOOGLE_API_KEY"))
+    report_info_section = {
+        # TODO: Update with codecarbon info and calls to model from metrics
+        "calls_to_model": metrics_aggregator.total_sample_size,
+        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+    }
 
-    return report_json
+    return {"properties": report_properties_sections, "info": report_info_section}
 
 
 def send_to_clients(message: AggregatorMessage):

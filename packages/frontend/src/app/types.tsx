@@ -3,6 +3,34 @@ import { Button } from '@mui/material';
 
 export type MarkdownFiles = Record<string, string>;
 
+export interface ReportPropertySection {
+  property: string;
+  computed_metrics: { metric: string; value: string }[];
+  legislation_extracts: LegislationExtract[];
+  llm_insights: string[];
+}
+
+export interface Report {
+  info: {[key: string]: any};
+  properties: ReportPropertySection[];
+}
+  
+
+export interface LegislationExtract {
+  article_number: number;
+  article_title: string;
+  description: string;
+  suitable_recitals: string[];
+}
+
+export interface Metric {
+  [metricName: string]: {
+    value: number;
+    ideal_value: number;
+    range: [number, number];
+  };
+}
+
 export type ConditionAlertFailure = {
   pred: (state: HomepageState) => boolean;
   error_msg: string;
