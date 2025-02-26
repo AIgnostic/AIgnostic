@@ -2,8 +2,11 @@ import time
 import pytest
 from unittest.mock import MagicMock, mock_open, patch
 from aggregator.aggregator import (
-    RESULT_QUEUE, MetricsAggregator,
-    ResultsConsumer, aggregator_generate_report, get_api_key,
+    RESULT_QUEUE, 
+    MetricsAggregator,
+    ResultsConsumer,
+    aggregator_generate_report, 
+    get_api_key,
     on_result_fetched,
     aggregator_intermediate_metrics_log,
     aggregator_metrics_completion_log,
