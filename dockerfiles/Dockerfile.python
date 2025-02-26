@@ -24,16 +24,32 @@ RUN npm ci
 
 COPY ./nx.json /app
 # Have to copy these manually - means we can change code without rebuilding it all as deps didn't change
-COPY ./packages/aggregator/pyproject.toml ./packages/aggregator/poetry.toml ./packages/aggregator/poetry.lock ./packages/aggregator/aggregator/__init__.py ./packages/aggregator/README.md /app/packages/aggregator/
-COPY ./packages/api/pyproject.toml ./packages/api/poetry.toml ./packages/api/poetry.lock ./packages/api/api/__init__.py ./packages/api/README.md /app/packages/api/
-COPY ./packages/common/pyproject.toml ./packages/common/poetry.toml ./packages/common/poetry.lock ./packages/common/common/__init__.py ./packages/common/README.md /app/packages/common/
-COPY ./packages/llm-insights/pyproject.toml ./packages/llm-insights/poetry.toml ./packages/llm-insights/poetry.lock ./packages/llm-insights/llm_insights/__init__.py ./packages/llm-insights/README.md /app/packages/llm-insights/
-COPY ./packages/metrics/pyproject.toml ./packages/metrics/poetry.toml ./packages/metrics/poetry.lock ./packages/metrics/metrics/__init__.py ./packages/metrics/README.md /app/packages/metrics/
-COPY ./packages/mocks/pyproject.toml ./packages/mocks/poetry.toml ./packages/mocks/poetry.lock ./packages/mocks/mocks/__init__.py ./packages/mocks/README.md /app/packages/mocks/
-COPY ./packages/report-generation/pyproject.toml ./packages/report-generation/poetry.toml ./packages/report-generation/poetry.lock ./packages/report-generation/report_generation/__init__.py ./packages/report-generation/README.md /app/packages/report-generation/
-COPY ./packages/worker/pyproject.toml ./packages/worker/poetry.toml ./packages/worker/poetry.lock ./packages/worker/worker/__init__.py ./packages/worker/README.md /app/packages/worker/
-COPY ./packages/dispatcher/pyproject.toml ./packages/dispatcher/poetry.toml ./packages/dispatcher/poetry.lock ./packages/dispatcher/dispatcher/__init__.py ./packages/dispatcher/README.md /app/packages/dispatcher/
+COPY ./packages/aggregator/pyproject.toml ./packages/aggregator/poetry.toml ./packages/aggregator/poetry.lock ./packages/aggregator/README.md /app/packages/aggregator/
+COPY ./packages/aggregator/aggregator/__init__.py /app/packages/aggregator/aggregator/
 
+COPY ./packages/api/pyproject.toml ./packages/api/poetry.toml ./packages/api/poetry.lock ./packages/api/README.md /app/packages/api/
+COPY ./packages/api/api/__init__.py /app/packages/api/api/
+
+COPY ./packages/common/pyproject.toml ./packages/common/poetry.toml ./packages/common/poetry.lock ./packages/common/README.md /app/packages/common/
+COPY ./packages/common/common/__init__.py /app/packages/common/common/
+
+COPY ./packages/llm-insights/pyproject.toml ./packages/llm-insights/poetry.toml ./packages/llm-insights/poetry.lock ./packages/llm-insights/README.md /app/packages/llm-insights/
+COPY ./packages/llm-insights/llm_insights/__init__.py /app/packages/llm-insights/llm_insights/
+
+COPY ./packages/metrics/pyproject.toml ./packages/metrics/poetry.toml ./packages/metrics/poetry.lock ./packages/metrics/README.md /app/packages/metrics/
+COPY ./packages/metrics/metrics/__init__.py /app/packages/metrics/metrics/
+
+COPY ./packages/mocks/pyproject.toml ./packages/mocks/poetry.toml ./packages/mocks/poetry.lock ./packages/mocks/README.md /app/packages/mocks/
+COPY ./packages/mocks/mocks/__init__.py /app/packages/mocks/mocks/
+
+COPY ./packages/report-generation/pyproject.toml ./packages/report-generation/poetry.toml ./packages/report-generation/poetry.lock ./packages/report-generation/README.md /app/packages/report-generation/
+COPY ./packages/report-generation/report_generation/__init__.py /app/packages/report-generation/report_generation/
+
+COPY ./packages/worker/pyproject.toml ./packages/worker/poetry.toml ./packages/worker/poetry.lock ./packages/worker/README.md /app/packages/worker/
+COPY ./packages/worker/worker/__init__.py /app/packages/worker/worker/
+
+COPY ./packages/dispatcher/pyproject.toml ./packages/dispatcher/poetry.toml ./packages/dispatcher/poetry.lock ./packages/dispatcher/README.md /app/packages/dispatcher/
+COPY ./packages/dispatcher/dispatcher/__init__.py /app/packages/dispatcher/dispatcher/
 
 COPY ./poetry.lock ./poetry.toml ./pyproject.toml /app/
 
