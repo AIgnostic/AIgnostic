@@ -17,6 +17,7 @@ include = "metrics"
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
 aif360 = "^0.6.1"
+nltk = "^3.9.1"
 
 [tool.poetry.dependencies.common]
 path = "../common"

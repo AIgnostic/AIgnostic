@@ -7,28 +7,10 @@
 
 # TODO: Update pydocs for regression tasks
 
-from typing import Callable
 from metrics.models import (
     CalculateRequest,
     MetricValues,
 )
-from metrics.utils import (
-    _query_model,
-    _lime_explanation,
-    _finite_difference_gradient
-)
-from sklearn.metrics import (
-    f1_score,
-    roc_auc_score,
-    mean_absolute_error as mae,
-    mean_squared_error as mse,
-    r2_score,
-)
-from sklearn.metrics.pairwise import cosine_similarity
-from aif360.metrics import ClassificationMetric
-from aif360.datasets import BinaryLabelDataset
-import pandas as pd
-import numpy as np
 from metrics.exceptions import (
     MetricsComputationException,
     DataInconsistencyException,

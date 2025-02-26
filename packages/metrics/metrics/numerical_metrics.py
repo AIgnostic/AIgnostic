@@ -2,8 +2,7 @@
 
 from typing import Callable
 from metrics.models import (
-    CalculateRequest,
-    MetricValues,
+    CalculateRequest
 )
 from metrics.utils import (
     _query_model,
@@ -24,9 +23,7 @@ import pandas as pd
 import numpy as np
 from metrics.exceptions import (
     MetricsComputationException,
-    DataInconsistencyException,
-    DataProvisionException,
-    _MetricsPackageException
+    DataProvisionException
 )
 from common.models import ModelResponse
 
