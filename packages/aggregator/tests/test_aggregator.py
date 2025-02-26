@@ -1,18 +1,19 @@
 import time
 import pytest
 from unittest.mock import MagicMock, mock_open, patch
-from aggregator.aggregator import (RESULT_QUEUE, MetricsAggregator,
-                                   ResultsConsumer, aggregator_generate_report, get_api_key,
-                                   on_result_fetched,
-                                   aggregator_intermediate_metrics_log,
-                                   aggregator_metrics_completion_log,
-                                   connected_clients,
-                                   message_queue,
-                                   websocket_handler,
-                                   send_to_clients,
-                                   user_aggregators,
-                                   manager,
-                                   )
+from aggregator.aggregator import (
+    RESULT_QUEUE, MetricsAggregator,
+    ResultsConsumer, aggregator_generate_report, get_api_key,
+    on_result_fetched,
+    aggregator_intermediate_metrics_log,
+    aggregator_metrics_completion_log,
+    connected_clients,
+    message_queue,
+    websocket_handler,
+    send_to_clients,
+    user_aggregators,
+    manager,
+)
 import json
 
 
