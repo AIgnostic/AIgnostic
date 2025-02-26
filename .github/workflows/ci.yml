@@ -197,6 +197,8 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}
+      - name: Commit SSH Key
+        run: echo "${{ secrets.DIGITAL_OCEAN_PRIVATE_KEY }}" > ~/.ssh/id_ecdsa
       - name: Deploy Stack
         run: docker stack deploy -c ./swarm/app.docker-compose.yml aignostic
 
