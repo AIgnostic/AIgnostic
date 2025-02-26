@@ -216,21 +216,17 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
     assert result[0]["property"] == "adversarial robustness"
     assert result[0]["computed_metrics"] == [{
         "metric": "fast gradient sign method",
-        "info": {
-            "value": 0.6,
-            "ideal_value": 1,
-            "range": (0, 1)
-        }
+        "value": 0.6,
+        "ideal_value": 1,
+        "range": (0, 1)
     }]
 
     assert result[2]["property"] == "fairness"
     assert result[2]["computed_metrics"] == [{
         "metric": "equal opportunity difference",
-        "info": {
-            "value": 0.5,
-            "ideal_value": 0,
-            "range": (-1, 1)
-        }
+        "value": 0.5,
+        "ideal_value": 0,
+        "range": (-1, 1)
     }]
     assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
     assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
