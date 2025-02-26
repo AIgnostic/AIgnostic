@@ -45,7 +45,7 @@ const RESULTS_URL = IS_PROD
   ? 'https://api.aignostic.docsoc.co.uk/results'
   : 'http://localhost:5002/results';
 const WEBSOCKET_URL = IS_PROD
-  ? 'wss://api.aignostic.docsoc.co.uk/aggregator/ws'
+  ? 'wss://aignostic-api.docsoc.co.uk/aggregator/ws'
   : 'ws://localhost:5005';
 const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
   ? 'https://api.aignostic.docsoc.co.uk/retrieve-metric-info'
