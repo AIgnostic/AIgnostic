@@ -159,11 +159,11 @@ jobs:
 
   deploy-docker-stack:
     # UNCOMMENT IT ALL BELOW
-    # needs:
-    #   - docker-api # if we didn't build a container, don't do this!
-    #   - docker-worker
-    #   - docker-aggregator
-    #   - docker-nginx
+    needs:
+      - docker-api # if we didn't build a container, don't do this!
+      - docker-worker
+      - docker-aggregator
+      - docker-nginx
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
@@ -199,8 +199,8 @@ jobs:
 
   deploy-docker-mocks:
     # UNCOMMENT IT ALL BELOW
-    # needs:
-    #   - docker-mocks
+    needs:
+      - docker-mocks
     # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
