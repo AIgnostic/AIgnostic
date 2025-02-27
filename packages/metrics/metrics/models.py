@@ -109,3 +109,11 @@ class MetricConfig(BaseModel):
 
     batch_size: int
     total_sample_size: int
+    warning_msg: Optional[str] = None
+
+
+class WorkerResults(MetricConfig):
+    """
+    Inherit from MetricConfig
+    """
+    user_id: str

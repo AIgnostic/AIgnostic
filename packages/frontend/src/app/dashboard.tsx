@@ -9,14 +9,14 @@ import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
 import { pdf } from '@react-pdf/renderer';
-import { WEBSOCKET_URL } from './constants';
 
 interface DashboardProps {
   onComplete: () => void;
+  socket: WebSocket | null;
 }
 
 // Each item from the websocket is an array of Metric objects.
-const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
   // 'items' holds each item (which is an array of Metric objects) received from the socket.
   const [items, setItems] = useState<Metric[]>([]);
   const [log, setLog] = useState<string>('');
@@ -32,89 +32,90 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
   const expectedItems = 10;
 
   useEffect(() => {
-    const socket = new WebSocket(WEBSOCKET_URL);
+    if (socket) {
+      socket.onmessage = (event) => {
+        const sanitizedData = event.data.replace(/NaN/g, 'null');
+        const data = JSON.parse(sanitizedData);
+        console.log('Received message:', data);
 
-    socket.onopen = () => {
-      console.log('WebSocket connection established');
-    };
+        switch (data.messageType) {
+          case 'LOG':
+            setLog(data.message);
+            break;
+          case 'METRICS_COMPLETE':
+            setLog(data.message);
+            break;
+          case 'METRICS_INTERMEDIATE':
+            try {
+              // Assume each intermediate message contains one item with multiple metrics.
+              const newItem: Metric = data.content.metrics_results;
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('Received message:', data);
-
-      switch (data.messageType) {
-        case 'LOG':
-          setLog(data.message);
-          break;
-        case 'METRICS_COMPLETE':
-          setLog(data.message);
-          break;
-        case 'METRICS_INTERMEDIATE':
-          try {
-            // Assume each intermediate message contains one item with multiple metrics.
-            const newItem: Metric[] = data.content.metrics_results;
-
-            console.log('New item:', newItem);
-            // Append the new item to our list of items.
-            setItems((prevItems) => {
-              const updatedItems = [...prevItems, newItem];
-              if (updatedItems.length >= expectedItems) {
-                setTimeout(onComplete, 0);
-                setShowError(true);
-                setError({
-                  header: 'Report is being generated',
-                  text: 'This may take a few seconds',
-                });
-              }
-              return updatedItems;
-            });
-          } catch (e: any) {
-            setShowError(true);
-            setError({ header: 'Error parsing data:', text: e.message });
-          }
-
-          break;
-        case 'REPORT': {
-          const generateReport = async () => {
-            console.log('Results received:', data.content);
-            setReport(data.content);
-            console.log('Report:', data.content);
-            const blob = await pdf(
-              <ReportRenderer report={data.content} />
-            ).toBlob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'AIgnostic_Report.pdf'; // Set the file name
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            if (error.header === 'Report is being generated') {
-              setShowError(false);
+              console.log('New item:', newItem);
+              // Append the new item to our list of items.
+              setItems((prevItems) => {
+                const updatedItems = [...prevItems, newItem];
+                if (updatedItems.length >= expectedItems) {
+                  setTimeout(onComplete, 0);
+                  setShowError(true);
+                  setError({
+                    header: 'Report is being generated',
+                    text: 'This may take a few seconds',
+                  });
+                }
+                return updatedItems;
+              });
+            } catch (e: any) {
+              setShowError(true);
+              setError({ header: 'Error parsing data:', text: e.message });
             }
-          };
-          generateReport();
-          break;
-        }
-        case 'ERROR':
-          setShowError(true);
-          setError({ header: 'Error 500:', text: data.message });
-          break;
-        default:
-          console.log('Unknown response from server:', data, data.messageType);
-          setShowError(true);
-          setError({
-            header: 'Unknown response from server:',
-            text: data.message,
-          });
-      }
-    };
 
-    return () => {
-      socket.close();
-    };
-  }, [onComplete]);
+            break;
+          case 'REPORT': {
+            const generateReport = async () => {
+              console.log('Results received:', data.content);
+              setReport(data.content);
+              console.log('Report:', data.content);
+              const blob = await pdf(
+                <ReportRenderer report={data.content} />
+              ).toBlob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'AIgnostic_Report.pdf'; // Set the file name
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              if (error.header === 'Report is being generated') {
+                setShowError(false);
+              }
+            };
+            generateReport();
+            break;
+          }
+          case 'ERROR':
+            setShowError(true);
+            setError({ header: 'Error 500:', text: data.message });
+            break;
+          default:
+            console.log(
+              'Unknown response from server:',
+              data,
+              data.messageType
+            );
+            setShowError(true);
+            setError({
+              header: 'Unknown response from server:',
+              text: data.message,
+            });
+        }
+      };
+
+      return () => {
+        socket?.close();
+      };
+    }
+  }, [onComplete, socket]);
 
   // Calculate overall progress as the number of items received divided by the expected total.
   const overallProgress = Math.min(items.length / expectedItems, 1);
@@ -191,36 +192,40 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
                 key={itemIndex}
                 style={{ ...metricCardStyle, flex: '1 1 calc(33.333% - 16px)' }}
               >
-                {Object.entries(item).map(([metric_name, metric_info], metricIndex) => (
-                  <div
-                    key={metricIndex}
-                    style={{
-                      border: `3px solid ${theme.palette.background.paper}`,
-                      marginBottom: '8px',
-                      backgroundColor: theme.palette.background.default,
-                      padding: '16px',
-                      borderRadius: '8px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    }}
-                  >
+                {Object.entries(item).map(
+                  ([metric_name, metric_info], metricIndex) => (
                     <div
+                      key={metricIndex}
                       style={{
-                        backgroundColor: theme.palette.background.paper,
-                        border: `1px solid #fff`,
-                        padding: '8px 16px',
-                        borderRadius: '8px',
+                        border: `3px solid ${theme.palette.background.paper}`,
                         marginBottom: '8px',
+                        backgroundColor: theme.palette.background.default,
+                        padding: '16px',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                       }}
                     >
-                      <h3>{metric_name}</h3>
+                      <div
+                        style={{
+                          backgroundColor: theme.palette.background.paper,
+                          border: `1px solid #fff`,
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          marginBottom: '8px',
+                        }}
+                      >
+                        <h3>{metric_name}</h3>
+                      </div>
+                      <div>
+                        <p>Metric: {metric_info.value}</p>
+                        <p>Ideal value: {metric_info.ideal_value}</p>
+                        <p>
+                          Range: {metric_info.range[0]} - {metric_info.range[1]}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p>Metric: {metric_info.value}</p>
-                      <p>Ideal value: {metric_info.ideal_value}</p>
-                      <p>Range: {metric_info.range[0]} - {metric_info.range[1]}</p>
-                    </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             );
           })

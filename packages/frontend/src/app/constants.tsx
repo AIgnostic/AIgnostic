@@ -5,10 +5,10 @@ import { fetchMetricInfo } from './utils';
 const AIGNOSTIC = 'AIgnostic';
 const HOME = '/';
 
-const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5001/predict';
+const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5011/predict';
 const MOCK_FINBERT_API_URL = 'http://finbert-mock-model-api:5001/predict';
 const MOCK_FOLKTABLES_DATASET_API_URL =
-  'http://folktables-dataset-api:5000/fetch-datapoints';
+  'http://folktables-dataset-api:5010/fetch-datapoints';
 const MOCK_FINANCIAL_DATASET_API_URL =
   'http://financial-dataset-api:5000/fetch-datapoints';
 

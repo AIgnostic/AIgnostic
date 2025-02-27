@@ -38,6 +38,7 @@ def test_generate_metrics_from_info_success():
             "model_api_key": "test_model_key",
             "metrics": ["accuracy", "precision"],
             "model_type": "binary_classification",
+            "user_id": "1234"
         }
 
         response = client.post("/evaluate", json=request_data)
@@ -60,6 +61,7 @@ def test_generate_metrics_from_info_failure():
             "model_api_key": "test_model_key",
             "metrics": ["accuracy", "precision"],
             "model_type": "binary_classification",
+            "user_id": "1234"
         }
 
         # Simulate an exception when dispatching jobs

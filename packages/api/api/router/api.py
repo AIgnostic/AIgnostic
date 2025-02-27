@@ -23,6 +23,7 @@ class ModelEvaluationRequest(BaseModel):
     model_api_key: str
     metrics: list[str]
     model_type: str
+    user_id: str
 
 
 @api.post("/evaluate")
@@ -50,6 +51,7 @@ async def generate_metrics_from_info(
                 model_url=request.model_url,
                 data_api_key=request.dataset_api_key,
                 model_api_key=request.model_api_key,
+                user_id=request.user_id,
                 channel=channel,
             )
             print(f"Dispatched job {i+1}")
@@ -82,6 +84,7 @@ def dispatch_job(
     model_url: HttpUrl,
     data_api_key: str,
     model_api_key: str,
+    user_id: str,
     channel: BlockingChannel,
 ):
     """
@@ -96,6 +99,7 @@ def dispatch_job(
         "model_url": str(model_url),
         "data_api_key": data_api_key,
         "model_api_key": model_api_key,
+        "user_id": user_id,
     }
     message = json.dumps(job_json)
     channel.basic_publish(exchange="", routing_key=JOB_QUEUE, body=message)
