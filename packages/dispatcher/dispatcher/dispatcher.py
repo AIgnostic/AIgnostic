@@ -5,7 +5,7 @@ import atexit
 from os import getenv
 from typing import Optional
 
-from common.models.job import Job
+from common.models.common import Job
 from common.rabbitmq.constants import JOB_QUEUE
 
 from colorama import init

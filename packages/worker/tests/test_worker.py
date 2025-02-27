@@ -40,12 +40,17 @@ def test_fetch_job_success():
             "model_url": "http://example.com/model",
             "data_api_key": "data_key",
             "model_api_key": "model_key",
-            "user_id": '1234'
+            "user_id": "1234",
+            "max_concurrenct_batches": 1,
         }
     ).encode("utf-8")
 
     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
-        mock_channel.basic_get.return_value = (mock_method_frame, mock_header_frame, mock_body)
+        mock_channel.basic_get.return_value = (
+            mock_method_frame,
+            mock_header_frame,
+            mock_body,
+        )
 
         result = worker.fetch_job()
         assert isinstance(result, Job)
@@ -65,13 +70,11 @@ def test_queue_result():
         result = MetricConfig(
             metric_values={
                 "accuracy": MetricValue(
-                    computed_value=0.95,
-                    ideal_value=1,
-                    range=(0, 1)
+                    computed_value=0.95, ideal_value=1, range=(0, 1)
                 )
             },
             batch_size=1,
-            total_sample_size=1
+            total_sample_size=1,
         )
         worker.queue_result(result)
         mock_channel.basic_publish.assert_called_once()
@@ -84,17 +87,16 @@ def test_queue_error():
         mock_channel.basic_publish.assert_called_once()
 
 
-@patch("metrics.metrics.calculate_metrics", return_value=MetricConfig(
-    metric_values={
-        "accuracy": MetricValue(
-            computed_value=0.95,
-            ideal_value=1,
-            range=(0, 1)
-        )
-    },
-    batch_size=1,
-    total_sample_size=1
-))
+@patch(
+    "metrics.metrics.calculate_metrics",
+    return_value=MetricConfig(
+        metric_values={
+            "accuracy": MetricValue(computed_value=0.95, ideal_value=1, range=(0, 1))
+        },
+        batch_size=1,
+        total_sample_size=1,
+    ),
+)
 @pytest.mark.asyncio
 async def test_process_job_success(mock_calculate_metrics):
     job = Job(
@@ -106,12 +108,17 @@ async def test_process_job_success(mock_calculate_metrics):
         model_url="http://example.com/model",
         data_api_key="data_key",
         model_api_key="model_key",
-        user_id="1234"
+        user_id="1234",
+        max_concurrenct_batches=1,
     )
 
-    with patch.object(worker, "fetch_data", new_callable=AsyncMock) as mock_fetch_data, \
-         patch.object(worker, "query_model", new_callable=AsyncMock) as mock_query_model, \
-         patch.object(worker, "queue_result", new_callable=MagicMock) as mock_queue_result:
+    with patch.object(
+        worker, "fetch_data", new_callable=AsyncMock
+    ) as mock_fetch_data, patch.object(
+        worker, "query_model", new_callable=AsyncMock
+    ) as mock_query_model, patch.object(
+        worker, "queue_result", new_callable=MagicMock
+    ) as mock_queue_result:
 
         mock_fetch_data.return_value = {
             "features": [[1, 2], [3, 4]],
@@ -120,7 +127,7 @@ async def test_process_job_success(mock_calculate_metrics):
         }
         mock_query_model.return_value = {
             "predictions": [[0], [1]],
-            "confidence_scores": [[0.9], [0.8]]
+            "confidence_scores": [[0.9], [0.8]],
         }
 
         await worker.process_job(job)
