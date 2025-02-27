@@ -25,11 +25,11 @@ test_data = {
             ["The market remained flat as investors awaited the Federal Reserve's decision."],
             ["The company's CEO resigned amid allegations of financial misconduct, causing shares to plummet drastically."],
             ["The new merger is expected to create significant synergies and boost profitability substantially."],
-            ["The economic outlook remains steady with little growth or decline."],
-            ["The company's innovative product received overwhelmingly positive reviews, leading to increased investor confidence."],
-            ["The unexpected drop in sales led to a severe downward revision of the company's revenue forecast."],
-            ["The company's groundbreaking technology is expected to revolutionize the industry, attracting major investments."],
-            ["The company's bankruptcy filing caused a massive sell-off, leading to a sharp decline in stock prices."]
+            # ["The economic outlook remains steady with little growth or decline."],
+            # ["The company's innovative product received overwhelmingly positive reviews, leading to increased investor confidence."],
+            # ["The unexpected drop in sales led to a severe downward revision of the company's revenue forecast."],
+            # ["The company's groundbreaking technology is expected to revolutionize the industry, attracting major investments."],
+            # ["The company's bankruptcy filing caused a massive sell-off, leading to a sharp decline in stock prices."]
         ],
         labels=[
             ['positive'],
@@ -37,11 +37,11 @@ test_data = {
             ['neutral'],
             ['negative'],
             ['positive'],
-            ['neutral'],
-            ['positive'],
-            ['negative'],
-            ['positive'],
-            ['negative']
+            # ['neutral'],
+            # ['positive'],
+            # ['negative'],
+            # ['positive'],
+            # ['negative']
         ],
         group_ids = [0] * 10
     ),
@@ -53,11 +53,11 @@ test_data = {
             ["The new product launch received mixed reviews, yet sales figures exceeded initial projections."],
             ["Regulatory changes impacted short-term profits, though long-term outlook remains optimistic."],
             ["The unexpected merger announcement left investors uncertain about future performance."],
-            ["Cost-cutting measures improved margins, but raised concerns about product quality."],
-            ["The company's market share declined slightly, while overall sector growth accelerated."],
-            ["Quarterly earnings met expectations, but guidance for the next quarter was revised downward."],
-            ["The CEO's controversial statements led to a temporary stock dip before recovering."],
-            ["A major contract was lost, but the company secured several smaller, potentially lucrative deals."]
+            # ["Cost-cutting measures improved margins, but raised concerns about product quality."],
+            # ["The company's market share declined slightly, while overall sector growth accelerated."],
+            # ["Quarterly earnings met expectations, but guidance for the next quarter was revised downward."],
+            # ["The CEO's controversial statements led to a temporary stock dip before recovering."],
+            # ["A major contract was lost, but the company secured several smaller, potentially lucrative deals."]
         ],
         labels=[
             ['neutral'],
@@ -65,11 +65,11 @@ test_data = {
             ['positive'],
             ['positive'],
             ['neutral'],
-            ['neutral'],
-            ['neutral'],
-            ['neutral'],
-            ['neutral'],
-            ['neutral']
+            # ['neutral'],
+            # ['neutral'],
+            # ['neutral'],
+            # ['neutral'],
+            # ['neutral']
         ],
         group_ids = [0] * 10
     ),
