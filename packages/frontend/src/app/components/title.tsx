@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Button } from '@mui/material';
 import { styles } from '../home.styles';
-import { HOME } from '../constants';
 import theme from '../theme';
 
 
@@ -32,7 +31,7 @@ const Title = () => (
           color: '#fff',
         }}
         onClick={() => {
-          window.location.href = `${HOME}/api-docs`;
+          window.location.href = `/api-docs`;
         }}
       >
         Getting Started
