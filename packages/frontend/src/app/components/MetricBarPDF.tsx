@@ -16,7 +16,6 @@ const MetricBarPDF: React.FC<{ value: number; idealValue: number; min?: number; 
         max = idealValue + Math.abs(idealValue - value) * 2;
     }
 
-    // const width = 200; // Total width of the bar
     const valuePercent = ((value - min) / (max - min)) * 100;
     const idealPercent = ((idealValue - min) / (max - min)) * 100;
 
@@ -53,10 +52,9 @@ const MetricBarPDF: React.FC<{ value: number; idealValue: number; min?: number; 
             width: `100%`,
             height: "100%",
             borderRadius: 5,
-            // border: `1px solid black`,
           }} />
       
-          {/* Marker for actual value */}
+          {/* Marker/threshold showing ideal value */}
           <View style={{
             position: "absolute",
             left: `${idealPercent}%`,
@@ -69,9 +67,30 @@ const MetricBarPDF: React.FC<{ value: number; idealValue: number; min?: number; 
             borderRadius: 5,
           }} />
         </View>
+
+        {/* Label for computed value */}
+        <Text
+          style={{
+            position: 'absolute',
+            left: `${valuePercent-3}%`,
+            fontSize: 8,
+            top: 17,
+            marginTop: 5,
+          }}
+        >
+          {value.toFixed(3)}
+        </Text>
   
         {/* Labels */}
-        <Text style={{ color: value >= idealValue ? `${green}` : `${red}`, fontSize: 10 }}>Value: {value.toFixed(2)} | Target: {idealValue.toFixed(2)}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
+          <Text style={{ fontSize: 8 }}>{min.toFixed(2)}</Text>
+          {/* <Text style={{ fontSize: 8 }}>{idealValue.toFixed(2)}</Text> */}
+          <Text style={{ fontSize: 8 }}>{max.toFixed(2)}</Text>
+        </View>
+  
+        <Text style={{ color: value >= idealValue ? `${green}` : `${red}`, fontSize: 10, marginTop: 2 }}>
+          Value: {value.toFixed(3)} | Target: {idealValue.toFixed(2)}
+        </Text>
       </View>
     );
   };

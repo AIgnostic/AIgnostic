@@ -25,12 +25,12 @@ describe('MetricBarPDF', () => {
 
   it('renders the correct value and target text', () => {
     const { getByText } = render(<MetricBarPDF value={0.5} idealValue={0.7} />);
-    expect(getByText('Value: 0.50 | Target: 0.70')).toBeTruthy();
+    expect(getByText('Value: 0.500 | Target: 0.70')).toBeTruthy();
   });
 
   it('applies correct color for value less than idealValue', () => {
     const { getByText } = render(<MetricBarPDF value={0.5} idealValue={0.7} />);
-    const valueText = getByText('Value: 0.50 | Target: 0.70');
+    const valueText = getByText('Value: 0.500 | Target: 0.70');
 
     // Extract the applied styles
     const appliedStyle = JSON.parse(valueText.getAttribute('data-style') || '{}');
@@ -40,7 +40,7 @@ describe('MetricBarPDF', () => {
 
 it('applies correct color for value greater than or equal to idealValue', () => {
     const { getByText } = render(<MetricBarPDF value={0.8} idealValue={0.7} />);
-    const valueText = getByText('Value: 0.80 | Target: 0.70');
+    const valueText = getByText('Value: 0.800 | Target: 0.70');
 
     // Extract the applied styles
     const appliedStyle = JSON.parse(valueText.getAttribute('data-style') || '{}');
@@ -56,6 +56,6 @@ it('applies correct color for value greater than or equal to idealValue', () => 
 
   it('adjusts min and max dynamically if infinity is provided', () => {
     const { getByText } = render(<MetricBarPDF value={1.5} idealValue={1} min={-Infinity} max={Infinity} />);
-    expect(getByText('Value: 1.50 | Target: 1.00')).toBeTruthy();
+    expect(getByText('Value: 1.500 | Target: 1.00')).toBeTruthy();
   });
 });

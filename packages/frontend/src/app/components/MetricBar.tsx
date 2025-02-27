@@ -108,7 +108,7 @@ const MetricBar: React.FC<MetricBarProps> = ({
         />
       </Box>
       <Typography variant="caption">
-        Computed Value: {value.toFixed(5)}
+        Computed Value: {value.toFixed(3)}
         <br />
         Target: {idealValue}
       </Typography>
