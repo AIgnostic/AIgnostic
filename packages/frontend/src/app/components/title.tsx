@@ -32,7 +32,7 @@ const Title = () => (
           color: '#fff',
         }}
         onClick={() => {
-          window.location.href = `${HOME}/api-docs`;
+          window.location.href = `/api-docs`;
         }}
       >
         Getting Started

@@ -17,13 +17,13 @@ export function App() {
   // Set the tab name based on the current route
   useEffect(() => {
     switch (location.pathname) {
-      case `${HOME}/`:
+      case `/`:
         document.title = `Home | ${AIGNOSTIC}`;
         break;
-      case `${HOME}/api-docs`:
+      case `/api-docs`:
         document.title = `API Docs | ${AIGNOSTIC}`;
         break;
-      case `${HOME}/dashboard`:
+      case `/dashboard`:
         document.title = `Dashboard | ${AIGNOSTIC}`;
         break;
       default:
@@ -38,14 +38,14 @@ export function App() {
     }
     return {} as MarkdownFiles;
   };
-  
+
   return (
     <div>
       <ThemeProvider theme={theme}>
         <Routes>
-          <Route path={`${HOME}/`} element={<Homepage />} />
-          <Route path={`${HOME}/api-docs`} element={<APIDocs getMarkdownFiles={defaultMarkdownLoader}/>} />
-          <Route path={`${HOME}/dashboard`} element={<Dashboard />} />
+          <Route path={`/`} element={<Homepage />} />
+          <Route path={`/api-docs`} element={<APIDocs getMarkdownFiles={defaultMarkdownLoader} />} />
+          <Route path={`/dashboard`} element={<Dashboard />} />
         </Routes>
       </ThemeProvider>
     </div>
