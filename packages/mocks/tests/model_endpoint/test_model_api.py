@@ -200,21 +200,20 @@ def test_probabilities_sum_to_one():
         assert confidence_scores[0] >= 0, "Probability score is less than 0"
         assert sum(confidence_scores) == pytest.approx(1), "Confidence scores do not sum to 1"
 
-# def test_single_token_generation():
-#     """Test if the API generates a single token correctly."""
-#     payload = {
-#         "prompt": "Hello, how are",
-#         "max_length": 1
-#     }
-
-#     response = llama.post("/predict", json=payload)
-    
-#     # Assertions
-#     assert response.status_code == 200  # Ensure response is successful
-#     json_data = response.json()
-    
-#     assert "response" in json_data  # Ensure response contains generated token
-#     assert isinstance(json_data["response"], str)  # Ensure it's a string
-#     assert len(json_data["response"].strip()) > 0  # Ensure it's not empty
-
-#     print(f"Generated Token: {json_data['response']}")  # Debugging output
+# TODO: To test and debug this
+def test_llama_multiple_inputs():
+    response = llama.post("/predict", json={
+        "features": [
+            ["Generate a word about happiness: "],
+            ["Complete this sentence: The quick brown fox "],
+            ["What's the capital of France? "]
+        ],
+        "labels": [[""], [""], [""]],  # Empty labels as they're not used
+        "group_ids": []
+    })
+    assert response.status_code == 200, response.text
+    assert len(response.json()["predictions"]) == 3, "Incorrect number of outputs produced given number of inputs"
+    assert len(response.json()["confidence_scores"]) == 3, "Incorrect number of confidence scores produced"
+    assert all(len(prediction) == 1 for prediction in response.json()["predictions"]), "Each input should have one prediction"
+    assert all(len(scores) == 1 for scores in response.json()["confidence_scores"]), "Each input should have one confidence score"
+    assert all(isinstance(prediction[0], str) for prediction in response.json()["predictions"]), "Predictions should be strings"

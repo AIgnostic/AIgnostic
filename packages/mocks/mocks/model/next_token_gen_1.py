@@ -24,28 +24,30 @@ app.add_middleware(
 )
 
 
-@app.post("/predict", response_model=LLMResponse)
-def predict(input: LLMInput) -> LLMResponse:
-    """
-    Given a prompt, generate a *single token* and return the response.
-    """
-    # Tokenise the input prompt
-    input_ids = tokenizer(input.prompt, return_tensors="pt").input_ids.to(model.device)
+@app.post("/predict", response_model=ModelResponse)
+def predict(input: ModelInput) -> ModelResponse:
+    predictions = []
+    confidence_scores = []
 
-    # Generate only one token
-    output = model.generate(
-        input_ids,
-        max_new_tokens=1,  # Single token generation
-        do_sample=True,  # Enable sampling for diversity
-        temperature=0.6,  # Control randomness
-        top_p=0.9  # Top-p nucleus sampling
-    )
+    for prompt in input.features:
+        # Assume the prompt is a list with one string element 
+        input_text= prompt[0]
 
-    # Extract the newly generated token
-    new_token_id = output[0][-1].item()
-    new_token = tokenizer.decode(new_token_id, skip_special_tokens=True)
+        input_ids = tokenizer(input_text, return_tensors="pt").input_ids.to(model.device)
+        output = model.generate(
+            input_ids,
+            max_length=input.max_length,
+            do_sample=True,
+            temperature=0.6,
+            top_p=0.9
+        )
 
-    return LLMResponse(response=new_token)  # Return only the generated single token
+        new_token_id = output[0][-1].item()
+        new_token = tokenizer.decode(new_token_id, skip_special_tokens=True)
+        predictions.append(new_token)
+        confidence_scores.append(None) # TODO: Placeholder value
+
+    return ModelResponse(predictions=predictions, confidence_scores=confidence_scores)
 
 
 if __name__ == "__main__":

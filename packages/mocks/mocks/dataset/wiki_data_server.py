@@ -7,8 +7,8 @@ import pandas as pd
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from datasets import load_dataset
+from common.models import ModelInput, ModelResponse
 from mocks.api_utils import get_dataset_api_key
-from common.models import LLMInput  # Ensure LLMInput is imported
 import os
 
 app: FastAPI = FastAPI()
@@ -31,22 +31,6 @@ df = pd.DataFrame(dataset["train"])
 if "text" not in df.columns:
     raise ValueError("Dataset must contain a 'text' column.")
 
-# Function to generate context-next token pairs
-def generate_next_token_pairs(df, num_samples=5000, context_length=20):
-    data = []
-
-    for text in df["text"]:
-        words = text.split()
-        if len(words) <= context_length:
-            continue  # Skip short lines
-
-        for i in range(len(words) - context_length):
-            context = " ".join(words[i : i + context_length])
-            next_token = words[i + context_length]
-            data.append([context, next_token])
-
-    return pd.DataFrame(data, columns=["context", "next_token"])
-
 # Create processed dataset
 processed_df = generate_next_token_pairs(df)
 
@@ -54,19 +38,20 @@ processed_df = generate_next_token_pairs(df)
 async def read_root():
     return {"message": "Welcome to the WikiText-103 Next Token server!"}
 
-@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=LLMInput)
-async def fetch_datapoints(num_datapoints: int = Query(2, alias="n"), max_length: int = Query(30)):
+@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=ModelInput)
+async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
     """
-    Fetch num_datapoints from WikiText-103 and return them as JSON in LLMInput format.
+    Fetch num_datapoints raw text samples from WikiText-103 and return them as JSON in ModelInput format.
+    The ModelInput will contain ONLY the 'features' field, which is a list of prompts.
 
     Args:
         num_datapoints (int): Number of text samples to fetch.
-        max_length (int): Maximum length of the generated sequence.
 
     Returns:
-        JSONResponse: A JSON response containing the datapoints in LLMInput format.
+        JSONResponse: A JSON response containing the datapoints in ModelInput format.
+                       Only the 'features' field will be populated.
     """
-    dataset_size = len(processed_df)
+    dataset_size = len(df)
 
     if num_datapoints > dataset_size:
         raise HTTPException(
@@ -77,21 +62,18 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n"), max_length
     random_indices = np.random.choice(dataset_size, num_datapoints, replace=False)
 
     try:
-        selected_data = processed_df.iloc[random_indices]
+        selected_data = df.iloc[random_indices]["text"].tolist()  # Get raw text
 
-        prompts = selected_data["context"].tolist()
+        # Each element in 'features' is a list containing ONE prompt string
+        features = [[prompt] for prompt in selected_data]
 
-        return LLMInput(
-            features=[prompt.split() for prompt in prompts],  # Convert text into tokenized format
-            labels=[[selected_data["next_token"].tolist()[i]] for i in range(num_datapoints)],
-            group_ids=[0] * num_datapoints,  # No groups in this dataset
-            prompt=prompts[0],  # Use the first prompt as an example for LLMInput format
-            max_length=max_length
-        )
+        return ModelInput(features=features, labels=[], group_ids=[])
+
     except Exception as e:
-        return HTTPException(detail=f"Error: {e}", status_code=500)
+        raise HTTPException(detail=f"Error: {e}", status_code=500)
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=5025)
