@@ -1,6 +1,7 @@
 import React from "react";
 import Slider from "@mui/material/Slider";
 import { Box, Typography } from "@mui/material";
+import  theme from "../theme";
 
 interface MetricBarProps {
   min?: number;
@@ -20,6 +21,7 @@ const MetricBar: React.FC<MetricBarProps> = ({
   // Calculate percentage positions for gradient stops
   const idealPercent = ((idealValue - min) / (max - min)) * 100;
   const valuePercent = ((value - min) / (max - min)) * 100;
+  const barColor = value > idealValue ? "rgb(114, 232, 139)" : "rgb(220, 59, 59)"
 
   const marks = [
     { value: min, label: `${min}` }, // First marker (red)
@@ -45,12 +47,15 @@ const MetricBar: React.FC<MetricBarProps> = ({
             "& .MuiSlider-track": {
               background: `linear-gradient(
                 to right, 
-                rgb(161, 23, 23) 0%, 
-                rgb(161, 23, 23) ${idealPercent}%, 
-                rgb(26, 165, 14) ${idealPercent}%,
-                rgb(26, 165, 14) 100%
+                ${barColor} 0%, 
+                ${barColor} ${valuePercent}%, 
+                grey ${valuePercent}%,
+                grey 100%
               )`,
               border: "none",
+            },
+            "& .MuiSlider-mark": {
+              display: "none", // Hide marks
             },
             
             "& .MuiSlider-markLabel": {
@@ -68,12 +73,26 @@ const MetricBar: React.FC<MetricBarProps> = ({
           sx={{
             position: "absolute",
             top: "50%",
-            left: `${valuePercent}%`,
+            left: `${idealPercent}%`,
             transform: "translate(-50%, -120%)",
             width: "4px",
             height: "30%",
             backgroundColor: "white",
             borderRadius: "2px",
+            border: "1px solid dotted",
+          }}
+        />
+
+        <Box
+          sx={{
+            position: "absolute",
+            top: "31%",
+            left: `${valuePercent}%`,
+            transform: "translate(-50%, -150%)",
+            width: "2px",
+            height: "2px",
+            backgroundColor: "white",
+            borderRadius: "5px",
           }}
         />
       </Box>

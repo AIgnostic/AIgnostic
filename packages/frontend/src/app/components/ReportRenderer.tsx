@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Times-Roman',
         padding: 5,
         borderRadius: 5,
-        backgroundColor: 'rgb(197, 217, 230)',
+        backgroundColor: 'grey',
     },
     bulletPoint: {
         marginLeft: 10,
@@ -100,7 +100,7 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                             <Text style={styles.subsection}>Computed Metrics</Text>
                             {section.computed_metrics.map((metric, idx) => (
                                 <View key={idx}>
-                                    <Text style={styles.bulletPoint}>
+                                    {/* <Text style={styles.bulletPoint}>
                                         • {metric.metric}: {metric.value}
                                     </Text>
                                     <Text style={styles.bulletPoint}>
@@ -108,7 +108,13 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                                     </Text>
                                     <Text style={styles.bulletPoint}>
                                         • Range: {metric.range[0]} - {metric.range[1]}
-                                    </Text>
+                                    </Text> */}
+                                    <MetricBarPDF
+                                        value={parseFloat(metric.value)}
+                                        idealValue={parseFloat(metric.ideal_value)}
+                                        min={parseFloat(metric.range[0])}
+                                        max={parseFloat(metric.range[1])}
+                                    />
                                 </View>
                             ))}
                         </View>
@@ -142,3 +148,74 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
 );
 
 export default ReportRenderer;
+
+
+const MetricBarPDF: React.FC<{ value: number; idealValue: number; min?: number; max?: number }> = ({
+    value,
+    idealValue,
+    min = 0,
+    max = 1,
+  }) => {
+    // const width = 200; // Total width of the bar
+    const valuePercent = ((value - min) / (max - min)) * 100;
+    const idealPercent = ((idealValue - min) / (max - min)) * 100;
+
+    const red = 'rgb(139, 20, 20)';
+    const lightRed = 'rgb(220, 59, 59)';
+    const green = 'rgb(65, 163, 86)';
+    const lightGreen = 'rgb(114, 232, 139)';
+  
+    return (
+      <View style={{ marginVertical: 10 }}>
+        {/* Bar container */}
+        <View style={{
+          height: 10,
+          backgroundColor: "lightgray",
+          position: "relative",
+          borderRadius: 5,
+          marginVertical: 5,
+        }}>
+          {/* Red section (before ideal value) */}
+          <View style={{
+            position: "absolute",
+            left: 0,
+            width: `${valuePercent}%`,
+            height: "100%",
+            backgroundColor: `${value > idealValue ? lightGreen : lightRed}`,
+            borderTopLeftRadius: 5,
+            borderBottomLeftRadius: 5,
+          }} />
+          
+          {/* Green section (after ideal value) */}
+          <View style={{
+            position: "absolute",
+            left: `0%`,
+            width: `100%`,
+            height: "100%",
+            borderRadius: 5,
+            // border: `1px solid black`,
+          }} />
+      
+          {/* Marker for actual value */}
+          <View style={{
+            position: "absolute",
+            left: `${idealPercent}%`,
+            width: 2,
+            height: "180%",
+            borderLeftWidth: 1,
+            borderLeftColor: "black",
+            borderLeftStyle: "dashed",
+            transform: "translateY(-4%)",
+            borderRadius: 5,
+          }} />
+        </View>
+  
+        {/* Labels */}
+        <Text style={{ color: value >= idealValue ? `${green}` : `${red}`, fontSize: 10 }}>
+            Value: {value.toFixed(2)} | Target: {idealValue.toFixed(2)}
+        </Text>
+      </View>
+    );
+  };
+  
+  
