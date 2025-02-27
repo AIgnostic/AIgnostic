@@ -94,6 +94,7 @@ def test_parse_legislation_text_with_valid_content():
     expected_output = {
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
+        "link": "https://gdpr-info.eu/art-31-gdpr/",
         "description": "The controller and the processor and, where " +
         "applicable, their representatives, shall cooperate, on request, " +
         "with the supervisory authority in the performance of its tasks.",
@@ -124,6 +125,7 @@ def test_parse_legislation_text_with_multiple_recitals():
     expected_output = {
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
+        "link": "https://gdpr-info.eu/art-31-gdpr/",
         "description": "The controller and the processor and, where " +
         "applicable, their representatives, shall cooperate, on request, " +
         "with the supervisory authority in the performance of its tasks.",
@@ -149,6 +151,7 @@ def test_parse_legislation_text_with_no_recitals():
     expected_output = {
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
+        "link": "https://gdpr-info.eu/art-31-gdpr/",
         "description": "The controller and the processor and, " +
         "where applicable, their representatives, shall cooperate, " +
         "on request, with the supervisory authority " +
@@ -165,6 +168,7 @@ def test_parse_legislation_text_with_empty_content():
     expected_output = {
         "article_number": "31",
         "article_title": "",
+        "link": "https://gdpr-info.eu/art-31-gdpr/",
         "description": "",
         "suitable_recitals": []
     }
@@ -187,6 +191,7 @@ def mock_dependencies():
             {
                 "article_number": "1",
                 "article_title": "Title for Article 1",
+                "link": "https://gdpr-info.eu/art-1-gdpr/",
                 "description": "Description for Article 1.",
                 "suitable_recitals": ["https://gdpr-info.eu/recitals/no-R1/"]
             }

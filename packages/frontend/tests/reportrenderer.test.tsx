@@ -8,6 +8,7 @@ jest.mock('@react-pdf/renderer', () => ({
     Page: ({ children }: any) => <div>{children}</div>,
     Text: ({ children, style }: any) => <span data-style={JSON.stringify(style)}>{children}</span>,
     View: ({ children, style }: any) => <div data-style={JSON.stringify(style)}>{children}</div>,
+    Link: ({ children, style }: any) => <div data-style={JSON.stringify(style)}>{children}</div>,
     StyleSheet: { 
         create: (styles: any) => styles,
     },
@@ -56,6 +57,7 @@ describe('ReportRenderer', () => {
                 legislation_extracts: [
                     { article_number: 5, 
                      article_title: 'Fair AI Act', 
+                     link: 'https://example.com',
                      description: 'AI systems must be unbiased.', 
                      suitable_recitals: ['Recital 1', 'Recital 2']}
                 ],
@@ -71,6 +73,11 @@ describe('ReportRenderer', () => {
     it('renders the report title', () => {
         const { getByText } = render(<ReportRenderer report={sampleReport} />);
         expect(getByText('AIgnostic | Final Report')).toBeTruthy();
+    });
+
+    it('renders disclaimers', () => {
+        const { getByText } = render(<ReportRenderer report={sampleReport} />);
+        expect(getByText('Legal Information and Disclaimers')).toBeTruthy();
     });
 
     it('renders general info', () => {
@@ -92,8 +99,9 @@ describe('ReportRenderer', () => {
         const metricBars = getAllByTestId(document.body, 'mock-metric-bar');
         expect(metricBars.length).toBe(3);
 
-        expect(getByText('Relevant Legislation Extracts')).toBeTruthy();
-        expect(getByText('• Article 5 [Fair AI Act]: AI systems must be unbiased.')).toBeTruthy();
+        expect(getByText('Legislation')).toBeTruthy();
+        expect(getByText('• Article 5 [Fair AI Act]:')).toBeTruthy();
+        expect(getByText('https://example.com')).toBeTruthy();
         expect(getByText('LLM Insights')).toBeTruthy();
         expect(getByText('This model demonstrates low bias but needs further evaluation.')).toBeTruthy();
         // Check if suitable recitals are rendered
