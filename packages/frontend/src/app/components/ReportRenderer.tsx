@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { Report } from '../types';
 import theme from '../theme';
+import MetricBarPDF from './MetricBarPDF';
 
 // Create styles
 const styles = StyleSheet.create({
@@ -46,7 +47,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Times-Roman',
         padding: 5,
         borderRadius: 5,
-        backgroundColor: 'rgb(197, 217, 230)',
+        backgroundColor: 'grey',
     },
     bulletPoint: {
         marginLeft: 10,
@@ -99,16 +100,16 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                         <View>
                             <Text style={styles.subsection}>Computed Metrics</Text>
                             {section.computed_metrics.map((metric, idx) => (
-                                <View key={idx}>
-                                    <Text style={styles.bulletPoint}>
-                                        • {metric.metric}: {metric.value}
+                                <View key={idx} style={{ marginBottom: 10 }}>
+                                    <Text style={[styles.text, {fontSize: 14}]}>
+                                        {metric.metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
                                     </Text>
-                                    <Text style={styles.bulletPoint}>
-                                        • Ideal Value: {metric.ideal_value}
-                                    </Text>
-                                    <Text style={styles.bulletPoint}>
-                                        • Range: {metric.range[0]} - {metric.range[1]}
-                                    </Text>
+                                    <MetricBarPDF
+                                        value={parseFloat(metric.value)}
+                                        idealValue={parseFloat(metric.ideal_value)}
+                                        min={(metric.range[0] === null) ? -Infinity : parseFloat(metric.range[0])}
+                                        max={(metric.range[1] === null) ? Infinity : parseFloat(metric.range[1])}
+                                    />
                                 </View>
                             ))}
                         </View>
@@ -142,3 +143,4 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
 );
 
 export default ReportRenderer;
+

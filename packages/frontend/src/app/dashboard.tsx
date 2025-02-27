@@ -4,6 +4,7 @@ import theme from './theme';
 import { styled } from '@mui/material/styles';
 import { Metric } from './types';
 import ReportRenderer from './components/ReportRenderer';
+import MetricBar from './components/MetricBar';
 
 import LinearProgress, {
   linearProgressClasses,
@@ -214,18 +215,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
                           marginBottom: '8px',
                         }}
                       >
-                        <h3>{metric_name}</h3>
+                        <h3>{metric_name.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</h3>
                       </div>
-                      <div>
-                        <p>Metric: {metric_info.value}</p>
-                        <p>Ideal value: {metric_info.ideal_value}</p>
-                        <p>
-                          Range: {metric_info.range[0]} - {metric_info.range[1]}
-                        </p>
-                      </div>
+                    <div>
+                      <MetricBar 
+                        // Note that the range can include nulls to represent infinities.
+                        // So replace here
+                        min={metric_info.range[0] === null ? -Infinity : metric_info.range[0]} 
+                        max={metric_info.range[1] === null ? Infinity : metric_info.range[1]}
+                        value={metric_info.value}
+                        idealValue={metric_info.ideal_value}
+                        label="" 
+                      />
                     </div>
-                  )
-                )}
+                  </div>
+                ))}
               </div>
             );
           })
