@@ -17,7 +17,9 @@ information to provide a written response about this
 </goal>
 
 <return format>
-A string response explaining the implications of the metrics in relation to the law and our model.
+A single string response containing the following:
+    - a summary of the parts of the legislation extracts that are most relevant to the metrics and the property.
+    - an explanation of the implications of the computed metric values in the context of the law and our model.
 </return format>
 
 <warnings>

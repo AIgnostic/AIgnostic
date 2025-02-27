@@ -24,6 +24,7 @@ export interface Report {
 export interface LegislationExtract {
   article_number: number;
   article_title: string;
+  link: string;
   description: string;
   suitable_recitals: string[];
 }

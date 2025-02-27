@@ -42,6 +42,7 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     data = {
         "article_number": article,
         "article_title": "",
+        "link": "",
         "description": "",
         "suitable_recitals": [],
     }
@@ -82,6 +83,7 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
 
         i += 1
 
+    data["link"] = f"https://gdpr-info.eu/art-{article}-gdpr/"
     data["description"] = data["description"].strip()
     return data
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
+import { Page, Text, View, Document, Link, StyleSheet } from '@react-pdf/renderer';
 import { Report } from '../types';
 import theme from '../theme';
 import MetricBarPDF from './MetricBarPDF';
@@ -62,6 +62,10 @@ const styles = StyleSheet.create({
         marginBottom: 6,
         fontFamily: 'Times-Roman',
     },
+    hyperlink: {
+        color: 'blue',
+        textDecorationLine: 'underline',
+    },
 });
 
 interface ReportProps {
@@ -76,6 +80,13 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
         <Page size="A4" style={styles.page}>
             {/* Report Title */}
             <Text style={styles.mainTitle}>AIgnostic | Final Report</Text>
+
+            {/* Disclaimers Section */}
+            <View style={styles.section}>
+                <Text style={styles.header}>Legal Information and Disclaimers</Text>
+                <Text style={styles.text}>AIgnostic is a tool for aiding audits and evaluations. It is merely a framework and guide.</Text>
+                <Text style={styles.text}>The developers of this tool cannot be held liable for any decisions, complaints and legal matters that arise from the AIgnostic evaluation or report.</Text>
+            </View>
 
             {/* General Info Section */}
             <View style={styles.section}>
@@ -96,7 +107,7 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                     </Text>
 
                     {/* Computed Metrics */}
-                    {section.computed_metrics.length > 0 && (
+                    {section.computed_metrics.length > 0 ?
                         <View>
                             <Text style={styles.subsection}>Computed Metrics</Text>
                             {section.computed_metrics.map((metric, idx) => (
@@ -112,20 +123,16 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                                     />
                                 </View>
                             ))}
-                        </View>
-                    )}
+                        </View>  
 
-                    {/* Legislation Extracts (Italicized) */}
-                    {section.legislation_extracts.length > 0 && (
+                        :
+
+                        // TODO: Add suggested metrics
                         <View>
-                            <Text style={styles.subsection}>Relevant Legislation Extracts</Text>
-                            {section.legislation_extracts.map((legislation, idx) => (
-                                <Text key={idx} style={[styles.bulletPoint, styles.quote]}>
-                                    • Article {legislation.article_number} [{legislation.article_title}]: {legislation.description}
-                                </Text>
-                            ))}
+                            <Text style={styles.subsection}>Computed Metrics</Text>
+                            <Text style={styles.text}>No metrics were computed for this property.</Text>
                         </View>
-                    )}
+                    }
 
                     {/* LLM Insights */}
                     {section.llm_insights.length > 0 && (
@@ -136,6 +143,24 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                             ))}
                         </View>
                     )}
+
+                    
+                    {/* Legislation Extracts (Italicized) */}
+                    {section.legislation_extracts.length > 0 && (
+                        <View>
+                            <Text style={styles.subsection}>Legislation</Text>
+                            <Text style={styles.text}>For more detailed information pertaining to the legislation, refer to the relevant legislation articles via the following links:</Text>
+                            {section.legislation_extracts.map((legislation, idx) => (
+                                <Text key={idx} style={[styles.bulletPoint, styles.quote]}>
+                                    • Article {legislation.article_number} [{legislation.article_title}]:  
+                                    <Link src={legislation.link} style={styles.hyperlink}>
+                                        {legislation.link}
+                                    </Link>
+                                </Text>
+                            ))}
+                        </View>
+                    )}
+
                 </View>
             ))}
         </Page>
