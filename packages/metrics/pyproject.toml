@@ -15,7 +15,7 @@ pytest-html = "^4.1.1"
 include = "metrics"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = "^3.12"
 aif360 = "^0.6.1"
 
 [tool.poetry.dependencies.common]

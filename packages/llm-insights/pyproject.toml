@@ -21,7 +21,7 @@ readme = "README.md"
 include = "llm_insights"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = "^3.12"
 langchain-google-genai = "^2.0.9"
 langchain-core = "^0.3.36"
 

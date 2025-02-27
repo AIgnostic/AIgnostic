@@ -21,7 +21,7 @@ readme = "README.md"
 include = "report_generation"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = "^3.12"
 bs4 = "^0.0.2"
 
 [tool.poetry.dependencies.metrics]
@@ -31,6 +31,7 @@ develop = true
 [tool.poetry.dependencies.llm-insights]
 path = "../llm-insights"
 develop = true
+
 
 [build-system]
 requires = ["poetry-core"]

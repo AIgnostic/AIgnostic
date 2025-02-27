@@ -212,6 +212,9 @@ class Worker():
                 predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, labels)
             elif job.model_type == "multi class classification":
                 predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, labels)
+            elif job.model_type == "next token generation":
+                # TODO: (NTG) Implement this
+                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, labels)
 
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")

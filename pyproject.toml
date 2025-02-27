@@ -5,18 +5,19 @@ autoActivate = true
 name = "@aignostic/source"
 version = "1.0.0"
 description = ""
-authors = [ ]
+authors = []
 license = "Proprietary"
 readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = "^3.12"
 fastapi = "^0.115.8"
 uvicorn = "^0.34.0"
 python-dotenv = "^1.0.1"
 folktables = "^0.0.12"
 pydantic = "^2.10.6"
+numpy = "^2.2.3"
 
 
 [tool.poetry.dependencies.api]
@@ -71,5 +72,5 @@ url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
 
 [build-system]
-requires = [ "poetry-core==1.1.0" ]
+requires = ["poetry-core==1.1.0"]
 build-backend = "poetry.core.masonry.api"

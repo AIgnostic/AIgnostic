@@ -3,7 +3,6 @@ Single Token Generation Model
 """
 from fastapi import FastAPI
 from pydantic import BaseModel
-from common.models import LLMInput, LLMResponse
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch

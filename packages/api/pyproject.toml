@@ -23,8 +23,7 @@ readme = "README.md"
 include = "api"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
-numpy = "^2.2.1"
+python = "^3.12"
 pydantic = "^2.10.5"
 uvicorn = "^0.34.0"
 pandas = "^2.2.3"

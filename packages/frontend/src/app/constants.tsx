@@ -76,10 +76,13 @@ const regressionMetrics = [
   "r squared",
 ]
 
+const nextTokenGenerationMetrics: string[] = []
+
 const modelTypesToMetrics: { [key: string]: string[] } = {
   "Binary Classification": binaryClassifierMetrics,
   "Multi Class Classification": multiClassClassifierMetrics,
   "Regression": regressionMetrics,
+  "Next Token Generation" : nextTokenGenerationMetrics,
   // 'General (Accuracy, Precision, Recall)': generalMetrics,
 };
 

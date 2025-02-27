@@ -21,13 +21,9 @@ readme = "README.md"
 include = "mocks"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = "^3.12"
 transformers = "^4.49.0"
-torch = [
-    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "linux", markers = "sys_platform != 'darwin'" },
-    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "win32", markers = "sys_platform != 'darwin'" },
-    { version = "^2.6.0", source = "pypi", platform = "darwin", markers = "sys_platform == 'darwin'" },
-]
+torch = "^2.6.0"
 
 [tool.poetry.dependencies.common]
 path = "../common"
@@ -37,28 +33,12 @@ develop = true
 transformers = "^4.49.0"
 folktables = "^0.0.12"
 scikit-learn = "^1.6.1"
-torch = [
-    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "linux", markers = "sys_platform != 'darwin'" },
-    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "win32", markers = "sys_platform != 'darwin'" },
-    { version = "^2.6.0", source = "pypi", platform = "darwin", markers = "sys_platform == 'darwin'" },
-]
+torch = "^2.6.0"
 
 [tool.poetry.group.train.dependencies]
-torch = [
-    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "linux", markers = "sys_platform != 'darwin'" },
-    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "win32", markers = "sys_platform != 'darwin'" },
-    { version = "^2.6.0", source = "pypi", platform = "darwin", markers = "sys_platform == 'darwin'" },
-]
-torchvision = [
-    { version = "^0.21.0+cpu", source = "pytorch_cpu", platform = "linux", markers = "sys_platform != 'darwin'" },
-    { version = "^0.21.0+cpu", source = "pytorch_cpu", platform = "win32", markers = "sys_platform != 'darwin'" },
-    { version = "^0.21.0", source = "pypi", platform = "darwin", markers = "sys_platform == 'darwin'" },
-]
-torchaudio = [
-    { version = "^2.5.2+cpu", source = "pytorch_cpu", platform = "linux", markers = "sys_platform != 'darwin'" },
-    { version = "^2.5.2+cpu", source = "pytorch_cpu", platform = "win32", markers = "sys_platform != 'darwin'" },
-    { version = "^2.5.2", source = "pypi", platform = "darwin", markers = "sys_platform == 'darwin'" },
-]
+torch = "^2.6.0"
+torchvision = "^0.21.0"
+torchaudio = "^2.5.2"
 
 
 [[tool.poetry.source]]

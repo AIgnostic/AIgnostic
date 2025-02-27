@@ -1,9 +1,9 @@
 [tool.coverage.run]
 branch = true
-source = [ "common" ]
+source = ["common"]
 
 [tool.coverage.report]
-exclude_lines = [ "if TYPE_CHECKING:" ]
+exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
 [tool.pytest.ini_options]
@@ -13,20 +13,20 @@ addopts = "--cov --cov-report html:'../../coverage/common/html' --cov-report xml
 name = "common"
 version = "1.0.0"
 description = "Pydantic models shared by everything"
-authors = [ ]
+authors = []
 license = "Proprietary"
 readme = "README.md"
-group = { }
+group = {}
 
-  [[tool.poetry.packages]]
-  include = "common"
+[[tool.poetry.packages]]
+include = "common"
 
-  [tool.poetry.dependencies]
-  python = ">=3.12,<3.13"
-  pydantic = "^2.10.6"
-  pika = "^1.3.2"
-  redis = {extras = ["hiredis"], version = "^5.2.1"}
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = "^2.10.6"
+pika = "^1.3.2"
+redis = { extras = ["hiredis"], version = "^5.2.1" }
 
 [build-system]
-requires = [ "poetry-core" ]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
