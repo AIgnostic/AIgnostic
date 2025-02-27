@@ -57,6 +57,7 @@ describe('ReportRenderer', () => {
                 legislation_extracts: [
                     { article_number: 5, 
                      article_title: 'Fair AI Act', 
+                     link: 'https://example.com',
                      description: 'AI systems must be unbiased.', 
                      suitable_recitals: ['Recital 1', 'Recital 2']}
                 ],
@@ -100,6 +101,7 @@ describe('ReportRenderer', () => {
 
         expect(getByText('Legislation')).toBeTruthy();
         expect(getByText('• Article 5 [Fair AI Act]:')).toBeTruthy();
+        expect(getByText('https://example.com')).toBeTruthy();
         expect(getByText('LLM Insights')).toBeTruthy();
         expect(getByText('This model demonstrates low bias but needs further evaluation.')).toBeTruthy();
         // Check if suitable recitals are rendered
