@@ -1,4 +1,5 @@
 from api.router.rabbitmq import get_channel
+from common.models.common import Job
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, Depends, HTTPException
 import json
@@ -55,9 +56,7 @@ async def generate_metrics_from_info(
                 channel=channel,
             )
             print(f"Dispatched job {i+1}")
-        return JSONResponse(
-            {"message": "Created and dispatched jobs"}, status_code=202
-        )
+        return JSONResponse({"message": "Created and dispatched jobs"}, status_code=202)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error dispatching jobs - {e}")
 
@@ -86,20 +85,22 @@ def dispatch_job(
     model_api_key: str,
     user_id: str,
     channel: BlockingChannel,
+    max_concurrenct_batches: int = 1,
 ):
     """
     Function to dispatch a job to the model
     """
-    job_json = {
-        "batch_size": batch_size,
-        "total_sample_size": total_sample_size,
-        "metrics": metrics,
-        "model_type": model_type,
-        "data_url": str(data_url),
-        "model_url": str(model_url),
-        "data_api_key": data_api_key,
-        "model_api_key": model_api_key,
-        "user_id": user_id,
-    }
-    message = json.dumps(job_json)
+    job = Job(
+        batch_size=batch_size,
+        total_sample_size=total_sample_size,
+        metrics=metrics,
+        model_type=model_type,
+        data_url=data_url,
+        model_url=model_url,
+        data_api_key=data_api_key,
+        model_api_key=model_api_key,
+        user_id=user_id,
+        max_concurrenct_batches=1,
+    )
+    message = job.json()
     channel.basic_publish(exchange="", routing_key=JOB_QUEUE, body=message)

@@ -1,13 +1,20 @@
 import asyncio
+import json
 import logging
 import atexit
 from os import getenv
+from typing import Optional
 
+from common.models.job import Job
+from common.rabbitmq.constants import JOB_QUEUE
+
+from colorama import init
 from common.redis.connect import connect_to_redis
 from pika import BlockingConnection
+from pika.adapters.blocking_connection import BlockingChannel
 import redis.asyncio as redis
 
-from common.rabbitmq.connect import connect_to_rabbitmq
+from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from dispatcher.logging.configure_logging import configure_logging
 
 logger = logging.getLogger("dispatcher")
@@ -18,6 +25,56 @@ redis_client: redis.Redis = None
 
 REDIS_HOST = getenv("REDIS_HOST", "localhost")
 REDIS_PORT = getenv("REDIS_PORT", 6379)
+
+
+class DispatcherException(Exception):
+    def __init__(self, detail: str, status_code: int = 500):
+        """Custom exception class for dispatcher errors
+
+        Args:
+            detail (str): Description of error that occured
+            status_code (int, optional): HTTP status code to report back to the client. Defaults to 500.
+        """
+        self.detail = detail
+        self.status_code = status_code
+        super().__init__(self.detail)
+
+
+class Dispatcher:
+
+    _connection: BlockingConnection
+    _redis_client: redis.Redis
+    _channel: BlockingChannel
+
+    def __init__(self, connection, redis_client):
+        self._connection = connection
+        self._redis_client = redis_client
+        self._channel = self._connection.channel()
+        init_queues(self.channel)
+        logger.info("Dispatcher initialized.")
+
+    def handle_job_unpack_error(self, e: ValueError):
+        logger.error(f"Invalid job format: {e}")
+        logger.error("Can't handle this error as no way to hand back to the API!")
+        # TODO: Pass back to api, show notificatio to uer
+        raise DispatcherException(f"Invalid job format: {e}", status_code=400)
+
+    def fetch_job(self) -> Optional[Job]:
+        """
+        Function to fetch a job from the job queue
+        """
+        method_frame, header_frame, body = self._channel.basic_get(
+            queue=JOB_QUEUE, auto_ack=True
+        )
+        if method_frame:
+            job_data = json.loads(body)
+            logger.info(f"Received job: {job_data}")
+            try:
+                logger.debug("Unpacking job data")
+                return Job(**job_data)
+            except ValueError as e:
+                self.handle_job_unpack_error(e)
+        return None
 
 
 async def redis_connect():
