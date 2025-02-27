@@ -23,9 +23,6 @@ export function App() {
       case `/api-docs`:
         document.title = `API Docs | ${AIGNOSTIC}`;
         break;
-      case `/dashboard`:
-        document.title = `Dashboard | ${AIGNOSTIC}`;
-        break;
       default:
         document.title = `${AIGNOSTIC}`;
     }
@@ -45,7 +42,6 @@ export function App() {
         <Routes>
           <Route path={`/`} element={<Homepage />} />
           <Route path={`/api-docs`} element={<APIDocs getMarkdownFiles={defaultMarkdownLoader} />} />
-          <Route path={`/dashboard`} element={<Dashboard />} />
         </Routes>
       </ThemeProvider>
     </div>
