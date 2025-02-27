@@ -101,7 +101,9 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                             <Text style={styles.subsection}>Computed Metrics</Text>
                             {section.computed_metrics.map((metric, idx) => (
                                 <View key={idx} style={{ marginBottom: 10 }}>
-                                    <Text>{metric.metric.replace(/_/g, ' ').replace(/\b\w/g, (char, index) => index === 0 ? char.toUpperCase() : char.toLowerCase())}</Text>
+                                    <Text style={[styles.text, {fontSize: 14}]}>
+                                        {metric.metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                                    </Text>
                                     <MetricBarPDF
                                         value={parseFloat(metric.value)}
                                         idealValue={parseFloat(metric.ideal_value)}
