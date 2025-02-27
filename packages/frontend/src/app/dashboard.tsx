@@ -215,10 +215,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
                           marginBottom: '8px',
                         }}
                       >
-                        <h3>{metric_name}</h3>
+                        <h3>{metric_name.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</h3>
                       </div>
                     <div>
                       <MetricBar 
+                        // Note that the range can include nulls to represent infinities.
+                        // So replace here
                         min={metric_info.range[0] === null ? -Infinity : metric_info.range[0]} 
                         max={metric_info.range[1] === null ? Infinity : metric_info.range[1]}
                         value={metric_info.value}

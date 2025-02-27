@@ -8,7 +8,7 @@ export interface ReportPropertySection {
   computed_metrics: {
       metric: string;
       ideal_value: string;
-      range: (string | null)[];
+      range: (string | null)[];  // nulls represent infinities
       value: string; 
   }[];
   legislation_extracts: LegislationExtract[];

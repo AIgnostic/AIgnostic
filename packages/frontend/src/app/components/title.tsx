@@ -3,9 +3,6 @@ import { Box, Button } from '@mui/material';
 import { styles } from '../home.styles';
 import { HOME } from '../constants';
 import theme from '../theme';
-import { pdf } from '@react-pdf/renderer';
-import ReportRenderer from './ReportRenderer';
-
 
 const Title = () => (
   <Box style={styles.container}>
