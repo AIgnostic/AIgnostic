@@ -62,7 +62,6 @@ services:
 
   # Microservices
   worker_ms:
-    container_name: worker
     image: aignostic/dev
     volumes:
       - .:/app
@@ -154,7 +153,6 @@ services:
       - aignostic_network
     ports:
       - '5001:5001'
-
 volumes:
   venv:
 networks:

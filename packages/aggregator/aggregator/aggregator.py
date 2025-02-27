@@ -159,47 +159,48 @@ class ResultsConsumer:
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
-connected_clients = set()  # Store multiple WebSocket clients
-message_queue = queue.Queue()  # Store messages until a client connects
-metrics_aggregator = MetricsAggregator()
+# Store multiple WebSocket clients
+connected_clients = set()
+# Store messages until a client connects
+message_queue = queue.Queue()
+# user_id -> MetricsAggregator
+user_aggregators: dict = {}
 
 
 def on_result_fetched(ch, method, properties, body):
-    """Handles incoming messages and waits for at least one client before sending."""
-    global connected_clients
     result_data = json.loads(body)
-    print(f"Received result: {result_data}")
-    print(f"Type of result_data: {type(result_data)}")
+    user_id = result_data["user_id"]
+    print(f"Received result for user {user_id}: {result_data}")
 
-    if metrics_aggregator.total_sample_size == 0:
-        metrics_aggregator.set_total_sample_size(result_data["total_sample_size"])
+    # ensure a metricsaffregator exists for the user
+    if user_id not in user_aggregators:
+        user_aggregators[user_id] = MetricsAggregator()
 
-    metrics_aggregator.aggregate_new_batch(
-        result_data["metric_values"], result_data["batch_size"]
-    )
+    aggregator: MetricsAggregator = user_aggregators[user_id]
 
-    aggregates = metrics_aggregator.get_aggregated_metrics()
+    if aggregator.total_sample_size == 0:
+        aggregator.set_total_sample_size(result_data["total_sample_size"])
 
-    send_to_clients(aggregator_intermediate_metrics_log(aggregates))
-    print(
-        f"{metrics_aggregator.samples_processed} / {metrics_aggregator.total_sample_size} Processed"
-    )
+    aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
 
-    if metrics_aggregator.samples_processed == metrics_aggregator.total_sample_size:
-        print("Finished processing all batches")
-        # All batches have now been processed, send completion message
+    aggregates = aggregator.get_aggregated_metrics()
+    # send the intermediate metrics to the user
+    manager.send_to_user(user_id, aggregator_intermediate_metrics_log(aggregates))
+    print(f"{aggregator.samples_processed} / {aggregator.total_sample_size} Processed for user {user_id}")
 
-        send_to_clients(aggregator_metrics_completion_log())
+    # if all batches have been processed, send final result
 
-        print("Creating and sending final report")
-        # generate a report and send to the frontend
-        report_json = aggregate_report(aggregates)
+    if aggregator.samples_processed == aggregator.total_sample_size:
+        print(f"Finished processing all batches for user {user_id}")
 
-        send_to_clients(aggregator_final_report_log(report_json))
+        # send completion message
+        manager.send_to_user(user_id, aggregator_metrics_completion_log())
 
-        # Reset the aggregator for the next batch
-        metrics_aggregator.samples_processed = 0
-        metrics_aggregator.metrics = {}
+        report_thread = threading.Thread(target=generate_and_send_report, args=(user_id, aggregates, aggregator))
+        report_thread.start()
+
+        # cleanup completed aggregator
+        del user_aggregators[user_id]
 
 
 def get_api_key():
@@ -210,20 +211,28 @@ def get_api_key():
     return os.getenv("GOOGLE_API_KEY")
 
 
-def aggregate_report(metrics: dict):
-    """
-    Generates a report to send to the frontend
-    By collating the metrics, and pulling information from the report generator
-    """
-
-    report_properties_sections = generate_report(metrics, get_api_key())
+def aggregator_generate_report(aggregates, aggregator):
+    """Generates a report based on the aggregated metrics."""
+    report_properties_section = generate_report(aggregates, os.getenv("GOOGLE_API_KEY"))
     report_info_section = {
         # TODO: Update with codecarbon info and calls to model from metrics
-        "calls_to_model": metrics_aggregator.total_sample_size,
-        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
-    }
+        "calls_to_model": aggregator.total_sample_size,
+        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
 
-    return {"properties": report_properties_sections, "info": report_info_section}
+
+    }
+    report_json = {"properties": report_properties_section, "info": report_info_section}
+    return report_json
+
+
+def generate_and_send_report(user_id, aggregates, aggregator):
+    """Generates the report and sends it without blocking the main process."""
+    try:
+        report_json = aggregator_generate_report(aggregates, aggregator)
+        manager.send_to_user(user_id, aggregator_final_report_log(report_json))
+    except Exception as e:
+        print(f"Error generating report for user {user_id}: {e}")
+        manager.send_to_user(user_id, aggregator_error_log(str(e)))
 
 
 def send_to_clients(message: AggregatorMessage):
@@ -249,26 +258,56 @@ def send_to_clients(message: AggregatorMessage):
     connected_clients.difference_update(disconnected_clients)
 
 
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections = {}
+
+    def connect(self, user_id, websocket):
+        """Stores a Websocket connection for a specific user"""
+        self.active_connections[user_id] = websocket
+
+    def disconnect(self, user_id):
+        """Removes a Websocket connection for a specific user"""
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+
+    def send_to_user(self, user_id, message):
+        """Sends a message to the correct user."""
+
+        if user_id in self.active_connections:
+            print(f"Sending message to user {user_id}")
+            websocket = self.active_connections[user_id]
+            try:
+                websocket.send(json.dumps(message.dict()))
+                print(f"Sent message to user {user_id}: {json.dumps(message.dict())}")
+            except Exception as e:
+                print(f"Error sending message to user {user_id}: {e}")
+                self.disconnect(user_id)
+        else:
+            print(f"User not connected: {user_id}")
+            print(f"Active connections {self.active_connections}")
+
+
+manager = ConnectionManager()
+
+
 def websocket_handler(websocket):
-    """Handles WebSocket connections and sends any queued messages upon connection."""
-    global connected_clients
-    print("New WebSocket connection")
-    connected_clients.add(websocket)
-
-    # Send any stored messages when the first client connects
-    while not message_queue.empty():
-        message = message_queue.get()
-        print("Sending queued message to new client")
-        send_to_clients(message)
-
+    """Handles Websocket connections and assigns them to users"""
     try:
-        for _ in websocket:  # Keep connection open
+        user_id = websocket.recv()
+        print(f"User {user_id} connected via websocket")
+
+        # register this user
+        manager.connect(user_id, websocket)
+
+        for _ in websocket:
+            # keep connection open
             pass
     except Exception as e:
-        print(f"WebSocket connection closed: {e}")
+        print(f"Websocket connection closed: {e}")
     finally:
-        print("Client disconnected")
-        connected_clients.remove(websocket)  # Remove on disconnect
+        print(f"User {user_id} disconnected")
+        manager.disconnect(user_id)
 
 
 def start_websocket_server():
@@ -279,6 +318,7 @@ def start_websocket_server():
 
 if __name__ == "__main__":
     # Load environment variables
+
     from dotenv import load_dotenv
 
     load_dotenv()
