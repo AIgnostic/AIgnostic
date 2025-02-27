@@ -404,7 +404,7 @@ def create_fairness_metric_fn(metric_fn: Callable[[ClassificationMetric], float]
 """
 
 
-def explanation_stability_score(info: CalculateRequest, lime_fn=_lime_explanation) -> float:
+def explanation_stability_score(info: CalculateRequest) -> float:
     """
     Calculate the explanation stability score for a given model and sample inputs
 
@@ -415,7 +415,7 @@ def explanation_stability_score(info: CalculateRequest, lime_fn=_lime_explanatio
     :return: float - the explanation stability score (1 - 1/N * sum(distance_fn(E(x), E(x')))
         where distance_fn is the distance function between two explanations E(x) and E(x')
     """
-    lime_actual, _ = lime_fn(info)
+    lime_actual, _ =  _lime_explanation(info)
 
     # Calculate gradients for perturbation
     gradients = _finite_difference_gradient(info, 0.01)
@@ -426,7 +426,7 @@ def explanation_stability_score(info: CalculateRequest, lime_fn=_lime_explanatio
     info.input_features = info.input_features + perturbation
 
     # Obtain perturbed lime output
-    lime_perturbed, _ = lime_fn(info)
+    lime_perturbed, _ = _lime_explanation(info)
 
     # use cosine-similarity for now but can be replaced with model-provider function later
     # TODO: Took absolute value of cosine similarity - verify if this is correct

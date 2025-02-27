@@ -37,6 +37,11 @@ from metrics.numerical_metrics import (
     create_fairness_metric_fn,
     equalized_odds_difference
 )
+from metrics.textual_input_metrics import (
+    expl_stability_text_input,
+    expl_sparsity_text_input,
+    expl_fidelity_text_input
+)
 
 
 task_type_to_metric = {
@@ -81,6 +86,17 @@ task_type_to_metric = {
         # "explanation_sparsity_score",
         # "explanation_fidelity_score",
     ],
+    # TODO: Review which metrics really apply
+    "text_classification": [
+        "accuracy",
+        "precision",
+        "recall",
+        "f1_score",
+        "roc_auc",
+        "expl_stability_text_input",
+        "expl_sparsity_text_input",
+        "expl_fidelity_text_input"
+    ]
 }
 """
     This mapping of model types to metrics is used to provide information about the types
@@ -216,6 +232,25 @@ metric_to_fn_and_requirements = {
         "range": (0, 1),
         "ideal_value": 0.85
     },
+    # TODO: Cross check ideal values
+    "expl_stability_text_input": {
+        "function": expl_stability_text_input,
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "ideal_value": 0.7
+    },
+    "expl_sparsity_text_input": {
+        "function": expl_sparsity_text_input,
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "ideal_value": 0.85
+    },
+    "expl_fidelity_text_input": {
+        "function": expl_fidelity_text_input,
+        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "range": (0, 1),
+        "ideal_value": 0.85
+    },
 
     # Uncertainty metrics
     "ood_auroc": {
@@ -338,7 +373,9 @@ def calculate_metrics(info: CalculateRequest) -> MetricConfig:
         # Approach allows valid metrics to still be calculated
         except _MetricsPackageException as e:
             results[metric] = e
+            print(e)
         except Exception as e:
+            print(e)
             results[metric] = MetricsComputationException(current_metric, detail=str(e))
     return MetricConfig(
         metric_values=results,
