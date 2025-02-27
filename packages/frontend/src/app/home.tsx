@@ -29,7 +29,6 @@ import {
 import { HomepageState } from './types';
 import Dashboard from './dashboard';
 import theme from './theme';
-// import MetricBar from './components/MetricBar';
 
 function Homepage() {
   const [state, setState] = useState<HomepageState & { dashboardKey: number }>({
@@ -194,8 +193,6 @@ function Homepage() {
       )}
 
       <Title />
-
-      {/* <MetricBar min={0} max={1} value={0.8} idealValue={0.7} label="Accuracy" /> */}
 
       <Stepper
         activeStep={state.activeStep}

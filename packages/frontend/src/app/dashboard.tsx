@@ -218,8 +218,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete }) => {
                     <div>
                     
                       <MetricBar 
-                        min={metric_info.range[0]} 
-                        max={metric_info.range[1]}
+                        min={metric_info.range[0] === null ? -Infinity : metric_info.range[0]} 
+                        max={metric_info.range[1] === null ? Infinity : metric_info.range[1]}
                         value={metric_info.value}
                         idealValue={metric_info.ideal_value}
                         label="" 

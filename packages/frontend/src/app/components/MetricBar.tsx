@@ -1,7 +1,7 @@
 import React from "react";
 import Slider from "@mui/material/Slider";
 import { Box, Typography } from "@mui/material";
-import  theme from "../theme";
+import theme from "../theme";
 
 interface MetricBarProps {
   min?: number;
@@ -18,17 +18,28 @@ const MetricBar: React.FC<MetricBarProps> = ({
   idealValue,
   label = "",
 }) => {
+  const minLabel = min === -Infinity ? "-∞" : min;
+  if (min === -Infinity) {
+    min = idealValue - Math.abs(idealValue - value) * 2;
+  }
+
+  const maxLabel = max === Infinity ? "∞" : max;
+  if (max === Infinity) {
+    max = idealValue + Math.abs(idealValue - value) * 2;
+  }
+
+  const marks = [
+    { value: min, label: `${minLabel}` }, // First marker (red)
+    { value: idealValue, label: "" }, // Ideal marker (green)
+    { value: value, label: value.toFixed(2) }, // Actual marker (white)
+    { value: max, label: `${maxLabel}` }, // Last marker (blue)
+  ];
+
   // Calculate percentage positions for gradient stops
   const idealPercent = ((idealValue - min) / (max - min)) * 100;
   const valuePercent = ((value - min) / (max - min)) * 100;
   const barColor = value > idealValue ? "rgb(114, 232, 139)" : "rgb(220, 59, 59)"
 
-  const marks = [
-    { value: min, label: `${min}` }, // First marker (red)
-    { value: idealValue, label: "" }, // Ideal marker (green)
-    { value: value, label: value.toFixed(2) }, // Actual marker (white)
-    { value: max, label: `${max}` }, // Last marker (blue)
-  ];
 
   return (
     <Box >
@@ -57,7 +68,7 @@ const MetricBar: React.FC<MetricBarProps> = ({
             "& .MuiSlider-mark": {
               display: "none", // Hide marks
             },
-            
+
             "& .MuiSlider-markLabel": {
               color: "white",
               fontSize: "0.75rem",

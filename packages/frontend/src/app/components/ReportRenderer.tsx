@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { Report } from '../types';
 import theme from '../theme';
+import MetricBarPDF from './MetricBarPDF';
 
 // Create styles
 const styles = StyleSheet.create({
@@ -99,21 +100,13 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                         <View>
                             <Text style={styles.subsection}>Computed Metrics</Text>
                             {section.computed_metrics.map((metric, idx) => (
-                                <View key={idx}>
-                                    {/* <Text style={styles.bulletPoint}>
-                                        • {metric.metric}: {metric.value}
-                                    </Text>
-                                    <Text style={styles.bulletPoint}>
-                                        • Ideal Value: {metric.ideal_value}
-                                    </Text>
-                                    <Text style={styles.bulletPoint}>
-                                        • Range: {metric.range[0]} - {metric.range[1]}
-                                    </Text> */}
+                                <View key={idx} style={{ marginBottom: 10 }}>
+                                    <Text>{metric.metric.replace(/_/g, ' ').replace(/\b\w/g, (char, index) => index === 0 ? char.toUpperCase() : char.toLowerCase())}</Text>
                                     <MetricBarPDF
                                         value={parseFloat(metric.value)}
                                         idealValue={parseFloat(metric.ideal_value)}
-                                        min={parseFloat(metric.range[0])}
-                                        max={parseFloat(metric.range[1])}
+                                        min={(metric.range[0] === null) ? -Infinity : parseFloat(metric.range[0])}
+                                        max={(metric.range[1] === null) ? Infinity : parseFloat(metric.range[1])}
                                     />
                                 </View>
                             ))}
@@ -149,73 +142,3 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
 
 export default ReportRenderer;
 
-
-const MetricBarPDF: React.FC<{ value: number; idealValue: number; min?: number; max?: number }> = ({
-    value,
-    idealValue,
-    min = 0,
-    max = 1,
-  }) => {
-    // const width = 200; // Total width of the bar
-    const valuePercent = ((value - min) / (max - min)) * 100;
-    const idealPercent = ((idealValue - min) / (max - min)) * 100;
-
-    const red = 'rgb(139, 20, 20)';
-    const lightRed = 'rgb(220, 59, 59)';
-    const green = 'rgb(65, 163, 86)';
-    const lightGreen = 'rgb(114, 232, 139)';
-  
-    return (
-      <View style={{ marginVertical: 10 }}>
-        {/* Bar container */}
-        <View style={{
-          height: 10,
-          backgroundColor: "lightgray",
-          position: "relative",
-          borderRadius: 5,
-          marginVertical: 5,
-        }}>
-          {/* Red section (before ideal value) */}
-          <View style={{
-            position: "absolute",
-            left: 0,
-            width: `${valuePercent}%`,
-            height: "100%",
-            backgroundColor: `${value > idealValue ? lightGreen : lightRed}`,
-            borderTopLeftRadius: 5,
-            borderBottomLeftRadius: 5,
-          }} />
-          
-          {/* Green section (after ideal value) */}
-          <View style={{
-            position: "absolute",
-            left: `0%`,
-            width: `100%`,
-            height: "100%",
-            borderRadius: 5,
-            // border: `1px solid black`,
-          }} />
-      
-          {/* Marker for actual value */}
-          <View style={{
-            position: "absolute",
-            left: `${idealPercent}%`,
-            width: 2,
-            height: "180%",
-            borderLeftWidth: 1,
-            borderLeftColor: "black",
-            borderLeftStyle: "dashed",
-            transform: "translateY(-4%)",
-            borderRadius: 5,
-          }} />
-        </View>
-  
-        {/* Labels */}
-        <Text style={{ color: value >= idealValue ? `${green}` : `${red}`, fontSize: 10 }}>
-            Value: {value.toFixed(2)} | Target: {idealValue.toFixed(2)}
-        </Text>
-      </View>
-    );
-  };
-  
-  

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { getAllByTestId, render } from '@testing-library/react';
 import ReportRenderer from '../src/app/components/ReportRenderer'; // Adjust path as needed
 import { Report } from '../src/app/types';
 
@@ -12,6 +12,13 @@ jest.mock('@react-pdf/renderer', () => ({
     StyleSheet: { create: (styles: any) => styles },
   }));
 
+// Mock MetricBarPDF to avoid rendering it in tests
+jest.mock('../src/app/components/MetricBarPDF', () => ({
+    __esModule: true,
+    default: jest.fn(() => <div data-testid="mock-metric-bar" />),
+  }));
+  
+  
   
 describe('ReportRenderer', () => {
     const sampleReport: Report = {
@@ -69,14 +76,11 @@ describe('ReportRenderer', () => {
         expect(getByText('Fairness')).toBeTruthy();
         expect(getByText('Computed Metrics')).toBeTruthy();
 
-        expect(getByText('• Bias Score: 0.12')).toBeTruthy();
-        expect(getByText('• Ideal Value: 0.0')).toBeTruthy();
+        expect (getByText('Bias Score')).toBeTruthy();
+        expect(getByText('Demographic Parity')).toBeTruthy();
 
-        expect(getByText('• Demographic Parity: 0.87')).toBeTruthy();
-        expect(getByText('• Ideal Value: 1.0')).toBeTruthy();
-
-        const rangeElements = getAllByText('• Range: 0.0 - 1.0');
-        expect(rangeElements.length).toBe(2);
+        const metricBars = getAllByTestId(document.body, 'mock-metric-bar');
+        expect(metricBars.length).toBe(2);
 
         expect(getByText('Relevant Legislation Extracts')).toBeTruthy();
         expect(getByText('• Article 5 [Fair AI Act]: AI systems must be unbiased.')).toBeTruthy();
