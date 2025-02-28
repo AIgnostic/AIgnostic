@@ -6,20 +6,19 @@ export type MarkdownFiles = Record<string, string>;
 export interface ReportPropertySection {
   property: string;
   computed_metrics: {
-      metric: string;
-      ideal_value: string;
-      range: (string | null)[];  // nulls represent infinities
-      value: string; 
+    metric: string;
+    ideal_value: string;
+    range: (string | null)[]; // nulls represent infinities
+    value: string;
   }[];
   legislation_extracts: LegislationExtract[];
   llm_insights: string[];
 }
 
 export interface Report {
-  info: {[key: string]: any};
+  info: { [key: string]: any };
   properties: ReportPropertySection[];
 }
-  
 
 export interface LegislationExtract {
   article_number: number;
@@ -58,6 +57,7 @@ export interface HomepageState {
   errorMessage: { header: string; text: string };
   showDashboard: boolean;
   isGeneratingReport: boolean;
+  userMetricsUploaded: boolean;
 }
 
 /*

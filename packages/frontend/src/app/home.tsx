@@ -51,6 +51,7 @@ function Homepage() {
     showDashboard: false,
     dashboardKey: 0, // Added key to force Dashboard remount
     isGeneratingReport: false,
+    userMetricsUploaded: false,
   });
 
   const getValues = {
@@ -148,6 +149,26 @@ function Homepage() {
 
   const handleReset = () => {
     setStateWrapper('activeStep', 0);
+  };
+
+  const handleMetricUpload = () => {
+    console.log('Upload custom metrics');
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    if (fileInput && fileInput.files) {
+      const file = fileInput.files[0];
+      if (file && file.name.endsWith('.py')) {
+        console.log('Python file uploaded:', file.name);
+        setStateWrapper('userMetricsUploaded', true);
+      } else {
+        setStateWrapper('error', true);
+        setStateWrapper('errorMessage', {
+          header: 'Please ensure you upload a Python file',
+          text: 'The custom metrics server currently only supports Python files.',
+        });
+      }
+    }
   };
 
   const handleSubmit = async () => {
@@ -371,6 +392,60 @@ function Homepage() {
                       style={{ margin: '5px' }}
                     />
                   ))}
+
+                  <Box
+                    style={{
+                      padding: '15px',
+                      margin: '10px 0',
+                      backgroundColor: theme.palette.background.paper,
+                      borderRadius: '5px',
+                      border: `1px solid #fff`,
+                    }}
+                  >
+                    <Typography
+                      variant="body1"
+                      style={{ marginBottom: '10px', color: '#fff' }}
+                    >
+                      Upload custom metrics to be evaluated
+                    </Typography>
+                    {!state.userMetricsUploaded && (
+                      <Button
+                        variant="contained"
+                        component="label"
+                        style={{
+                          marginRight: '10px',
+                          backgroundColor: theme.palette.primary.main,
+                        }}
+                      >
+                        Upload Python File
+                        <input
+                          type="file"
+                          hidden
+                          onChange={handleMetricUpload}
+                        />
+                      </Button>
+                    )}
+                    {state.userMetricsUploaded && (
+                      <Button
+                        variant="contained"
+                        onClick={() => {
+                          const fileInput = document.querySelector(
+                            'input[type="file"]'
+                          ) as HTMLInputElement;
+                          if (fileInput) {
+                            fileInput.value = '';
+                            setStateWrapper('userMetricsUploaded', false);
+                          }
+                        }}
+                        style={{
+                          backgroundColor: theme.palette.error.main,
+                          color: '#fff',
+                        }}
+                      >
+                        Clear File
+                      </Button>
+                    )}
+                  </Box>
                 </Box>
               )}
 

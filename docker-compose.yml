@@ -99,6 +99,25 @@ services:
     links:
       - rabbitmq
 
+  user_added_metrics:
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python -u -m user_added_metrics.metric_server
+    working_dir: /app/packages/user-added-metrics
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - '8010:8010'
+    links:
+      - rabbitmq
+
   ####
   # Mock servers to test against
   ####

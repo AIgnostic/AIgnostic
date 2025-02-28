@@ -91,3 +91,30 @@ def test_execute_function(sample_script, sample_requirements):
     # The endpoint returns a JSON-stringified result.
     result = json.loads(json_response["result"])
     assert result == 3
+
+
+def test_execute_numpy_function(sample_script, sample_requirements):
+    """Test executing a user-defined numpy function."""
+    # Upload dependencies
+    with open(sample_requirements, "rb") as f:
+        dep_response = client.post("/upload-dependencies", files={"file": f})
+    assert dep_response.status_code == 200
+    file_id = dep_response.json()["file_id"]
+
+    # Upload the user script
+    with open(sample_script, "rb") as f:
+        script_response = client.post(f"/upload-metrics?file_id={file_id}", files={"file": f})
+    assert script_response.status_code == 200
+
+    # Execute the 'multiply_matrix' function with parameters.
+    payload = {
+        "file_id": file_id,
+        "function_name": "multiply_matrix",
+        "params": {"matrix": [[1, 2], [3, 4]]}
+    }
+    exec_response = client.post("/compute-metric", json=payload)
+    assert exec_response.status_code == 200
+    json_response = exec_response.json()
+    # The endpoint returns a JSON-stringified result.
+    result = json.loads(json_response["result"])
+    assert result == [[2, 4], [6, 8]]

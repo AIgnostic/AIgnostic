@@ -3,6 +3,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 import importlib.util
 import os 
 import shutil
+from common.models.common import ComputeUserMetricRequest
 import uvicorn 
 import uuid
 from pydantic import BaseModel
@@ -14,11 +15,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 VENV_DIR = "/tmp/venvs"
 os.makedirs(VENV_DIR, exist_ok=True)
-
-class ComputeMetricRequest(BaseModel):
-    file_id: str
-    function_name: str
-    params: dict
 
 
 # store loaded user functions
@@ -33,6 +29,10 @@ def install_dependencies(env_path, requirements_path):
     pip_path = os.path.join(env_path, "bin", "pip")
     subprocess.run([pip_path, "install", "-r", requirements_path], check=True)
 
+
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to the user added metrics server!"}
 
 @app.post("/upload-dependencies")
 async def upload_dependencies(file: UploadFile = File(...)):
@@ -55,6 +55,14 @@ async def upload_dependencies(file: UploadFile = File(...)):
 
     # install dependencies
     install_dependencies(env_path, requirements_path)
+
+    # Install numpy by default unless already in dependencies
+    with open(requirements_path, "r") as f:
+        requirements = f.read()
+    
+    if "numpy" not in requirements:
+        pip_path = os.path.join(env_path, "bin", "pip")
+        subprocess.run([pip_path, "install", "numpy"], check=True)
 
     return {"message": "Dependencies installed successfully", "file_id": file_id}
 
@@ -90,7 +98,7 @@ async def upload_metrics(file_id: str, file: UploadFile = File(...)):
 
 
 @app.post("/compute-metric")
-async def compute_metric(data: ComputeMetricRequest):
+async def compute_metric(data: ComputeUserMetricRequest):
     """Executes a user-defined function inside its corresponding virtual environment."""
     file_id = data.file_id
     function_name = data.function_name
@@ -124,3 +132,7 @@ print(json.dumps(result))
         raise HTTPException(status_code=500, detail=process.stderr)
 
     return {"result": process.stdout.strip()}
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8010)
