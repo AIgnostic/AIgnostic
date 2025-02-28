@@ -19,7 +19,7 @@ services:
     container_name: worker
     image: ghcr.io/aignostic/worker:latest
     deploy:
-      replicas: 3
+      replicas: 30
     networks:
       - aignostic_network
     environment:

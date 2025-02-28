@@ -1,8 +1,5 @@
-import asyncio
 import json
 import logging
-import atexit
-from os import getenv
 from typing import Optional
 
 from common.models.common import Job
@@ -10,23 +7,13 @@ from common.rabbitmq.constants import JOB_QUEUE
 from dispatcher.models import RunningJob
 from worker.worker import WorkerException
 
-from colorama import init
-from common.redis.connect import connect_to_redis
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 import redis.asyncio as redis
 
-from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
-from dispatcher.logging.configure_logging import configure_logging
+from common.rabbitmq.connect import init_queues
 
-logger = logging.getLogger("dispatcher")
-
-# gloals
-connection: BlockingConnection = None
-redis_client: redis.Redis = None
-
-REDIS_HOST = getenv("REDIS_HOST", "localhost")
-REDIS_PORT = getenv("REDIS_PORT", 6379)
+logger = logging.getLogger(__name__)
 
 
 class DispatcherException(Exception):
@@ -52,7 +39,7 @@ class Dispatcher:
         self._connection = connection
         self._redis_client = redis_client
         self._channel = self._connection.channel()
-        init_queues(self.channel)
+        init_queues(self._channel)
         logger.info("Dispatcher initialized.")
 
     def handle_job_unpack_error(self, e: ValueError):
@@ -78,7 +65,10 @@ class Dispatcher:
                 self.handle_job_unpack_error(e)
         return None
 
-    async def process_job(self, job: Job):
+    async def dispatch_as_required(self, user_id: str):
+        """Given a user id, lookup currently running jobs and dispatch as required"""
+
+    async def process_new_job(self, job: Job):
         logger.info(f"Processing job: {job}")
         logger.info(f"Preparing data to run job {job.user_id}")
         # Create object in redis
@@ -91,8 +81,10 @@ class Dispatcher:
             errored_batches=0,
         )
         # Add to redis
-        await self._redis_client.set(job.user_id, running_job.json())
+        await self._redis_client.set(job.user_id, running_job.model_dump_json())
         logger.info(f"Init data stored in Redis for job {job.user_id}")
+        # Start processing job
+        await self.dispatch_as_required(running_job.user_id)
 
     async def run(self):
         logger.info("Dispatcher running...")
@@ -105,48 +97,4 @@ class Dispatcher:
                 continue
 
             if job:
-                await self.process_job(job)
-
-
-async def redis_connect():
-    logger.info("Connecting to Redis...")
-    global redis_client
-    redis_client = await connect_to_redis(f"redis://{REDIS_HOST}:{REDIS_PORT}")
-
-
-def rabbitmq_connect():
-    logger.info("Connecting to rabbitmq...")
-    global connection
-    connection = connect_to_rabbitmq()
-
-
-async def startup():
-    """Perform application startup actions"""
-    # 1: Configure global logger so we can log thing
-    configure_logging("production")
-    logger.info("Dispatcher booting up...")
-    rabbitmq_connect()
-    await redis_connect()
-    logger.info("Application startup complete.")
-
-
-def cleanup():
-    """Perform application cleanup actions"""
-    logger.info("Shutting down...")
-    if connection:
-        connection.close()
-        logger.info("RabbitMQ connection closed.")
-    # Can't cleanup redis client because it's async
-    logger.info("Application cleanup complete.")
-
-
-async def main():
-    """Main entry point"""
-    await startup()
-    logger.warning("Application logic TODO")
-
-
-atexit.register(cleanup)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+                await self.process_new_job(job)

@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-
 from common.models.common import Job
+from pydantic import BaseModel
 
 
-@dataclass
-class RunningJob:
+class RunningJob(BaseModel):
     """Represents a running job in the dispatcher. Is all of Job + our data"""
 
     job_data: Job
