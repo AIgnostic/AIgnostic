@@ -1,3 +1,4 @@
+from typing import List
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
@@ -38,7 +39,7 @@ async def test_should_load_job_to_redis():
     # Check if the job was added to Redis
     mock_redis_client.set.assert_called_once()
     args, kwargs = mock_redis_client.set.call_args
-    assert args[0] == job.user_id
+    args: List[str]
     running_job = RunningJob(
         job_data=job,
         user_id=job.user_id,
@@ -47,5 +48,5 @@ async def test_should_load_job_to_redis():
         completed_batches=0,
         errored_batches=0,
     )
-    assert args[0] == job.user_id
+    assert job.user_id in args[0]
     assert args[1] == running_job.model_dump_json()

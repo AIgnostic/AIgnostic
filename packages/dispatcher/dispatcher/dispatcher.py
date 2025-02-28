@@ -5,6 +5,7 @@ from typing import Optional
 from common.models.common import Job
 from common.rabbitmq.constants import JOB_QUEUE
 from dispatcher.models import RunningJob
+from dispatcher.utils import redis_key
 from worker.worker import WorkerException
 
 from pika import BlockingConnection
@@ -68,6 +69,9 @@ class Dispatcher:
     async def dispatch_as_required(self, user_id: str):
         """Given a user id, lookup currently running jobs and dispatch as required"""
 
+    def _get_job_redis_key(self, user_id: str) -> str:
+        return redis_key("jobs", user_id)
+
     async def process_new_job(self, job: Job):
         logger.info(f"Processing job: {job}")
         logger.info(f"Preparing data to run job {job.user_id}")
@@ -81,7 +85,9 @@ class Dispatcher:
             errored_batches=0,
         )
         # Add to redis
-        await self._redis_client.set(job.user_id, running_job.model_dump_json())
+        await self._redis_client.set(
+            self._get_job_redis_key(job.user_id), running_job.model_dump_json()
+        )
         logger.info(f"Init data stored in Redis for job {job.user_id}")
         # Start processing job
         await self.dispatch_as_required(running_job.user_id)
