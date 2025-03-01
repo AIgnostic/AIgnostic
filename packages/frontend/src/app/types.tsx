@@ -58,6 +58,7 @@ export interface HomepageState {
   showDashboard: boolean;
   isGeneratingReport: boolean;
   userMetricsUploaded: boolean;
+  userRequirementsUploaded: boolean;
 }
 
 /*
