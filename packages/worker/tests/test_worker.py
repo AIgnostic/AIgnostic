@@ -52,7 +52,7 @@ def test_fetch_job_success():
             mock_body,
         )
 
-        result = worker.fetch_job()
+        result = worker.fetch_batch()
         assert isinstance(result, PipelineJob)
         assert result.data_url == "http://example.com/data"
 
@@ -61,7 +61,7 @@ def test_fetch_job_no_job():
 
     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
         mock_channel.basic_get.return_value = (None, None, None)
-        result = worker.fetch_job()
+        result = worker.fetch_batch()
         assert result is None
 
 

@@ -5,7 +5,7 @@ from typing import Optional
 import uuid
 
 from common.models.pipeline import Batch, JobCompleteMessage, PipelineJob
-from common.rabbitmq.constants import JOB_QUEUE
+from common.rabbitmq.constants import BATCH_QUEUE, JOB_QUEUE
 from dispatcher.models import RunningJob
 from dispatcher.utils import redis_key
 from worker.worker import WorkerException
@@ -73,7 +73,7 @@ class Dispatcher:
         logger.info(f"Dispatching batch for job {user_id}")
         self._channel.basic_publish(
             exchange="",
-            routing_key=JOB_QUEUE,
+            routing_key=BATCH_QUEUE,
             body=job_data.model_dump_json(),
         )
         logger.info(f"Batch dispatched for job {user_id}")

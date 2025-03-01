@@ -38,6 +38,9 @@ class MetricCalculationJob(BaseModel):
     metrics: list[str]
     """List of metrics to be calculated"""
 
+    model_type: str
+    """Type of model"""
+
 
 class PipelineJob(BaseModel):
     """Sent to the Dispatcher to start a new job and dispatch the appropriate number of batches"""
