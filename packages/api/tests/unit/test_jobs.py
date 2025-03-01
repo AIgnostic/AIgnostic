@@ -1,6 +1,10 @@
+import http
 from unittest.mock import patch, MagicMock
+import uuid
 from api.router.api import dispatch_job
+from common.models.pipeline import MetricCalculationJob
 from common.rabbitmq.constants import JOB_QUEUE
+from pydantic import HttpUrl
 
 
 @patch("pika.BlockingConnection")
@@ -18,17 +22,21 @@ def test_dispatch_job(mock_connection):
     model_api_key = "model-key"
 
     # Dispatch job
+
     dispatch_job(
-        batch_size=batch_size,
-        total_sample_size=100,
-        metrics=metrics,
-        model_type="binary classification",
-        data_url=data_url,
-        model_url=model_url,
-        data_api_key=data_api_key,
-        model_api_key=model_api_key,
+        metrics=MetricCalculationJob(
+            data_url=data_url,
+            model_url=model_url,
+            data_api_key=data_api_key,
+            model_api_key=model_api_key,
+            metrics=metrics,
+            model_type="binary classification",
+        ),
+        batches=10,
+        batch_size=10,
+        max_concurrent_batches=1,
         channel=mock_channel,
-        user_id="1234",
+        job_id=str(uuid.uuid4()),
     )
 
     # Assert that `basic_publish` was called once

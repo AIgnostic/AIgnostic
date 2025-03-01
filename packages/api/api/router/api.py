@@ -52,11 +52,13 @@ async def generate_metrics_from_info(
                     data_api_key=request.dataset_api_key,
                     model_api_key=request.model_api_key,
                     metrics=request.metrics,
+                    model_type=request.model_type,
                 ),
                 batches=NUM_BATCHES,
                 batch_size=BATCH_SIZE,
                 max_concurrent_batches=MAX_CONCURRENT_BATCHES,
                 channel=channel,
+                job_id=request.user_id,
             )
             print(f"Dispatched job {i+1}")
         return JSONResponse({"message": "Created and dispatched jobs"}, status_code=202)
@@ -83,8 +85,8 @@ def dispatch_job(
     batches: int,
     batch_size: int,
     channel: BlockingChannel,
+    job_id: str,
 ):
-    job_id = str(uuid.uuid4())
     job = PipelineJob(
         job_id=job_id,
         max_concurrent_batches=max_concurrent_batches,

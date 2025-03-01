@@ -17,16 +17,24 @@ The API send the dispatcher a Job to dispatch, which it then breaks down into Ba
 from enum import Enum
 from typing import Annotated, Optional
 import uuid
-from pydantic import UUID4, AfterValidator, BaseModel, computed_field, root_validator
+from pydantic import (
+    UUID4,
+    AfterValidator,
+    BaseModel,
+    HttpUrl,
+    computed_field,
+    model_validator,
+    root_validator,
+)
 
 
 class MetricCalculationJob(BaseModel):
     """A very basic requests - calculate metrics for this data source & model"""
 
-    data_url: str
+    data_url: HttpUrl
     """URL of the data source"""
 
-    model_url: str
+    model_url: HttpUrl
     """URL of the model"""
 
     data_api_key: str
@@ -89,14 +97,6 @@ class JobCompleteMessage(BaseModel):
 
     errorMessage: Optional[str] = None
     """Error message if the job has errored"""
-
-    @root_validator
-    def check_error_message(cls, values):
-        # By Copilot
-        status, errorMessage = values.get("status"), values.get("errorMessage")
-        if status == JobStatus.ERRORED and not errorMessage:
-            raise ValueError("errorMessage must be provided if status is ERRORED")
-        return values
 
 
 class Batch(BaseModel):
