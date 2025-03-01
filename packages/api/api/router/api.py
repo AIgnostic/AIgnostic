@@ -1,5 +1,6 @@
+import uuid
 from api.router.rabbitmq import get_channel
-from common.models.common import PipelineJob
+from common.models.pipeline import MetricCalculationJob, PipelineJob
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, Depends, HTTPException
 import json
@@ -12,6 +13,7 @@ from metrics.models import MetricsInfo
 api = APIRouter()
 BATCH_SIZE = 50
 NUM_BATCHES = 10
+MAX_CONCURRENT_BATCHES = 1
 # total sample size should be a multiple of batch size
 # TOTAL_SAMPLE_SIZE = round(1000 / BATCH_SIZE) * BATCH_SIZE
 TOTAL_SAMPLE_SIZE = BATCH_SIZE * NUM_BATCHES
@@ -44,15 +46,16 @@ async def generate_metrics_from_info(
 
         for i in range(TOTAL_SAMPLE_SIZE // BATCH_SIZE):
             dispatch_job(
+                metrics=MetricCalculationJob(
+                    data_url=request.dataset_url,
+                    model_url=request.model_url,
+                    data_api_key=request.dataset_api_key,
+                    model_api_key=request.model_api_key,
+                    metrics=request.metrics,
+                ),
+                batches=NUM_BATCHES,
                 batch_size=BATCH_SIZE,
-                total_sample_size=TOTAL_SAMPLE_SIZE,
-                metrics=request.metrics,
-                model_type=request.model_type,
-                data_url=request.dataset_url,
-                model_url=request.model_url,
-                data_api_key=request.dataset_api_key,
-                model_api_key=request.model_api_key,
-                user_id=request.user_id,
+                max_concurrent_batches=MAX_CONCURRENT_BATCHES,
                 channel=channel,
             )
             print(f"Dispatched job {i+1}")
@@ -75,32 +78,20 @@ async def retrieve_info() -> MetricsInfo:
 
 
 def dispatch_job(
+    metrics: MetricCalculationJob,
+    max_concurrent_batches: int,
+    batches: int,
     batch_size: int,
-    total_sample_size: int,
-    metrics: list[str],
-    model_type: str,
-    data_url: HttpUrl,
-    model_url: HttpUrl,
-    data_api_key: str,
-    model_api_key: str,
-    user_id: str,
     channel: BlockingChannel,
-    max_concurrenct_batches: int = 1,
 ):
-    """
-    Function to dispatch a job to the model
-    """
+    job_id = str(uuid.uuid4())
     job = PipelineJob(
+        job_id=job_id,
+        max_concurrent_batches=max_concurrent_batches,
+        batches=batches,
         batch_size=batch_size,
-        total_sample_size=total_sample_size,
         metrics=metrics,
-        model_type=model_type,
-        data_url=data_url,
-        model_url=model_url,
-        data_api_key=data_api_key,
-        model_api_key=model_api_key,
-        user_id=user_id,
-        max_concurrenct_batches=1,
     )
     message = job.json()
     channel.basic_publish(exchange="", routing_key=JOB_QUEUE, body=message)
+    return job_id
