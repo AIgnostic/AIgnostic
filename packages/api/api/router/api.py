@@ -1,5 +1,5 @@
 from api.router.rabbitmq import get_channel
-from common.models.common import Job
+from common.models.common import PipelineJob
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, Depends, HTTPException
 import json
@@ -90,7 +90,7 @@ def dispatch_job(
     """
     Function to dispatch a job to the model
     """
-    job = Job(
+    job = PipelineJob(
         batch_size=batch_size,
         total_sample_size=total_sample_size,
         metrics=metrics,

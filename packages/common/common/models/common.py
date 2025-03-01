@@ -33,9 +33,6 @@ class Job(BaseModel):  # pragma: no cover
     user_id: str
 
 
-
-
-
 class ModelInput(BaseModel):  # pragma: no cover
     """
     A model for a dataset to be sent to a model

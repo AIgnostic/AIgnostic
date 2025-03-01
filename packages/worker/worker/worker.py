@@ -9,7 +9,7 @@ Each worker:
 """
 
 import os
-from common.models.common import Job
+from common.models.common import PipelineJob
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from metrics.models import WorkerResults
 import requests
@@ -44,7 +44,7 @@ class WorkerException(Exception):
         super().__init__(self.detail)
 
 
-class Worker():
+class Worker:
     def __init__(self, host="localhost"):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
@@ -86,22 +86,26 @@ class Worker():
     def close(self):
         self._channel.close()
 
-    def fetch_job(self) -> Optional[Job]:
+    def fetch_job(self) -> Optional[PipelineJob]:
         """
         Function to fetch a job from the job queue
         """
-        method_frame, header_frame, body = self._channel.basic_get(queue=JOB_QUEUE, auto_ack=True)
+        method_frame, header_frame, body = self._channel.basic_get(
+            queue=JOB_QUEUE, auto_ack=True
+        )
         if method_frame:
             job_data = json.loads(body)
             print(f"Received job: {job_data}")
             try:
                 print("Unpacking job data")
-                return Job(**job_data)
+                return PipelineJob(**job_data)
             except ValueError as e:
                 raise WorkerException(f"Invalid job format: {e}", status_code=400)
         return None
 
-    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> dict:
+    async def fetch_data(
+        self, data_url: HttpUrl, dataset_api_key, batch_size: int
+    ) -> dict:
         """
         Helper function to fetch data from the dataset API
 
@@ -115,7 +119,7 @@ class Worker():
             response = requests.get(
                 data_url,
                 headers={"Authorization": f"Bearer {dataset_api_key}"},
-                params={"n": batch_size}
+                params={"n": batch_size},
             )
 
         try:
@@ -176,10 +180,12 @@ class Worker():
                 f"Could not parse model response - {e}; response = {response.text}"
             )
 
-    async def process_job(self, job: Job):
+    async def process_job(self, job: PipelineJob):
 
         # fetch data from datasetURL
-        data: dict = await self.fetch_data(job.data_url, job.data_api_key, job.batch_size)
+        data: dict = await self.fetch_data(
+            job.data_url, job.data_api_key, job.batch_size
+        )
 
         # strip the label from the datapoint
         try:
@@ -210,9 +216,13 @@ class Worker():
             # some preprocessing for FinBERT
             # TODO: Need to sort out how to handle this properly
             if job.model_type == "binary_classification":
-                predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, true_labels)
+                predicted_labels, true_labels = self.binarize_finbert_output(
+                    predicted_labels, true_labels
+                )
             elif job.model_type == "multi_class_classification":
-                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, true_labels)
+                predicted_labels, true_labels = self.convert_to_numeric_classes(
+                    predicted_labels, true_labels
+                )
 
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
@@ -237,7 +247,9 @@ class Worker():
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")
             # add user_id to the results
-            worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id)
+            worker_results = WorkerResults(
+                **metrics_results.model_dump(), user_id=job.user_id
+            )
             self.queue_result(worker_results)
             return
         except Exception as e:
@@ -284,7 +296,9 @@ class Worker():
                 )
 
             for col_index in range(len(labels[0])):
-                if not isinstance(predictions[0][col_index], type(labels[0][col_index])):
+                if not isinstance(
+                    predictions[0][col_index], type(labels[0][col_index])
+                ):
                     raise WorkerException(
                         "Model output type does not match target attribute type",
                         status_code=400,
@@ -340,7 +354,9 @@ class Worker():
         predicted_labels = [label for sublist in predicted_labels for label in sublist]
         true_labels = [label for sublist in true_labels for label in sublist]
         # binarize the labels
-        predicted_labels = [[1] if label == "positive" else [0] for label in predicted_labels]
+        predicted_labels = [
+            [1] if label == "positive" else [0] for label in predicted_labels
+        ]
         true_labels = [[1] if label == "positive" else [0] for label in true_labels]
         return predicted_labels, true_labels
 

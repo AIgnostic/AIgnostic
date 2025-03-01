@@ -1,18 +1,13 @@
-from common.models.common import Job
+from common.models.pipeline import PipelineJob
 from pydantic import BaseModel
 
 
 class RunningJob(BaseModel):
     """Represents a running job in the dispatcher. Is all of Job + our data"""
 
-    job_data: Job
+    job_data: PipelineJob
     """Original data associated with the job"""
 
-    user_id: str
-    """User ID associated with the job (Job ID) (used as Redis Key)"""
-
-    max_concurrent_batches: int
-    """Maximum number of batches to be processed concurrently"""
     currently_running_batches: int
     """Number of batches currently being processed"""
     completed_batches: int

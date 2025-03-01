@@ -3,7 +3,7 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 from dispatcher.dispatcher import Dispatcher
-from common.models.common import Job
+from common.models.common import PipelineJob
 from dispatcher.models import RunningJob
 
 
@@ -20,7 +20,7 @@ async def test_should_load_job_to_redis():
     dispatcher = Dispatcher(mock_connection, mock_redis_client)
 
     # Create a sample job
-    job = Job(
+    job = PipelineJob(
         user_id="user123",
         max_concurrenct_batches=5,
         batch_size=10,

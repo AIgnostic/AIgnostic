@@ -1,7 +1,7 @@
 import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
-from common.models.common import Job
+from common.models.common import PipelineJob
 from common.models import MetricConfig, MetricValue
 
 
@@ -53,7 +53,7 @@ def test_fetch_job_success():
         )
 
         result = worker.fetch_job()
-        assert isinstance(result, Job)
+        assert isinstance(result, PipelineJob)
         assert result.data_url == "http://example.com/data"
 
 
@@ -99,7 +99,7 @@ def test_queue_error():
 )
 @pytest.mark.asyncio
 async def test_process_job_success(mock_calculate_metrics):
-    job = Job(
+    job = PipelineJob(
         batch_size=1,
         total_sample_size=1,
         metrics=["accuracy"],
