@@ -22,8 +22,6 @@ class Job(BaseModel):  # pragma: no cover
     :param model_api_key: str - the API key for the model
     """
 
-    max_concurrenct_batches: int
-
     batch_size: int
     total_sample_size: int
     metrics: list[str]
@@ -33,6 +31,9 @@ class Job(BaseModel):  # pragma: no cover
     data_api_key: str
     model_api_key: str
     user_id: str
+
+
+
 
 
 class ModelInput(BaseModel):  # pragma: no cover
