@@ -1,7 +1,9 @@
 import json
+import uuid
+
+from common.models.pipeline import Batch, MetricCalculationJob
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
-from common.models.common import PipelineJob
 from common.models import MetricConfig, MetricValue
 
 
@@ -30,20 +32,23 @@ def test_fetch_job_success():
 
     mock_method_frame = MagicMock()
     mock_header_frame = MagicMock()
-    mock_body = json.dumps(
-        {
-            "batch_size": 10,
-            "total_sample_size": 100,
-            "metrics": ["accuracy"],
-            "model_type": "binary classification",
-            "data_url": "http://example.com/data",
-            "model_url": "http://example.com/model",
-            "data_api_key": "data_key",
-            "model_api_key": "model_key",
-            "user_id": "1234",
-            "max_concurrenct_batches": 1,
-        }
-    ).encode("utf-8")
+    mock_body = (
+        Batch(
+            job_id=str(uuid.uuid4()),
+            batch_id=uuid.uuid4(),
+            batch_size=10,
+            metrics=MetricCalculationJob(
+                data_url="http://example.com/data",
+                model_url="http://example.com/model",
+                data_api_key="data_key",
+                model_api_key="model_key",
+                metrics=["accuracy"],
+                model_type="binary classification",
+            ),
+        )
+        .json()
+        .encode("utf-8")
+    )
 
     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
         mock_channel.basic_get.return_value = (
@@ -53,8 +58,8 @@ def test_fetch_job_success():
         )
 
         result = worker.fetch_batch()
-        assert isinstance(result, PipelineJob)
-        assert result.data_url == "http://example.com/data"
+        assert isinstance(result, Batch)
+        assert str(result.metrics.data_url) == "http://example.com/data"
 
 
 def test_fetch_job_no_job():
@@ -99,17 +104,18 @@ def test_queue_error():
 )
 @pytest.mark.asyncio
 async def test_process_job_success(mock_calculate_metrics):
-    job = PipelineJob(
+    job = Batch(
+        job_id=str(uuid.uuid4()),
+        batch_id=uuid.uuid4(),
         batch_size=1,
-        total_sample_size=1,
-        metrics=["accuracy"],
-        model_type="regression",  # use a model type that bypasses label conversion
-        data_url="http://example.com/data",
-        model_url="http://example.com/model",
-        data_api_key="data_key",
-        model_api_key="model_key",
-        user_id="1234",
-        max_concurrenct_batches=1,
+        metrics=MetricCalculationJob(
+            data_url="http://example.com/data",
+            model_url="http://example.com/model",
+            data_api_key="data_key",
+            model_api_key="model_key",
+            metrics=["accuracy"],
+            model_type="binary classification",
+        ),
     )
 
     with patch.object(

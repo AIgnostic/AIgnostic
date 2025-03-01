@@ -86,10 +86,10 @@ class JobStatus(str, Enum):
 class JobCompleteMessage(BaseModel):
     """Sent to the Dispatcher to indicate that a job has been completed or errored"""
 
-    job_id: Annotated[str, AfterValidator(lambda x: uuid.UUID(x, version=4))]
+    job_id: str
     """Identifier for the job"""
 
-    batch_id: Annotated[str, AfterValidator(lambda x: uuid.UUID(x, version=4))]
+    batch_id: str
     """Identifier for the batch"""
 
     status: JobStatus
@@ -102,7 +102,7 @@ class JobCompleteMessage(BaseModel):
 class Batch(BaseModel):
     """A batch of a job"""
 
-    job_id: Annotated[str, AfterValidator(lambda x: uuid.UUID(x, version=4))]
+    job_id: str
     """Identifier (UUID) for the originating job"""
 
     batch_id: UUID4

@@ -13,7 +13,7 @@ from metrics.models import MetricsInfo
 api = APIRouter()
 BATCH_SIZE = 50
 NUM_BATCHES = 10
-MAX_CONCURRENT_BATCHES = 1
+MAX_CONCURRENT_BATCHES = NUM_BATCHES + 1
 # total sample size should be a multiple of batch size
 # TOTAL_SAMPLE_SIZE = round(1000 / BATCH_SIZE) * BATCH_SIZE
 TOTAL_SAMPLE_SIZE = BATCH_SIZE * NUM_BATCHES
