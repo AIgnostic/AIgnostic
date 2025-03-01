@@ -47,6 +47,7 @@ async def test_should_load_job_to_redis():
         currently_running_batches=0,
         completed_batches=0,
         errored_batches=0,
+        pending_batches=job.total_sample_size,
     )
     assert job.user_id in args[0]
     assert args[1] == running_job.model_dump_json()

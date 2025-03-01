@@ -19,3 +19,5 @@ class RunningJob(BaseModel):
     """Number of batches that have been processed"""
     errored_batches: int
     """Number of batches that have errored"""
+    pending_batches: int
+    """Number of batches that are pending"""

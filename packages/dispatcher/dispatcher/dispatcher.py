@@ -68,6 +68,49 @@ class Dispatcher:
 
     async def dispatch_as_required(self, user_id: str):
         """Given a user id, lookup currently running jobs and dispatch as required"""
+        logger.info(f"Dispatching as required for job {user_id}")
+        # Get the running job
+        running_job = await self._redis_client.get(self._get_job_redis_key(user_id))
+        if not running_job:
+            logger.error(f"Job {user_id} not found in Redis!")
+            # TODO: Handle error finding jon
+            logger.warning(f"This error for {user_id} is unhandled!")
+            return
+        running_job = RunningJob(**json.loads(running_job))
+        logger.debug(f"Running job: {running_job}")
+        # How many batches can we run?
+        left_batches = running_job.pending_batches
+        if left_batches == 0:
+            logger.info(
+                f"No batches left to run for job {user_id} - regarding as complete"
+            )
+            # TODO: Handle completion & report errored batches
+            # Delete key
+            await self._redis_client.delete(self._get_job_redis_key(user_id))
+            logger.info(f"Job {user_id} marked as complete & deleted")
+            logger.warning(
+                f"Job {user_id} is complete but this is unhandled! Erroed batches are not reproted"
+            )
+            return
+        # If we can run more batches, do so
+        # We can dispatch up to (no. batches we can run - batches currently running), but if we have fewer than that batches left, dispatch that
+        batches_to_dispatch = min(
+            running_job.max_concurrent_batches - running_job.currently_running_batches,
+            left_batches,
+        )
+        logger.info(f"Dispatching {batches_to_dispatch} new batches for job {user_id}")
+        # Dispatch batches
+        logger.warning("TODO: Dispatch batches")
+        # Update running job
+        running_job.currently_running_batches += batches_to_dispatch
+        running_job.pending_batches -= batches_to_dispatch
+        # Update redis
+        await self._redis_client.set(
+            self._get_job_redis_key(user_id), running_job.model_dump_json()
+        )
+        logger.info(
+            f"Updated running job in Redis for job {user_id}, pending={running_job.pending_batches}, running={running_job.currently_running_batches}, completed={running_job.completed_batches}, errored={running_job.errored_batches}"
+        )
 
     def _get_job_redis_key(self, user_id: str) -> str:
         return redis_key("jobs", user_id)
@@ -83,6 +126,7 @@ class Dispatcher:
             currently_running_batches=0,
             completed_batches=0,
             errored_batches=0,
+            pending_batches=job.total_sample_size,
         )
         # Add to redis
         await self._redis_client.set(
