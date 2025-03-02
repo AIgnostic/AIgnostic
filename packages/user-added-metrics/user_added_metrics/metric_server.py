@@ -1,3 +1,4 @@
+import json
 import subprocess
 from fastapi import FastAPI, UploadFile, File, HTTPException
 import importlib.util
@@ -9,6 +10,7 @@ import uuid
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import sys
+import numpy as np
 
 app = FastAPI()
 
@@ -105,10 +107,13 @@ async def upload_metrics_and_dependencies(user_id: str, requirements: UploadFile
     spec.loader.exec_module(module)
 
     # Store callable functions that begin with 'metric_'
+    # convert user_id to underscored version
+
+
+
     user_functions[user_id] = {
         name: func for name, func in vars(module).items() if callable(func) and name.startswith("metric_")
     }
-
     return {"message": "Metrics and dependencies uploaded successfully", "user_id": user_id, "functions": list(user_functions[user_id].keys())}
 
 @app.get("/inspect-uploaded-functions/{user_id}")
@@ -134,40 +139,58 @@ async def clear_user_data(user_id: str):
     return {"message": f"Data for user {user_id} cleared successfully"}
 
 
+
 @app.post("/compute-metric")
 async def compute_metric(data: ComputeUserMetricRequest):
-    """Executes a user-defined function inside its corresponding virtual environment."""
+    """
+    Executes a user-defined function in an **isolated virtual environment** for the specific user.
+
+    - Ensures the **correct venv is used**.
+    - Runs the **user's function as a subprocess**, preventing interference between users.
+    - Converts **JSON-safe input back into NumPy arrays before execution**.
+    """
     user_id = data.user_id
     function_name = data.function_name
-    params = data.params
+    params = data.params  # Convert JSON-safe input to NumPy
 
-    if user_id not in user_functions or function_name not in user_functions[user_id]:
-        raise HTTPException(status_code=404, detail="Function not found")
-    
-    env_path = get_user_path(VENV_DIR, user_id)
-    python_bin = os.path.join(env_path, "bin", "python")
+    user_venv_dir = get_user_path(VENV_DIR, user_id)
     user_upload_dir = get_user_path(UPLOAD_DIR, user_id)
+    python_bin = os.path.join(user_venv_dir, "bin", "python")
 
-    # Ensure Python can find the script
-    sys.path.insert(0, user_upload_dir)
+    if not os.path.exists(python_bin):
+        raise HTTPException(status_code=404, detail=f"Virtual environment not found for user {user_id}")
 
-    script_code = f"""
+    script_path = os.path.join(user_upload_dir, "user_script.py")
+    if not os.path.exists(script_path):
+        raise HTTPException(status_code=404, detail=f"User script not found for user {user_id}")
+
+    # Serialize params to pass to subprocess
+    params_json = json.dumps(params)
+
+    # Command to execute the function inside the user's venv
+    command = [
+        python_bin, "-c",
+        f"""
 import sys
 import json
+import numpy as np
 sys.path.insert(0, '{user_upload_dir}')
 from user_script import {function_name} as func
-result = func(**{params})
+
+params = json.loads('{params_json}')
+params = {{k: np.array(v) if isinstance(v, list) else v for k, v in params.items()}}
+
+result = func(params)
 print(json.dumps(result))
 """
+    ]
 
-    process = subprocess.run(
-        [python_bin, "-c", script_code], capture_output=True, text=True
-    )
+    process = subprocess.run(command, capture_output=True, text=True)
 
     if process.returncode != 0:
-        raise HTTPException(status_code=500, detail=process.stderr)
+        raise HTTPException(status_code=500, detail=f"User-defined metric execution failed: {process.stderr}")
 
-    return {"result": process.stdout.strip()}
+    return {"result": json.loads(process.stdout.strip())}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8010)

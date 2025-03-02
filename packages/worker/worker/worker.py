@@ -11,7 +11,7 @@ Each worker:
 import os
 from common.models.common import Job
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
-from metrics.models import WorkerResults
+from metrics.models import WorkerResults, convert_calculate_request_to_dict
 import requests
 from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
@@ -30,7 +30,7 @@ connection = None
 channel: BlockingChannel = None
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
-USER_METRIC_SERVER_URL = os.environ.get("USER_METRIC_SERVER_URL", "http://localhost:8010")
+USER_METRIC_SERVER_URL = os.environ.get("USER_METRIC_SERVER_URL", "http://user-added-metrics:8010")
 
 class WorkerException(Exception):
     def __init__(self, detail: str, status_code: int = 500):
@@ -238,11 +238,42 @@ class Worker():
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")
             # add user_id to the results
-            worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id)
+            worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id, user_defined_metrics=None)
 
             # query the user metric server to get the user-defined metrics
-            user_metrics = requests.post(
-                
+            user_metrics_server_response = requests.get(
+                f"{USER_METRIC_SERVER_URL}/inspect-uploaded-functions/{job.user_id}",
+            )
+
+            user_defined_metrics = []
+            if user_metrics_server_response.status_code == 200:
+                user_defined_metrics = user_metrics_server_response.json()["functions"]
+                print(f"User defined metrics: {user_defined_metrics}")
+            else:
+                print("ERROR FETCHING USER METRICS: " + user_metrics_server_response.text)
+                print("No user-defined metrics found")
+
+            params_dict = convert_calculate_request_to_dict(metrics_request)    
+
+            for metric in user_defined_metrics:
+                try:
+                    # execute the user-defined metric
+                    exec_response = requests.post(
+                        f"{USER_METRIC_SERVER_URL}/compute-metric",
+                        json={
+                            "user_id": job.user_id,
+                            "function_name": metric,
+                            "params": params_dict,
+                        },
+                    )
+                    if exec_response.status_code == 200:
+                        result = json.loads(exec_response.json()["result"])
+                        print(f"User metric {metric} result: {result}")
+                        # worker_results.user_defined_metrics[metric] = result
+                    else:
+                        print("ERROR EXECUTING USER METRIC: " + exec_response.text)
+                except Exception as e:
+                    print("ERROR EXECUTING USER METRIC: " + str(e))
 
             self.queue_result(worker_results)
             return
