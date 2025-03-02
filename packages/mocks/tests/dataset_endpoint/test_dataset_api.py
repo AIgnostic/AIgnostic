@@ -34,6 +34,7 @@ def test_fetch_datapoints_returns_correctly():
     assert response.status_code == 200
     data = response.json()
     assert "features" in data and "labels" in data and "group_ids" in data
+    print("data: ", data)
     assert len(data["features"]) == len(data["labels"]) == len(data["group_ids"]) == 2
 
 

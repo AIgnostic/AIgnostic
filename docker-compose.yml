@@ -128,8 +128,17 @@ services:
     networks:
       - aignostic_network
     ports:
-      - '5000:5000'
+      - '5050:5050'
+  
+  gemini_model_api:
+    container_name: gemini-model-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.model.gemini_mock --host
 
+    
   scikit_mock_model_api:
     container_name: scikit-mock-model-api
     image: aignostic/dev

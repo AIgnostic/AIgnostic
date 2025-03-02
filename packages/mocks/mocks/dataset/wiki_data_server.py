@@ -25,14 +25,11 @@ app.add_middleware(
 dataset = load_dataset("wikitext", "wikitext-103-raw-v1")
 
 # Convert dataset to DataFrame
-df = pd.DataFrame(dataset["train"])
+old_df = pd.DataFrame(dataset["train"])
 
 # Ensure dataset is formatted correctly
-if "text" not in df.columns:
+if "text" not in old_df.columns:
     raise ValueError("Dataset must contain a 'text' column.")
-
-# Create processed dataset
-processed_df = generate_next_token_pairs(df)
 
 @app.get("/")
 async def read_root():
@@ -51,22 +48,24 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
         JSONResponse: A JSON response containing the datapoints in ModelInput format.
                        Only the 'features' field will be populated.
     """
+    df = old_df.dropna(subset=["text"])
+    df = df[df["text"].str.strip().astype(bool)]
     dataset_size = len(df)
-
+    print("dataset_size: ", dataset_size)
     if num_datapoints > dataset_size:
         raise HTTPException(
             status_code=400,
             detail="Requested more data points than available in the dataset."
         )
-
+    print("num_datapoints: ", num_datapoints)
     random_indices = np.random.choice(dataset_size, num_datapoints, replace=False)
-
+    print("random_indices: ", random_indices)
     try:
-        selected_data = df.iloc[random_indices]["text"].tolist()  # Get raw text
+        selected_data = df.iloc[random_indices]["text"].tolist()
 
-        # Each element in 'features' is a list containing ONE prompt string
         features = [[prompt] for prompt in selected_data]
-
+        print("features: ", features)
+        print("length of features: ", len(features))
         return ModelInput(features=features, labels=[], group_ids=[])
 
     except Exception as e:
