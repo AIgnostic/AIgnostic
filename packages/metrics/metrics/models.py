@@ -68,7 +68,7 @@ class CalculateRequest(BaseModel):
     )
     def convert_to_np_arrays(cls, v):
         return nested_list_to_np(v)
-    
+
 
 def convert_calculate_request_to_dict(info: CalculateRequest) -> dict:
     """
@@ -104,7 +104,6 @@ def convert_calculate_request_to_dict(info: CalculateRequest) -> dict:
         "total_sample_size": info.total_sample_size,
         "regression_flag": info.regression_flag
     }
-
 
 
 class MetricsPackageExceptionModel(BaseModel):

@@ -85,4 +85,3 @@ class ComputeUserMetricRequest(BaseModel):
     user_id: str
     function_name: str
     params: dict
-
