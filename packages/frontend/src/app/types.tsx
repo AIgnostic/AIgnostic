@@ -8,9 +8,9 @@ export interface ReportPropertySection {
   computed_metrics: {
       metric: string;
       ideal_value: string;
-      range: string[];
+      range: (string | null)[];  // nulls represent infinities
       value: string; 
-}[];
+  }[];
   legislation_extracts: LegislationExtract[];
   llm_insights: string[];
 }
@@ -24,6 +24,7 @@ export interface Report {
 export interface LegislationExtract {
   article_number: number;
   article_title: string;
+  link: string;
   description: string;
   suitable_recitals: string[];
 }

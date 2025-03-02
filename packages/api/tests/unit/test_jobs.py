@@ -28,6 +28,7 @@ def test_dispatch_job(mock_connection):
         data_api_key=data_api_key,
         model_api_key=model_api_key,
         channel=mock_channel,
+        user_id="1234",
     )
 
     # Assert that `basic_publish` was called once

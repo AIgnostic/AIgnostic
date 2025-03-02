@@ -16,7 +16,7 @@ import CodeBox from './components/CodeBox'; // Import your CodeBox component
 import { styles } from './home.styles';
 import { Box } from '@mui/material';
 import { AIGNOSTIC } from './constants';
-import { MarkdownFiles, BackButton } from './types';
+import { MarkdownFiles } from './types';
 import theme from './theme';
 
 type APIDocsProps = {
@@ -83,7 +83,7 @@ const APIDocs: React.FC<APIDocsProps> = ({ getMarkdownFiles }) => {
                     className,
                     children,
                   }: {
-                    node?: any;
+                    node?: unknown;
                     inline?: boolean;
                     className?: string;
                     children?: React.ReactNode;
@@ -95,7 +95,7 @@ const APIDocs: React.FC<APIDocsProps> = ({ getMarkdownFiles }) => {
                     className,
                     children,
                   }: {
-                    node?: any;
+                    node?: unknown;
                     inline?: boolean;
                     className?: string;
                     children?: React.ReactNode;
