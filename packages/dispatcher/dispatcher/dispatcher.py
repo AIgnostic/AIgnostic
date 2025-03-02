@@ -1,5 +1,6 @@
 import json
 import logging
+import stat
 from typing import Optional
 import uuid
 
@@ -44,9 +45,15 @@ class Dispatcher:
         init_queues(self._channel)
         logger.info("Dispatcher initialized.")
 
+    def propogate_error(self, job_id: Optional[str], e: Exception):
+        """Propogare error, somehow, in the system so the user sees it - TODO!"""
+        logger.error(f"Job ID {job_id} - error: {e}")
+        logger.warning(
+            f"TODO - Can't handle this error for job_id {job_id} as no way to hand back to the API!"
+        )
+
     def handle_job_unpack_error(self, e: ValueError):
-        logger.error(f"Invalid job format: {e}")
-        logger.error("Can't handle this error as no way to hand back to the API!")
+        self.propogate_error(None, e)
         # TODO: Pass back to api, show notificatio to uer
         raise DispatcherException(f"Invalid job format: {e}", status_code=400)
 
@@ -65,17 +72,21 @@ class Dispatcher:
                 self.handle_job_unpack_error(e)
         return None
 
-    async def dispatch_batch(self, user_id: str, job_data: Batch):
+    async def dispatch_batch(self, job_id: str, job_data: Batch):
         # TODO: Add error handling
         # TODO: Different queue
         """Dispatch a single batch for the given job id"""
-        logger.info(f"Dispatching batch for job {user_id}")
-        self._channel.basic_publish(
-            exchange="",
-            routing_key=BATCH_QUEUE,
-            body=job_data.model_dump_json(),
-        )
-        logger.info(f"Batch dispatched for job {user_id}")
+        try:
+            logger.info(f"Dispatching batch for job {job_id}")
+            self._channel.basic_publish(
+                exchange="",
+                routing_key=BATCH_QUEUE,
+                body=job_data.model_dump_json(),
+            )
+            logger.info(f"Batch dispatched for job {job_id}")
+        except Exception as e:
+            self.propogate_error(job_id, e)
+            raise DispatcherException(f"Error dispatching batch: {e}")
 
     async def dispatch_as_required(self, job_id: str):
         """Given a job id, lookup currently running jobs and dispatch until pending batches == max batches"""
@@ -85,6 +96,7 @@ class Dispatcher:
         if not running_job:
             logger.error(f"Job {job_id} not found in Redis!")
             # TODO: Handle error finding jon
+            self.propogate_error(job_id, ValueError("Job not found in Redis!"))
             logger.warning(f"This error for {job_id} is unhandled!")
             return
         logger.debug(f"Running job: {running_job}")
@@ -176,6 +188,15 @@ class Dispatcher:
                 running_job.errored_batches += 1
                 running_job.currently_running_batches -= 1
                 logger.error(f"Error in batch {msg.batch_id}: {msg.errorMessage}!")
+                self.propogate_error(
+                    msg.job_id,
+                    WorkerException(
+                        detail=(
+                            msg.errorMessage if msg.errorMessage else "Unknown error"
+                        ),
+                        status_code=500,
+                    ),
+                )
                 # TODO: Handle error
                 logger.warning(
                     f"Error in batch {msg.batch_id} is unhandled! Job will not be dispatched."
