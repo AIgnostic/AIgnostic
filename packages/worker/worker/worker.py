@@ -33,11 +33,10 @@ from common.models import (
 from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
 from metrics.models import WorkerException
 
+from common.models.common import AggregatorJob, JobType, WorkerError
 
-connection = None
-channel: BlockingChannel = None
+
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
-
 
 class Worker():
     def __init__(self, host="localhost"):
@@ -70,7 +69,7 @@ class Worker():
             exchange="", routing_key=RESULT_QUEUE, body=job.model_dump_json()
         )
 
-    def queue_error(self, error: str):
+    def queue_error(self, error: WorkerError):
         """
         Function to queue an error message
         """
@@ -131,7 +130,7 @@ class Worker():
         try:
             # Parse the response JSON
             dataset_response = DatasetResponse(**response.json())
-
+            
             # Return the data
             return dataset_response
         except Exception as e:

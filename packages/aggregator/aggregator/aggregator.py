@@ -297,6 +297,22 @@ def on_result_fetched(ch, method, properties, body):
         raise ValueError(f"Invalid job type: {job.job_type}")
 
 
+def on_result_fetched(ch, method, properties, body):
+    """Handles incoming messages and waits for at least one client before sending."""
+    global connected_clients
+    body = json.loads(body)
+    job = AggregatorJob(**body)
+
+    print(f"Received job: {job}")
+
+    if (job.job_type == JobType.RESULT):
+        process_batch_result(worker_results=job.content)
+    elif (job.job_type == JobType.ERROR):
+        process_error_result(error_data=job.content)
+    else:
+        raise ValueError(f"Invalid job type: {job.job_type}")
+
+
 def send_to_clients(message: AggregatorMessage):
     """Sends messages to all connected WebSocket clients."""
     global connected_clients
