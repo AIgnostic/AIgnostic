@@ -99,7 +99,6 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=Fa
 
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
-    print(f"Model Response = {response}")
     # Compute model probabilities for perturbed samples
     outputs = response.predictions if (info.regression_flag or esp) else response.confidence_scores
 
@@ -150,7 +149,6 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
     )
 
     print(f"Attempting to query model at {info.model_url}")
-    print(f"model_input = {model_input.model_dump(mode='json')}")
     if info.model_api_key is None:
         response = requests.post(url=info.model_url, json=model_input.model_dump(mode="json"))
     else:

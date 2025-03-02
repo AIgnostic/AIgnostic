@@ -250,9 +250,6 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     perturbed_samples = generate_masked_sequences(info.input_features, num_masked_per_sentence=ceil(average_sentence_length / 10))
     # Required later to map inputs to masked inputs
     num_perturbations_per_sample = perturbed_samples.shape[1]
-    print(f"num_perturbations_per_sample: {num_perturbations_per_sample}")
-    print(f"average_sentence_length: {average_sentence_length}")
-    print(f"average_sentence_length / 10: {average_sentence_length / 10}")
     # Flatten the array and reshape to 2D (convert from (N, 10) to (N*10, 1))
     # This allows us to query the model API with all perturbed samples at once in a way compatible with the expected implementation
     perturbed_samples = np.array(perturbed_samples).reshape(-1).reshape(-1, 1)
@@ -280,7 +277,6 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
 
     # Choose cosine similarity for text inputs as they involve large embedding spaces
     cosine_similarities = embedding_perturbation_cosine_similarities(feature_embeddings, perturbed_embeddings)
-    print(f"cosine_similarities.shape: {cosine_similarities.shape}")
     # Small constant for numerical stability
     epsilon = 1e-10
 
