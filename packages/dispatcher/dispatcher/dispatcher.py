@@ -57,9 +57,9 @@ class Dispatcher:
         """
         method_frame, _, body = self._channel.basic_get(queue=JOB_QUEUE, auto_ack=True)
         if method_frame:
-            job_data = json.loads(body)
-            logger.info(f"Received job: {job_data}")
             try:
+                job_data = json.loads(body)
+                logger.info(f"Received job: {job_data}")
                 logger.debug("Unpacking job data")
                 return PipelineJob(**job_data)
             except ValueError as e:
