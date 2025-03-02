@@ -19,7 +19,7 @@ class CalculateRequest(BaseModel):
 
     :param metrics: list[str] - List of metrics to be calculated.
     :param task_name: Optional[str] - Name of the task for which metrics are calculated. Options:
-        "binary_classification", "multi_class_classification", "regression".
+        "binary_classification", "multi_class_classification", "regression", "next_token_generation.
     :param input_data: Optional[list[list]] - 2D list of input data where each nested list
         corresponds to one row of data.
     :param confidence_scores: Optional[list[list]] - 2D list of probabilities where each nested

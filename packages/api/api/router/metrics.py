@@ -3,9 +3,8 @@ from metrics.models import (
     MetricsInfo,
     MetricValues,
 )
-from metrics.metrics import MetricsComputationException
 from metrics.metrics import calculate_metrics as _calculate_metrics
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 
 """
     Contains the API endpoints for the metrics service
@@ -53,7 +52,4 @@ async def calculate_metrics(info: CalculateRequest) -> MetricValues:
     data required for calculation of these metrics.
     :return: MetricValues - contains the calculated metrics and their scores
     """
-    try:
-        return _calculate_metrics(info)
-    except MetricsComputationException as e:
-        raise HTTPException(status_code=500, detail=e.detail)
+    return _calculate_metrics(info)

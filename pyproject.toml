@@ -18,6 +18,9 @@ python-dotenv = "^1.0.1"
 folktables = "^0.0.12"
 pydantic = "^2.10.6"
 numpy = "^2.2.3"
+rouge = "^1.0.1"
+editdistance = "^0.8.1"
+compressed-tensors = "^0.9.2"
 
 
 [tool.poetry.dependencies.api]
@@ -65,6 +68,11 @@ pytest-cov = "6.0.0"
 pytest-html = "4.1.1"
 pytest-httpserver = "^1.1.0"
 httpx = "^0.28.1"
+torch = [
+    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "linux", markers = "sys_platform != 'darwin'" },
+    { version = "^2.6.0+cpu", source = "pytorch_cpu", platform = "win32", markers = "sys_platform != 'darwin'" },
+    { version = "^2.6.0", source = "pypi", platform = "darwin", markers = "sys_platform == 'darwin'" },
+]
 
 [[tool.poetry.source]]
 name = "pytorch_cpu"

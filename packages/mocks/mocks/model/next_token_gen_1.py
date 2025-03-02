@@ -1,11 +1,10 @@
-"""
-Single Token Generation Model
-"""
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
+import torch.nn as nn
+from common.models import ModelInput, ModelResponse
 
 # Load model and tokenizer
 name = "neuralmagic/Llama-2-7b-chat-quantized.w8a8"
@@ -27,26 +26,45 @@ app.add_middleware(
 def predict(input: ModelInput) -> ModelResponse:
     predictions = []
     confidence_scores = []
+    messages = [
+    {"role": "system", "content": "You are a pirate chatbot who always responds in pirate speak!"},
+    {"role": "user", "content": "Who are you?"},
+]
+    print("Messages: ")
+    print(messages)
 
-    for prompt in input.features:
-        # Assume the prompt is a list with one string element 
-        input_text= prompt[0]
+    # Tokenize and get input_ids and attention_mask
+    tokenized_input = tokenizer.apply_chat_template(
+        messages,
+        add_generation_prompt=True,
+        return_tensors="pt"
+    ).to(model.device)
+    print("Passed tokeniszed input stage")
+    input_ids = tokenized_input
+    attention_mask = None
 
-        input_ids = tokenizer(input_text, return_tensors="pt").input_ids.to(model.device)
-        output = model.generate(
+    terminators = [
+        tokenizer.eos_token_id,
+        tokenizer.convert_tokens_to_ids("<|eot_id|>")
+    ]
+    print("Entering model generation")
+    outputs = model.bfloat16().generate(
             input_ids,
-            max_length=input.max_length,
+            attention_mask=attention_mask,
+            max_new_tokens=256,
             do_sample=True,
-            temperature=0.6,
-            top_p=0.9
+            temperature=1.5,
+            top_p=0.9,
         )
-
-        new_token_id = output[0][-1].item()
-        new_token = tokenizer.decode(new_token_id, skip_special_tokens=True)
-        predictions.append(new_token)
-        confidence_scores.append(None) # TODO: Placeholder value
-
+    print("Finished model generation")
+    response = outputs[0][input_ids.shape[-1]:]
+    new_token = tokenizer.decode(response, skip_special_tokens=True)
+    predictions.append(new_token)
+    confidence_scores.append(None)
+    print("Predictions: ")
+    print(predictions)
     return ModelResponse(predictions=predictions, confidence_scores=confidence_scores)
+
 
 
 if __name__ == "__main__":
