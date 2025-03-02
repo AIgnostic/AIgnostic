@@ -138,7 +138,10 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
         )
     elif info.task_name == "text_classification" and generated_input_features.shape[1] != 1:
         raise ModelQueryException(
-            detail=f"Input features must be of shape (N, 1) for text samples, but received shape {generated_input_features.shape}",
+            detail=(
+                "Input features must be of shape (N, 1) for text samples, "
+                f"but received shape {generated_input_features.shape}",
+            ),
             status_code=400
         )
 

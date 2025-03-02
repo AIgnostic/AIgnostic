@@ -93,8 +93,8 @@ class DataProvisionException(_MetricsPackageException):
         if detail:
             err_msg += f": {detail}"
         super().__init__(err_msg, status_code)
-    
-    
+
+
 class InvalidParameterException(_MetricsPackageException):
     """
     Class representing invalid parameter values for metric calculations - this occurs when

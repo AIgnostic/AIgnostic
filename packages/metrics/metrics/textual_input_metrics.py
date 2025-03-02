@@ -3,17 +3,22 @@ from metrics.numerical_metrics import (
     explanation_sparsity_score,
     explanation_fidelity_score
 )
-from metrics.exceptions import MetricsComputationException
 from metrics.ntg_metric_utils import text_input_lime, generate_synonym_perturbations
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
+
 def expl_stability_text_input(info: CalculateRequest) -> float:
     """
     masked_sentence_explainability computes the "LIME" equivalent for a text input model by modelling disimilarity in
-    the input features.
+    the input prompts. Currently, this is only supports text classification tasks.
+
+    :param info: Information required to compute the gradient including info.input_features,
+        confidence_scores, model_url and model_api_key.
+
+    :return: Stability score for the model.
     """
-    masked_coefs, _ =  text_input_lime(info)
+    masked_coefs, _ = text_input_lime(info)
     print("Running expl_stability_text_input")
     # TODO: Refactor generate_synonym_perturbations to take in an np.array of strings rather than a single string
     synonym_coefs = []
@@ -21,7 +26,7 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
     for i in range(info.input_features.shape[0]):
         # Obtain the text input string to the model
         inp = info.input_features[i][0]
-        
+
         # Obtain the confidence scores for the model
         targets = info.confidence_scores[i]
 
@@ -36,7 +41,7 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         # where c is the number classes in the model
         info.confidence_scores = np.array([[targets]] * synonym_sentences.shape[0])
         info.input_features = synonym_sentences
-        
+
         mask_with_synonyms_coefs, _ = text_input_lime(info)
 
         # Append the LIME coefficients for the synonym perturbations to the list of coefficients

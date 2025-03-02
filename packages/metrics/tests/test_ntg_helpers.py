@@ -43,13 +43,17 @@ def test_perturbations_on_single_word():
 def test_generating_masked_sequences_does_not_duplicate_input():
     sentences = np.array([["This is a test sentence"], ["It was the best of times. It was the worst of times."]])
     masked_sequences = generate_masked_sequences(sentences, num_masked_per_sentence=10)
-    assert masked_sequences.shape == (2, 10), f"Expected shape (2, 10), but got {masked_sequences.shape}"
-    assert np.all(np.vectorize(lambda x: "[MASK]" in x)(masked_sequences)), "Expected [MASK] tokens in all masked sequences"
+    assert masked_sequences.shape == (2, 10), (
+        f"Expected shape (2, 10), but got {masked_sequences.shape}"
+    )
+    assert np.all(np.vectorize(lambda x: "[MASK]" in x)(masked_sequences)), (
+        "Expected [MASK] tokens in all masked sequences"
+    )
 
 
 def test_invalid_mask_probability_raises_invalid_parameter_exception():
     sentences = np.array([["This is a test sentence"], ["It was the best of times. It was the worst of times."]])
-    with pytest.raises(InvalidParameterException) as e:
+    with pytest.raises(InvalidParameterException):
         generate_masked_sequences(sentences, mask_prob=0, num_masked_per_sentence=10)
 
 

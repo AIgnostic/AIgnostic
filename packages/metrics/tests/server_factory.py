@@ -29,6 +29,10 @@ server_configs = {
     "txt_inp_expl_stability": {
         "port": 3003,
         "app": txt_inp_expl_stability_app,
+    },
+    "finbert_integration": {
+        "port": 3004,
+        "app": finbert_app,
     }
 }
 

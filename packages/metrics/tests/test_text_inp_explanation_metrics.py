@@ -1,15 +1,13 @@
 from metrics.models import CalculateRequest, MetricValue
-from common.models import ModelResponse, ModelInput
+from common.models import ModelResponse
 import pytest
 from tests.server_factory import (
     server_factory,
     HOST,
     server_configs
 )
-from mocks.model.finbert import app as finbert_app
 from fastapi.testclient import TestClient
 from metrics.metrics import calculate_metrics
-import requests
 from tests.metric_mocks.mock_text_inp_classifier_expl_stability import TEST_INPUT
 
 server_factory = server_factory  # To suppress lint errors
@@ -17,6 +15,7 @@ server_factory = server_factory  # To suppress lint errors
 # Mock name used to access server_config fields
 mock_name = "txt_inp_expl_stability"
 client = TestClient(server_configs[mock_name]["app"])
+
 
 @pytest.fixture(scope="module")
 def apply_server_factory(server_factory):
@@ -29,7 +28,7 @@ def test_ntg_explanation_stability(apply_server_factory):
 
     response = client.post("/predict-hs", json=TEST_INPUT.model_dump(mode="json"))
     assert response.status_code == 200, response.text
-    
+
     model_resp: ModelResponse = response.json()
     assert model_resp["confidence_scores"], model_resp
 

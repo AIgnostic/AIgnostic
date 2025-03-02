@@ -415,7 +415,7 @@ def explanation_stability_score(info: CalculateRequest) -> float:
     :return: float - the explanation stability score (1 - 1/N * sum(distance_fn(E(x), E(x')))
         where distance_fn is the distance function between two explanations E(x) and E(x')
     """
-    lime_actual, _ =  _lime_explanation(info)
+    lime_actual, _ = _lime_explanation(info)
 
     # Calculate gradients for perturbation
     gradients = _finite_difference_gradient(info, 0.01)

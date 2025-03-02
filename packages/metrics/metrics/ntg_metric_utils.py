@@ -26,6 +26,7 @@ MIN_AVERAGE_SENTENCE_LENGTH = 3
 MASK_WORD = "[MASK]"
 DEFAULT_ENCODER = "sentence-transformers/distiluse-base-multilingual-cased-v1"
 
+
 def generate_synonym_perturbations(sentence: str, mask=MASK_WORD, limit=10) -> list[str]:
     """
     Given a sentence, generate a list of sentences where one word is replaced by a synonym.
@@ -61,7 +62,7 @@ def embedding_perturbation_cosine_similarities(embeddings: np.array, embeddings_
     :param embedding_perturbed: np.array - Sentence embedding for the perturbed sentence (2D np.array)
 
     :return: np.array - Cosine similarity between the sentence embeddings (2D np.array)
-    """    
+    """
     similarities = cosine_similarity(embeddings, embeddings_perturbed)
     return np.diagonal(similarities).reshape(-1, 1)
 
@@ -80,7 +81,7 @@ def prompt_to_embeddings(prompts: np.array, encoder_path=DEFAULT_ENCODER) -> np.
     if prompts.ndim == 2:
         if prompts.shape[1] != 1:
             raise DataProvisionException(
-                detail= (
+                detail=(
                     "Input datapoints must be singleton string arrays representing one prompt"
                 )
             )
@@ -89,7 +90,7 @@ def prompt_to_embeddings(prompts: np.array, encoder_path=DEFAULT_ENCODER) -> np.
         raise DataProvisionException(
             detail="Input features must be a 1D or 2D array of text samples",
         )
-    
+
     batch_size = 5
     num_prompts = len(prompts)
     embeddings = np.zeros((num_prompts, model.get_sentence_embedding_dimension()))
@@ -101,9 +102,9 @@ def prompt_to_embeddings(prompts: np.array, encoder_path=DEFAULT_ENCODER) -> np.
 
 
 def prompt_perturbation_cosine_similarities(
-        input_sentences: np.array, perturbed_sentences: np.array,
-        encoder_name=DEFAULT_ENCODER
-    ) -> np.array:
+    input_sentences: np.array, perturbed_sentences: np.array,
+    encoder_name=DEFAULT_ENCODER
+) -> np.array:
     """
     Given two lists of input and perturbed sentences, calculate the cosine similarity between the sentence embeddings.
     Use a semantically aligned sentence embedding model to compute the embeddings.
@@ -169,10 +170,10 @@ def compute_edit_distances(target_sentences: list[str], perturbed_sentences: lis
 def compute_bert_scores(target_sentences: list[str], perturbed_sentences: list[str]) -> list[float]:
     """
     Given two lists of target and perturbed sentences, calculate the BERT score for each pair.
-    
+
     :param target_sentences: list[str] - List of target sentences
     :param perturbed_sentences: list[str] - List of perturbed sentences
-    
+
     :return: list[float] - List of BERT scores
     """
     pass
@@ -180,16 +181,16 @@ def compute_bert_scores(target_sentences: list[str], perturbed_sentences: list[s
 
 def generate_masked_sequences(sentences: np.array, mask_prob: float = 0.3, num_masked_per_sentence=10) -> np.array:
     """
-    Given a batch of sentences, generate masked sequences by randomly masking words. This approach is preferred to masking
-    every word one at a time as this scales with the length of the input.
+    Given a batch of sentences, generate masked sequences by randomly masking words. This approach is
+    preferred to masking every word one at a time as this scales with the length of the input.
 
     :param sentences: np.array - Array of sentences to be masked, shape = (num_sentences, 1)
     :param mask_prob: float - Probability of masking a word
     :param num_masked_per_sentence: int - Number of masked sequences to generate per sentence,
         default = 10
 
-    :return: np.array - Array of masked sequences. Note, if an output sentence is the same as the input sentence, it will be
-        re-generated until at least one word is masked.
+    :return: np.array - Array of masked sequences. Note, if an output sentence is the same as the
+        input sentence, it will be re-generated until at least one word is masked.
         shape = (num_sentences, num_masked_per_sentence)
     """
     if mask_prob <= 0 or mask_prob >= 1:
@@ -239,19 +240,24 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     # Choose number of generated masked texts to be proportional to the average sentence length
     average_sentence_length = ceil(np.mean([len(sentence.split()) for sentence in info.input_features.reshape(-1)]))
 
-    # If average sentence length is too short, raise an exception - it is better to raise a warning in the frontend about potentially
-    # inaccurate metrics
+    # If average sentence length is too short, raise an exception - it is better to
+    # raise a warning in the frontend about potentially inaccurate metrics
     if average_sentence_length <= MIN_AVERAGE_SENTENCE_LENGTH:
         raise DataProvisionException(
-            detail="Insufficient number of words in each input sequence to accurately compute metrics requiring masked sequences",
+            detail="Insufficient number of words in each input sequence to accurately"
+            " compute metrics requiring masked sequences",
         )
 
     # Generation of the N masked sequences per sentence where N is proportional to the average sentence length
-    perturbed_samples = generate_masked_sequences(info.input_features, num_masked_per_sentence=ceil(average_sentence_length / 10))
+    perturbed_samples = generate_masked_sequences(
+        info.input_features,
+        num_masked_per_sentence=ceil(average_sentence_length / 10)
+    )
     # Required later to map inputs to masked inputs
     num_perturbations_per_sample = perturbed_samples.shape[1]
     # Flatten the array and reshape to 2D (convert from (N, 10) to (N*10, 1))
-    # This allows us to query the model API with all perturbed samples at once in a way compatible with the expected implementation
+    # This allows us to query the model API with all perturbed samples at once in a way
+    # that is compatible with the expected implementation
     perturbed_samples = np.array(perturbed_samples).reshape(-1).reshape(-1, 1)
     # TODO: Consider batching inputs to the model API
     response: ModelResponse = _query_model(perturbed_samples, info)
@@ -268,7 +274,7 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
             status_code=400
         )
 
-    # Convert input features to shape (N * num_perturbations_per_sample, d) from (N, 1) 
+    # Convert input features to shape (N * num_perturbations_per_sample, d) from (N, 1)
     # where d is either the number of classes for classification or 1 for regression
     features = np.tile(info.input_features, (num_perturbations_per_sample, 1))
 
@@ -289,11 +295,10 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
 
     # Fit a weighted linear regression model
     reg_model = Ridge(alpha=1.0)
-    
+
     reg_model.fit(perturbed_embeddings - feature_embeddings, outputs, sample_weight=weights)
 
     return reg_model.coef_, reg_model
 
 
 # TODO: Implement a method to convert sentences to a fixed-length embedding space for semantic comparison. e.g. SONAR
-    
