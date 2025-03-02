@@ -60,7 +60,7 @@ class Worker():
         init_queues(self._channel)
         print("Connection established to RabbitMQ")
 
-    def queue_result(self, result: MetricConfig):
+    def queue_result(self, result: WorkerResults):
         """
         Function to queue the results of a job
         """
