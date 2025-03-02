@@ -1,9 +1,4 @@
-
-from typing import Any, Optional
-from pydantic import BaseModel, Field, HttpUrl
-from pydantic import BaseModel, field_validator, HttpUrl, Field
 import numpy as np
-
 
 
 def metric_custom_accuracy(data: dict) -> dict:
@@ -72,7 +67,7 @@ def metric_custom_equalized_odds_difference(data: dict) -> dict:
 
     equalized_odds_diff = abs(abs(fpr_1 - fpr_0) - abs(tpr_1 - tpr_0))
     ideal_equalized_odds_diff = 0.0
-    equalized_odds_diff_range = (-1 , 1.0)
+    equalized_odds_diff_range = (-1, 1.0)
 
     return {
         "computed_value": equalized_odds_diff,

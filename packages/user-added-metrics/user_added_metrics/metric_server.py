@@ -2,18 +2,17 @@ import json
 import subprocess
 from fastapi import FastAPI, UploadFile, File, HTTPException
 import importlib.util
-import os 
+import os
 import shutil
 from common.models.common import ComputeUserMetricRequest
-import uvicorn 
-import uuid
-from pydantic import BaseModel
+import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import numpy as np
-import resource
+
 
 app = FastAPI()
+
 
 # Allow all origins
 app.add_middleware(
@@ -24,23 +23,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 UPLOAD_DIR = "/tmp/user_added_metrics"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 VENV_DIR = "/tmp/venvs"
 os.makedirs(VENV_DIR, exist_ok=True)
 
-
 # store loaded user functions
 user_functions = {}
+
 
 def get_user_path(base_dir, user_id):
     """Generates a user-specific directory path."""
     return os.path.join(base_dir, user_id)
 
+
 def create_virtual_env(env_path):
     """Creates a virtual environment at the specified path."""
     subprocess.run(["python3", "-m", "venv", env_path], check=True)
+
 
 def install_dependencies(env_path, requirements_path):
     """Installs dependencies from requirements.txt into the virtual environment."""
@@ -54,17 +56,19 @@ async def read_root():
 
 
 @app.post("/upload-metrics-and-dependencies")
-async def upload_metrics_and_dependencies(user_id: str, requirements: UploadFile = File(None), script: UploadFile = File(...)):
+async def upload_metrics_and_dependencies(user_id: str,
+                                          requirements: UploadFile = File(None),
+                                          script: UploadFile = File(...)):
     """Uploads a user script and its dependencies, then loads functions inside the corresponding virtual environment."""
     if not user_id:
         raise HTTPException(status_code=400, detail="User ID is required")
-    
+
     if requirements and not requirements.filename.endswith(".txt"):
         raise HTTPException(status_code=400, detail="Requirements file must be a .txt file")
-    
+
     if not script.filename.endswith(".py"):
         raise HTTPException(status_code=400, detail="Script file must be a .py file")
-    
+
     user_upload_dir = get_user_path(UPLOAD_DIR, user_id)
     user_venv_dir = get_user_path(VENV_DIR, user_id)
     os.makedirs(user_upload_dir, exist_ok=True)
@@ -88,7 +92,7 @@ async def upload_metrics_and_dependencies(user_id: str, requirements: UploadFile
     # Install numpy by default unless already in dependencies
     with open(requirements_path, "r") as f:
         requirements_content = f.read()
-    
+
     if "numpy" not in requirements_content:
         pip_path = os.path.join(user_venv_dir, "bin", "pip")
         subprocess.run([pip_path, "install", "numpy"], check=True)
@@ -108,23 +112,20 @@ async def upload_metrics_and_dependencies(user_id: str, requirements: UploadFile
     spec.loader.exec_module(module)
 
     # Store callable functions that begin with 'metric_'
-    # convert user_id to underscored version
-
-
-
     user_functions[user_id] = {
         name: func for name, func in vars(module).items() if callable(func) and name.startswith("metric_")
     }
-    return {"message": "Metrics and dependencies uploaded successfully", "user_id": user_id, "functions": list(user_functions[user_id].keys())}
+
+    return {"message": "Metrics and dependencies uploaded successfully",
+            "user_id": user_id, "functions": list(user_functions[user_id].keys())}
+
 
 @app.get("/inspect-uploaded-functions/{user_id}")
 async def inspect_uploaded_functions(user_id: str):
     """Inspects the functions uploaded by the user."""
     if user_id not in user_functions:
         raise HTTPException(status_code=404, detail="User ID not found")
-    
     return {"user_id": user_id, "functions": list(user_functions[user_id].keys())}
-
 
 
 @app.delete("/clear-user-data/{user_id}")
@@ -132,13 +133,12 @@ async def clear_user_data(user_id: str):
     """Clears all stored scripts and virtual environments for a user."""
     user_upload_dir = get_user_path(UPLOAD_DIR, user_id)
     user_venv_dir = get_user_path(VENV_DIR, user_id)
-    
+
     shutil.rmtree(user_upload_dir, ignore_errors=True)
     shutil.rmtree(user_venv_dir, ignore_errors=True)
     user_functions.pop(user_id, None)
-    
-    return {"message": f"Data for user {user_id} cleared successfully"}
 
+    return {"message": f"Data for user {user_id} cleared successfully"}
 
 
 # Helper to ensure outputs are JSON-serializable
@@ -153,7 +153,6 @@ def ensure_json_serializable(obj):
         return [ensure_json_serializable(v) for v in obj]
     # Base types (int, float, str, bool, None) are already JSON serializable
     return obj
-
 
 
 @app.post("/compute-metric")
@@ -183,7 +182,7 @@ async def compute_metric(data: ComputeUserMetricRequest):
     params_json = json.dumps(params)  # Serialize params to a JSON string
 
     # Command to execute the function inside the user's venv
-    # THIS HAS TO BE INDENTED AS SUCH TO WORK   
+    # THIS HAS TO BE INDENTED AS SUCH TO WORK - DO NOT CHANGE
     command = [
         python_bin, "-c",
         f"""
@@ -215,11 +214,9 @@ except Exception as e:
 
     if process.returncode != 0:
         raise HTTPException(status_code=500, detail=f"User-defined metric execution failed: {process.stderr}")
-    
+
     print(process.stdout)
     return {"result": json.loads(process.stdout.strip())}
-
-
 
 
 if __name__ == "__main__":

@@ -2,14 +2,16 @@ import pytest
 from fastapi.testclient import TestClient
 import os
 import uuid
-import json
 from user_added_metrics.metric_server import app
 
+
 client = TestClient(app)
+
 
 # Temporary file paths
 TMP_DIR = "/tmp/test_user_added_metrics"
 os.makedirs(TMP_DIR, exist_ok=True)
+
 
 @pytest.fixture
 def sample_requirements():
@@ -19,6 +21,7 @@ def sample_requirements():
     with open(req_file_path, "w") as f:
         f.write("pika\n")
     return req_file_path
+
 
 @pytest.fixture
 def sample_script():
@@ -55,14 +58,17 @@ def metric_multiply_matrix(data):
         )
     return script_file_path
 
+
 def test_upload_metrics_and_dependencies(sample_script, sample_requirements):
     """Test uploading metrics and dependencies."""
     user_id = str(uuid.uuid4())
+
     with open(sample_requirements, "rb") as req_file, open(sample_script, "rb") as script_file:
         response = client.post(
             f"/upload-metrics-and-dependencies?user_id={user_id}",
             files={"requirements": req_file, "script": script_file},
         )
+
     assert response.status_code == 200
     json_response = response.json()
     assert json_response["user_id"] == user_id
@@ -73,14 +79,17 @@ def test_upload_metrics_and_dependencies(sample_script, sample_requirements):
     assert "metric_add_numbers" in functions
     assert "metric_multiply_matrix" in functions
 
+
 def test_inspect_functions(sample_script, sample_requirements):
     """Test inspecting the functions uploaded by the user."""
     user_id = str(uuid.uuid4())
+
     with open(sample_requirements, "rb") as req_file, open(sample_script, "rb") as script_file:
         response = client.post(
             f"/upload-metrics-and-dependencies?user_id={user_id}",
             files={"requirements": req_file, "script": script_file},
         )
+
     assert response.status_code == 200
     inspect_response = client.get(f"/inspect-uploaded-functions/{user_id}")
     assert inspect_response.status_code == 200
@@ -90,16 +99,19 @@ def test_inspect_functions(sample_script, sample_requirements):
     assert "metric_add_numbers" in functions
     assert "metric_multiply_matrix" in functions
 
+
 def test_execute_function(sample_script, sample_requirements):
     """Test executing a user-defined function that adds numbers."""
     user_id = str(uuid.uuid4())
+
     with open(sample_requirements, "rb") as req_file, open(sample_script, "rb") as script_file:
         response = client.post(
             f"/upload-metrics-and-dependencies?user_id={user_id}",
             files={"requirements": req_file, "script": script_file},
         )
+
     assert response.status_code == 200
-    
+
     payload = {
         "user_id": user_id,
         "function_name": "metric_add_numbers",
@@ -117,6 +129,7 @@ def test_execute_function(sample_script, sample_requirements):
     assert result["ideal_value"] == 3
     assert result["range"] == [3, 3]
 
+
 def test_execute_numpy_function(sample_script, sample_requirements):
     """Test executing a user-defined function that multiplies a matrix using numpy."""
     user_id = str(uuid.uuid4())
@@ -126,7 +139,7 @@ def test_execute_numpy_function(sample_script, sample_requirements):
             files={"requirements": req_file, "script": script_file},
         )
     assert response.status_code == 200
-    
+
     payload = {
         "user_id": user_id,
         "function_name": "metric_multiply_matrix",
@@ -144,6 +157,7 @@ def test_execute_numpy_function(sample_script, sample_requirements):
     assert result["ideal_value"] == expected_matrix
     assert result["range"] == [2, 8]
 
+
 def test_clear_user_data(sample_script, sample_requirements):
     """Test clearing user-specific data."""
     user_id = str(uuid.uuid4())
@@ -153,7 +167,7 @@ def test_clear_user_data(sample_script, sample_requirements):
             files={"requirements": req_file, "script": script_file},
         )
     assert response.status_code == 200
-    
+
     clear_response = client.delete(f"/clear-user-data/{user_id}")
     assert clear_response.status_code == 200
     json_response = clear_response.json()

@@ -32,6 +32,7 @@ RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
 USER_METRIC_SERVER_URL = os.environ.get("USER_METRIC_SERVER_URL", "http://user-added-metrics:8010")
 
+
 class WorkerException(Exception):
     def __init__(self, detail: str, status_code: int = 500):
         """Custom exception class for workers
@@ -238,7 +239,8 @@ class Worker():
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")
             # add user_id to the results
-            worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id, user_defined_metrics=None)
+            worker_results = WorkerResults(**metrics_results.model_dump(),
+                                           user_id=job.user_id, user_defined_metrics=None)
 
             try:
                 # query the user metric server to get the user-defined metrics
@@ -256,10 +258,9 @@ class Worker():
                 print(f"Exception occurred while fetching user metrics: {e}")
                 user_defined_metrics = []
 
-
             for metric in user_defined_metrics:
                 try:
-                    params_dict = convert_calculate_request_to_dict(metrics_request)    
+                    params_dict = convert_calculate_request_to_dict(metrics_request)
                     # execute the user-defined metric
                     exec_response = requests.post(
                         f"{USER_METRIC_SERVER_URL}/compute-metric",
@@ -277,7 +278,7 @@ class Worker():
                         worker_results.user_defined_metrics[metric] = result
                     else:
                         print(f"SERVER RESPONSE NOT OKAY: {exec_response.text}")
-                        
+
                 except Exception as e:
                     print(f"ERROR EXECUTING USER METRIC: {e}")
 

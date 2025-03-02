@@ -188,7 +188,7 @@ def on_result_fetched(ch, method, properties, body):
     if result_data["user_defined_metrics"]:
         for metric, metric_info in result_data["user_defined_metrics"].items():
             batch_metrics[metric] = metric_info["result"]
-            
+
     aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
 
     aggregates = aggregator.get_aggregated_metrics()
