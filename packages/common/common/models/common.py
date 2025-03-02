@@ -1,9 +1,10 @@
-from pydantic import BaseModel, field_validator
-from typing import Any, Union, Optional
 from pydantic import BaseModel
+from typing import Any, Union, Optional
 from abc import ABC
 from enum import Enum
 from metrics.models import WorkerResults
+
+
 class Job(BaseModel):   # pragma: no cover
     """
     Job pydantic model represents the request body when sending a request

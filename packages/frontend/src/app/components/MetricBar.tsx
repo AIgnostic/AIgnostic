@@ -21,8 +21,8 @@ const MetricBar: React.FC<MetricBarProps> = ({
 }) => {
 
 
-  var minValue = min === null ? -Infinity : parseFloat(min as string)
-  var maxValue = max === null ? Infinity : parseFloat(max as string)
+  let minValue = min === null ? -Infinity : parseFloat(min as string)
+  let maxValue = max === null ? Infinity : parseFloat(max as string)
   const value = parseFloat(actual);
   const idealValue = parseFloat(ideal);
 

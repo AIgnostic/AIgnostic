@@ -58,7 +58,6 @@ def test_integration_results_consumer_and_metrics_aggregator():
         (result3, 15)
     ]
 
-
     # Mock RabbitMQ's basic_consume and simulate message consumption
     def mock_basic_consume(queue, on_message_callback, auto_ack):
         for message in test_messages:

@@ -1,6 +1,7 @@
 from aggregator.aggregator import MetricsAggregator
 from common.models import MetricValue
 
+
 def test_initial_state():
     """Test that the initial state of MetricsAggregator is correct."""
     aggregator = MetricsAggregator()

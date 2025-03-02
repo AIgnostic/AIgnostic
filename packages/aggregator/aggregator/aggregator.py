@@ -10,6 +10,7 @@ from common.models import AggregatorMessage, MessageType, JobType, AggregatorJob
 from metrics.models import WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
 
+
 def aggregator_metrics_completion_log():
     return AggregatorMessage(
         messageType=MessageType.METRICS_COMPLETE,
@@ -60,7 +61,7 @@ class MetricsAggregator:
             if metric not in self.metrics:
                 # First time encountering this metric, initialize with the first batch value
 
-                if isinstance(metric_value_obj, MetricsPackageExceptionModel) :
+                if isinstance(metric_value_obj, MetricsPackageExceptionModel):
                     self.metrics[metric] = {
                         "value": None,
                         "ideal_value": None,
@@ -214,10 +215,11 @@ def process_batch_result(worker_results: WorkerResults):
     if aggregator.samples_processed == aggregator.total_sample_size:
         print(f"Finished processing all batches for user {user_id}")
         print("Creating and sending final report")
-        send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
-                                      message="Generating final report - this may take a few minutes",
-                                      statusCode=200,
-                                      content=None))
+        send_to_clients(AggregatorMessage(
+            messageType=MessageType.LOG,
+            message="Generating final report - this may take a few minutes",
+            statusCode=200,
+            content=None))
 
         # send completion message
         manager.send_to_user(user_id, aggregator_metrics_completion_log())
@@ -279,22 +281,6 @@ def generate_and_send_report(user_id, aggregates, aggregator):
     except Exception as e:
         print(f"Error generating report for user {user_id}: {e}")
         manager.send_to_user(user_id, aggregator_error_log(str(e)))
-
-
-def on_result_fetched(ch, method, properties, body):
-    """Handles incoming messages and waits for at least one client before sending."""
-    global connected_clients
-    body = json.loads(body)
-    job = AggregatorJob(**body)
-
-    print(f"Received job: {job}")
-
-    if (job.job_type == JobType.RESULT):
-        process_batch_result(worker_results=job.content)
-    elif (job.job_type == JobType.ERROR):
-        process_error_result(error_data=job.content)
-    else:
-        raise ValueError(f"Invalid job type: {job.job_type}")
 
 
 def on_result_fetched(ch, method, properties, body):

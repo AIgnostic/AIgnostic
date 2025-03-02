@@ -12,8 +12,6 @@ import os
 import json
 import asyncio
 import random
-from pika.adapters.blocking_connection import BlockingChannel
-from common.models.common import Job
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from metrics.models import WorkerResults
 import requests
@@ -23,7 +21,6 @@ from typing import Optional
 from common.models import (
     Job,
     CalculateRequest,
-    MetricConfig,
     DatasetResponse,
     ModelResponse,
     AggregatorJob,
@@ -33,10 +30,9 @@ from common.models import (
 from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
 from metrics.models import WorkerException
 
-from common.models.common import AggregatorJob, JobType, WorkerError
-
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
+
 
 class Worker():
     def __init__(self, host="localhost"):
@@ -73,8 +69,8 @@ class Worker():
         """
         Function to queue an error message
         """
-        job = AggregatorJob(job_type=JobType.ERROR, content=
-                            WorkerError(
+        job = AggregatorJob(job_type=JobType.ERROR,
+                            content=WorkerError(
                                 error_message=error,
                                 error_code=500,
                             ))
@@ -130,7 +126,7 @@ class Worker():
         try:
             # Parse the response JSON
             dataset_response = DatasetResponse(**response.json())
-            
+
             # Return the data
             return dataset_response
         except Exception as e:
@@ -161,7 +157,6 @@ class Worker():
             raise WorkerException(
                 detail=e.response.json()["detail"], status_code=e.response.status_code
             )
-
 
         try:
             # Check if the request was successful

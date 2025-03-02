@@ -88,7 +88,7 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     return data
 
 
-def get_legislation_extracts(metrics_data: dict) -> list[dict] :
+def get_legislation_extracts(metrics_data: dict) -> list[dict]:
     """
     Generates a comprehensive report based on the provided metrics data and API key.
 
@@ -115,19 +115,20 @@ def get_legislation_extracts(metrics_data: dict) -> list[dict] :
         common_metrics = computed_metrics.intersection(property_metrics)
         property_result["property"] = property
 
-        if common_metrics:
-            property_result["computed_metrics"] = [
-                {
-                    "metric": metric.replace("_", " "),
-                    "value": 0 if metrics_data[metric]["error"] else round(metrics_data[metric]["value"], 3),
-                    "ideal_value": None if metrics_data[metric]["error"] else round(metrics_data[metric]["ideal_value"], 3),
-                    "range": None if metrics_data[metric]["error"] else metrics_data[metric]["range"],
-                    "error": metrics_data[metric]["error"] if metrics_data[metric]["error"] else None,
-                }
-                for metric in common_metrics
-            ]
-        else:
-            property_result["computed_metrics"] = []
+        computed_metrics_list = []
+        for metric in common_metrics:
+            metric_data = metrics_data.get(metric, {})
+            error = metric_data.get("error")
+
+            computed_metrics_list.append({
+                "metric": metric.replace("_", " "),
+                "value": 0 if error else round(metric_data.get("value", 0), 3),
+                "ideal_value": None if error else round(metric_data.get("ideal_value", 0), 3),
+                "range": None if error else metric_data.get("range"),
+                "error": error or None,
+            })
+
+        property_result["computed_metrics"] = computed_metrics_list
 
         property_result["legislation_extracts"] = []
         for regulations in property_to_regulations[property]:
@@ -138,7 +139,6 @@ def get_legislation_extracts(metrics_data: dict) -> list[dict] :
         results.append(property_result)
 
     return results
-
 
 
 def add_llm_insights(metrics_data: list[dict], api_key: str) -> list[dict]:

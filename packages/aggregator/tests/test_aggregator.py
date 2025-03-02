@@ -16,7 +16,6 @@ from aggregator.aggregator import (
     send_to_clients,
     user_aggregators,
     manager,
-    generate_and_send_report,
 )
 import json
 
