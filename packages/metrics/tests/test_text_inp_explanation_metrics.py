@@ -70,3 +70,26 @@ def test_ntg_explanation_stability(apply_server_factory):
         hs_result.metric_values[metric_name].computed_value
         > ls_result.metric_values[metric_name].computed_value
     ), "Stronger examples should have higher stability scores than ambiguous datapoints"
+
+
+def test_high_stability_score(apply_server_factory):
+    metric_name = "expl_stability_text_input"
+
+    response = client.post("/predict-hs", json=TEST_INPUT.model_dump(mode="json"))
+
+    model_resp: ModelResponse = response.json()
+    assert model_resp["confidence_scores"], model_resp
+
+    hs_info = CalculateRequest(
+        batch_size=10,
+        total_sample_size=10,
+        metrics=[metric_name],
+        input_features=TEST_INPUT.features,
+        confidence_scores=model_resp["confidence_scores"],
+        model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-hs",
+    )
+
+    hs_result = calculate_metrics(hs_info)
+    assert isinstance(hs_result.metric_values[metric_name], MetricValue), hs_result
+
+    assert hs_result.metric_values[metric_name].computed_value == 1.0, hs_result
