@@ -8,30 +8,29 @@ function FileUploadComponent() {
   const [requirementsFile, setRequirementsFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fileId, setFileId] = useState<string | null>(null);
+  const [functions, setFunctions] = useState<string[] | null>(null);
 
   const handleFileChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     fileType: 'python' | 'requirements'
   ) => {
     const file = event.target.files?.[0] || null;
-
-    if (fileType === 'python' && file && file.name.endsWith('.py')) {
+    if (fileType === 'python' && file?.name.endsWith('.py')) {
       setPythonFile(file);
-      setError(null);
-    } else if (
-      fileType === 'requirements' &&
-      file &&
-      file.name.endsWith('.txt')
-    ) {
+    } else if (fileType === 'requirements' && file?.name.endsWith('.txt')) {
       setRequirementsFile(file);
-      setError(null);
     } else {
       setError('Invalid file type. Please upload a .py or .txt file.');
     }
+    setError(null);
   };
+  const userId = sessionStorage.getItem('userId');
 
   const handleSubmitFiles = async () => {
+    if (!userId) {
+      setError('User ID not found. Please log in.');
+      return;
+    }
     if (!pythonFile) {
       setError('Please upload a Python file before submitting.');
       return;
@@ -48,21 +47,17 @@ function FileUploadComponent() {
 
     try {
       const response = await fetch(
-        `${USER_METRICS_SERVER_URL}/upload-metrics-and-dependencies`,
-        {
-          method: 'POST',
-          body: formData,
-        }
+        `${USER_METRICS_SERVER_URL}/upload-metrics-and-dependencies?user_id=${userId}`,
+        { method: 'POST', body: formData }
       );
 
-      const responseData = await response.json();
+      if (!response.ok)
+        throw new Error(
+          (await response.json()).detail || `Error ${response.status}`
+        );
 
-      if (!response.ok) {
-        throw new Error(responseData.detail || `Error ${response.status}`);
-      }
-
-      console.log('Files uploaded successfully:', responseData);
-      setFileId(responseData.file_id);
+      setFunctions([]);
+      console.log('Files uploaded successfully:', await response.json());
     } catch (error) {
       setError(`Upload failed: ${(error as Error).message}`);
     } finally {
@@ -70,37 +65,9 @@ function FileUploadComponent() {
     }
   };
 
-  const handleClearServer = async () => {
-    setUploading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${USER_METRICS_SERVER_URL}/clear-server`, {
-        method: 'DELETE',
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(responseData.detail || `Error ${response.status}`);
-      }
-
-      console.log('Server cleared successfully:', responseData);
-      setPythonFile(null);
-      setRequirementsFile(null);
-      setFileId(null);
-    } catch (error) {
-      setError(`Clearing server failed: ${(error as Error).message}`);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const [functions, setFunctions] = useState<string[] | null>(null);
-
-  const handleInspectFunctions = async () => {
-    if (!fileId) {
-      setError('No file ID found. Please upload files first.');
+  const handleClearUserData = async () => {
+    if (!userId) {
+      setError('User ID not found. Please log in.');
       return;
     }
 
@@ -109,22 +76,43 @@ function FileUploadComponent() {
 
     try {
       const response = await fetch(
-        `${USER_METRICS_SERVER_URL}/inspect-uploaded-functions/${fileId}`,
-        {
-          method: 'GET',
-        }
+        `${USER_METRICS_SERVER_URL}/clear-user-data/${userId}`,
+        { method: 'DELETE' }
       );
+      if (!response.ok)
+        throw new Error(
+          (await response.json()).detail || `Error ${response.status}`
+        );
+      setPythonFile(null);
+      setRequirementsFile(null);
+      setFunctions(null);
+    } catch (error) {
+      setError(`Clearing user data failed: ${(error as Error).message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
-      const responseData = await response.json();
+  const handleInspectFunctions = async () => {
+    if (!userId) {
+      setError('User ID not found. Please log in.');
+      return;
+    }
 
-      if (!response.ok) {
-        throw new Error(responseData.detail || `Error ${response.status}`);
-      }
+    setUploading(true);
+    setError(null);
 
-      setFunctions(responseData.functions);
-
-      console.log('Functions inspected successfully:', responseData);
-      // Handle the inspected functions as needed
+    try {
+      const response = await fetch(
+        `${USER_METRICS_SERVER_URL}/inspect-uploaded-functions/${userId}`,
+        { method: 'GET' }
+      );
+      if (!response.ok)
+        throw new Error(
+          (await response.json()).detail || `Error ${response.status}`
+        );
+      const data = await response.json();
+      setFunctions(data.functions);
     } catch (error) {
       setError(`Inspection failed: ${(error as Error).message}`);
     } finally {
@@ -140,7 +128,6 @@ function FileUploadComponent() {
         borderRadius: 2,
         margin: 2,
         boxShadow: theme.shadows[3],
-        elevation: 3,
       }}
     >
       <Typography variant="h6">Upload Your Metrics</Typography>
@@ -183,21 +170,16 @@ function FileUploadComponent() {
         {uploading ? 'Uploading...' : 'Submit Files'}
       </Button>
 
-      {fileId && (
-        <Typography color="success">
-          Upload successful! File ID: {fileId}
-        </Typography>
-      )}
-      {fileId && (
+      {functions && (
         <>
           <Button
             variant="contained"
             color="error"
-            onClick={handleClearServer}
+            onClick={handleClearUserData}
             disabled={uploading}
             sx={{ margin: 1 }}
           >
-            {uploading ? 'Clearing...' : 'Clear Server'}
+            {uploading ? 'Clearing...' : 'Clear Data'}
           </Button>
           <Button
             variant="contained"
@@ -208,7 +190,7 @@ function FileUploadComponent() {
           >
             Inspect Uploaded Functions
           </Button>
-          {functions && (
+          {functions && functions.length > 0 && (
             <Box sx={{ marginTop: 2 }}>
               <Typography variant="h6">Functions in Uploaded File:</Typography>
               <ul>

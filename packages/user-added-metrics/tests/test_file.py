@@ -69,7 +69,7 @@ class CalculateRequest(BaseModel):
         return nested_list_to_np(v)
 
 
-def accuracy(info: CalculateRequest) -> float:
+def metric_accuracy(info: CalculateRequest) -> float:
     """
     Calculate the accuracy of the model
 

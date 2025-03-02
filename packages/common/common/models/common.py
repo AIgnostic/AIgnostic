@@ -82,7 +82,7 @@ class LLMResponse(ModelInput, BaseModel):
 
 
 class ComputeUserMetricRequest(BaseModel):
-    file_id: str
+    user_id: str
     function_name: str
     params: dict
 

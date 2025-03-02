@@ -30,6 +30,7 @@ connection = None
 channel: BlockingChannel = None
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
+USER_METRIC_SERVER_URL = os.environ.get("USER_METRIC_SERVER_URL", "http://localhost:8010")
 
 class WorkerException(Exception):
     def __init__(self, detail: str, status_code: int = 500):
@@ -238,6 +239,11 @@ class Worker():
             print(f"Final Results: {metrics_results}")
             # add user_id to the results
             worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id)
+
+            # query the user metric server to get the user-defined metrics
+            user_metrics = requests.post(
+                
+
             self.queue_result(worker_results)
             return
         except Exception as e:
