@@ -36,7 +36,7 @@ from metrics.exceptions import (
     DataProvisionException,
     _MetricsPackageException
 )
-from common.models.common import ModelResponse, MetricValues
+from common.models.common import ModelResponse
 
 
 task_type_to_metric = {
