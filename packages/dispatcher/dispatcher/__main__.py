@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import atexit
 from os import getenv
@@ -11,7 +10,7 @@ from common.redis.connect import connect_to_redis
 from pika import BlockingConnection
 import redis.asyncio as redis
 
-from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
+from common.rabbitmq.connect import connect_to_rabbitmq
 from dispatcher.logging.configure_logging import configure_logging
 
 logger = logging.getLogger("dispatcher")

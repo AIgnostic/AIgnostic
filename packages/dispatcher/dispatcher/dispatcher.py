@@ -1,6 +1,5 @@
 import json
 import logging
-from pdb import run
 from typing import Optional
 import uuid
 
@@ -104,7 +103,8 @@ class Dispatcher:
             )
             return
         # If we can run more batches, do so
-        # We can dispatch up to (no. batches we can run - batches currently running), but if we have fewer than that batches left, dispatch that
+        # We can dispatch up to (no. batches we can run - batches currently running), but if we have fewer than
+        # that batches left, dispatch that
         batches_to_dispatch = min(
             max(
                 running_job.job_data.max_concurrent_batches
@@ -128,7 +128,7 @@ class Dispatcher:
             running_job.pending_batches = max(0, running_job.pending_batches - 1)
             await self.update_job(job_id, running_job)
             logger.info(
-                f"Updated running job in Redis for job {job_id}, pending={running_job.pending_batches}, running={running_job.currently_running_batches}, completed={running_job.completed_batches}, errored={running_job.errored_batches}"
+                f"Updated running job in Redis for job {job_id}, pending={running_job.pending_batches}, running={running_job.currently_running_batches}, completed={running_job.completed_batches}, errored={running_job.errored_batches}"  # noqa
             )
 
         logger.info(f"Dispatched {batches_to_dispatch} new batches for job {job_id}.")
