@@ -267,11 +267,13 @@ class Worker():
                         },
                     )
                     if exec_response.status_code == 200:
-                        result = json.loads(exec_response.json()["result"])
+                        result = exec_response.json()["result"]
                         print(f"User metric {metric} result: {result}")
-                        # worker_results.user_defined_metrics[metric] = result
+                        if worker_results.user_defined_metrics is None:
+                            worker_results.user_defined_metrics = {}
+                        worker_results.user_defined_metrics[metric] = result
                     else:
-                        print("ERROR EXECUTING USER METRIC: " + exec_response.text)
+                        print("SERVER RESPONSE NOT OKAY: " + exec_response.text)
                 except Exception as e:
                     print("ERROR EXECUTING USER METRIC: " + str(e))
 

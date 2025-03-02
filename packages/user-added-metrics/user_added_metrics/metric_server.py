@@ -140,18 +140,33 @@ async def clear_user_data(user_id: str):
 
 
 
+# Helper to ensure outputs are JSON-serializable
+def ensure_json_serializable(obj):
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, np.generic):  # covers NumPy scalar types
+        return obj.item()
+    if isinstance(obj, dict):
+        return {k: ensure_json_serializable(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [ensure_json_serializable(v) for v in obj]
+    # Base types (int, float, str, bool, None) are already JSON serializable
+    return obj
+
+
+
 @app.post("/compute-metric")
 async def compute_metric(data: ComputeUserMetricRequest):
     """
-    Executes a user-defined function in an **isolated virtual environment** for the specific user.
+    Executes a user-defined function in an **isolated virtual environment**.
 
-    - Ensures the **correct venv is used**.
-    - Runs the **user's function as a subprocess**, preventing interference between users.
-    - Converts **JSON-safe input back into NumPy arrays before execution**.
+    - Passes parameters via stdin for safety.
+    - Converts JSON lists **without NumPy**.
+    - Ensures the result is **always JSON-safe**.
     """
     user_id = data.user_id
     function_name = data.function_name
-    params = data.params  # Convert JSON-safe input to NumPy
+    params = data.params  # Already a Python dict with lists, no NumPy
 
     user_venv_dir = get_user_path(VENV_DIR, user_id)
     user_upload_dir = get_user_path(UPLOAD_DIR, user_id)
@@ -164,8 +179,7 @@ async def compute_metric(data: ComputeUserMetricRequest):
     if not os.path.exists(script_path):
         raise HTTPException(status_code=404, detail=f"User script not found for user {user_id}")
 
-    # Serialize params to pass to subprocess
-    params_json = json.dumps(params)
+    params_json = json.dumps(params)  # Serialize params to a JSON string
 
     # Command to execute the function inside the user's venv
     command = [
@@ -173,27 +187,37 @@ async def compute_metric(data: ComputeUserMetricRequest):
         f"""
 import sys
 import json
-import numpy as np
 sys.path.insert(0, '{user_upload_dir}')
 from user_script import {function_name} as func
 
-params = json.loads('{params_json}')
-params = {{k: np.array(v) if isinstance(v, list) else v for k, v in params.items()}}
+# Read parameters from stdin
+params = json.loads(sys.stdin.read())
 
-result = func(params)
-print(json.dumps(result))
+# Execute function
+try:
+    result = func(params)
+
+    # Ensure result follows expected format
+    if isinstance(result, dict) and all(k in result for k in ["computed_value", "ideal_value", "range"]):
+        result["range"] = list(result["range"])  # Ensure range is a list, not a tuple
+        print(json.dumps({{"result": result}}))
+    else:
+        print(json.dumps({{"error": "Invalid return format from user function"}}))
+
+except Exception as e:
+    print(json.dumps({{"error": str(e)}}))
 """
     ]
 
-    process = subprocess.run(command, capture_output=True, text=True)
+    process = subprocess.run(command, input=params_json, capture_output=True, text=True)
 
     if process.returncode != 0:
         raise HTTPException(status_code=500, detail=f"User-defined metric execution failed: {process.stderr}")
-
+    
+    print(process.stdout)
     return {"result": json.loads(process.stdout.strip())}
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8010)
+
 
 
 if __name__ == "__main__":

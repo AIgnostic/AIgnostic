@@ -172,6 +172,9 @@ def on_result_fetched(ch, method, properties, body):
     user_id = result_data["user_id"]
     print(f"Received result for user {user_id}: {result_data}")
 
+    if result_data["user_defined_metrics"] is not None:
+        print(f"User-defined metrics received for user {user_id}: {result_data['user_defined_metrics']}")
+
     # ensure a metricsaffregator exists for the user
     if user_id not in user_aggregators:
         user_aggregators[user_id] = MetricsAggregator()
@@ -181,6 +184,11 @@ def on_result_fetched(ch, method, properties, body):
     if aggregator.total_sample_size == 0:
         aggregator.set_total_sample_size(result_data["total_sample_size"])
 
+    batch_metrics = result_data["metric_values"]
+    if result_data["user_defined_metrics"]:
+        for metric, metric_info in result_data["user_defined_metrics"].items():
+            batch_metrics[metric] = metric_info["result"]
+            
     aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
 
     aggregates = aggregator.get_aggregated_metrics()
