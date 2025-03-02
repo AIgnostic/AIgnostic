@@ -1,7 +1,7 @@
 from typing import List
 import uuid
 
-from common.models.pipeline import MetricCalculationJob, PipelineJob
+from common.models.pipeline import Batch, MetricCalculationJob, PipelineJob
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
@@ -56,6 +56,51 @@ async def test_should_load_job_to_redis_and_dispatch():
     assert str(job.job_id) in args[0]
     assert args[1] == running_job.model_dump_json()
     assert dispatcher.dispatch_as_required.called
+
+
+async def test_dispatch_batch_dispatches():
+    """Should dispatch a batch"""
+    # Mock the Redis client
+    mock_redis_client = AsyncMock()
+
+    # Mock the connection
+    mock_connection = MagicMock()
+
+    # Create a Dispatcher instance with the mocked Redis client and connection
+    dispatcher = Dispatcher(mock_connection, mock_redis_client)
+
+    channel_mock = MagicMock()
+    mock_connection.channel.return_value = channel_mock
+
+    # Create a sample job
+    job = PipelineJob(
+        job_id=str(uuid.uuid4()),
+        max_concurrent_batches=5,
+        batch_size=10,
+        batches=10,
+        metrics=MetricCalculationJob(
+            data_url="http://example.com/data",
+            model_url="http://example.com/model",
+            data_api_key="data_api_key",
+            model_api_key="model_api_key",
+            metrics=["accuracy"],
+            model_type="model_type",
+        ),
+    )
+
+    # Create a sample batch
+    batch = Batch(
+        job_id=str(job.job_id),
+        batch_id=uuid.uuid4(),
+        batch_size=10,
+        metrics=job.metrics,
+    )
+
+    # Call dispatch_batch with the job_id and the batch
+    await dispatcher.dispatch_batch(job.job_id, batch)
+
+    args, kwargs = channel_mock.basic_publish.call_args
+    assert kwargs["body"] == batch.model_dump_json()
 
 
 @pytest.mark.parametrize(
@@ -148,3 +193,6 @@ async def test_should_dispatch_new_batches_as_needed(
         updated_running_job.currently_running_batches
         == running_jobs + expected_dispatched_batches
     )
+
+    # Should not delete the job if there are still pending batches
+    assert not mock_redis_client.delete.called
