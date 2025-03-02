@@ -7,7 +7,9 @@ import { generateReportText } from '../src/app/utils';
 import { MOCK_SCIKIT_API_URL,
          MOCK_FINBERT_API_URL,
          MOCK_FOLKTABLES_DATASET_API_URL,
-         MOCK_FINANCIAL_DATASET_API_URL} from '../src/app/constants';
+         MOCK_FINANCIAL_DATASET_API_URL,
+         MOCK_WIKI_DATASET_API_URL,
+         MOCK_GEMINI_API_URL} from '../src/app/constants';
 
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {
@@ -25,6 +27,8 @@ describe('checkURL function', () => {
       MOCK_FINBERT_API_URL,
       MOCK_FOLKTABLES_DATASET_API_URL,
       MOCK_FINANCIAL_DATASET_API_URL,
+      MOCK_GEMINI_API_URL,
+      MOCK_WIKI_DATASET_API_URL
     ];
 
     validUrls.forEach((url) => {

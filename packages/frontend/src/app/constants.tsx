@@ -7,6 +7,8 @@ const MOCK_SCIKIT_API_URL = 'http://scikit-mock-model-api:5001/predict';
 const MOCK_FINBERT_API_URL = 'http://finbert-mock-model-api:5001/predict';
 const MOCK_FOLKTABLES_DATASET_API_URL = 'http://folktables-dataset-api:5000/fetch-datapoints';
 const MOCK_FINANCIAL_DATASET_API_URL = 'http://financial-dataset-api:5050/fetch-datapoints';
+const MOCK_WIKI_DATASET_API_URL = 'http://next-token-generation-api:5025/fetch-datapoints';
+const MOCK_GEMINI_API_URL = 'http://gemini-api:5030/predict';
 
 const steps = [
   {
@@ -117,6 +119,8 @@ export {
   MOCK_FINBERT_API_URL,
   MOCK_FOLKTABLES_DATASET_API_URL,
   MOCK_FINANCIAL_DATASET_API_URL,
+  MOCK_GEMINI_API_URL,
+  MOCK_WIKI_DATASET_API_URL,
   AIGNOSTIC,
   HOME,
   modelTypesToMetrics,

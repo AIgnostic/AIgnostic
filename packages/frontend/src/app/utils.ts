@@ -4,7 +4,9 @@ import { reportStyles } from "./home.styles";
 import { MOCK_SCIKIT_API_URL,
          MOCK_FINBERT_API_URL,
          MOCK_FOLKTABLES_DATASET_API_URL,
-         MOCK_FINANCIAL_DATASET_API_URL} from "./constants"
+         MOCK_FINANCIAL_DATASET_API_URL,
+         MOCK_WIKI_DATASET_API_URL, 
+         MOCK_GEMINI_API_URL} from "./constants"
 import { Article } from "@mui/icons-material";
 
 function checkURL(url: string): boolean {
@@ -12,7 +14,9 @@ function checkURL(url: string): boolean {
     if (url === MOCK_SCIKIT_API_URL ||
         url === MOCK_FINBERT_API_URL ||
         url === MOCK_FOLKTABLES_DATASET_API_URL ||
-        url === MOCK_FINANCIAL_DATASET_API_URL)  {
+        url === MOCK_FINANCIAL_DATASET_API_URL ||
+        url === MOCK_WIKI_DATASET_API_URL ||
+        url === MOCK_GEMINI_API_URL)  {
         return true; 
     }
     if (url === '') {

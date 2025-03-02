@@ -30,6 +30,7 @@ uvicorn = "^0.34.0"
 google-generativeai = "^0.8.4"
 pandas = "^2.2.3"
 datasets = "^3.3.2"
+folktables = "^0.0.12"
 
 [tool.poetry.dependencies.common]
 path = "../common"
