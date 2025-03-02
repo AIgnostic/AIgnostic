@@ -53,7 +53,7 @@ class MetricCalculationJob(BaseModel):
 class PipelineJob(BaseModel):
     """Sent to the Dispatcher to start a new job and dispatch the appropriate number of batches"""
 
-    job_id: Annotated[str, AfterValidator(lambda x: uuid.UUID(x, version=4))]
+    job_id: str
     """Identifier for the job"""
 
     # Concurrency control
@@ -105,7 +105,7 @@ class Batch(BaseModel):
     job_id: str
     """Identifier (UUID) for the originating job"""
 
-    batch_id: UUID4
+    batch_id: str
     """Identifier (UUID) for the batch"""
 
     batch_size: int

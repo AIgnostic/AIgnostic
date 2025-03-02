@@ -58,6 +58,7 @@ async def test_should_load_job_to_redis_and_dispatch():
     assert dispatcher.dispatch_as_required.called
 
 
+@pytest.mark.asyncio
 async def test_dispatch_batch_dispatches():
     """Should dispatch a batch"""
     # Mock the Redis client
@@ -67,10 +68,12 @@ async def test_dispatch_batch_dispatches():
     mock_connection = MagicMock()
 
     # Create a Dispatcher instance with the mocked Redis client and connection
-    dispatcher = Dispatcher(mock_connection, mock_redis_client)
 
     channel_mock = MagicMock()
     mock_connection.channel.return_value = channel_mock
+    channel_mock.basic_publish = MagicMock()
+
+    dispatcher = Dispatcher(mock_connection, mock_redis_client)
 
     # Create a sample job
     job = PipelineJob(
@@ -91,7 +94,7 @@ async def test_dispatch_batch_dispatches():
     # Create a sample batch
     batch = Batch(
         job_id=str(job.job_id),
-        batch_id=uuid.uuid4(),
+        batch_id=str(uuid.uuid4()),
         batch_size=10,
         metrics=job.metrics,
     )
@@ -99,6 +102,7 @@ async def test_dispatch_batch_dispatches():
     # Call dispatch_batch with the job_id and the batch
     await dispatcher.dispatch_batch(job.job_id, batch)
 
+    assert channel_mock.basic_publish.called
     args, kwargs = channel_mock.basic_publish.call_args
     assert kwargs["body"] == batch.model_dump_json()
 
@@ -118,6 +122,7 @@ async def test_dispatch_batch_dispatches():
         ),  # 1000 pending, 1 running, 1 max allowed, but 2 running, should give none dispatched (error check)
     ],
 )
+@pytest.mark.asyncio
 async def test_should_dispatch_new_batches_as_needed(
     pending_jobs, max_jobs, running_jobs
 ):
@@ -178,10 +183,11 @@ async def test_should_dispatch_new_batches_as_needed(
     assert dispatcher.dispatch_batch.call_count == expected_dispatched_batches
     assert dispatcher.update_job.call_count == expected_dispatched_batches
 
-    # Check if the update_job method was called
-    dispatcher.update_job.assert_called_once()
-
     # Check if the pending batches were updated
+    if expected_dispatched_batches == 0:
+        assert not dispatcher.update_job.called
+        return
+
     args, kwargs = dispatcher.update_job.call_args
     assert args[0] == job.job_id
     updated_running_job = args[1]

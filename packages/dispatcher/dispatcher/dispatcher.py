@@ -106,8 +106,11 @@ class Dispatcher:
         # If we can run more batches, do so
         # We can dispatch up to (no. batches we can run - batches currently running), but if we have fewer than that batches left, dispatch that
         batches_to_dispatch = min(
-            running_job.job_data.max_concurrent_batches
-            - running_job.currently_running_batches,
+            max(
+                running_job.job_data.max_concurrent_batches
+                - running_job.currently_running_batches,
+                0,
+            ),
             left_batches,
         )
         logger.info(f"Dispatching {batches_to_dispatch} new batches for job {job_id}")
@@ -115,14 +118,14 @@ class Dispatcher:
             logger.debug(f"Dispatching batch {i+1} for job {job_id}")
             batch = Batch(
                 job_id=job_id,
-                batch_id=uuid.uuid4(),
+                batch_id=str(uuid.uuid4()),
                 batch_size=running_job.job_data.batch_size,
                 metrics=running_job.job_data.metrics,
             )
             await self.dispatch_batch(job_id, batch)
             logger.debug(f"Updating Redis for job {job_id}")
-            running_job.currently_running_batches += batches_to_dispatch
-            running_job.pending_batches -= batches_to_dispatch
+            running_job.currently_running_batches += 1
+            running_job.pending_batches = max(0, running_job.pending_batches - 1)
             await self.update_job(job_id, running_job)
             logger.info(
                 f"Updated running job in Redis for job {job_id}, pending={running_job.pending_batches}, running={running_job.currently_running_batches}, completed={running_job.completed_batches}, errored={running_job.errored_batches}"
