@@ -98,7 +98,22 @@ services:
         condition: service_healthy
     links:
       - rabbitmq
-
+  dispatcher_ms:
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python -u -m dispatcher
+    working_dir: /app/packages/dispatcher
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    links:
+      - rabbitmq
   ####
   # Mock servers to test against
   ####
