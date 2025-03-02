@@ -1,9 +1,7 @@
-import uuid
 from api.router.rabbitmq import get_channel
 from common.models.pipeline import MetricCalculationJob, PipelineJob
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, Depends, HTTPException
-import json
 from fastapi.responses import JSONResponse
 from pika.adapters.blocking_connection import BlockingChannel
 from common.rabbitmq.constants import JOB_QUEUE

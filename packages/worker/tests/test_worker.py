@@ -1,4 +1,3 @@
-import json
 import uuid
 
 from common.models.pipeline import Batch, MetricCalculationJob

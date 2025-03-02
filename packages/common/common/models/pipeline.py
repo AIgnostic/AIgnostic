@@ -8,23 +8,17 @@ Terminology:
 - Job: The request from the user to compute metrics for a data source and model, _plus_ concurrency control
     This makes it a more concrete thing our pipeline can work with - it it what tells the start of the pipeline what
     it needs to kick off. In other words it what the overall pipeline works to complete.
-- Batch: A single unit of work that is part of a job. A job can be broken down into multiple batches to be processed, 
+- Batch: A single unit of work that is part of a job. A job can be broken down into multiple batches to be processed,
     and a worker will process each Batch
 
 The API send the dispatcher a Job to dispatch, which it then breaks down into Batches to be processed by the workers.
 """
 
 from enum import Enum
-from typing import Annotated, Optional
-import uuid
+from typing import Optional
 from pydantic import (
-    UUID4,
-    AfterValidator,
     BaseModel,
     HttpUrl,
-    computed_field,
-    model_validator,
-    root_validator,
 )
 
 

@@ -1,10 +1,8 @@
-import http
 from unittest.mock import patch, MagicMock
 import uuid
 from api.router.api import dispatch_job
 from common.models.pipeline import MetricCalculationJob
 from common.rabbitmq.constants import JOB_QUEUE
-from pydantic import HttpUrl
 
 
 @patch("pika.BlockingConnection")
@@ -14,7 +12,6 @@ def test_dispatch_job(mock_connection):
     mock_connection.return_value.channel.return_value = mock_channel
 
     # Sample data for testing
-    batch_size = 10
     metrics = ["accuracy", "precision"]
     data_url = "https://example.com/data"
     model_url = "https://example.com/model"
