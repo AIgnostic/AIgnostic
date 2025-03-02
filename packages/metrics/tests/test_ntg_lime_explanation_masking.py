@@ -104,6 +104,7 @@ def test_ntg_explanation_stability(apply_server_factory):
     )
 
     hs_result = calculate_metrics(hs_info)
+    assert isinstance(hs_result.metric_values[metric_name], MetricValue), hs_result
 
     ls_data = test_data["low_stability"]
     response = finbert_client.post("/predict", json=ls_data.model_dump(mode="json"))
@@ -123,7 +124,6 @@ def test_ntg_explanation_stability(apply_server_factory):
 
     ls_result = calculate_metrics(ls_info)
 
-    assert isinstance(hs_result.metric_values[metric_name], MetricValue), hs_result
     assert isinstance(ls_result.metric_values[metric_name], MetricValue), ls_result
 
     assert (
