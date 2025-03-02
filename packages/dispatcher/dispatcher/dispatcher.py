@@ -4,7 +4,7 @@ from pdb import run
 from typing import Optional
 import uuid
 
-from common.models.pipeline import Batch, JobCompleteMessage, PipelineJob
+from common.models.pipeline import Batch, JobCompleteMessage, JobStatus, PipelineJob
 from common.rabbitmq.constants import BATCH_QUEUE, JOB_QUEUE
 from dispatcher.models import RunningJob
 from dispatcher.utils import redis_key
@@ -163,22 +163,40 @@ class Dispatcher:
             return
         # Success or error?
         match msg.status:
-            case JobCompleteMessage.status.COMPLETED:
+            case JobStatus.COMPLETED:
                 running_job.completed_batches += 1
                 running_job.currently_running_batches -= 1
                 logger.info(f"Batch {msg.batch_id} completed!")
                 # Update
                 await self.update_job(msg.job_id, running_job)
                 # Dispatch more if required
-                logger.info(f"Dispatching more batches for job {msg.job_id}...")
-                await self.dispatch_as_required(msg.job_id)
-            case JobCompleteMessage.status.ERRORED:
+
+            case JobStatus.ERRORED:
                 running_job.errored_batches += 1
+                running_job.currently_running_batches -= 1
                 logger.error(f"Error in batch {msg.batch_id}: {msg.errorMessage}!")
                 # TODO: Handle error
-                logger.warning(f"Error in batch {msg.batch_id} is unhandled!")
+                logger.warning(
+                    f"Error in batch {msg.batch_id} is unhandled! Job will not be dispatched."
+                )
                 # Update
                 await self.update_job(msg.job_id, running_job)
+
+        # If no more pending batches, and none in progress, job is complete
+        if (
+            running_job.pending_batches == 0
+            and running_job.currently_running_batches == 0
+        ):
+            logger.info(f"Job {msg.job_id} is complete!")
+            # Delete key
+            await self._redis_client.delete(self._get_job_redis_key(msg.job_id))
+            logger.info(f"Job {msg.job_id} marked as complete & deleted")
+            logger.warning(
+                f"Job {msg.job_id} is complete but this is unhandled! Erroed batches are not reproted"
+            )
+        else:
+            logger.info(f"Dispatching more batches for job {msg.job_id}...")
+            await self.dispatch_as_required(msg.job_id)
 
     def _get_job_redis_key(self, job_id: str) -> str:
         """Return the key to reference a job in redis"""
