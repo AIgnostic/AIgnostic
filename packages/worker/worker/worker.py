@@ -240,23 +240,26 @@ class Worker():
             # add user_id to the results
             worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id, user_defined_metrics=None)
 
-            # query the user metric server to get the user-defined metrics
-            user_metrics_server_response = requests.get(
-                f"{USER_METRIC_SERVER_URL}/inspect-uploaded-functions/{job.user_id}",
-            )
+            try:
+                # query the user metric server to get the user-defined metrics
+                user_metrics_server_response = requests.get(
+                    f"{USER_METRIC_SERVER_URL}/inspect-uploaded-functions/{job.user_id}",
+                )
 
-            user_defined_metrics = []
-            if user_metrics_server_response.status_code == 200:
-                user_defined_metrics = user_metrics_server_response.json()["functions"]
-                print(f"User defined metrics: {user_defined_metrics}")
-            else:
-                print("ERROR FETCHING USER METRICS: " + user_metrics_server_response.text)
-                print("No user-defined metrics found")
+                user_defined_metrics = []
+                if user_metrics_server_response.status_code == 200:
+                    user_defined_metrics = user_metrics_server_response.json()["functions"]
+                    print(f"User defined metrics: {user_defined_metrics}")
+                else:
+                    print(f"SERVER RESPONSE NOT OKAY: {user_metrics_server_response.text}")
+            except Exception as e:
+                print(f"Exception occurred while fetching user metrics: {e}")
+                user_defined_metrics = []
 
-            params_dict = convert_calculate_request_to_dict(metrics_request)    
 
             for metric in user_defined_metrics:
                 try:
+                    params_dict = convert_calculate_request_to_dict(metrics_request)    
                     # execute the user-defined metric
                     exec_response = requests.post(
                         f"{USER_METRIC_SERVER_URL}/compute-metric",
@@ -273,9 +276,10 @@ class Worker():
                             worker_results.user_defined_metrics = {}
                         worker_results.user_defined_metrics[metric] = result
                     else:
-                        print("SERVER RESPONSE NOT OKAY: " + exec_response.text)
+                        print(f"SERVER RESPONSE NOT OKAY: {exec_response.text}")
+                        
                 except Exception as e:
-                    print("ERROR EXECUTING USER METRIC: " + str(e))
+                    print(f"ERROR EXECUTING USER METRIC: {e}")
 
             self.queue_result(worker_results)
             return

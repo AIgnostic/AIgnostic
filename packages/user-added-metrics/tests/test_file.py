@@ -5,76 +5,77 @@ from pydantic import BaseModel, field_validator, HttpUrl, Field
 import numpy as np
 
 
-def nested_list_to_np(value: list[list]) -> np.array:
-    if value:
-        return np.array(value)
-    return value
 
-class CalculateRequest(BaseModel):
+def metric_custom_accuracy(data: dict) -> dict:
     """
-    CalculateRequest pydantic model represents the request body when sending a request
-    to calculate metrics. It includes a list of metrics to be calculated as well as all relevant
-    data for the task.
+    Calculate the accuracy of the model.
 
-    :param metrics: list[str] - List of metrics to be calculated.
-    :param task_name: Optional[str] - Name of the task for which metrics are calculated. Options:
-        "binary_classification", "multi_class_classification", "regression".
-    :param input_data: Optional[list[list]] - 2D list of input data where each nested list
-        corresponds to one row of data.
-    :param confidence_scores: Optional[list[list]] - 2D list of probabilities where each nested
-        list corresponds to one row of data - indicates the probability of a given output prediction
-        and all other possible outputs
-    :param true_labels: Optional[list[list]] - 2D list of true labels where each nested list
-        corresponds to one row of data.
-    :param predicted_labels: Optional[list[list]] - 2D list of predicted labels where each
-        nested list corresponds to one row of data.
-    :param target_class: Optional[Any] - The target class for which metrics are calculated.
-    :param privileged_groups: Optional[list[dict[str, Any]]] - List of dictionaries representing
-        privileged groups.
-    :param unprivileged_groups: Optional[list[dict[str, Any]]] - List of dictionaries representing
-        unprivileged groups.
-    :param protected_attr: Optional[list[int]] - List of indices representing protected attributes.
-    :param model_url: Optional[HttpUrl] - URL of the model endpoint.
-    :param model_api_key: Optional[str] - API key for accessing the model endpoint.
+    :param data: dict - Dictionary containing required inputs.
+        - "true_labels": List or NumPy array of true labels.
+        - "predicted_labels": List or NumPy array of predicted labels.
+
+    :return: dict - Dictionary containing computed accuracy, ideal value, and range.
     """
-    metrics: list[str]
-    task_name: Optional[str] = None
-    batch_size: Optional[int] = None
-    total_sample_size: Optional[int] = None
-    input_features: Optional[list[list]] = None
-    confidence_scores: Optional[list[list]] = None
-    true_labels: Optional[list[list]] = None
-    predicted_labels: Optional[list[list]] = None
-    target_class: Optional[Any] = None
-    privileged_groups: Optional[list[dict[str, Any]]] = None
-    unprivileged_groups: Optional[list[dict[str, Any]]] = None
-    protected_attr: Optional[list[int]] = None
-    model_url: Optional[HttpUrl] = None
-    model_api_key: Optional[str] = None
+    true_labels = np.array(data.get("true_labels"))
+    predicted_labels = np.array(data.get("predicted_labels"))
 
-    # TODO: Refactor this to a better implementation
-    regression_flag: bool = False
+    if true_labels.shape != predicted_labels.shape:
+        raise ValueError("Shape mismatch: true_labels and predicted_labels must have the same shape.")
 
-    # Convert the 'true_labels' and 'predicted_labels' into np.arrays
-    @field_validator(
-        'input_features',
-        'confidence_scores',
-        'true_labels',
-        'predicted_labels',
-        'protected_attr',
-        mode='after'
-    )
-    
-    def convert_to_np_arrays(cls, v):
-        return nested_list_to_np(v)
+    accuracy = (true_labels == predicted_labels).mean()
+    ideal_accuracy = 1.0
+    accuracy_range = (0.0, 1.0)
+
+    return {
+        "computed_value": accuracy,
+        "ideal_value": ideal_accuracy,
+        "range": accuracy_range
+    }
 
 
-def metric_accuracy(info: CalculateRequest) -> float:
+def metric_custom_equalized_odds_difference(data: dict) -> dict:
     """
-    Calculate the accuracy of the model
+    Compute equalized odds difference from a dictionary.
 
-    :param info: CalculateRequest - contains information required to calculate the metric.
-        accuracy requires true_labels and predicted_labels to be provided.
+    :param data: dict - Dictionary containing required inputs.
+        equalized_odds_difference requires true_labels, predicted_labels, and protected_attr.
+
+    :return: dict - Dictionary containing the equalized odds difference.
     """
-    return (info.true_labels == info.predicted_labels).mean()
+    labels = np.array(data.get("true_labels"))
+    predictions = np.array(data.get("predicted_labels"))
+    groups = np.array(data.get("protected_attr"))
 
+    def rate(target_label, group):
+        """Compute TPR or FPR based on the target class and group."""
+        group_mask = (groups == group)
+        group_labels = labels[group_mask]
+        group_predictions = predictions[group_mask]
+
+        if target_label == 1:
+            tp = np.count_nonzero((group_labels == 1) & (group_predictions == 1))
+            fn = np.count_nonzero((group_labels == 1) & (group_predictions == 0))
+            total = tp + fn
+        else:
+            fp = np.count_nonzero((group_labels == 0) & (group_predictions == 1))
+            tn = np.count_nonzero((group_labels == 0) & (group_predictions == 0))
+            total = fp + tn
+
+        if total == 0:
+            return 0.0
+        return tp / total if target_label == 1 else fp / total
+
+    fpr_1 = rate(0, 1)
+    fpr_0 = rate(0, 0)
+    tpr_1 = rate(1, 1)
+    tpr_0 = rate(1, 0)
+
+    equalized_odds_diff = abs(abs(fpr_1 - fpr_0) - abs(tpr_1 - tpr_0))
+    ideal_equalized_odds_diff = 0.0
+    equalized_odds_diff_range = (-1 , 1.0)
+
+    return {
+        "computed_value": equalized_odds_diff,
+        "ideal_value": ideal_equalized_odds_diff,
+        "range": equalized_odds_diff_range
+    }
