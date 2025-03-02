@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import numpy as np
+import resource
 
 app = FastAPI()
 
@@ -182,6 +183,7 @@ async def compute_metric(data: ComputeUserMetricRequest):
     params_json = json.dumps(params)  # Serialize params to a JSON string
 
     # Command to execute the function inside the user's venv
+    # THIS HAS TO BE INDENTED AS SUCH TO WORK   
     command = [
         python_bin, "-c",
         f"""
