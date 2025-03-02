@@ -14,12 +14,12 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
     the input features.
     """
     masked_coefs, _ =  text_input_lime(info)
-
     print("Running expl_stability_text_input")
     # TODO: Refactor generate_synonym_perturbations to take in an np.array of strings rather than a single string
     synonym_coefs = []
     masked_coefs_resized = []
-
+    print(f"masked_coefs: {masked_coefs}")
+    print(f"masked_coefs.shape: {masked_coefs.shape}")
     for i in range(info.input_features.shape[0]):
         # Obtain the text input string to the model
         inp = info.input_features[i][0]
@@ -56,7 +56,8 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
     synonym_coefs = np.array(synonym_coefs)
     print(f"synonym_coefs: {synonym_coefs}")
     print(f"synonym_coefs.shape: {synonym_coefs.shape}")
-    masked_coefs_resized = np.array(masked_coefs_resized).reshape(-1, masked_coefs.shape[-1])
+    masked_coefs_resized = np.array(masked_coefs_resized)
+    masked_coefs_resized.reshape(-1, masked_coefs_resized.shape[-1])
     print(f"masked_coefs_resized: {masked_coefs_resized}")
     print(f"masked_coefs_resized.shape: {masked_coefs_resized.shape}")
 
