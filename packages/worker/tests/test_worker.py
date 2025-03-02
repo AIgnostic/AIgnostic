@@ -35,7 +35,7 @@ def test_fetch_job_success():
     mock_body = (
         Batch(
             job_id=str(uuid.uuid4()),
-            batch_id=uuid.uuid4(),
+            batch_id=str(uuid.uuid4()),
             batch_size=10,
             metrics=MetricCalculationJob(
                 data_url="http://example.com/data",
@@ -45,6 +45,7 @@ def test_fetch_job_success():
                 metrics=["accuracy"],
                 model_type="binary classification",
             ),
+            total_sample_size=500,
         )
         .json()
         .encode("utf-8")
@@ -106,7 +107,7 @@ def test_queue_error():
 async def test_process_job_success(mock_calculate_metrics):
     job = Batch(
         job_id=str(uuid.uuid4()),
-        batch_id=uuid.uuid4(),
+        batch_id=str(uuid.uuid4()),
         batch_size=1,
         metrics=MetricCalculationJob(
             data_url="http://example.com/data",
@@ -116,6 +117,7 @@ async def test_process_job_success(mock_calculate_metrics):
             metrics=["accuracy"],
             model_type="binary classification",
         ),
+        total_sample_size=500,
     )
 
     with patch.object(

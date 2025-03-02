@@ -248,6 +248,7 @@ class Worker:
                 protected_attr=[random.randint(0, 1) for _ in range(len(true_labels))],
                 model_url=metrics_data.model_url,
                 model_api_key=metrics_data.model_api_key,
+                total_sample_size=batch.total_sample_size,
             )
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")

@@ -121,6 +121,7 @@ class Dispatcher:
                 batch_id=str(uuid.uuid4()),
                 batch_size=running_job.job_data.batch_size,
                 metrics=running_job.job_data.metrics,
+                total_sample_size=running_job.job_data.total_sample_size,
             )
             await self.dispatch_batch(job_id, batch)
             logger.debug(f"Updating Redis for job {job_id}")

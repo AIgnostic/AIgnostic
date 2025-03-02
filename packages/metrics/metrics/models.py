@@ -57,6 +57,8 @@ class CalculateRequest(BaseModel):
     # TODO: Refactor this to a better implementation
     regression_flag: bool = False
 
+    total_sample_size: int
+
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @field_validator(
         "input_features",

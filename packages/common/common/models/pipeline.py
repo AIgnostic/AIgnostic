@@ -65,7 +65,6 @@ class PipelineJob(BaseModel):
     """Size of each batch"""
 
     @property
-    @computed_field
     def total_sample_size(self) -> int:
         """Tell us the total samples needed for this job - batch size * number of batches"""
         return self.batches * self.batch_size
@@ -110,6 +109,9 @@ class Batch(BaseModel):
 
     batch_size: int
     """Size of the batch to process"""
+
+    total_sample_size: int
+    """Total samples in the batch"""
 
     metrics: MetricCalculationJob
     """Data for the metrics this Batch should calculate (from the Job)"""

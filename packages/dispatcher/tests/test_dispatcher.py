@@ -142,6 +142,7 @@ async def test_dispatch_batch_dispatches(mock_connection, sample_job):
         batch_id=str(uuid.uuid4()),
         batch_size=10,
         metrics=sample_job.metrics,
+        total_sample_size=100,
     )
 
     # Call dispatch_batch with the job_id and the batch
