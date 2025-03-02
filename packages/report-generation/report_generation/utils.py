@@ -113,10 +113,8 @@ def get_legislation_extracts(metrics_data: dict) -> list[dict] :
             [p.replace(" ", "_") for p in property_to_metrics[property]]
         )
         common_metrics = computed_metrics.intersection(property_metrics)
-        print("Setting property")
         property_result["property"] = property
 
-        print("Setting computed metrics")
         if common_metrics:
             property_result["computed_metrics"] = [
                 {
@@ -131,7 +129,6 @@ def get_legislation_extracts(metrics_data: dict) -> list[dict] :
         else:
             property_result["computed_metrics"] = []
 
-        print("Setting legislation extracts")
         property_result["legislation_extracts"] = []
         for regulations in property_to_regulations[property]:
             article_content = extract_legislation_text(regulations)
