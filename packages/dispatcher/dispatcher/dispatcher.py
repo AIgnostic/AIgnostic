@@ -69,7 +69,7 @@ class Dispatcher:
     async def dispatch_batch(self, user_id: str, job_data: Batch):
         # TODO: Add error handling
         # TODO: Different queue
-        """Dispatch a single batch for the given user id"""
+        """Dispatch a single batch for the given job id"""
         logger.info(f"Dispatching batch for job {user_id}")
         self._channel.basic_publish(
             exchange="",
@@ -79,7 +79,7 @@ class Dispatcher:
         logger.info(f"Batch dispatched for job {user_id}")
 
     async def dispatch_as_required(self, job_id: str):
-        """Given a user id, lookup currently running jobs and dispatch as required"""
+        """Given a job id, lookup currently running jobs and dispatch until pending batches == max batches"""
         logger.info(f"Dispatching as required for job {job_id}")
         # Get the running job
         running_job = await self.get_job(job_id)
@@ -130,10 +130,8 @@ class Dispatcher:
 
         logger.info(f"Dispatched {batches_to_dispatch} new batches for job {job_id}.")
 
-    def _get_job_redis_key(self, user_id: str) -> str:
-        return redis_key("jobs", user_id)
-
     async def process_new_job(self, job: PipelineJob):
+        """Called when a new job is received to setup the job in redis and start processing"""
         logger.info(f"Processing job: {job}")
         logger.info(f"Preparing data to run job {job.job_id}")
         # Create object in redis
@@ -151,6 +149,7 @@ class Dispatcher:
         await self.dispatch_as_required(running_job.job_data.job_id)
 
     async def handle_job_completion(self, msg: JobCompleteMessage):
+        """Handle a job completion message"""
         logger.info(f"Handling job completion: {msg}")
         # Get the running job
         running_job = await self.get_job(msg.job_id)
@@ -178,18 +177,25 @@ class Dispatcher:
                 # Update
                 await self.update_job(msg.job_id, running_job)
 
+    def _get_job_redis_key(self, job_id: str) -> str:
+        """Return the key to reference a job in redis"""
+        return redis_key("jobs", job_id)
+
     async def update_job(self, job_id: str, running_job: RunningJob):
+        """Update a job in redis"""
         await self._redis_client.set(
             self._get_job_redis_key(job_id), running_job.model_dump_json()
         )
 
     async def get_job(self, job_id: str) -> RunningJob | None:
+        """Get a job from redis"""
         job = await self._redis_client.get(self._get_job_redis_key(job_id))
         if job:
             return RunningJob(**json.loads(job))
         return None
 
     async def run(self):
+        """Main dispatcher loop"""
         logger.info("Dispatcher running...")
         while True:
             try:
