@@ -12,6 +12,7 @@ from metrics.exceptions import (
     ModelQueryException,
     DataProvisionException
 )
+from random import sample
 from metrics.utils import (
     _query_model
 )
@@ -25,7 +26,7 @@ MIN_AVERAGE_SENTENCE_LENGTH = 3
 MASK_WORD = "[MASK]"
 DEFAULT_ENCODER = "sentence-transformers/distiluse-base-multilingual-cased-v1"
 
-def generate_synonym_perturbations(sentence: str, mask=MASK_WORD) -> list[str]:
+def generate_synonym_perturbations(sentence: str, mask=MASK_WORD, limit=10) -> list[str]:
     """
     Given a sentence, generate a list of sentences where one word is replaced by a synonym.
     """
@@ -45,6 +46,8 @@ def generate_synonym_perturbations(sentence: str, mask=MASK_WORD) -> list[str]:
             perturbed_words[i] = syn
             perturbed_sentence = " ".join(perturbed_words)
             perturbations.append(perturbed_sentence)
+    # TODO: Sample in a more effective way than random sampling
+    perturbations = sample(perturbations, min(limit, len(perturbations)))
     return perturbations
 
 
@@ -247,11 +250,12 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     perturbed_samples = generate_masked_sequences(info.input_features, num_masked_per_sentence=ceil(average_sentence_length / 10))
     # Required later to map inputs to masked inputs
     num_perturbations_per_sample = perturbed_samples.shape[1]
-
+    print(f"num_perturbations_per_sample: {num_perturbations_per_sample}")
+    print(f"average_sentence_length: {average_sentence_length}")
+    print(f"average_sentence_length / 10: {average_sentence_length / 10}")
     # Flatten the array and reshape to 2D (convert from (N, 10) to (N*10, 1))
     # This allows us to query the model API with all perturbed samples at once in a way compatible with the expected implementation
     perturbed_samples = np.array(perturbed_samples).reshape(-1).reshape(-1, 1)
-
     # TODO: Consider batching inputs to the model API
     response: ModelResponse = _query_model(perturbed_samples, info)
 
@@ -259,7 +263,7 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     # outputs.shape = (num_samples * num_perturbations_per_sample, 1) if regression
     # outputs.shape = (num_samples * num_perturbations_per_sample, num_classes) if classification
     outputs = response.predictions if info.regression_flag else response.confidence_scores
- 
+
     # outputs should only be None if it we use confidence_scores as pydantic enforces predictions are present
     if outputs is None:
         raise ModelQueryException(
@@ -276,7 +280,7 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
 
     # Choose cosine similarity for text inputs as they involve large embedding spaces
     cosine_similarities = embedding_perturbation_cosine_similarities(feature_embeddings, perturbed_embeddings)
-
+    print(f"cosine_similarities.shape: {cosine_similarities.shape}")
     # Small constant for numerical stability
     epsilon = 1e-10
 
