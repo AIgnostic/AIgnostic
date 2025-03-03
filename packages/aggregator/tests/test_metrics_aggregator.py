@@ -1,6 +1,6 @@
 from aggregator.aggregator import MetricsAggregator
 from common.models import MetricValue, MetricsPackageExceptionModel
-
+from unittest.mock import patch, MagicMock
 
 def test_initial_state():
     """Test that the initial state of MetricsAggregator is correct."""

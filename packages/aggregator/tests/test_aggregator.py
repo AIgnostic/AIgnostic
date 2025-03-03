@@ -5,7 +5,9 @@ from aggregator.aggregator import (
     RESULT_QUEUE,
     MetricsAggregator,
     ResultsConsumer,
+    aggregator_final_report_log,
     aggregator_generate_report,
+    generate_and_send_report,
     get_api_key,
     on_result_fetched,
     aggregator_intermediate_metrics_log,
@@ -18,6 +20,7 @@ from aggregator.aggregator import (
     manager,
 )
 import json
+from common.models import AggregatorJob, JobType, WorkerError
 
 
 @pytest.fixture(scope="module")
@@ -128,6 +131,20 @@ def test_run_keyboard_interrupt(
 
     # Ensure that stop() is called when KeyboardInterrupt occurs
     mock_stop.assert_called_once()
+
+
+def test_on_result_fetched_for_error():
+    body = AggregatorJob(
+        job_type=JobType.ERROR,
+        content=WorkerError(
+            error_message="An error occurred",
+            error_code=500
+        )
+    )
+    bodyJson = body.model_dump_json()
+    with patch("aggregator.aggregator.process_error_result", new_callable=MagicMock) as mock_process_error_result:
+        on_result_fetched(None, None, None, bodyJson)
+        mock_process_error_result.assert_called_once_with(error_data=body.content)
 
 
 @patch('aggregator.aggregator.manager.send_to_user')
@@ -278,6 +295,37 @@ def test_send_to_clients_with_clients():
 #         assert "properties" in report
 #         assert "info" in report
 #         mock_generate_report.assert_called_once_with(metrics, "test_value")
+
+
+def test_generate_and_send_report():
+    aggregates = {
+        "accuracy": {
+            "computed_value": 0.85,
+            "ideal_value": 1.0,
+            "range": [0.0, 1.0]
+        },
+        "precision": {
+            "computed_value": 0.15,
+            "ideal_value": 1.0,
+            "range": [0.0, 1.0]
+        }
+    }
+
+    aggregator = MagicMock()
+
+    with patch("aggregator.aggregator.aggregator_generate_report", new_callable=MagicMock) as mock_aggregator_generate_report, \
+                patch.object(manager, "send_to_user") as mock_send_to_user:
+        # Call function under test
+
+        mock_return_report = {"properties": [], "info": {}}
+        mock_aggregator_generate_report.return_value = mock_return_report
+        
+        generate_and_send_report("user123", aggregates, aggregator)
+
+        # Ensure aggregator_generate_report is called
+        mock_aggregator_generate_report.assert_called_once_with(aggregates, aggregator)
+        mock_send_to_user.assert_called_once_with("user123", aggregator_final_report_log(mock_return_report))
+
 
 @patch("aggregator.aggregator.get_legislation_extracts")
 @patch("aggregator.aggregator.add_llm_insights")
