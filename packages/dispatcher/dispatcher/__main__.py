@@ -8,6 +8,7 @@ from dispatcher.dispatcher import Dispatcher
 
 from common.redis.connect import connect_to_redis
 from pika import BlockingConnection
+from worker.worker import RABBIT_MQ_HOST
 import redis as redis
 
 from common.rabbitmq.connect import connect_to_rabbitmq
@@ -18,6 +19,7 @@ logger = logging.getLogger("dispatcher")
 # gloals
 REDIS_HOST = getenv("REDIS_HOST", "localhost")
 REDIS_PORT = getenv("REDIS_PORT", 6379)
+RABBIT_MQ_HOST = getenv("RABBITMQ_HOST", "localhost")
 
 
 def redis_connect() -> redis.Redis:
@@ -30,7 +32,7 @@ def redis_connect() -> redis.Redis:
 
 def rabbitmq_connect() -> BlockingConnection:
     logger.info("Connecting to rabbitmq...")
-    return connect_to_rabbitmq()
+    return connect_to_rabbitmq(host=RABBIT_MQ_HOST)
 
 
 def startup() -> Tuple[BlockingConnection, redis.Redis]:

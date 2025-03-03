@@ -4,7 +4,7 @@ from typing import Optional
 import uuid
 
 from common.models.pipeline import Batch, JobStatusMessage, JobStatus, PipelineJob
-from common.rabbitmq.constants import BATCH_QUEUE, JOB_QUEUE
+from common.rabbitmq.constants import BATCH_QUEUE, JOB_QUEUE, STATUS_QUEUE
 from dispatcher.models import RunningJob
 from dispatcher.utils import redis_key
 from worker.worker import WorkerException
@@ -259,20 +259,26 @@ class Dispatcher:
             job_data = json.loads(body)
             logger.info(f"Received status update: {job_data}")
             logger.debug("Unpacking status update")
-            return JobStatusMessage(**job_data)
+            msg = JobStatusMessage(**job_data)
+            self.handle_job_completion(msg)
         except ValueError as e:
             self.handle_status_unpack_error(e)
 
     def run(self):
         """Main dispatcher loop"""
         logger.info("Dispatcher running...")
-        while True:
-            try:
-                job = self.fetch_job()
-            except WorkerException as e:
-                logger.error(f"Error unpacking job: {e}")
-                logger.error("Waiting for next job...")
-                continue
 
-            if job:
-                self.process_new_job(job)
+        def job_callback(channel, method, properties, body):
+            self.got_job(channel, method, properties, body)
+
+        def status_callback(channel, method, properties, body):
+            self.got_status(channel, method, properties, body)
+
+        self._channel.basic_consume(
+            queue=JOB_QUEUE, on_message_callback=job_callback, auto_ack=True
+        )
+        self._channel.basic_consume(
+            queue=STATUS_QUEUE, on_message_callback=status_callback, auto_ack=True
+        )
+        # Block
+        self._channel.start_consuming()
