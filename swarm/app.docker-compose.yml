@@ -50,6 +50,14 @@ services:
     depends_on:
       - api_router
 
+  user_added_metrics:
+    container_name: user_added_metrics
+    image: ghcr.io/aignostic/useraddedmetrics:latest
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+
 networks:
   aignostic_network:
     driver: overlay
