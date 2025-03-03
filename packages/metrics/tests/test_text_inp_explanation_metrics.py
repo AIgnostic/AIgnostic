@@ -40,7 +40,8 @@ def test_ntg_explanation_stability(apply_server_factory):
         input_features=TEST_INPUT.features,
         confidence_scores=model_resp["confidence_scores"],
         model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-hs",
-        model_api_key="None"
+        model_api_key="None",
+        task_name="text_classification",
     )
 
     hs_result = calculate_metrics(hs_info)
@@ -59,6 +60,8 @@ def test_ntg_explanation_stability(apply_server_factory):
         input_features=TEST_INPUT.features,
         confidence_scores=model_resp["confidence_scores"],
         model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-ls",
+        model_api_key="None",
+        task_name="text_classification",
     )
 
     ls_result = calculate_metrics(ls_info)
@@ -86,6 +89,8 @@ def test_high_stability_score(apply_server_factory):
         input_features=TEST_INPUT.features,
         confidence_scores=model_resp["confidence_scores"],
         model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-hs",
+        model_api_key="None",
+        task_name="text_classification"
     )
 
     hs_result = calculate_metrics(hs_info)

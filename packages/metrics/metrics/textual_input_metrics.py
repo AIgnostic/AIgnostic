@@ -28,18 +28,25 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         inp = info.input_features[i][0]
 
         # Obtain the confidence scores for the model
-        targets = info.confidence_scores[i]
+        if info.task_name in ['next_token_gen', 'regression']:
+            targets = info.predicted_labels
+        else:
+            targets = info.confidence_scores
 
         # Generate synonym perturbations for one input at a time - shape = (num_perturbations, 1)
         synonym_sentences = np.array(generate_synonym_perturbations(inp)).reshape(-1, 1)
 
         # Obtain the LIME coefficients for the synonym perturbations
         temp_input_features = info.input_features
-        temp_c_scores = info.confidence_scores
+
+        temp_scores = targets
 
         # Duplicate the confidence scores for the synonym perturbations shape = (num_perturbations, c)
         # where c is the number classes in the model
-        info.confidence_scores = np.array([[targets]] * synonym_sentences.shape[0])
+        if info.task_name in ['next_token_gen', 'regression']:
+            info.predicted_labels = np.array([[targets]] * synonym_sentences.shape[0])
+        else:
+            info.confidence_scores = np.array([[targets]] * synonym_sentences.shape[0])
         info.input_features = synonym_sentences
 
         mask_with_synonyms_coefs, _ = text_input_lime(info)
@@ -53,7 +60,10 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         # Reset the input features and confidence scores to the original values after
         # obtaining the LIME coefficients for the synonym perturbations
         info.input_features = temp_input_features
-        info.confidence_scores = temp_c_scores
+        if info.task_name in ['next_token_gen', 'regression']:
+            info.predicted_labels = temp_scores
+        else:
+            info.confidence_scores = temp_scores
 
     synonym_coefs = np.array(synonym_coefs)
     masked_coefs_resized = np.array(masked_coefs_resized)
