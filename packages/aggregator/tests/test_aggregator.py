@@ -313,17 +313,17 @@ def test_generate_and_send_report():
 
     aggregator = MagicMock()
 
-    with patch("aggregator.aggregator.aggregator_generate_report", new_callable=MagicMock) as mock_aggregator_generate_report, \
-                patch.object(manager, "send_to_user") as mock_send_to_user:
+    with patch("aggregator.aggregator.aggregator_generate_report", new_callable=MagicMock) as mock_rep_gen, \
+         patch.object(manager, "send_to_user") as mock_send_to_user:
         # Call function under test
 
         mock_return_report = {"properties": [], "info": {}}
-        mock_aggregator_generate_report.return_value = mock_return_report
-        
+        mock_rep_gen.return_value = mock_return_report
+
         generate_and_send_report("user123", aggregates, aggregator)
 
         # Ensure aggregator_generate_report is called
-        mock_aggregator_generate_report.assert_called_once_with(aggregates, aggregator)
+        mock_rep_gen.assert_called_once_with(aggregates, aggregator)
         mock_send_to_user.assert_called_once_with("user123", aggregator_final_report_log(mock_return_report))
 
 
