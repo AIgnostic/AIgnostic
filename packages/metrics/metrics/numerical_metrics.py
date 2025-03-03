@@ -531,4 +531,6 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     return roc_auc_score(labels, scores)
 
 def hello_score(info: CalculateRequest) -> float:
+    print("True Labels:", info.true_labels)
+    print("Predicted Labels:", info.predicted_labels)
     return 0.6
