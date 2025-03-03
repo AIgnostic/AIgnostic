@@ -224,8 +224,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
                       </div>
                       :
                       <MetricBar 
-                        // Note that the range can include nulls to represent infinities.
-                        // So replace here
+
                         min={metric_info.range[0]} 
                         max={metric_info.range[1]}
                         actual={metric_info.value}

@@ -28,12 +28,12 @@ const MetricBar: React.FC<MetricBarProps> = ({
 
   const minLabel = minValue === -Infinity ? "-∞" : minValue;
   if (minValue === -Infinity) {
-    minValue = idealValue - Math.abs(idealValue - value) * 2;
+    minValue = idealValue - Math.max(1,Math.abs(idealValue - value)) * 2;
   }
 
   const maxLabel = maxValue === Infinity ? "∞" : maxValue;
   if (maxValue === Infinity) {
-    maxValue = idealValue + Math.abs(idealValue - value) * 2;
+    maxValue = idealValue + Math.max(1,Math.abs(idealValue - value)) * 2;
   }
 
   const marks = [
