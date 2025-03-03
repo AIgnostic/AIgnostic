@@ -183,7 +183,7 @@ def test_invalid_job_format_raises_worker_exception():
         job_dict.pop("metrics")  # now an invalid Job
 
         mock_channel.basic_get.return_value = (MagicMock(), MagicMock(), json.dumps(job_dict).encode("utf-8"))
-        
+
         with pytest.raises(WorkerException):
             worker.fetch_job()
             mock_channel.basic_get.assert_called_once()
@@ -197,7 +197,7 @@ async def test_fetch_data_http_error_gives_worker_exception(mock_get):
     mock_response.raise_for_status.side_effect = HTTPError("HTTP Error")
     mock_get.return_value = mock_response
 
-    with pytest.raises(WorkerException) as excinfo:
+    with pytest.raises(WorkerException):
         await worker.fetch_data("http://example.com/data", "data_key", 1)
 
 
@@ -230,7 +230,7 @@ async def test_query_model_http_error_gives_worker_exception(mock_post):
         group_ids=[1]
     )
 
-    with pytest.raises(WorkerException) as excinfo:
+    with pytest.raises(WorkerException):
         await worker.query_model("http://example.com/predict", mock_data, "model_key")
 
 
@@ -250,7 +250,7 @@ async def test_query_model_invalid_data_format_gives_worker_exception(mock_post)
     )
     with pytest.raises(WorkerException) as excinfo:
         await worker.query_model("http://example.com/predict", mock_data, "model_key")
-    
+
     assert "Could not parse model response" in str(excinfo.value)
 
 

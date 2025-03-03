@@ -82,8 +82,10 @@ class MetricsAggregator:
             else:
                 if self.metrics[metric]["error"]:
                     # If there was a previous error, skip update
+                    self.metrics[metric]["count"] += batch_size
                     continue
                 if isinstance(metric_value_obj, MetricsPackageExceptionModel):
+                    self.metrics[metric]["count"] += batch_size
                     self.metrics[metric]["error"] = metric_value_obj.error_message
                     continue
 
