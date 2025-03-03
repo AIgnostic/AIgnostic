@@ -99,7 +99,6 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=Fa
 
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
-    print(f"Model Response = {response}")
     # Compute model probabilities for perturbed samples
     outputs = response.predictions if (info.regression_flag or esp) else response.confidence_scores
 
@@ -132,6 +131,19 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
     Returns:
     - response : Response from the model API
     """
+    if generated_input_features.ndim != 2:
+        raise ModelQueryException(
+            detail="Input features must be a 2D array",
+            status_code=400
+        )
+    elif info.task_name == "text_classification" and generated_input_features.shape[1] != 1:
+        raise ModelQueryException(
+            detail=(
+                "Input features must be of shape (N, 1) for text samples, "
+                f"but received shape {generated_input_features.shape}",
+            ),
+            status_code=400
+        )
 
     model_input = ModelInput(
         features=generated_input_features.tolist(),
@@ -139,6 +151,7 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
         group_ids=np.zeros(len(generated_input_features), dtype=int).tolist(),
     )
 
+    print(f"Attempting to query model at {info.model_url}")
     if info.model_api_key is None:
         response = requests.post(url=info.model_url, json=model_input.model_dump(mode="json"))
     else:
@@ -147,6 +160,8 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
             json=model_input.model_dump(mode="json"),
             headers={"Authorization": f"Bearer {info.model_api_key}"},
         )
+
+    print(response)
 
     try:
         response.raise_for_status()
