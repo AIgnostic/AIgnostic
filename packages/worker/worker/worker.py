@@ -9,39 +9,30 @@ Each worker:
 """
 
 import os
-from common.models.common import Job
+import json
+import asyncio
+import random
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from metrics.models import WorkerResults
 import requests
 from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
-import json
 from typing import Optional
-import asyncio
-from common.models import CalculateRequest, MetricConfig
-import random
-
+from common.models import (
+    Job,
+    CalculateRequest,
+    DatasetResponse,
+    ModelResponse,
+    AggregatorJob,
+    JobType,
+    WorkerError,
+)
 from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
+from metrics.models import WorkerException
+from pydantic import ValidationError
 
-from pika.adapters.blocking_connection import BlockingChannel
 
-
-connection = None
-channel: BlockingChannel = None
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
-
-
-class WorkerException(Exception):
-    def __init__(self, detail: str, status_code: int = 500):
-        """Custom exception class for workers
-
-        Args:
-            detail (str): Description of error that occured
-            status_code (int, optional): HTTP status code to report back to the client. Defaults to 500.
-        """
-        self.detail = detail
-        self.status_code = status_code
-        super().__init__(self.detail)
 
 
 class Worker():
@@ -66,21 +57,28 @@ class Worker():
         init_queues(self._channel)
         print("Connection established to RabbitMQ")
 
-    def queue_result(self, result: MetricConfig):
+    def queue_result(self, result: WorkerResults):
         """
         Function to queue the results of a job
         """
+        job = AggregatorJob(job_type=JobType.RESULT, content=result)
         self._channel.basic_publish(
-            exchange="", routing_key=RESULT_QUEUE, body=result.model_dump_json()
+            exchange="", routing_key=RESULT_QUEUE, body=job.model_dump_json()
         )
-        print("Result: ", result)
 
-    def queue_error(self, error: str):
+    def queue_error(self, error: WorkerError):
         """
         Function to queue an error message
         """
+        job = AggregatorJob(job_type=JobType.ERROR,
+                            content=WorkerError(
+                                error_message=error,
+                                error_code=500,
+                            ))
         self._channel.basic_publish(
-            exchange="", routing_key=RESULT_QUEUE, body=json.dumps({"error": error})
+            exchange="",
+            routing_key=RESULT_QUEUE,
+            body=job.model_dump_json(),
         )
 
     def close(self):
@@ -97,11 +95,11 @@ class Worker():
             try:
                 print("Unpacking job data")
                 return Job(**job_data)
-            except ValueError as e:
+            except (ValueError, ValidationError) as e:
                 raise WorkerException(f"Invalid job format: {e}", status_code=400)
         return None
 
-    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> dict:
+    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> DatasetResponse:
         """
         Helper function to fetch data from the dataset API
 
@@ -128,14 +126,13 @@ class Worker():
 
         try:
             # Parse the response JSON
-            data = response.json()
-
+            dataset_response = DatasetResponse(**response.json())
             # Return the data
-            return data
-        except Exception as e:
-            raise WorkerException(f"Error while fetching data: {e}")
+            return dataset_response
+        except ValidationError as e:
+            raise WorkerException(f"Data error - data returned from data provider of incorrect format: \n{e}")
 
-    async def query_model(self, model_url: HttpUrl, data: dict, model_api_key):
+    async def query_model(self, model_url: HttpUrl, data: DatasetResponse, model_api_key) -> ModelResponse:
         """
         Helper function to query the model API
 
@@ -146,31 +143,36 @@ class Worker():
         """
         # Send a POST request to the model API
         if model_api_key is None:
-            response = requests.post(url=model_url, json=data)
+            response = requests.post(url=model_url, json=data.model_dump_json())
         else:
             response = requests.post(
                 url=model_url,
-                json=data,
+                json=data.model_dump(),
                 headers={"Authorization": f"Bearer {model_api_key}"},
             )
 
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise WorkerException(
-                detail=e.response.json()["detail"], status_code=e.response.status_code
-            )
-
-        self._check_model_response(response, data["labels"])
+            if e.response and e.response.json():
+                raise WorkerException(
+                    detail=e.response.json()["detail"], status_code=e.response.status_code
+                )
+            else:
+                raise WorkerException(
+                    detail="HTTP Exception", status_code=400
+                )
 
         try:
             # Check if the request was successful
 
             # Parse the response JSON
-            data = response.json()
+            model_response = ModelResponse(**response.json())
+            print(f"Model response: {model_response}")
+            self._check_model_response(model_response.predictions, data.labels)
 
-            # Return the data
-            return data
+            # Return the model response
+            return model_response
         except Exception as e:
             raise WorkerException(
                 f"Could not parse model response - {e}; response = {response.text}"
@@ -178,30 +180,17 @@ class Worker():
 
     async def process_job(self, job: Job):
 
-        # fetch data from datasetURL
-        data: dict = await self.fetch_data(job.data_url, job.data_api_key, job.batch_size)
-
-        # strip the label from the datapoint
         try:
-            features = data["features"]
-            true_labels = data["labels"]
-            group_ids = data["group_ids"]
-        except KeyError:
-            raise WorkerException("KeyError occurred during data processing")
-        except Exception:
-            raise WorkerException("Error while processing data")
+            # fetch data from datasetURL
+            dataset_response = await self.fetch_data(job.data_url, job.data_api_key, job.batch_size)
 
-        # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
+            # query model at modelURL
+            # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
+            # TODO: Refactor to use pydantic models
+            model_response = await self.query_model(job.model_url, dataset_response, job.model_api_key)
 
-        # TODO: Refactor to use pydantic models
-        predictions = await self.query_model(
-            job.model_url,
-            {"features": features, "labels": true_labels, "group_ids": group_ids},
-            job.model_api_key,
-        )
-
-        try:
-            predicted_labels = predictions["predictions"]
+            true_labels = dataset_response.labels
+            predicted_labels = model_response.predictions
 
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
@@ -214,19 +203,20 @@ class Worker():
             elif job.model_type == "multi_class_classification":
                 predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, true_labels)
 
+            print(f"Metrics to compute: {job.metrics}")
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
-            print(f"Confidence scores: {predictions['confidence_scores']}")
+            print(f"Confidence scores: {model_response.confidence_scores}")
 
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
                 metrics=job.metrics,
                 batch_size=job.batch_size,
-                input_features=features,
+                input_features=dataset_response.features,
                 total_sample_size=job.total_sample_size,
                 true_labels=true_labels,
                 predicted_labels=predicted_labels,
-                confidence_scores=predictions["confidence_scores"],
+                confidence_scores=model_response.confidence_scores,
                 # TODO: Do this group stuff properly
                 privileged_groups=[{"protected_attr": 1}],
                 unprivileged_groups=[{"protected_attr": 0}],
@@ -234,14 +224,22 @@ class Worker():
                 model_url=job.model_url,
                 model_api_key=job.model_api_key,
             )
+
+            # Calculate metrics
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")
             # add user_id to the results
             worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id)
             self.queue_result(worker_results)
             return
+        except WorkerException as e:
+            # known/caught error
+            # should be sent back to user
+            self.queue_error(WorkerError(error_message=e.detail, error_code=e.status_code))
         except Exception as e:
-            raise WorkerException(f"Error while processing data: {e}")
+            # unknown/uncaught error
+            # should be raised to be dealt with
+            raise WorkerException(f"Unhandled error while processing job: {e}")
 
     def run(self):
         self.connect()
@@ -255,7 +253,7 @@ class Worker():
             print("Worker stopped")
 
     # TODO: Write a doc explaining error messages and what checking is/isn't supported
-    def _check_model_response(self, response, labels):
+    def _check_model_response(self, predictions, labels):
         """
         PRE: response is received from a deserialised pydantic model and labels and types
         have been enforced according to ModelOutput.
@@ -269,7 +267,6 @@ class Worker():
         Params:
         - response : Response object from the model API
         """
-        predictions = response.json()["predictions"]
         if len(predictions) != len(labels):
             raise WorkerException(
                 "Number of model outputs does not match expected number of labels",

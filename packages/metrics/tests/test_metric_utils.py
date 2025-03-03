@@ -6,7 +6,7 @@ from metrics.utils import (
 from metrics.exceptions import ModelQueryException
 from metrics.models import CalculateRequest
 from common.models import (
-    ModelInput,
+    DatasetResponse,
     ModelResponse
 )
 from unittest.mock import patch, MagicMock
@@ -118,7 +118,7 @@ def test_query_model_success(mock_post):
     # Assert
     mock_post.assert_called_once_with(
         url=info.model_url,
-        json=ModelInput(
+        json=DatasetResponse(
             features=generated_input_features.tolist(),
             labels=np.zeros((len(generated_input_features), 1)).tolist(),
             group_ids=np.zeros(len(generated_input_features), dtype=int).tolist(),

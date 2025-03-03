@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from common.models import ModelInput, ModelResponse
+from common.models import DatasetResponse, ModelResponse
 
 app: FastAPI = FastAPI()
 app.add_middleware(
@@ -35,7 +35,7 @@ EXPECTED_GRADIENT = [
 
 
 @app.post('/predict', response_model=ModelResponse)
-async def predict(input_data: ModelInput):
+async def predict(input_data: DatasetResponse):
     try:
         predictions = [INPUTS_TO_LABELS[tuple(row)] for row in input_data.features]
         return ModelResponse(

@@ -5,7 +5,9 @@ from aggregator.aggregator import (
     RESULT_QUEUE,
     MetricsAggregator,
     ResultsConsumer,
+    aggregator_final_report_log,
     aggregator_generate_report,
+    generate_and_send_report,
     get_api_key,
     on_result_fetched,
     aggregator_intermediate_metrics_log,
@@ -18,6 +20,7 @@ from aggregator.aggregator import (
     manager,
 )
 import json
+from common.models import AggregatorJob, JobType, WorkerError
 
 
 @pytest.fixture(scope="module")
@@ -130,8 +133,22 @@ def test_run_keyboard_interrupt(
     mock_stop.assert_called_once()
 
 
+def test_on_result_fetched_for_error():
+    body = AggregatorJob(
+        job_type=JobType.ERROR,
+        content=WorkerError(
+            error_message="An error occurred",
+            error_code=500
+        )
+    )
+    bodyJson = body.model_dump_json()
+    with patch("aggregator.aggregator.process_error_result", new_callable=MagicMock) as mock_process_error_result:
+        on_result_fetched(None, None, None, bodyJson)
+        mock_process_error_result.assert_called_once_with(error_data=body.content)
+
+
 @patch('aggregator.aggregator.manager.send_to_user')
-@patch('aggregator.aggregator.generate_report')
+@patch('aggregator.aggregator.generate_and_send_report')
 def test_on_result_fetched(mock_generate_report, mock_send_to_user):
     # Create dummy RabbitMQ parameters (not used in logic).
     mock_channel = MagicMock()
@@ -140,21 +157,26 @@ def test_on_result_fetched(mock_generate_report, mock_send_to_user):
 
     # Define sample incoming message with a user_id.
     sample_message = {
-        "user_id": "user123",
-        "total_sample_size": 20,
-        "batch_size": 10,
-        "metric_values": {
-            "accuracy": {
-                "computed_value": 0.85,
-                "ideal_value": 1.0,
-                "range": [0.0, 1.0]
-            },
-            "precision": {
-                "computed_value": 0.15,
-                "ideal_value": 1.0,
-                "range": [0.0, 1.0]
+        "job_type": "RESULT",
+        "content": {
+            "user_id": "user123",
+            "total_sample_size": 20,
+            "batch_size": 10,
+            "metric_values": {
+                "accuracy": {
+                    "computed_value": 0.85,
+                    "ideal_value": 1.0,
+                    "range": [0.0, 1.0]
+                },
+                "precision": {
+                    "computed_value": 0.15,
+                    "ideal_value": 1.0,
+                    "range": [0.0, 1.0]
+                }
             }
+
         }
+
     }
     message_body = json.dumps(sample_message)
 
@@ -258,21 +280,74 @@ def test_send_to_clients_with_clients():
     mock_client2.send.assert_called_once()
 
 
-@patch("aggregator.aggregator.generate_report")
-def test_aggregate_report(mock_generate_report):
+# @patch("aggregator.aggregator.aggregator_generate_report")
+# def test_aggregate_report(mock_generate_report):
+#     # Mock metrics data
+#     metrics = {"accuracy": 0.85, "precision": 0.15}
+
+#     # Mock report generation functions
+#     mock_generate_report.return_value = {"properties" : [], "info" : {}}
+#     with patch.dict("os.environ", {"GOOGLE_API_KEY": "test_value"}):
+#         # Call function under test
+#         report = generate_and_send_report("mock_uuid", metrics, metrics_aggregator)
+
+#         # Ensure report is generated correctly
+#         assert "properties" in report
+#         assert "info" in report
+#         mock_generate_report.assert_called_once_with(metrics, "test_value")
+
+
+def test_generate_and_send_report():
+    aggregates = {
+        "accuracy": {
+            "computed_value": 0.85,
+            "ideal_value": 1.0,
+            "range": [0.0, 1.0]
+        },
+        "precision": {
+            "computed_value": 0.15,
+            "ideal_value": 1.0,
+            "range": [0.0, 1.0]
+        }
+    }
+
+    aggregator = MagicMock()
+
+    with patch("aggregator.aggregator.aggregator_generate_report", new_callable=MagicMock) as mock_rep_gen, \
+         patch.object(manager, "send_to_user") as mock_send_to_user:
+        # Call function under test
+
+        mock_return_report = {"properties": [], "info": {}}
+        mock_rep_gen.return_value = mock_return_report
+
+        generate_and_send_report("user123", aggregates, aggregator)
+
+        # Ensure aggregator_generate_report is called
+        mock_rep_gen.assert_called_once_with(aggregates, aggregator)
+        mock_send_to_user.assert_called_once_with("user123", aggregator_final_report_log(mock_return_report))
+
+
+@patch("aggregator.aggregator.get_legislation_extracts")
+@patch("aggregator.aggregator.add_llm_insights")
+def test_aggregator_generate_report(mock_add_llm_insights, mock_get_legislation_extracts):
     # Mock metrics data
     metrics = {"accuracy": 0.85, "precision": 0.15}
 
     # Mock report generation functions
-    mock_generate_report.return_value = []
-    with patch.dict("os.environ", {"GOOGLE_API_KEY": "test_value"}):
-        # Call function under test
-        report = aggregator_generate_report(metrics, metrics_aggregator)
+    mock_get_legislation_extracts.return_value = []
+    mock_add_llm_insights.return_value = []
 
-        # Ensure report is generated correctly
-        assert "properties" in report
-        assert "info" in report
-        mock_generate_report.assert_called_once_with(metrics, "test_value")
+    aggregator = MagicMock()
+    aggregator.total_sample_size = 20
+
+    # Call function under test
+    report = aggregator_generate_report(metrics, aggregator)
+
+    # Ensure report is generated correctly
+    assert "properties" in report
+    assert "info" in report
+    mock_get_legislation_extracts.assert_called_once()
+    mock_add_llm_insights.assert_called_once()
 
 
 @patch.dict("os.environ", {"GOOGLE_API_KEY": "test_api_key"})

@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from mocks.api_utils import get_dataset_api_key
-from common.models import ModelInput
+from common.models import DatasetResponse
 import os
 
 app: FastAPI = FastAPI()
@@ -36,7 +36,7 @@ async def read_root():
     return {"message": "Welcome to the Financial PhraseBank server!"}
 
 
-@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=ModelInput)
+@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=DatasetResponse)
 async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
     """
     Fetch num_datapoints from the Financial PhraseBank and return them as JSON.
@@ -61,7 +61,7 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
         features = [[text] for text in selected_data["text"].tolist()]
         labels = [[sentiment] for sentiment in selected_data["sentiment"].tolist()]
 
-        return ModelInput(
+        return DatasetResponse(
             features=features,
             labels=labels,
             group_ids=[0] * len(features)  # No groups in this dataset

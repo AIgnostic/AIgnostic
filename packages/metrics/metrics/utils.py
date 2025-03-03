@@ -1,6 +1,6 @@
 from metrics.exceptions import ModelQueryException
 from metrics.models import CalculateRequest
-from common.models import ModelInput, ModelResponse
+from common.models import DatasetResponse, ModelResponse
 from sklearn.linear_model import Ridge
 from scipy.spatial.distance import euclidean
 import numpy as np
@@ -133,7 +133,7 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
     - response : Response from the model API
     """
 
-    model_input = ModelInput(
+    model_input = DatasetResponse(
         features=generated_input_features.tolist(),
         labels=np.zeros((len(generated_input_features), 1)).tolist(),
         group_ids=np.zeros(len(generated_input_features), dtype=int).tolist(),

@@ -1,11 +1,11 @@
 from fastapi import HTTPException
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from common.models import ModelInput, ModelResponse
+from common.models import DatasetResponse, ModelResponse
 import torch
 # Load model directly
 
 
-def predict(input: ModelInput, model_name: str) -> ModelResponse:
+def predict(input: DatasetResponse, model_name: str) -> ModelResponse:
     try:
         model = AutoModelForSequenceClassification.from_pretrained(model_name)
         tokenizer = AutoTokenizer.from_pretrained(model_name)

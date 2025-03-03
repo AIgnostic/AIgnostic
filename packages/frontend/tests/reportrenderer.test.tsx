@@ -39,19 +39,29 @@ describe('ReportRenderer', () => {
                         metric: 'Bias Score',
                         value: '0.12',
                         ideal_value: '0.0',
-                        range: ['0.0', '1.0']
+                        range: ['0.0', '1.0'],
+                        error: null
                     },
                     {
                         metric: 'not title case metric',
                         value: '0.87',
                         ideal_value: '1.0',
-                        range: ['0.0', '1.0']
+                        range: ['0.0', '1.0'],
+                        error: null
                     },
                     {
                         metric: 'Weird Range',
                         value: '0.87',
                         ideal_value: '1.0',
-                        range: [null, '1.0']
+                        range: [null, '1.0'],
+                        error: null
+                    },
+                    {
+                        metric: 'Errored Metric',
+                        value: '0',
+                        ideal_value: '1',
+                        range: ['0', '1'],
+                        error: 'Computing this metric failed.'
                     }
                 ],
                 legislation_extracts: [
@@ -109,4 +119,11 @@ describe('ReportRenderer', () => {
         // expect(getByText('Recital 1')).toBeTruthy();
         // expect(getByText('Recital 2')).toBeTruthy();
     });
+
+    it("renders error metrics correctly", () => {
+        const { getByText } = render(<ReportRenderer report={sampleReport} />);
+        expect(getByText('Errored Metric')).toBeTruthy();
+        expect(getByText('An error occured during the computation of this metric.'));
+    });
+
 });

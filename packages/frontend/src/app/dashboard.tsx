@@ -218,15 +218,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
                         <h3>{metric_name.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</h3>
                       </div>
                     <div>
+                      {(metric_info.error !== null) ?
+                      <div>
+                        <p style={{ color: 'red' }}>An error occurred during the computation of this metric.</p>
+                      </div>
+                      :
                       <MetricBar 
-                        // Note that the range can include nulls to represent infinities.
-                        // So replace here
-                        min={metric_info.range[0] === null ? -Infinity : metric_info.range[0]} 
-                        max={metric_info.range[1] === null ? Infinity : metric_info.range[1]}
-                        value={metric_info.value}
-                        idealValue={metric_info.ideal_value}
+
+                        min={metric_info.range[0]} 
+                        max={metric_info.range[1]}
+                        actual={metric_info.value}
+                        ideal={metric_info.ideal_value}
                         label="" 
                       />
+                      }
                     </div>
                   </div>
                 ))}

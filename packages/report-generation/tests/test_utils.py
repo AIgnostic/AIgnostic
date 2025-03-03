@@ -1,7 +1,8 @@
 from report_generation.utils import search_legislation
 from report_generation.utils import extract_legislation_text
 from report_generation.utils import parse_legislation_text
-from report_generation.utils import generate_report
+from report_generation.utils import get_legislation_extracts
+from report_generation.utils import add_llm_insights
 from report_generation.constants import property_to_regulations
 from unittest import mock
 import pytest
@@ -207,23 +208,26 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
         "fast_gradient_sign_method": {
             "value": 0.6,
             "ideal_value": 1,
-            "range": (0, 1)
+            "range": (0, 1),
+            "error": None
         },
         "equal_opportunity_difference": {
             "value": 0.5,
             "ideal_value": 0,
-            "range": (-1, 1)
+            "range": (-1, 1),
+            "error": None
         }
     }
 
-    result = generate_report(metrics_data, api_key="test_key")
+    result = get_legislation_extracts(metrics_data)
 
     assert result[0]["property"] == "adversarial robustness"
     assert result[0]["computed_metrics"] == [{
         "metric": "fast gradient sign method",
         "value": 0.6,
         "ideal_value": 1,
-        "range": (0, 1)
+        "range": (0, 1),
+        "error": None
     }]
 
     assert result[2]["property"] == "fairness"
@@ -231,7 +235,8 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
         "metric": "equal opportunity difference",
         "value": 0.5,
         "ideal_value": 0,
-        "range": (-1, 1)
+        "range": (-1, 1),
+        "error": None
     }]
     assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
     assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
@@ -244,7 +249,7 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
 def test_generate_report_with_empty_metrics(mock_dependencies):
     metrics_data = {}
 
-    result = generate_report(metrics_data, api_key="test_key")
+    result = get_legislation_extracts(metrics_data)
 
     assert result[0]["computed_metrics"] == []
     assert result[1]["computed_metrics"] == []
@@ -266,7 +271,7 @@ def test_generate_report_with_non_existent_metric(mock_dependencies):
         "non-existent metric": {}
     }
 
-    result = generate_report(metrics_data, api_key="test_key")
+    result = get_legislation_extracts(metrics_data)
 
     assert result[0]["computed_metrics"] == []
     assert result[1]["computed_metrics"] == []
@@ -281,3 +286,32 @@ def test_generate_report_with_non_existent_metric(mock_dependencies):
     assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["uncertainity"])
     assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
     assert len(result[5]["legislation_extracts"]) == len(property_to_regulations["data minimality"])
+
+
+def test_add_llm_insights(mock_dependencies):
+    metrics_data = [
+        {
+            "property": "adversarial robustness",
+            "computed_metrics": [
+                {
+                    "metric": "fast gradient sign method",
+                    "value": 0.6,
+                    "ideal_value": 1,
+                    "range": (0, 1)
+                }
+            ],
+            "legislation_extracts": [
+                {
+                    "article_number": "1",
+                    "article_title": "Title for Article 1",
+                    "link": "https://gdpr-info.eu/art-1-gdpr/",
+                    "description": "Description for Article 1.",
+                    "suitable_recitals": ["https://gdpr-info.eu/recitals/no-R1/"]
+                }
+            ]
+        }
+    ]
+
+    result = add_llm_insights(metrics_data, api_key="test_key")
+
+    assert result[0]["llm_insights"] and result[0]["llm_insights"] != []

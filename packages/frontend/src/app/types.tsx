@@ -9,7 +9,8 @@ export interface ReportPropertySection {
       metric: string;
       ideal_value: string;
       range: (string | null)[];  // nulls represent infinities
-      value: string; 
+      value: string;
+      error: string | null;
   }[];
   legislation_extracts: LegislationExtract[];
   llm_insights: string[];
@@ -31,9 +32,10 @@ export interface LegislationExtract {
 
 export interface Metric {
   [metricName: string]: {
-    value: number;
-    ideal_value: number;
-    range: [number, number];
+    value: string;
+    ideal_value: string;
+    range: (string | null)[];
+    error: string | null;
   };
 }
 

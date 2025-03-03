@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from common.models import ModelInput, ModelResponse
+from common.models import DatasetResponse, ModelResponse
 import random
 
 app: FastAPI = FastAPI()
@@ -14,7 +14,7 @@ app.add_middleware(
 
 
 @app.post('/predict', response_model=ModelResponse)
-async def get_prediction_and_confidence(input_data: ModelInput):
+async def get_prediction_and_confidence(input_data: DatasetResponse):
     n = len(input_data.features)
     predictions = [[random.randint(0, 1)] for _ in range(n)]
     confidence_scores: list[list] = [[round(random.uniform(0.5, 1.0), 2)] for _ in range(n)]

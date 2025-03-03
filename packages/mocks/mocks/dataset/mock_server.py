@@ -1,7 +1,7 @@
 from folktables import ACSDataSource, ACSEmployment
 from fastapi import FastAPI, Query, Depends, HTTPException
 from mocks.api_utils import get_dataset_api_key
-from common.models import ModelInput
+from common.models import DatasetResponse
 import pandas as pd
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,7 +26,7 @@ async def read_root():
     return {"message": "Welcome to the mock server!"}
 
 
-@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=ModelInput)
+@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=DatasetResponse)
 async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
     """
     Fetch num_datapoints from the ACS data and convert into
@@ -61,7 +61,7 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
         filtered_labels = [[(bool(r) if isinstance(r, np.bool_) else r) for r in row] for row in filtered_labels.values]
         filtered_group_ids = list(filtered_group_ids.values)
 
-        return ModelInput(
+        return DatasetResponse(
             features=filtered_features,
             labels=filtered_labels,
             group_ids=filtered_group_ids
