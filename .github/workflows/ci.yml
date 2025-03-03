@@ -137,7 +137,6 @@ jobs:
       - docker-worker
       - docker-aggregator
       - docker-nginx
-      - docker-useraddedmetrics
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
