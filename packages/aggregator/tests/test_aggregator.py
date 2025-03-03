@@ -154,6 +154,9 @@ def test_on_result_fetched(mock_generate_report, mock_send_to_user):
                 "ideal_value": 1.0,
                 "range": [0.0, 1.0]
             }
+        },
+        "user_defined_metrics": {
+
         }
     }
     message_body = json.dumps(sample_message)

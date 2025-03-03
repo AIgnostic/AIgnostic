@@ -51,6 +51,9 @@ COPY ./packages/worker/worker/__init__.py /app/packages/worker/worker/
 COPY ./packages/dispatcher/pyproject.toml ./packages/dispatcher/poetry.toml ./packages/dispatcher/poetry.lock ./packages/dispatcher/README.md /app/packages/dispatcher/
 COPY ./packages/dispatcher/dispatcher/__init__.py /app/packages/dispatcher/dispatcher/
 
+COPY ./packages/user-added-metrics/pyproject.toml ./packages/user-added-metrics/poetry.toml ./packages/user-added-metrics/poetry.lock ./packages/user-added-metrics/README.md /app/packages/user-added-metrics/
+COPY ./packages/user-added-metrics/user_added_metrics/__init__.py /app/packages/user-added-metrics/user_added_metrics/
+
 COPY ./poetry.lock ./poetry.toml ./pyproject.toml /app/
 
 # Run poetry install at root

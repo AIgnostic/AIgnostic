@@ -108,7 +108,6 @@ jobs:
       image_tag: 'mocks'
       build_target: 'mocks'
     secrets: inherit
-
   # Build nginx reverse proxy
   docker-nginx:
     # Build base image first to enable caching

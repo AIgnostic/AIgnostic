@@ -79,3 +79,9 @@ class LLMResponse(ModelInput, BaseModel):
         response: str - response generated from the model
     """
     response: str
+
+
+class ComputeUserMetricRequest(BaseModel):
+    user_id: str
+    function_name: str
+    params: dict
