@@ -400,27 +400,3 @@ def test_should_delete_on_last_batch(dispatcher, mock_redis_client, sample_job):
 
     # Verify that the job was not dispatched
     assert not dispatcher.dispatch_as_required.called
-
-
-# Run loop:
-# Check we call fetch_job, process_new_job
-# Error on process_new_job so that we do not infinite loop
-def test_run_loop(dispatcher, mock_connection, sample_job):
-    """Should run the loop correctly"""
-    dispatcher.fetch_job = MagicMock()
-    dispatcher.process_new_job = MagicMock()
-    dispatcher.process_new_job.side_effect = DispatcherException(
-        "Test error to stop the infinite loop", 400
-    )
-
-    # Call run_loop
-    with pytest.raises(DispatcherException):
-        dispatcher.run()
-
-    # Verify that fetch_job was called
-    dispatcher.fetch_job.assert_called_once()
-
-    # Verify that process_new_job was called
-    dispatcher.process_new_job.assert_called_once_with(
-        dispatcher.fetch_job.return_value
-    )

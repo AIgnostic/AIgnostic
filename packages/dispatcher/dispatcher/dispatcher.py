@@ -106,9 +106,9 @@ class Dispatcher:
         logger.debug(f"Running job: {running_job}")
         # How many batches can we run?
         left_batches = running_job.pending_batches
-        if left_batches == 0:
+        if left_batches == 0 and running_job.currently_running_batches == 0:
             logger.info(
-                f"No batches left to run for job {job_id} - regarding as complete"
+                f"No batches left to run for job {job_id} & no batches running - regarding as complete"
             )
             # TODO: Handle completion & report errored batches
             # Delete key
