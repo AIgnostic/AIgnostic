@@ -7,6 +7,7 @@ channel = None
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
 
+
 def get_channel():
     return channel
 
