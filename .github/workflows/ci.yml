@@ -108,19 +108,6 @@ jobs:
       image_tag: 'mocks'
       build_target: 'mocks'
     secrets: inherit
-
-  docker-useraddedmetrics:
-    uses: ./.github/workflows/docker.yml
-    needs:
-      - docker-base
-      - lint
-      - test
-      - build
-    with:
-      image_tag: 'useraddedmetrics'
-      build_target: 'useraddedmetrics'
-    secrets: inherit
-
   # Build nginx reverse proxy
   docker-nginx:
     # Build base image first to enable caching
