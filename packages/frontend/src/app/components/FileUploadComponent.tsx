@@ -1,9 +1,20 @@
 import { useState } from 'react';
-import { Button, Box, Typography } from '@mui/material';
+import { Button, Box, Typography, Chip } from '@mui/material';
 import theme from '../theme';
 import { USER_METRICS_SERVER_URL } from '../constants';
+import { HomepageState } from '../types';
 
-function FileUploadComponent() {
+interface FileUploadComponentProps {
+  state: HomepageState & { dashboardKey: number }; // Replace 'any' with the appropriate type
+  setStateWrapper: <K extends keyof (HomepageState & { dashboardKey: number })>(
+    key: K,
+    value: (HomepageState & { dashboardKey: number })[K]
+  ) => void;
+}
+function FileUploadComponent({
+  state,
+  setStateWrapper,
+}: FileUploadComponentProps) {
   const [pythonFile, setPythonFile] = useState<File | null>(null);
   const [requirementsFile, setRequirementsFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -124,7 +135,8 @@ function FileUploadComponent() {
     <Box
       sx={{
         padding: 2,
-        backgroundColor: theme.palette.background.paper,
+        backgroundColor: theme.palette.background.default,
+        border: `10px solid ${theme.palette.background.paper}`,
         borderRadius: 2,
         margin: 2,
         boxShadow: theme.shadows[3],
@@ -191,15 +203,33 @@ function FileUploadComponent() {
             Inspect Uploaded Functions
           </Button>
           {functions && functions.length > 0 && (
-            <Box sx={{ marginTop: 2 }}>
+            <Box
+              sx={{
+                marginTop: 2,
+                bgcolor: theme.palette.primary.main,
+                p: 2,
+                shadow: 3,
+                elevation: 4,
+                boxShadow: theme.shadows[3],
+              }}
+            >
               <Typography variant="h6">Functions in Uploaded File:</Typography>
-              <ul>
+              {/* <ul>
                 {functions.map((func, index) => (
                   <li key={index}>
                     <Typography variant="body2">{func}</Typography>
                   </li>
                 ))}
-              </ul>
+              </ul> */}
+              {functions.map((func, index) => (
+                <Chip
+                  key={index}
+                  label={func}
+                  variant="filled"
+                  color={'secondary'}
+                  style={{ margin: '5px' }}
+                />
+              ))}
             </Box>
           )}
         </>

@@ -486,7 +486,7 @@ function Homepage() {
                       style={{ margin: '5px' }}
                     />
                   ))}
-                  <FileUploadComponent />
+                  <FileUploadComponent state={state} setStateWrapper={setStateWrapper}/>
                 </Box>
               )}
 
