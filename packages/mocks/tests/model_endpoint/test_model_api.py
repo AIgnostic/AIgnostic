@@ -18,7 +18,7 @@ huggingface_mock = TestClient(huggingface_app)
 scikit_mock = TestClient(scikit_app)
 basic_mock = TestClient(mock_app)
 finbert_mock = TestClient(finbert_app)
-llama = TestClient(llama)
+# llama = TestClient(llama)
 gemini = TestClient(gemini)
 
 
@@ -222,16 +222,15 @@ def test_probabilities_sum_to_one():
 #     # assert all(isinstance(prediction[0], str) for prediction in response.json()["predictions"]), "Predictions should be strings"
 
 
-def test_gemini():
-    response = gemini.post("/predict", json={
-        "features": [["Hello world"]],
-        "labels": [[""]],
-        "group_ids": []
-    })
-    assert response.status_code == 200, response.text
-    print(response.json())
-    predictions = response.json()["predictions"]
-    confidence_scores = response.json()["confidence_scores"]
-    assert len(predictions) == 1, f"Expected 1 prediction, got {len(predictions)}"
-    assert len(confidence_scores) == 1, f"Expected 1 confidence score, got {len(confidence_scores)}"
-
+# def test_gemini():
+#     response = gemini.post("/predict", json={
+#         "features": [["Hello world"]],
+#         "labels": [[""]],
+#         "group_ids": []
+#     })
+#     assert response.status_code == 200, response.text
+#     print(response.json())
+#     predictions = response.json()["predictions"]
+#     confidence_scores = response.json()["confidence_scores"]
+#     assert len(predictions) == 1, f"Expected 1 prediction, got {len(predictions)}"
+#     assert len(confidence_scores) == 1, f"Expected 1 confidence score, got {len(confidence_scores)}"

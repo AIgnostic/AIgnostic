@@ -32,7 +32,7 @@ def test_fgsm_attack():
 """
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def mock_info():
     """
     Mock input object for testing
@@ -74,6 +74,8 @@ def test_lime_explanation(mock_query, mock_info):
     # Ensure the model is of type Ridge
     assert isinstance(model, Ridge), "Expected the regression model to be of type Ridge"
 
+
+# TODO: Add lime tests for regression vs classification
 
 """
     _query_model tests

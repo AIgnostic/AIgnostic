@@ -2,6 +2,7 @@ from metrics.models import CalculateRequest, MetricsPackageExceptionModel
 from metrics.metrics import calculate_metrics, check_metrics_are_supported_for_task
 from metrics.exceptions import DataProvisionException
 import pytest
+from metrics.metrics import task_type_to_metric
 
 
 def test_empty_true_labels_returns_metric_exception_for_per_class_metrics():
@@ -95,6 +96,7 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
     """
     Test that when some metrics fail, the pipeline continues to calculate the other metrics.
     """
+    task_type_to_metric["binary_classification"].append("explanation_stability_score")
     # Arrange
     info = CalculateRequest(
         metrics=[
@@ -112,7 +114,7 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
     assert results.metric_values
     assert "accuracy" in results.metric_values
     assert isinstance(
-        results.metric_values["accuracy"],
+        results.metric_values["accuracy"].computed_value,
         float
     )
     assert isinstance(
@@ -124,7 +126,7 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
         MetricsPackageExceptionModel
     )
 
-    assert results.metric_values["accuracy"] == 0.5
+    assert results.metric_values["accuracy"].computed_value == 0.5
     assert (
         "The following missing fields are required to calculate metric"
         in results.metric_values["explanation_stability_score"].detail

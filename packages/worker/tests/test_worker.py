@@ -2,7 +2,7 @@ import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from common.models.common import Job
-from common.models import MetricValues
+from common.models import MetricConfig, MetricValue
 
 
 from worker.worker import Worker
@@ -40,6 +40,7 @@ def test_fetch_job_success():
             "model_url": "http://example.com/model",
             "data_api_key": "data_key",
             "model_api_key": "model_key",
+            "user_id": '1234'
         }
     ).encode("utf-8")
 
@@ -61,7 +62,17 @@ def test_fetch_job_no_job():
 
 def test_queue_result():
     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
-        result = MetricValues(metric_values={"accuracy": 0.95}, batch_size=1, total_sample_size=1)
+        result = MetricConfig(
+            metric_values={
+                "accuracy": MetricValue(
+                    computed_value=0.95,
+                    ideal_value=1,
+                    range=(0, 1)
+                )
+            },
+            batch_size=1,
+            total_sample_size=1
+        )
         worker.queue_result(result)
         mock_channel.basic_publish.assert_called_once()
 
@@ -73,38 +84,44 @@ def test_queue_error():
         mock_channel.basic_publish.assert_called_once()
 
 
-@patch("metrics.metrics.calculate_metrics", new_callable=AsyncMock)
+@patch("metrics.metrics.calculate_metrics", return_value=MetricConfig(
+    metric_values={
+        "accuracy": MetricValue(
+            computed_value=0.95,
+            ideal_value=1,
+            range=(0, 1)
+        )
+    },
+    batch_size=1,
+    total_sample_size=1
+))
 @pytest.mark.asyncio
-async def test_process_job_success(
-    mock_calculate_metrics
-):
+async def test_process_job_success(mock_calculate_metrics):
     job = Job(
         batch_size=1,
         total_sample_size=1,
         metrics=["accuracy"],
-        model_type="binary classification",
+        model_type="regression",  # use a model type that bypasses label conversion
         data_url="http://example.com/data",
         model_url="http://example.com/model",
         data_api_key="data_key",
         model_api_key="model_key",
+        user_id="1234"
     )
 
     with patch.object(worker, "fetch_data", new_callable=AsyncMock) as mock_fetch_data, \
          patch.object(worker, "query_model", new_callable=AsyncMock) as mock_query_model, \
-         patch.object(worker, "queue_result", new_callable=AsyncMock) as mock_queue_result:
+         patch.object(worker, "queue_result", new_callable=MagicMock) as mock_queue_result:
 
         mock_fetch_data.return_value = {
             "features": [[1, 2], [3, 4]],
             "labels": [[0], [1]],
             "group_ids": [1, 2],
         }
-        mock_query_model.return_value = {"predictions": [[0], [1]], "confidence_scores": [[0.9], [0.8]]}
-
-        mock_calculate_metrics.return_value = MetricValues(
-            metric_values={"accuracy": 0.95},
-            batch_size=1,
-            total_sample_size=1
-        )
+        mock_query_model.return_value = {
+            "predictions": [[0], [1]],
+            "confidence_scores": [[0.9], [0.8]]
+        }
 
         await worker.process_job(job)
 

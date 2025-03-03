@@ -27,6 +27,7 @@ def list_available_gemini_models():
     except Exception as e:
         print(f"Error listing models: {e}")
 
+
 @app.post("/predict", response_model=ModelResponse)
 async def predict(request: ModelInput):
     """Generates text using Gemini to complete an answer."""
@@ -39,12 +40,12 @@ async def predict(request: ModelInput):
         print(f"Response: {response.text}")
         if response.prompt_feedback and response.prompt_feedback.block_reason:
             raise HTTPException(status_code=400, detail=f"Gemini blocked the prompt due to: {response.prompt_feedback.block_reason}")
-        confidence_scores.append([None])
         predictions.append([response.text])
         print("Reached this")
         return ModelResponse(predictions=predictions, confidence_scores=confidence_scores)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

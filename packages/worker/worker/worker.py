@@ -11,13 +11,14 @@ Each worker:
 import os
 from common.models.common import Job
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
+from metrics.models import WorkerResults
 import requests
 from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
 import json
 from typing import Optional
 import asyncio
-from common.models import CalculateRequest, MetricValues
+from common.models import CalculateRequest, MetricConfig
 import random
 
 from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
@@ -65,12 +66,12 @@ class Worker():
         init_queues(self._channel)
         print("Connection established to RabbitMQ")
 
-    def queue_result(self, result: MetricValues):
+    def queue_result(self, result: MetricConfig):
         """
         Function to queue the results of a job
         """
         self._channel.basic_publish(
-            exchange="", routing_key=RESULT_QUEUE, body=json.dumps(dict(result))
+            exchange="", routing_key=RESULT_QUEUE, body=result.model_dump_json()
         )
         print("Result: ", result)
 
@@ -175,7 +176,7 @@ class Worker():
                 f"Could not parse model response - {e}; response = {response.text}"
             )
 
-    async def process_job(self, job: Job) -> MetricValues:
+    async def process_job(self, job: Job):
 
         # fetch data from datasetURL
         data: dict = await self.fetch_data(job.data_url, job.data_api_key, job.batch_size)
@@ -183,7 +184,7 @@ class Worker():
         # strip the label from the datapoint
         try:
             features = data["features"]
-            labels = data["labels"]
+            true_labels = data["labels"]
             group_ids = data["group_ids"]
         except KeyError:
             raise WorkerException("KeyError occurred during data processing")
@@ -195,7 +196,7 @@ class Worker():
         # TODO: Refactor to use pydantic models
         predictions = await self.query_model(
             job.model_url,
-            {"features": features, "labels": labels, "group_ids": group_ids},
+            {"features": features, "labels": true_labels, "group_ids": group_ids},
             job.model_api_key,
         )
 
@@ -203,7 +204,7 @@ class Worker():
             predicted_labels = predictions["predictions"]
 
             print(f"Predicted labels: {predicted_labels}")
-            print(f"True labels: {labels}")
+            print(f"True labels: {true_labels}")
             print(f"Metrics to compute: {job.metrics}")
 
             # some preprocessing for FinBERT
@@ -239,7 +240,9 @@ class Worker():
             )
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")
-            self.queue_result(metrics_results)
+            # add user_id to the results
+            worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id)
+            self.queue_result(worker_results)
             return
         except Exception as e:
             raise WorkerException(f"Error while processing data: {e}")

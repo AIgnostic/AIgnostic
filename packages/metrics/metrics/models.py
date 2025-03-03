@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator, HttpUrl, Field
-from typing import Optional, Any, Union
+from typing import Optional, Any, Union, Tuple
 from common.utils import nested_list_to_np
 from metrics.exceptions import _MetricsPackageException
 
@@ -8,7 +8,7 @@ class MetricsInfo(BaseModel):
     """
     Format to receive information about types of metrics available
     """
-    tasks_to_metric_map: dict[str, list]
+    task_to_metric_map: dict[str, list]
 
 
 class CalculateRequest(BaseModel):
@@ -39,6 +39,7 @@ class CalculateRequest(BaseModel):
     :param model_api_key: Optional[str] - API key for accessing the model endpoint.
     """
     metrics: list[str]
+    # TODO: Refactor to make task_name non-optional and remove regression_flag
     task_name: Optional[str] = None
     batch_size: Optional[int] = None
     total_sample_size: Optional[int] = None
@@ -82,11 +83,22 @@ class MetricsPackageExceptionModel(BaseModel):
         arbitrary_types_allowed = True
 
 
-class MetricValues(BaseModel):
+class MetricValue(BaseModel):
     """
-    Receive calculated metric values
+    Represents a metric's computed and ideal values, and its min-max range
+
+    :param true_value: float - The true value of the metric
+    :param ideal_value: float - The ideal value of the metric
+    :param range: Tuple[Optional[float], Optional[float]] - The acceptable range the metric can lie in
     """
-    metric_values: dict[str, Union[MetricsPackageExceptionModel, float]]
+    computed_value: float
+    ideal_value: float
+    range: Tuple[Optional[float], Optional[float]] = (None, None)
+
+
+class MetricConfig(BaseModel):
+    """Receive calculated metric values and other relevant information"""
+    metric_values: dict[str, Union[MetricsPackageExceptionModel, MetricValue]]
 
     @field_validator('metric_values', mode='before')
     def convert_exception_to_model(cls, v):
@@ -98,3 +110,11 @@ class MetricValues(BaseModel):
 
     batch_size: int
     total_sample_size: int
+    warning_msg: Optional[str] = None
+
+
+class WorkerResults(MetricConfig):
+    """
+    Inherit from MetricConfig
+    """
+    user_id: str

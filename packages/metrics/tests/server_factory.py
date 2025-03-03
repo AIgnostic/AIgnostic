@@ -1,6 +1,8 @@
 from tests.metric_mocks.mock_model_finite_diff_grad import app as finite_diff_grad_app
 from tests.metric_mocks.mock_model_explanation_metrics import app as expl_stability_app
 from tests.metric_mocks.mock_model_ood_auroc import app as ood_auroc_app
+from tests.metric_mocks.mock_text_inp_classifier_expl_stability import app as txt_inp_expl_stability_app
+from mocks.model.finbert import app as finbert_app
 from threading import Thread
 import pytest
 import uvicorn
@@ -24,6 +26,14 @@ server_configs = {
         "port": 3002,
         "app": expl_stability_app,
     },
+    "txt_inp_expl_stability": {
+        "port": 3003,
+        "app": txt_inp_expl_stability_app,
+    },
+    "finbert_integration": {
+        "port": 3004,
+        "app": finbert_app,
+    }
 }
 
 

@@ -1,15 +1,16 @@
-import { checkURL }from '../src/app/utils';
+import { checkURL } from '../src/app/utils';
 import '@testing-library/jest-dom';
-import jsPDF from 'jspdf';
-import { applyStyle } from '../src/app/utils';
-import { reportStyles } from '../src/app/home.styles';
-import { generateReportText } from '../src/app/utils';
 import { MOCK_SCIKIT_API_URL,
          MOCK_FINBERT_API_URL,
          MOCK_FOLKTABLES_DATASET_API_URL,
          MOCK_FINANCIAL_DATASET_API_URL,
          MOCK_WIKI_DATASET_API_URL,
-         MOCK_GEMINI_API_URL} from '../src/app/constants';
+         MOCK_GEMINI_API_URL,
+         MOCK_FINANCIAL_DATASET_API_URL_PROD,
+         MOCK_FOLKTABLES_DATASET_API_URL_PROD,
+         MOCK_FINBERT_API_URL_PROD,
+         MOCK_SCIKIT_API_URL_PROD
+        } from '../src/app/constants';
 
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {
@@ -28,7 +29,13 @@ describe('checkURL function', () => {
       MOCK_FOLKTABLES_DATASET_API_URL,
       MOCK_FINANCIAL_DATASET_API_URL,
       MOCK_GEMINI_API_URL,
-      MOCK_WIKI_DATASET_API_URL
+      MOCK_WIKI_DATASET_API_URL,
+
+      // Prod
+      MOCK_SCIKIT_API_URL_PROD,
+      MOCK_FINBERT_API_URL_PROD,
+      MOCK_FOLKTABLES_DATASET_API_URL_PROD,
+      MOCK_FINANCIAL_DATASET_API_URL_PROD,
     ];
 
     validUrls.forEach((url) => {
@@ -54,72 +61,5 @@ describe('checkURL function', () => {
     invalidUrls.forEach((url) => {
       expect(checkURL(url)).toBe(false);
     });
-  });
-});
-
-describe('applyStyle', () => {
-  it('should apply the correct font, style, and size to the jsPDF document', () => {
-    const doc = new jsPDF();
-    const style = reportStyles.title;
-
-    const setFontSpy = jest.spyOn(doc, 'setFont');
-    const setFontSizeSpy = jest.spyOn(doc, 'setFontSize');
-
-    // Apply styles
-    applyStyle(doc, style);
-
-    // Check if setFont and setFontSize were called with the correct arguments
-    expect(setFontSpy).toHaveBeenCalledWith(style.font, style.style);
-    expect(setFontSizeSpy).toHaveBeenCalledWith(style.size);
-  });
-});
-
-jest.mock('jspdf', () => {
-  const mockJsPDF = jest.fn().mockImplementation(() => {
-    return {
-      save: jest.fn(),
-      text: jest.fn(),
-      setFontSize: jest.fn(),
-      setFont: jest.fn(),
-      splitTextToSize: jest.fn().mockImplementation((text:string, width:number) => 
-        {
-          if (text !== undefined) {
-            return [text.substring(0, width)];
-          } else {
-            return [];
-          }
-        }
-      ),
-    };
-  });
-    return mockJsPDF;
-});
-
-describe('generateReportText', () => {
-  it('check doc generateReport text calls the mocked methods', () => {
-    const results = [
-      {
-        property: 'Property 1',
-        computed_metrics: [
-          {'Metric 1': 0.5},
-          {'Metric 2': 0.6},
-        ],
-        legislation_extracts: [
-          "Legislation 1",
-          "Legislation 2"
-        ],
-        llm_insights: [
-          "Insight 1",
-          "Insight 2"
-        ],
-      }
-
-    ];
-
-    const doc = generateReportText(results);
-        
-    // Optionally check that the doc is using the mocked methods
-    expect(doc.text).toHaveBeenCalled();
-    expect(doc.setFont).toHaveBeenCalled();
   });
 });

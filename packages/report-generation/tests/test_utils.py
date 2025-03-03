@@ -94,6 +94,7 @@ def test_parse_legislation_text_with_valid_content():
     expected_output = {
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
+        "link": "https://gdpr-info.eu/art-31-gdpr/",
         "description": "The controller and the processor and, where " +
         "applicable, their representatives, shall cooperate, on request, " +
         "with the supervisory authority in the performance of its tasks.",
@@ -124,6 +125,7 @@ def test_parse_legislation_text_with_multiple_recitals():
     expected_output = {
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
+        "link": "https://gdpr-info.eu/art-31-gdpr/",
         "description": "The controller and the processor and, where " +
         "applicable, their representatives, shall cooperate, on request, " +
         "with the supervisory authority in the performance of its tasks.",
@@ -149,6 +151,7 @@ def test_parse_legislation_text_with_no_recitals():
     expected_output = {
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
+        "link": "https://gdpr-info.eu/art-31-gdpr/",
         "description": "The controller and the processor and, " +
         "where applicable, their representatives, shall cooperate, " +
         "on request, with the supervisory authority " +
@@ -165,6 +168,7 @@ def test_parse_legislation_text_with_empty_content():
     expected_output = {
         "article_number": "31",
         "article_title": "",
+        "link": "https://gdpr-info.eu/art-31-gdpr/",
         "description": "",
         "suitable_recitals": []
     }
@@ -187,6 +191,7 @@ def mock_dependencies():
             {
                 "article_number": "1",
                 "article_title": "Title for Article 1",
+                "link": "https://gdpr-info.eu/art-1-gdpr/",
                 "description": "Description for Article 1.",
                 "suitable_recitals": ["https://gdpr-info.eu/recitals/no-R1/"]
             }
@@ -199,17 +204,35 @@ def mock_dependencies():
 
 def test_generate_report_with_valid_metrics(mock_dependencies):
     metrics_data = {
-        "fast_gradient_sign_method": 0.6,
-        "equal_opportunity_difference": 0.5
+        "fast_gradient_sign_method": {
+            "value": 0.6,
+            "ideal_value": 1,
+            "range": (0, 1)
+        },
+        "equal_opportunity_difference": {
+            "value": 0.5,
+            "ideal_value": 0,
+            "range": (-1, 1)
+        }
     }
 
     result = generate_report(metrics_data, api_key="test_key")
 
     assert result[0]["property"] == "adversarial robustness"
-    assert result[0]["computed_metrics"] == [{"metric": "fast gradient sign method", "value": 0.6}]
+    assert result[0]["computed_metrics"] == [{
+        "metric": "fast gradient sign method",
+        "value": 0.6,
+        "ideal_value": 1,
+        "range": (0, 1)
+    }]
 
     assert result[2]["property"] == "fairness"
-    assert result[2]["computed_metrics"] == [{"metric": "equal opportunity difference", "value": 0.5}]
+    assert result[2]["computed_metrics"] == [{
+        "metric": "equal opportunity difference",
+        "value": 0.5,
+        "ideal_value": 0,
+        "range": (-1, 1)
+    }]
     assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
     assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
     assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["fairness"])

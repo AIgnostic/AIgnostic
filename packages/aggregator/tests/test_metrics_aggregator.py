@@ -19,11 +19,33 @@ def test_set_total_sample_size():
 def test_aggregate_new_batch_single_batch():
     """Test aggregation with a single batch."""
     aggregator = MetricsAggregator()
-    aggregator.aggregate_new_batch({"accuracy": 0.8, "loss": 0.5}, 10)
+    metric_info = {
+        "accuracy": {
+            "computed_value": 0.8,
+            "ideal_value": 1.0,
+            "range": (0, 1)
+        },
+        "loss": {
+            "computed_value": 0.5,
+            "ideal_value": 0.0,
+            "range": (0, 1)
+        }
+    }
+    aggregator.aggregate_new_batch(metric_info, 10)
 
     expected_metrics = {
-        "accuracy": {"value": 0.8, "count": 10},
-        "loss": {"value": 0.5, "count": 10}
+        "accuracy": {
+            "value": 0.8,
+            "ideal_value": 1.0,
+            "range": (0, 1),
+            "count": 10
+        },
+        "loss": {
+            "value": 0.5,
+            "ideal_value": 0.0,
+            "range": (0, 1),
+            "count": 10
+        }
     }
     assert aggregator.metrics == expected_metrics
     assert aggregator.samples_processed == 10
@@ -32,8 +54,32 @@ def test_aggregate_new_batch_single_batch():
 def test_aggregate_multiple_batches():
     """Test aggregation with multiple batches."""
     aggregator = MetricsAggregator()
-    aggregator.aggregate_new_batch({"accuracy": 0.8, "loss": 0.5}, 10)
-    aggregator.aggregate_new_batch({"accuracy": 0.9, "loss": 0.4}, 20)
+    metric_info1 = {
+        "accuracy": {
+            "computed_value": 0.8,
+            "ideal_value": 1.0,
+            "range": (0, 1)
+        },
+        "loss": {
+            "computed_value": 0.5,
+            "ideal_value": 0.0,
+            "range": (0, 1)
+        }
+    }
+    aggregator.aggregate_new_batch(metric_info1, 10)
+    metric_info2 = {
+        "accuracy": {
+            "computed_value": 0.9,
+            "ideal_value": 1.0,
+            "range": (0, 1)
+        },
+        "loss": {
+            "computed_value": 0.4,
+            "ideal_value": 0.0,
+            "range": (0, 1)
+        }
+    }
+    aggregator.aggregate_new_batch(metric_info2, 20)
 
     expected_metrics = {
         "accuracy": {"value": (0.8 * 10 + 0.9 * 20) / 30, "count": 30},
@@ -48,8 +94,32 @@ def test_aggregate_multiple_batches():
 def test_get_aggregated_metrics():
     """Test retrieving the aggregated metrics."""
     aggregator = MetricsAggregator()
-    aggregator.aggregate_new_batch({"accuracy": 0.8, "loss": 0.5}, 10)
-    aggregator.aggregate_new_batch({"accuracy": 0.9, "loss": 0.4}, 20)
+    metric_info1 = {
+        "accuracy": {
+            "computed_value": 0.8,
+            "ideal_value": 1.0,
+            "range": (0, 1)
+        },
+        "loss": {
+            "computed_value": 0.5,
+            "ideal_value": 0.0,
+            "range": (0, 1)
+        }
+    }
+    aggregator.aggregate_new_batch(metric_info1, 10)
+    metric_info2 = {
+        "accuracy": {
+            "computed_value": 0.9,
+            "ideal_value": 1.0,
+            "range": (0, 1)
+        },
+        "loss": {
+            "computed_value": 0.4,
+            "ideal_value": 0.0,
+            "range": (0, 1)
+        }
+    }
+    aggregator.aggregate_new_batch(metric_info2, 20)
 
     aggregated_metrics = aggregator.get_aggregated_metrics()
 
@@ -58,5 +128,5 @@ def test_get_aggregated_metrics():
         "loss": (0.5 * 10 + 0.4 * 20) / 30
     }
 
-    assert abs(aggregated_metrics["accuracy"] - expected_metrics["accuracy"]) < 1e-5
-    assert abs(aggregated_metrics["loss"] - expected_metrics["loss"]) < 1e-5
+    assert abs(aggregated_metrics["accuracy"]["value"] - expected_metrics["accuracy"]) < 1e-5
+    assert abs(aggregated_metrics["loss"]["value"] - expected_metrics["loss"]) < 1e-5

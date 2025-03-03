@@ -1,22 +1,34 @@
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import Dashboard from '../src/app/dashboard';
-import '@testing-library/jest-dom';
-import { generateReportText } from '../src/app/utils';
+import React from "react";
+import { render, screen, act } from "@testing-library/react";
+import Dashboard from "../src/app/dashboard";
+import "@testing-library/jest-dom";
+import { pdf } from "@react-pdf/renderer";
 
-// Mock `generateReportText` so we can track its calls
-jest.mock('../src/app/utils', () => ({
-  generateReportText: jest.fn(() => ({
-    save: jest.fn(), // Mock `save()` method
+
+// Mock `ErrorMessage` and `ReportRenderer` components
+jest.mock("../src/app/components/ErrorMessage", () => () => (
+  <div data-testid="error-message">Error</div>
+));
+jest.mock("../src/app/components/ReportRenderer", () => () => (
+  <div data-testid="report-renderer">Final Report</div>
+));
+
+jest.mock("@react-pdf/renderer", () => ({
+  pdf: jest.fn(() => ({
+    toBlob: jest.fn(() => Promise.resolve(new Blob())),
   })),
 }));
-jest.mock('../src/app/components/ErrorMessage', () => () => <div data-testid="error-message">Error</div>);
 
-describe('Dashboard Component', () => {
+// Mock URL.createObjectURL
+global.URL.createObjectURL = jest.fn(() => "blob:http://localhost/blob");
+global.URL.revokeObjectURL = jest.fn();
+
+describe("Dashboard Component", () => {
   let mockWebSocket: Partial<WebSocket>;
   let onCompleteMock: jest.Mock;
 
   beforeEach(() => {
+    // Mock WebSocket
     mockWebSocket = {
       send: jest.fn(),
       close: jest.fn(),
@@ -25,81 +37,85 @@ describe('Dashboard Component', () => {
     onCompleteMock = jest.fn();
   });
 
-  test('renders progress bar and waiting message initially', () => {
-    render(<Dashboard onComplete={onCompleteMock} />);
-    expect(screen.getByText('0 / 10 batches processed')).toBeInTheDocument();
-    expect(screen.getByText('Waiting for messages...')).toBeInTheDocument();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  test('updates log on LOG message', async () => {
-    render(<Dashboard onComplete={onCompleteMock} />);
+  test("renders progress bar and waiting message initially", () => {
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
+    expect(screen.getByText("0 / 10 batches processed")).toBeInTheDocument();
+    expect(screen.getByText("Waiting for messages...")).toBeInTheDocument();
+  });
 
-    act(() => {
+  test("updates log on LOG message", async () => {
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket}/>);
+
+    await act(async () => {
       (mockWebSocket.onmessage as any)({
-        data: JSON.stringify({ messageType: 'LOG', message: 'Processing started' }),
+        data: JSON.stringify({ messageType: "LOG", message: "Processing started" }),
       });
     });
 
-    expect(screen.getByText('Processing started')).toBeInTheDocument();
+    expect(screen.getByText("Processing started")).toBeInTheDocument();
   });
 
-  test('displays error message on ERROR event', async () => {
-    render(<Dashboard onComplete={onCompleteMock} />);
+  test("displays error message on ERROR event", async () => {
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
 
-    act(() => {
+    await act(async () => {
       (mockWebSocket.onmessage as any)({
-        data: JSON.stringify({ messageType: 'ERROR', message: 'Server Error' }),
+        data: JSON.stringify({ messageType: "ERROR", message: "Server Error" }),
       });
     });
 
-    expect(screen.getByTestId('error-message')).toBeInTheDocument();
+    expect(screen.getByTestId("error-message")).toBeInTheDocument();
   });
 
-  test('processes METRICS_INTERMEDIATE messages and updates progress', async () => {
-    render(<Dashboard onComplete={onCompleteMock} />);
+  test("processes METRICS_INTERMEDIATE messages and updates progress", async () => {
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket}/>);
 
-    act(() => {
+    await act(async () => {
       (mockWebSocket.onmessage as any)({
         data: JSON.stringify({
-          messageType: 'METRICS_INTERMEDIATE',
-          content: { metrics_results: {"accuracy": 0.75, "precision": 0.5} },
+          messageType: "METRICS_INTERMEDIATE",
+          content: { metrics_results: { 
+            accuracy: {
+              value: 0.75,
+              ideal_value:0.85,
+              range:[0, 1]         
+            }, 
+            precision: {
+              value: 0.75,
+              ideal_value:0.85,
+              range:[0, 1]
+            },
+          } },
         }),
       });
     });
 
-    expect(screen.getByText('1 / 10 batches processed')).toBeInTheDocument();
+    expect(screen.getByText("1 / 10 batches processed")).toBeInTheDocument();
   });
 
-  test('processes REPORT messages and generates report', () => {
-    const onCompleteMock = jest.fn();
-    render(<Dashboard onComplete={onCompleteMock} />);
 
-    const reportData = {
-      property: 'Test Property',
-      computedMetrics: [{ metric: 'accuracy', result: '0.9' }],
-      legislationExtracts: ['Extract 1'],
-      llmInsights: ['Insight 1'],
-    };
+  test("generates and downloads the report on REPORT message", async () => {
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket}/>);
 
-    act(() => {
-      (mockWebSocket.onmessage as any)({
-        data: JSON.stringify({
-          messageType: 'REPORT',
-          content: reportData,
-        }),
-      });
+    const mockReportData = { /* Your mock report structure */ };
+
+    await act(async () => {
+      (mockWebSocket as any).onmessage(
+        { data: JSON.stringify({ messageType: "REPORT", content: mockReportData }) }
+      );
     });
 
-    // Ensure `generateReportText` was called with correct data
-    expect(generateReportText).toHaveBeenCalledWith(reportData);
-
-    // Ensure `save()` method was called on the generated document
-    const generatedDoc = (generateReportText as jest.Mock).mock.results[0].value;
-    expect(generatedDoc.save).toHaveBeenCalledWith('AIgnostic_Report.pdf');
+    // Ensure pdf() was called with ReportRenderer
+    expect(pdf).toHaveBeenCalled();
   });
 
-  test('closes WebSocket on unmount', () => {
-    const { unmount } = render(<Dashboard onComplete={onCompleteMock} />);
+
+  test("closes WebSocket on unmount", () => {
+    const { unmount } = render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
     unmount();
     expect(mockWebSocket.close).toHaveBeenCalled();
   });

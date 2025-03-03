@@ -84,17 +84,10 @@ const styles = {
       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
       padding: '20px',
       minWidth: '300px',
-      backgroundColor: theme.palette.secondary.main,
+      backgroundColor: theme.palette.primary.main,
+      border: '1px solid #e0e0e0',
     },
   },
 };
 
-const reportStyles = {
-  title: { font: 'helvetica', style: 'bold', size: 24 },
-  sectionHeader: { font: 'helvetica', style: 'bold', size: 16 },
-  subHeader: { font: 'helvetica', style: 'bold', size: 14 },
-  normalText: { font: 'helvetica', style: 'normal', size: 12 },
-  bulletText: { font: 'helvetica', style: 'normal', size: 11 },
-};
-
-export { styles, reportStyles };
+export { styles };

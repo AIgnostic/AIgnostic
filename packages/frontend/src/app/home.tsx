@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { checkURL, generateReportText } from './utils';
+import { useEffect, useState } from 'react';
+import { checkURL } from './utils';
 import {
   steps,
-  BACKEND_URL,
+  BACKEND_EVALUATE_URL,
   RESULTS_URL,
   modelTypesToMetrics,
-  generalMetrics,
   activeStepToInputConditions,
+  WEBSOCKET_URL,
 } from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
@@ -30,8 +30,10 @@ import {
 import { HomepageState } from './types';
 import Dashboard from './dashboard';
 import theme from './theme';
+import { v4 as uuidv4 } from 'uuid';
 
 function Homepage() {
+  const [socket, setSocket] = useState<WebSocket | null>(null);
   const [state, setState] = useState<HomepageState & { dashboardKey: number }>({
     modelURL: '',
     datasetURL: '',
@@ -41,11 +43,7 @@ function Homepage() {
     isDatasetURLValid: true,
     activeStep: 0,
     selectedItem: '',
-    metricChips: generalMetrics.map((metric) => ({
-      id: metric,
-      label: metric,
-      selected: true,
-    })),
+    metricChips: [],
     metricsHelperText: '',
     selectedModelType: '',
     error: false,
@@ -82,6 +80,43 @@ function Homepage() {
     },
   };
 
+  useEffect(() => {
+    let userId = sessionStorage.getItem('userId');
+    if (!userId) {
+      userId = uuidv4();
+      console.log('Generated new user ID:', userId);
+      sessionStorage.setItem('userId', userId);
+    }
+
+    const connectWebSocket = () => {
+      const newSocket = new WebSocket(WEBSOCKET_URL);
+      newSocket.onopen = () => {
+        console.log('WebSocket connection established');
+        newSocket.send(userId.toString());
+      };
+      newSocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Received message:', data);
+      };
+
+      newSocket.onclose = () => {
+        console.log('WebSocket connection closed, attempting to reconnect...');
+        setTimeout(connectWebSocket, 1000);
+      };
+
+      setSocket(newSocket);
+      console.log('Connection set');
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (socket) {
+        socket.close();
+      }
+    };
+  }, []);
+
   const setStateWrapper = <K extends keyof typeof state>(
     key: K,
     value: (typeof state)[K]
@@ -107,6 +142,10 @@ function Homepage() {
     }
   };
 
+  const generateUniqueUserID = () => {
+    return Math.random().toString(36).substring(2, 15);
+  };
+
   const handleReset = () => {
     setStateWrapper('activeStep', 0);
   };
@@ -126,6 +165,13 @@ function Homepage() {
       return;
     }
 
+    let userId = sessionStorage.getItem('userId');
+
+    if (!userId) {
+      userId = uuidv4(); // Generate a new user ID if not found
+      sessionStorage.setItem('userId', userId);
+    }
+
     setStateWrapper('isGeneratingReport', true); // Prevent multiple clicks
     setStateWrapper('dashboardKey', state.dashboardKey + 1);
     setStateWrapper('showDashboard', true);
@@ -139,11 +185,12 @@ function Homepage() {
         .filter((metricChip) => metricChip.selected)
         .map((metricChip) => metricChip.label.toLowerCase()),
       model_type: state.selectedModelType.toLowerCase(),
+      user_id: userId,
     };
 
     try {
       // Send POST request to backend server
-      const postResponse = await fetch(BACKEND_URL, {
+      const postResponse = await fetch(BACKEND_EVALUATE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(user_info),
@@ -161,7 +208,6 @@ function Homepage() {
       }
 
       console.log('Job accepted. Waiting for results');
-
     } catch (error: any) {
       console.error('Error while posting to backend:', error.message);
       setStateWrapper('error', true);
@@ -172,17 +218,16 @@ function Homepage() {
     }
   };
 
-  // Placeholder for the dropdown items
-  const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
-  const [selectedItem, setSelectedItem] = useState('');
-
   function handleModelTypeChange(value: string) {
     if (value in modelTypesToMetrics) {
       setStateWrapper(
         'metricChips',
         modelTypesToMetrics[value].map((metric) => ({
           id: metric,
-          label: metric,
+          value: metric,
+          label: metric
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (char) => char.toUpperCase()),
           selected: true,
         }))
       );
@@ -230,11 +275,11 @@ function Homepage() {
                     const handleOnBlur =
                       field.validKey && field.isValid !== undefined
                         ? () => {
-                          setStateWrapper(
-                            field.validKey as keyof typeof state,
-                            checkURL(field.value)
-                          );
-                        }
+                            setStateWrapper(
+                              field.validKey as keyof typeof state,
+                              checkURL(field.value)
+                            );
+                          }
                         : undefined; // Don't do anything for fields that don't need validation onBlur
 
                     const errorProps =
@@ -283,16 +328,7 @@ function Homepage() {
                     <RadioGroup
                       value={state.selectedModelType}
                       onChange={(event) => {
-                        setStateWrapper(
-                          'metricChips',
-                          modelTypesToMetrics[event.target.value].map(
-                            (metric) => ({
-                              id: metric,
-                              label: metric,
-                              selected: true,
-                            })
-                          )
-                        );
+                        handleModelTypeChange(event.target.value);
                         setStateWrapper(
                           'selectedModelType',
                           event.target.value
@@ -304,7 +340,9 @@ function Homepage() {
                           key={modelType}
                           value={modelType}
                           control={<Radio color="secondary" />}
-                          label={modelType}
+                          label={modelType
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, (char) => char.toUpperCase())}
                         />
                       ))}
                     </RadioGroup>
@@ -353,9 +391,9 @@ function Homepage() {
                     ).length === 0
                       ? 'You have not selected any metrics'
                       : state.metricChips
-                        .filter((metricChip) => metricChip.selected)
-                        .map((metricChip) => metricChip.label)
-                        .join(', ')}
+                          .filter((metricChip) => metricChip.selected)
+                          .map((metricChip) => metricChip.label)
+                          .join(', ')}
                   </Typography>
                 </Box>
               )}
@@ -363,50 +401,56 @@ function Homepage() {
               <Box sx={{ mb: 2 }}>
                 {index === steps.length - 1 ? (
                   <div>
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        // check that APIs are present and valid
-                        // if not, jump to step 0
-                        if (!state.modelURL || !state.datasetURL) {
-                          if (!state.modelURL) {
-                            setStateWrapper('isModelURLValid', false);
+                    {!state.showDashboard && (
+                      <Button
+                        variant="contained"
+                        onClick={() => {
+                          // check that APIs are present and valid
+                          // if not, jump to step 0
+                          if (!state.modelURL || !state.datasetURL) {
+                            if (!state.modelURL) {
+                              setStateWrapper('isModelURLValid', false);
+                            }
+                            if (!state.datasetURL) {
+                              setStateWrapper('isDatasetURLValid', false);
+                            }
+                            setStateWrapper('activeStep', 0);
                           }
-                          if (!state.datasetURL) {
-                            setStateWrapper('isDatasetURLValid', false);
-                          }
-                          setStateWrapper('activeStep', 0);
-                        }
 
-                        // check that at least one metric is selected
-                        // if not, jump to step 3
-                        else if (
-                          state.metricChips.filter(
-                            (metricChip) => metricChip.selected
-                          ).length === 0
-                        ) {
-                          setStateWrapper(
-                            'metricsHelperText',
-                            'Please select at least one metric'
-                          );
-                          setStateWrapper('activeStep', 2);
-                        }
-                        // if all checks pass, generate report
-                        else {
-                          if (!state.isGeneratingReport) {
-                            handleSubmit();
+                          // check that at least one metric is selected
+                          // if not, jump to step 3
+                          else if (
+                            state.metricChips.filter(
+                              (metricChip) => metricChip.selected
+                            ).length === 0
+                          ) {
+                            setStateWrapper(
+                              'metricsHelperText',
+                              'Please select at least one metric'
+                            );
+                            setStateWrapper('activeStep', 2);
                           }
-                        }
+                          // if all checks pass, generate report
+                          else {
+                            if (!state.isGeneratingReport) {
+                              handleSubmit();
+                            }
+                          }
 
-                        // open dashboard page in new tab
-                        // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
-                      }}
-                      disabled={state.isGeneratingReport}
-                      sx={{ mt: 1, mr: 1, backgroundColor: theme.palette.secondary.main }}
-                    >
-                      {' '}
-                      Generate Report
-                    </Button>
+                          // open dashboard page in new tab
+                          // window.open(`/${AIGNOSTIC}/dashboard`, '_blank');
+                        }}
+                        disabled={state.isGeneratingReport}
+                        sx={{
+                          mt: 1,
+                          mr: 1,
+                          backgroundColor: theme.palette.secondary.main,
+                        }}
+                      >
+                        {' '}
+                        Generate Report
+                      </Button>
+                    )}
                     {state.showDashboard && (
                       // Passing the dashboardKey forces remount when it changes.
                       <Dashboard
@@ -414,6 +458,7 @@ function Homepage() {
                         onComplete={() => {
                           setStateWrapper('isGeneratingReport', false);
                         }}
+                        socket={socket}
                       />
                     )}
                   </div>
