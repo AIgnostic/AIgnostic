@@ -84,6 +84,14 @@ class LLMResponse(DatasetResponse, BaseModel):
 
 
 class AggregatorMessage(BaseModel, ABC):
+    """
+    Model for messages sent by the aggregator to the frontend
+    Params:
+    messageType: str - the type of the message (e.g. LOG)
+    message: str - the message to be displayed
+    statusCode: int - the status code of the message
+    content: Any - the additional content (e.g. the report for a REPORT type)
+    """
     messageType: str
     message: str
     statusCode: int
