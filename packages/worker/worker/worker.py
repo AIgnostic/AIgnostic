@@ -9,7 +9,8 @@ Each worker:
 """
 
 import os
-from common.models.pipeline import Batch
+from re import error
+from common.models.pipeline import Batch, JobStatus, JobStatusMessage
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from metrics.models import WorkerResults
 import requests
@@ -21,7 +22,7 @@ import asyncio
 from common.models import CalculateRequest, MetricConfig
 import random
 
-from common.rabbitmq.constants import BATCH_QUEUE, RESULT_QUEUE
+from common.rabbitmq.constants import BATCH_QUEUE, RESULT_QUEUE, STATUS_QUEUE
 
 from pika.adapters.blocking_connection import BlockingChannel
 
@@ -257,9 +258,38 @@ class Worker:
                 **metrics_results.model_dump(), user_id=batch.job_id
             )
             self.queue_result(worker_results)
+            self.send_status_completed(batch.job_id, batch.batch_id)
             return
         except Exception as e:
+            self.send_status_error(batch.job_id, batch.batch_id, e)
             raise WorkerException(f"Error while processing data: {e}")
+
+    def send_status_completed(self, job_id: str, batch_id: str):
+        """
+        Function to send a status message to the status queue
+        """
+        self._channel.basic_publish(
+            exchange="",
+            routing_key=STATUS_QUEUE,
+            body=JobStatusMessage(
+                job_id=job_id, batch_id=batch_id, status=JobStatus.COMPLETED
+            ).model_dump_json(),
+        )
+
+    def send_status_error(self, job_id: str, batch_id: str, error):
+        """
+        Function to send a status message to the status queue
+        """
+        self._channel.basic_publish(
+            exchange="",
+            routing_key=STATUS_QUEUE,
+            body=JobStatusMessage(
+                job_id=job_id,
+                batch_id=batch_id,
+                status=JobStatus.ERRORED,
+                errorMessage=str(error),
+            ).model_dump_json(),
+        )
 
     def run(self):
         self.connect()

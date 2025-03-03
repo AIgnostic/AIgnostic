@@ -11,7 +11,7 @@ from metrics.models import MetricsInfo
 api = APIRouter()
 BATCH_SIZE = 50
 NUM_BATCHES = 10
-MAX_CONCURRENT_BATCHES = NUM_BATCHES + 1
+MAX_CONCURRENT_BATCHES = 1
 # total sample size should be a multiple of batch size
 # TOTAL_SAMPLE_SIZE = round(1000 / BATCH_SIZE) * BATCH_SIZE
 TOTAL_SAMPLE_SIZE = BATCH_SIZE * NUM_BATCHES
@@ -41,24 +41,22 @@ async def generate_metrics_from_info(
     - metrics: list of metrics that should be applied
     """
     try:
-
-        for i in range(TOTAL_SAMPLE_SIZE // BATCH_SIZE):
-            dispatch_job(
-                metrics=MetricCalculationJob(
-                    data_url=request.dataset_url,
-                    model_url=request.model_url,
-                    data_api_key=request.dataset_api_key,
-                    model_api_key=request.model_api_key,
-                    metrics=request.metrics,
-                    model_type=request.model_type,
-                ),
-                batches=NUM_BATCHES,
-                batch_size=BATCH_SIZE,
-                max_concurrent_batches=MAX_CONCURRENT_BATCHES,
-                channel=channel,
-                job_id=request.user_id,
-            )
-            print(f"Dispatched job {i+1}")
+        dispatch_job(
+            metrics=MetricCalculationJob(
+                data_url=request.dataset_url,
+                model_url=request.model_url,
+                data_api_key=request.dataset_api_key,
+                model_api_key=request.model_api_key,
+                metrics=request.metrics,
+                model_type=request.model_type,
+            ),
+            batches=NUM_BATCHES,
+            batch_size=BATCH_SIZE,
+            max_concurrent_batches=MAX_CONCURRENT_BATCHES,
+            channel=channel,
+            job_id=request.user_id,
+        )
+        print("Dispatched jobs")
         return JSONResponse({"message": "Created and dispatched jobs"}, status_code=202)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error dispatching jobs - {e}")
