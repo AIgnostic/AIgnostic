@@ -9,6 +9,10 @@ services:
       - '15672:15672'
     networks:
       - aignostic_network
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=securepassword
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 10s
@@ -19,14 +23,8 @@ services:
   # Frontend services
   ###
   frontend:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.frontend
     image: aignostic/frontend
     container_name: frontend
-    volumes:
-      - .:/app
-      - venv:/app/.venv
     command: npx nx serve frontend --host 0.0.0.0
     ports:
       - '4200:4200'
@@ -53,6 +51,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
     depends_on:
       rabbitmq:
@@ -60,7 +60,7 @@ services:
     links:
       - rabbitmq
 
-  # Microservices
+  # # Microservices
   worker_ms:
     image: aignostic/dev
     volumes:
@@ -71,6 +71,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
     depends_on:
       rabbitmq:
@@ -92,6 +94,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
     depends_on:
       rabbitmq:
@@ -110,6 +114,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
     depends_on:
       rabbitmq:
@@ -161,6 +167,7 @@ services:
       - aignostic_network
     ports:
       - '5011:5011'
+      
   finbert_mock_model_api:
     container_name: finbert-mock-model-api
     image: aignostic/dev
