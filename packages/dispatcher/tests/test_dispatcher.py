@@ -4,7 +4,7 @@ import uuid
 
 from common.models.pipeline import (
     Batch,
-    JobCompleteMessage,
+    JobStatusMessage,
     JobStatus,
     MetricCalculationJob,
     PipelineJob,
@@ -285,7 +285,7 @@ async def test_job_complete_bad_input(dispatcher, mock_redis_client):
 
     # Call handle_job_completion
     await dispatcher.handle_job_completion(
-        JobCompleteMessage(
+        JobStatusMessage(
             job_id="job_id",
             batch_id="batch_id",
             status=JobStatus.COMPLETED,
@@ -314,7 +314,7 @@ async def test_job_complete_completed(dispatcher, mock_redis_client, sample_job)
 
     # Call handle_job_completion
     await dispatcher.handle_job_completion(
-        JobCompleteMessage(
+        JobStatusMessage(
             job_id=str(sample_job.job_id),
             batch_id="batch_id",
             status=JobStatus.COMPLETED,
@@ -353,7 +353,7 @@ async def test_job_error_handled(dispatcher, mock_redis_client, sample_job):
 
     # Call handle_job_completion
     await dispatcher.handle_job_completion(
-        JobCompleteMessage(
+        JobStatusMessage(
             job_id=str(sample_job.job_id),
             batch_id="batch_id",
             status=JobStatus.ERRORED,
@@ -393,7 +393,7 @@ async def test_should_delete_on_last_batch(dispatcher, mock_redis_client, sample
 
     # Call handle_job_completion
     await dispatcher.handle_job_completion(
-        JobCompleteMessage(
+        JobStatusMessage(
             job_id=str(sample_job.job_id),
             batch_id="batch_id",
             status=JobStatus.COMPLETED,

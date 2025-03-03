@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 import uuid
 
-from common.models.pipeline import Batch, JobCompleteMessage, JobStatus, PipelineJob
+from common.models.pipeline import Batch, JobStatusMessage, JobStatus, PipelineJob
 from common.rabbitmq.constants import BATCH_QUEUE, JOB_QUEUE
 from dispatcher.models import RunningJob
 from dispatcher.utils import redis_key
@@ -55,6 +55,11 @@ class Dispatcher:
         self.propogate_error(None, e)
         # TODO: Pass back to api, show notificatio to uer
         raise DispatcherException(f"Invalid job format: {e}", status_code=400)
+
+    def handle_status_unpack_error(self, e: ValueError):
+        self.propogate_error(None, e)
+        # TODO: Pass back to api, show notificatio to uer
+        raise DispatcherException(f"Invalid status format: {e}", status_code=400)
 
     def fetch_job(self) -> Optional[PipelineJob]:
         """
@@ -163,7 +168,7 @@ class Dispatcher:
         # Start processing job
         await self.dispatch_as_required(running_job.job_data.job_id)
 
-    async def handle_job_completion(self, msg: JobCompleteMessage):
+    async def handle_job_completion(self, msg: JobStatusMessage):
         """Handle a job completion message"""
         logger.info(f"Handling job completion: {msg}")
         # Get the running job
@@ -235,6 +240,28 @@ class Dispatcher:
         if job:
             return RunningJob(**json.loads(job))
         return None
+
+    # COnnection related logic
+    def got_job(self, channel, method, properties, body: str):
+        """Callback for when we get a new job"""
+        try:
+            job_data = json.loads(body)
+            logger.info(f"Received job: {job_data}")
+            logger.debug("Unpacking job data")
+            job = PipelineJob(**job_data)
+            # Process
+            self.process_new_job(job)
+        except ValueError as e:
+            self.handle_job_unpack_error(e)
+
+    def got_status(self, channel, method, properties, body: str):
+        try:
+            job_data = json.loads(body)
+            logger.info(f"Received status update: {job_data}")
+            logger.debug("Unpacking status update")
+            return JobStatusMessage(**job_data)
+        except ValueError as e:
+            self.handle_status_unpack_error(e)
 
     async def run(self):
         """Main dispatcher loop"""

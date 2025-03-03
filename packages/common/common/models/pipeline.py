@@ -76,7 +76,7 @@ class JobStatus(str, Enum):
     """Job has errored"""
 
 
-class JobCompleteMessage(BaseModel):
+class JobStatusMessage(BaseModel):
     """Sent to the Dispatcher to indicate that a job has been completed or errored"""
 
     job_id: str
