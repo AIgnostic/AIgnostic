@@ -29,6 +29,7 @@ from common.models import (
 )
 from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
 from metrics.models import WorkerException
+from pydantic import ValidationError
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
@@ -94,7 +95,7 @@ class Worker():
             try:
                 print("Unpacking job data")
                 return Job(**job_data)
-            except ValueError as e:
+            except (ValueError, ValidationError) as e:
                 raise WorkerException(f"Invalid job format: {e}", status_code=400)
         return None
 
@@ -126,11 +127,10 @@ class Worker():
         try:
             # Parse the response JSON
             dataset_response = DatasetResponse(**response.json())
-
             # Return the data
             return dataset_response
-        except Exception as e:
-            raise WorkerException(f"Error while fetching data: {e}")
+        except ValidationError as e:
+            raise WorkerException(f"Data error - data returned from data provider of incorrect format: \n{e}")
 
     async def query_model(self, model_url: HttpUrl, data: DatasetResponse, model_api_key) -> ModelResponse:
         """
@@ -154,9 +154,14 @@ class Worker():
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise WorkerException(
-                detail=e.response.json()["detail"], status_code=e.response.status_code
-            )
+            if e.response and e.response.json():
+                raise WorkerException(
+                    detail=e.response.json()["detail"], status_code=e.response.status_code
+                )
+            else:
+                raise WorkerException(
+                    detail="HTTP Exception", status_code=400
+                )
 
         try:
             # Check if the request was successful
@@ -230,7 +235,7 @@ class Worker():
         except WorkerException as e:
             # known/caught error
             # should be sent back to user
-            self.queue_error(WorkerError(e.detail, status_code=e.status_code))
+            self.queue_error(WorkerError(error_message=e.detail, error_code=e.status_code))
         except Exception as e:
             # unknown/uncaught error
             # should be raised to be dealt with
