@@ -54,35 +54,32 @@ def test_init_queues(mock_channel):
     channel.queue_declare.assert_any_call(queue="result_queue", durable=True)
 
 
-@pytest.mark.asyncio
 @patch("common.redis.connect.redis.Redis.from_url")
-@patch("common.redis.connect.asyncio.sleep", return_value=None)
-async def test_connect_to_redis_success(mock_sleep, mock_redis_from_url):
+@patch("common.redis.connect.sleep", return_value=None)
+def test_connect_to_redis_success(mock_sleep, mock_redis_from_url):
     mock_redis_client = MagicMock()
-    mock_redis_client.ping = AsyncMock(return_value=True)
+    mock_redis_client.ping = MagicMock(return_value=True)
     mock_redis_from_url.return_value = mock_redis_client
 
-    redis_client = await connect_to_redis(url="redis://localhost", retries=3)
+    redis_client = connect_to_redis(url="redis://localhost", retries=3)
     assert redis_client is not None
     mock_redis_from_url.assert_called_once_with("redis://localhost")
     mock_redis_client.ping.assert_called_once()
 
 
-@pytest.mark.asyncio
 @patch("common.redis.connect.redis.Redis.from_url", side_effect=redis.ConnectionError)
-@patch("common.redis.connect.asyncio.sleep", return_value=None)
+@patch("common.redis.connect.sleep", return_value=None)
 async def test_connect_to_redis_retry(mock_sleep, mock_redis_from_url):
     with pytest.raises(Exception):
-        await connect_to_redis(url="redis://localhost", retries=3)
+        connect_to_redis(url="redis://localhost", retries=3)
     assert mock_redis_from_url.call_count == 3
     assert mock_sleep.call_count == 3
 
 
-@pytest.mark.asyncio
 @patch("common.redis.connect.redis.Redis.from_url", side_effect=redis.ConnectionError)
-@patch("common.redis.connect.asyncio.sleep", return_value=None)
-async def test_connect_to_redis_exhaust_retries(mock_sleep, mock_redis_from_url):
+@patch("common.redis.connect.sleep", return_value=None)
+def test_connect_to_redis_exhaust_retries(mock_sleep, mock_redis_from_url):
     with pytest.raises(Exception):
-        await connect_to_redis(url="redis://localhost", retries=10)
+        connect_to_redis(url="redis://localhost", retries=10)
     assert mock_redis_from_url.call_count == 10
     assert mock_sleep.call_count == 10
