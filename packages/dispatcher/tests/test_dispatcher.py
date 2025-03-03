@@ -18,7 +18,7 @@ from dispatcher.models import RunningJob
 @pytest.fixture
 def mock_redis_client():
     """Fixture for creating a mock Redis client."""
-    return AsyncMock()
+    return MagicMock()
 
 
 @pytest.fixture
@@ -100,15 +100,14 @@ def test_should_give_no_job_if_no_method_frame(dispatcher, mock_connection):
     assert fetched_job is None
 
 
-@pytest.mark.asyncio
-async def test_should_load_job_to_redis_and_dispatch(
+def test_should_load_job_to_redis_and_dispatch(
     dispatcher, mock_redis_client, sample_job
 ):
     """Should load a job onto redis and start dispatching"""
-    dispatcher.dispatch_as_required = AsyncMock()
+    dispatcher.dispatch_as_required = MagicMock()
 
     # Call process_new_job with the sample job
-    await dispatcher.process_new_job(sample_job)
+    dispatcher.process_new_job(sample_job)
 
     # Check if the job was added to Redis
     mock_redis_client.set.assert_called_once()
@@ -127,8 +126,7 @@ async def test_should_load_job_to_redis_and_dispatch(
     assert dispatcher.dispatch_as_required.called
 
 
-@pytest.mark.asyncio
-async def test_dispatch_batch_dispatches(mock_connection, sample_job):
+def test_dispatch_batch_dispatches(mock_connection, sample_job):
     """Should dispatch a single batch"""
     channel_mock = MagicMock()
     mock_connection.channel.return_value = channel_mock
@@ -146,7 +144,7 @@ async def test_dispatch_batch_dispatches(mock_connection, sample_job):
     )
 
     # Call dispatch_batch with the job_id and the batch
-    await dispatcher.dispatch_batch(sample_job.job_id, batch)
+    dispatcher.dispatch_batch(sample_job.job_id, batch)
 
     # Verify that a batch was published
     assert channel_mock.basic_publish.called
@@ -166,8 +164,7 @@ async def test_dispatch_batch_dispatches(mock_connection, sample_job):
         (1000, 1, 2),  # Many pending, already beyond max concurrency = 1
     ],
 )
-@pytest.mark.asyncio
-async def test_should_dispatch_new_batches_as_needed(
+def test_should_dispatch_new_batches_as_needed(
     dispatcher, pending_jobs, max_jobs, running_jobs, mock_redis_client, sample_job
 ):
     """Should dispatch new batches as required - until pending == max"""
@@ -188,13 +185,13 @@ async def test_should_dispatch_new_batches_as_needed(
     )
 
     # Mock dispatcher methods
-    dispatcher.get_job = AsyncMock()
+    dispatcher.get_job = MagicMock()
     dispatcher.get_job.return_value = running_job
-    dispatcher.dispatch_batch = AsyncMock()
-    dispatcher.update_job = AsyncMock()
+    dispatcher.dispatch_batch = MagicMock()
+    dispatcher.update_job = MagicMock()
 
     # Call dispatch_as_required
-    await dispatcher.dispatch_as_required(sample_job.job_id)
+    dispatcher.dispatch_as_required(sample_job.job_id)
 
     # Check calls
     dispatcher.get_job.assert_called_once_with(sample_job.job_id)
@@ -221,23 +218,21 @@ async def test_should_dispatch_new_batches_as_needed(
     assert not mock_redis_client.delete.called
 
 
-@pytest.mark.asyncio
-async def test_should_stop_if_job_not_found(dispatcher):
+def test_should_stop_if_job_not_found(dispatcher):
     """Should stop if job not found"""
-    dispatcher.dispatch_batch = AsyncMock()
-    dispatcher.get_job = AsyncMock()
+    dispatcher.dispatch_batch = MagicMock()
+    dispatcher.get_job = MagicMock()
     dispatcher.get_job.return_value = None
 
     # Call dispatch_as_required
-    await dispatcher.dispatch_as_required("job_id")
+    dispatcher.dispatch_as_required("job_id")
 
     # Verify we tried to fetch the job, but found none
     dispatcher.get_job.assert_called_once_with("job_id")
     assert not dispatcher.dispatch_batch.called
 
 
-@pytest.mark.asyncio
-async def test_get_job_should_get_job(dispatcher, mock_redis_client, sample_job):
+def test_get_job_should_get_job(dispatcher, mock_redis_client, sample_job):
     """Should get a job from Redis"""
 
     running_job = RunningJob(
@@ -251,7 +246,7 @@ async def test_get_job_should_get_job(dispatcher, mock_redis_client, sample_job)
     mock_redis_client.get.return_value = running_job.model_dump_json()
 
     # Call get_job
-    res = await dispatcher.get_job("job_id")
+    res = dispatcher.get_job("job_id")
 
     # Verify that the job was fetched from Redis
     mock_redis_client.get.assert_called_once_with(
@@ -260,14 +255,13 @@ async def test_get_job_should_get_job(dispatcher, mock_redis_client, sample_job)
     assert res == running_job
 
 
-@pytest.mark.asyncio
-async def test_should_return_none_if_no_job_get_job(dispatcher, mock_redis_client):
+def test_should_return_none_if_no_job_get_job(dispatcher, mock_redis_client):
     """Should return None if no job found in Redis"""
 
     mock_redis_client.get.return_value = None
 
     # Call get_job
-    res = await dispatcher.get_job("job_id")
+    res = dispatcher.get_job("job_id")
 
     # Verify that the job was fetched from Redis
     mock_redis_client.get.assert_called_once_with(
@@ -277,14 +271,13 @@ async def test_should_return_none_if_no_job_get_job(dispatcher, mock_redis_clien
 
 
 # Handle job complete
-@pytest.mark.asyncio
-async def test_job_complete_bad_input(dispatcher, mock_redis_client):
+def test_job_complete_bad_input(dispatcher, mock_redis_client):
     """If the job is not found, should log an error and return"""
-    dispatcher.get_job = AsyncMock()
+    dispatcher.get_job = MagicMock()
     dispatcher.get_job.return_value = None
 
     # Call handle_job_completion
-    await dispatcher.handle_job_completion(
+    dispatcher.handle_job_completion(
         JobStatusMessage(
             job_id="job_id",
             batch_id="batch_id",
@@ -298,10 +291,9 @@ async def test_job_complete_bad_input(dispatcher, mock_redis_client):
 
 
 # If completed job, should update the job to inc complete, dec pending and dispatch more
-@pytest.mark.asyncio
-async def test_job_complete_completed(dispatcher, mock_redis_client, sample_job):
+def test_job_complete_completed(dispatcher, mock_redis_client, sample_job):
     """If the job is completed, should update the job to inc complete, dec running and dispatch more"""
-    dispatcher.get_job = AsyncMock()
+    dispatcher.get_job = MagicMock()
     dispatcher.get_job.return_value = RunningJob(
         job_data=sample_job,
         currently_running_batches=1,
@@ -310,10 +302,10 @@ async def test_job_complete_completed(dispatcher, mock_redis_client, sample_job)
         pending_batches=10,
     )
 
-    dispatcher.dispatch_as_required = AsyncMock()
+    dispatcher.dispatch_as_required = MagicMock()
 
     # Call handle_job_completion
-    await dispatcher.handle_job_completion(
+    dispatcher.handle_job_completion(
         JobStatusMessage(
             job_id=str(sample_job.job_id),
             batch_id="batch_id",
@@ -337,10 +329,9 @@ async def test_job_complete_completed(dispatcher, mock_redis_client, sample_job)
     dispatcher.dispatch_as_required.assert_called_once_with(str(sample_job.job_id))
 
 
-@pytest.mark.asyncio
-async def test_job_error_handled(dispatcher, mock_redis_client, sample_job):
+def test_job_error_handled(dispatcher, mock_redis_client, sample_job):
     """If the job is errored, should update the job to inc errored and log an error"""
-    dispatcher.get_job = AsyncMock()
+    dispatcher.get_job = MagicMock()
     dispatcher.get_job.return_value = RunningJob(
         job_data=sample_job,
         currently_running_batches=1,
@@ -349,10 +340,10 @@ async def test_job_error_handled(dispatcher, mock_redis_client, sample_job):
         pending_batches=10,
     )
 
-    dispatcher.dispatch_as_required = AsyncMock()
+    dispatcher.dispatch_as_required = MagicMock()
 
     # Call handle_job_completion
-    await dispatcher.handle_job_completion(
+    dispatcher.handle_job_completion(
         JobStatusMessage(
             job_id=str(sample_job.job_id),
             batch_id="batch_id",
@@ -378,10 +369,9 @@ async def test_job_error_handled(dispatcher, mock_redis_client, sample_job):
     assert not mock_redis_client.delete.called
 
 
-@pytest.mark.asyncio
-async def test_should_delete_on_last_batch(dispatcher, mock_redis_client, sample_job):
+def test_should_delete_on_last_batch(dispatcher, mock_redis_client, sample_job):
     """If no more pending batches, and none in progress, job is complete"""
-    dispatcher.get_job = AsyncMock()
+    dispatcher.get_job = MagicMock()
     dispatcher.get_job.return_value = RunningJob(
         job_data=sample_job,
         currently_running_batches=1,
@@ -389,10 +379,10 @@ async def test_should_delete_on_last_batch(dispatcher, mock_redis_client, sample
         errored_batches=1,
         pending_batches=0,
     )
-    dispatcher.dispatch_as_required = AsyncMock()
+    dispatcher.dispatch_as_required = MagicMock()
 
     # Call handle_job_completion
-    await dispatcher.handle_job_completion(
+    dispatcher.handle_job_completion(
         JobStatusMessage(
             job_id=str(sample_job.job_id),
             batch_id="batch_id",
@@ -415,18 +405,17 @@ async def test_should_delete_on_last_batch(dispatcher, mock_redis_client, sample
 # Run loop:
 # Check we call fetch_job, process_new_job
 # Error on process_new_job so that we do not infinite loop
-@pytest.mark.asyncio
-async def test_run_loop(dispatcher, mock_connection, sample_job):
+def test_run_loop(dispatcher, mock_connection, sample_job):
     """Should run the loop correctly"""
     dispatcher.fetch_job = MagicMock()
-    dispatcher.process_new_job = AsyncMock()
+    dispatcher.process_new_job = MagicMock()
     dispatcher.process_new_job.side_effect = DispatcherException(
         "Test error to stop the infinite loop", 400
     )
 
     # Call run_loop
     with pytest.raises(DispatcherException):
-        await dispatcher.run()
+        dispatcher.run()
 
     # Verify that fetch_job was called
     dispatcher.fetch_job.assert_called_once()

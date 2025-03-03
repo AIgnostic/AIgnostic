@@ -11,7 +11,7 @@ from worker.worker import WorkerException
 
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
-import redis.asyncio as redis
+import redis as redis
 
 from common.rabbitmq.connect import init_queues
 
@@ -76,7 +76,7 @@ class Dispatcher:
                 self.handle_job_unpack_error(e)
         return None
 
-    async def dispatch_batch(self, job_id: str, job_data: Batch):
+    def dispatch_batch(self, job_id: str, job_data: Batch):
         # TODO: Add error handling
         # TODO: Different queue
         """Dispatch a single batch for the given job id"""
@@ -92,11 +92,11 @@ class Dispatcher:
             self.propogate_error(job_id, e)
             raise DispatcherException(f"Error dispatching batch: {e}")
 
-    async def dispatch_as_required(self, job_id: str):
+    def dispatch_as_required(self, job_id: str):
         """Given a job id, lookup currently running jobs and dispatch until pending batches == max batches"""
         logger.info(f"Dispatching as required for job {job_id}")
         # Get the running job
-        running_job = await self.get_job(job_id)
+        running_job = self.get_job(job_id)
         if not running_job:
             logger.error(f"Job {job_id} not found in Redis!")
             # TODO: Handle error finding jon
@@ -112,7 +112,7 @@ class Dispatcher:
             )
             # TODO: Handle completion & report errored batches
             # Delete key
-            await self._redis_client.delete(self._get_job_redis_key(job_id))
+            self._redis_client.delete(self._get_job_redis_key(job_id))
             logger.info(f"Job {job_id} marked as complete & deleted")
             logger.warning(
                 f"Job {job_id} is complete but this is unhandled! Erroed batches are not reproted"
@@ -139,18 +139,18 @@ class Dispatcher:
                 metrics=running_job.job_data.metrics,
                 total_sample_size=running_job.job_data.total_sample_size,
             )
-            await self.dispatch_batch(job_id, batch)
+            self.dispatch_batch(job_id, batch)
             logger.debug(f"Updating Redis for job {job_id}")
             running_job.currently_running_batches += 1
             running_job.pending_batches = max(0, running_job.pending_batches - 1)
-            await self.update_job(job_id, running_job)
+            self.update_job(job_id, running_job)
             logger.info(
                 f"Updated running job in Redis for job {job_id}, pending={running_job.pending_batches}, running={running_job.currently_running_batches}, completed={running_job.completed_batches}, errored={running_job.errored_batches}"  # noqa
             )
 
         logger.info(f"Dispatched {batches_to_dispatch} new batches for job {job_id}.")
 
-    async def process_new_job(self, job: PipelineJob):
+    def process_new_job(self, job: PipelineJob):
         """Called when a new job is received to setup the job in redis and start processing"""
         logger.info(f"Processing job: {job}")
         logger.info(f"Preparing data to run job {job.job_id}")
@@ -163,16 +163,16 @@ class Dispatcher:
             pending_batches=job.batches,
         )
         # Add to redis
-        await self.update_job(job.job_id, running_job)
+        self.update_job(job.job_id, running_job)
         logger.info(f"Init data stored in Redis for job {job.job_id}")
         # Start processing job
-        await self.dispatch_as_required(running_job.job_data.job_id)
+        self.dispatch_as_required(running_job.job_data.job_id)
 
-    async def handle_job_completion(self, msg: JobStatusMessage):
+    def handle_job_completion(self, msg: JobStatusMessage):
         """Handle a job completion message"""
         logger.info(f"Handling job completion: {msg}")
         # Get the running job
-        running_job = await self.get_job(msg.job_id)
+        running_job = self.get_job(msg.job_id)
         if running_job is None:
             logger.error(f"Job {msg.job_id} not found in Redis!")
             logger.warning(f"This error for {msg.job_id} is unhandled!")
@@ -185,7 +185,7 @@ class Dispatcher:
                 running_job.currently_running_batches -= 1
                 logger.info(f"Batch {msg.batch_id} completed!")
                 # Update
-                await self.update_job(msg.job_id, running_job)
+                self.update_job(msg.job_id, running_job)
                 # Dispatch more if required
 
             case JobStatus.ERRORED:
@@ -206,7 +206,7 @@ class Dispatcher:
                     f"Error in batch {msg.batch_id} is unhandled! Job will not be dispatched."
                 )
                 # Update
-                await self.update_job(msg.job_id, running_job)
+                self.update_job(msg.job_id, running_job)
 
         # If no more pending batches, and none in progress, job is complete
         if (
@@ -215,28 +215,28 @@ class Dispatcher:
         ):
             logger.info(f"Job {msg.job_id} is complete!")
             # Delete key
-            await self._redis_client.delete(self._get_job_redis_key(msg.job_id))
+            self._redis_client.delete(self._get_job_redis_key(msg.job_id))
             logger.info(f"Job {msg.job_id} marked as complete & deleted")
             logger.warning(
                 f"Job {msg.job_id} is complete but this is unhandled! Erroed batches are not reproted"
             )
         else:
             logger.info(f"Dispatching more batches for job {msg.job_id}...")
-            await self.dispatch_as_required(msg.job_id)
+            self.dispatch_as_required(msg.job_id)
 
     def _get_job_redis_key(self, job_id: str) -> str:
         """Return the key to reference a job in redis"""
         return redis_key("jobs", job_id)
 
-    async def update_job(self, job_id: str, running_job: RunningJob):
+    def update_job(self, job_id: str, running_job: RunningJob):
         """Update a job in redis"""
-        await self._redis_client.set(
+        self._redis_client.set(
             self._get_job_redis_key(job_id), running_job.model_dump_json()
         )
 
-    async def get_job(self, job_id: str) -> RunningJob | None:
+    def get_job(self, job_id: str) -> RunningJob | None:
         """Get a job from redis"""
-        job = await self._redis_client.get(self._get_job_redis_key(job_id))
+        job = self._redis_client.get(self._get_job_redis_key(job_id))
         if job:
             return RunningJob(**json.loads(job))
         return None
@@ -263,7 +263,7 @@ class Dispatcher:
         except ValueError as e:
             self.handle_status_unpack_error(e)
 
-    async def run(self):
+    def run(self):
         """Main dispatcher loop"""
         logger.info("Dispatcher running...")
         while True:
@@ -275,4 +275,4 @@ class Dispatcher:
                 continue
 
             if job:
-                await self.process_new_job(job)
+                self.process_new_job(job)

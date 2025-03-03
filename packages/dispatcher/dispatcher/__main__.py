@@ -8,7 +8,7 @@ from dispatcher.dispatcher import Dispatcher
 
 from common.redis.connect import connect_to_redis
 from pika import BlockingConnection
-import redis.asyncio as redis
+import redis as redis
 
 from common.rabbitmq.connect import connect_to_rabbitmq
 from dispatcher.logging.configure_logging import configure_logging
@@ -20,10 +20,10 @@ REDIS_HOST = getenv("REDIS_HOST", "localhost")
 REDIS_PORT = getenv("REDIS_PORT", 6379)
 
 
-async def redis_connect() -> redis.Redis:
+def redis_connect() -> redis.Redis:
     logger.info("Connecting to Redis...")
     global redis_client
-    redis_client = await connect_to_redis(f"redis://{REDIS_HOST}:{REDIS_PORT}")
+    redis_client = connect_to_redis(f"redis://{REDIS_HOST}:{REDIS_PORT}")
     logger.info("Connected to Redis.")
     return redis_client
 
@@ -33,13 +33,13 @@ def rabbitmq_connect() -> BlockingConnection:
     return connect_to_rabbitmq()
 
 
-async def startup() -> Tuple[BlockingConnection, redis.Redis]:
+def startup() -> Tuple[BlockingConnection, redis.Redis]:
     """Perform application startup actions"""
     # 1: Configure global logger so we can log thing
     configure_logging("production")
     logger.info("Dispatcher booting up...")
     connection = rabbitmq_connect()
-    redis = await redis_connect()
+    redis = redis_connect()
     logger.info("Application startup complete.")
     return connection, redis
 
@@ -54,15 +54,15 @@ def cleanup(connection: Optional[BlockingConnection] = None):
     logger.info("Application cleanup complete.")
 
 
-async def main():
+def main():
     """Main entry point"""
     logger.warning("Starting dispatcher...")
-    connection, redis = await startup()
+    connection, redis = startup()
     dispatcher = Dispatcher(connection, redis)
-    await dispatcher.run()
+    dispatcher.run()
 
 
 atexit.register(cleanup)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
