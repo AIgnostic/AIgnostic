@@ -78,7 +78,9 @@ const regressionMetrics = [
   "r squared",
 ]
 
-const nextTokenGenerationMetrics: string[] = []
+const nextTokenGenerationMetrics: string[] = [
+  "hello score"
+]
 
 const modelTypesToMetrics: { [key: string]: string[] } = {
   "Binary Classification": binaryClassifierMetrics,

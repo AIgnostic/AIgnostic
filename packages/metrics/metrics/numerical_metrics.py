@@ -529,3 +529,6 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     assert len(labels) == len(scores), "Length mismatch between labels and scores in OOD-AUROC calculation."
 
     return roc_auc_score(labels, scores)
+
+def hello_score(info: CalculateRequest) -> float:
+    return 0.6

@@ -34,7 +34,8 @@ from metrics.numerical_metrics import (
     explanation_stability_score,
     ood_auroc,
     create_fairness_metric_fn,
-    equalized_odds_difference
+    equalized_odds_difference,
+    hello_score
 )
 
 task_type_to_metric = {
@@ -79,7 +80,9 @@ task_type_to_metric = {
         "explanation_sparsity_score",
         "explanation_fidelity_score",
     ],
-    "next_token_generation": []
+    "next_token_generation": [
+        "hello_score"
+    ]
 }
 
 
@@ -130,7 +133,10 @@ metric_to_fn_and_requirements = {
         "function": r_squared,
         "required_inputs": ["true_labels", "predicted_labels"]
     },
-
+    "hello_score": {
+        "function": hello_score,
+        "required_inputs": ["predicted_labels"]
+    },
     # Fairness metrics
     **{
         metric_name: {
