@@ -1,16 +1,16 @@
 // tests/fileupload.test.tsx
 
+import React, { act } from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import FileUploadComponent from '../src/app/components/FileUploadComponent';
+import '@testing-library/jest-dom';
+
 global.fetch = jest.fn(() =>
   Promise.resolve({
     ok: true,
     json: async () => ({ task_to_metric_map: {} }),
   })
 ) as jest.Mock;
-
-import React, { act } from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import FileUploadComponent from '../src/app/components/FileUploadComponent';
-import '@testing-library/jest-dom';
 
 const dummyState = { dashboardKey: 0 };
 const setStateWrapper = jest.fn();
