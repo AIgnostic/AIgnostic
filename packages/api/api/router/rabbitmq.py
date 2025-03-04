@@ -11,10 +11,6 @@ def get_channel():
     return channel
 
 
-def ack_cb(method_frame):
-    print(f"Got Pika ack: {method_frame}")
-
-
 def fastapi_connect_rabbitmq():
     global connection
     global channel

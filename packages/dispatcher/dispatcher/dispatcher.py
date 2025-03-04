@@ -53,13 +53,15 @@ class Dispatcher:
 
     def handle_job_unpack_error(self, e: ValueError):
         self.propogate_error(None, e)
+        logger.error(f"Invalid job format: {e}")
         # TODO: Pass back to api, show notificatio to uer
-        raise DispatcherException(f"Invalid job format: {e}", status_code=400)
+        # raise DispatcherException(f"Invalid job format: {e}", status_code=400)
 
     def handle_status_unpack_error(self, e: ValueError):
         self.propogate_error(None, e)
-        # TODO: Pass back to api, show notificatio to uer
-        raise DispatcherException(f"Invalid status format: {e}", status_code=400)
+        # TODO: Pass back to api, show notificatio to user
+        logger.error(f"Invalid status format: {e}")
+        # raise DispatcherException(f"Invalid status format: {e}", status_code=400)
 
     def fetch_job(self) -> Optional[PipelineJob]:
         """
@@ -90,7 +92,7 @@ class Dispatcher:
             logger.info(f"Batch dispatched for job {job_id}")
         except Exception as e:
             self.propogate_error(job_id, e)
-            raise DispatcherException(f"Error dispatching batch: {e}")
+            # raise DispatcherException(f"Error dispatching batch: {e}")
 
     def dispatch_as_required(self, job_id: str):
         """Given a job id, lookup currently running jobs and dispatch until pending batches == max batches"""

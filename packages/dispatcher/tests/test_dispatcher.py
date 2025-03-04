@@ -9,6 +9,7 @@ from common.models.pipeline import (
     MetricCalculationJob,
     PipelineJob,
 )
+from common.rabbitmq.constants import JOB_QUEUE, STATUS_QUEUE
 import pytest
 from unittest.mock import MagicMock
 from dispatcher.dispatcher import Dispatcher, DispatcherException
@@ -63,19 +64,20 @@ def test_dispatcher_exception_has_detail_and_status_code():
     assert exception.status_code == status_code
 
 
-def test_should_throw_dispatcher_exception_if_malformed_job(
+def test_should_propogate_dispatcher_exception_if_malformed_job(
     dispatcher, mock_connection
 ):
-    """Should throw an exception if the job is malformed"""
+    """Should propogate an exception if the job is malformed"""
     # Mock the channel's basic_get result
     mock_connection.channel.return_value.basic_get.return_value = (
         True,
         None,
         "malfomed job",
     )
+    dispatcher.propogate_error = MagicMock()
 
-    with pytest.raises(DispatcherException):
-        dispatcher.fetch_job()
+    dispatcher.fetch_job()
+    dispatcher.propogate_error.assert_called_once()
 
 
 def test_should_unpack_job_correctly(dispatcher, mock_connection, sample_job):
@@ -415,3 +417,74 @@ def test_should_delete_on_last_batch(dispatcher, mock_redis_client, sample_job):
 
     # Verify that only one job was dispatched
     dispatcher.dispatch_as_required.assert_called_once()
+
+
+def test_should_propogate_error_if_dispatch_fails(
+    dispatcher, mock_connection, sample_job
+):
+    dispatcher.propogate_error = MagicMock()
+    # Make basic_publish throw error
+    mock_connection.channel.return_value.basic_publish.side_effect = Exception()
+
+    # Call dispatch_batch with the job_id and the batch
+    dispatcher.dispatch_batch(
+        sample_job.job_id,
+        Batch(
+            job_id=str(sample_job.job_id),
+            batch_id=str(uuid.uuid4()),
+            batch_size=10,
+            metrics=sample_job.metrics,
+            total_sample_size=100,
+        ),
+    )
+
+    # Should prop
+    dispatcher.propogate_error.assert_called_once()
+
+
+def test_got_status_update_should_process(dispatcher, sample_job):
+    dispatcher.handle_job_completion = MagicMock()
+    update = JobStatusMessage(
+        job_id=str(sample_job.job_id),
+        batch_id="batch_id",
+        status=JobStatus.COMPLETED,
+    )
+    # Call got_job
+    dispatcher.got_status(None, None, None, update.model_dump_json())
+    dispatcher.handle_job_completion.assert_called_once_with(update)
+
+
+def test_status_unpack_error_propogates(dispatcher, sample_job):
+    dispatcher.propogate_error = MagicMock()
+    # Call got_status
+    dispatcher.got_status(None, None, None, "jinvalidjsonkdqw{}}")
+
+    # Should prop
+    dispatcher.propogate_error.assert_called_once()
+
+
+def test_got_job_should_process(dispatcher, sample_job):
+    dispatcher.process_new_job = MagicMock()
+    # Call got_job
+    dispatcher.got_job(None, None, None, sample_job.model_dump_json())
+    dispatcher.process_new_job.assert_called_once_with(sample_job)
+
+
+def test_job_unpack_error_propogates(dispatcher, sample_job):
+    dispatcher.propogate_error = MagicMock()
+    # Call got_status
+    dispatcher.got_job(None, None, None, "jinvalidjsonkdqw{}}")
+
+    # Should prop
+    dispatcher.propogate_error.assert_called_once()
+
+
+def test_run_should_queue_for_job_and_status(dispatcher, mock_connection):
+    # Run should call basic_consume twice, once for JOB_QEUE and the other for STATUS_QUEUE
+    mock_channel = mock_connection.channel.return_value
+    dispatcher.run()
+    assert mock_channel.basic_consume.call_count == 2
+    assert mock_channel.basic_consume.call_args_list[0][1]["queue"] == JOB_QUEUE
+    assert mock_channel.basic_consume.call_args_list[1][1]["queue"] == STATUS_QUEUE
+    # Was start_consuming called?
+    assert mock_channel.start_consuming.called
