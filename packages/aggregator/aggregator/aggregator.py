@@ -200,7 +200,6 @@ def process_batch_result(worker_results: WorkerResults):
     if worker_results.user_defined_metrics is not None:
         print(f"User-defined metrics received for user {user_id}: {worker_results.user_defined_metrics}")
 
-
     # ensure a metricsaffregator exists for the user
     if user_id not in user_aggregators:
         user_aggregators[user_id] = MetricsAggregator()
@@ -214,10 +213,12 @@ def process_batch_result(worker_results: WorkerResults):
     if worker_results.user_defined_metrics is not None:
         for metric, metric_value in worker_results.user_defined_metrics.items():
 
-            metric_value_obj = MetricsPackageExceptionModel(**metric_value) if "error" in metric_value else MetricValue(**metric_value)
+            metric_value_obj = (
+                MetricsPackageExceptionModel(**metric_value)
+                if "error" in metric_value
+                else MetricValue(**metric_value)
+            )
             batch_metrics[metric] = metric_value_obj
-            
-
 
     aggregator.aggregate_new_batch(worker_results.metric_values, worker_results.batch_size)
 

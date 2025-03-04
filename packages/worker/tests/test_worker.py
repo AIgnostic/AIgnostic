@@ -96,8 +96,6 @@ def test_queue_result():
         mock_channel.basic_publish.assert_called_once()
 
 
-
-
 @patch("worker.worker.requests.get")
 @patch("worker.worker.requests.post")
 @pytest.mark.asyncio
@@ -331,8 +329,6 @@ async def test_query_model_success(mock_post):
     data = DatasetResponse(**data)
     result = await worker.query_model("http://example.com/model", data, "model_key")
     assert result.predictions == [[0], [1]]
-
-
 
 
 @patch("worker.worker.requests.get")
