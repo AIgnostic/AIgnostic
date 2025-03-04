@@ -9,6 +9,10 @@ services:
       - '15672:15672'
     networks:
       - aignostic_network
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=securepassword
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 10s
@@ -21,17 +25,17 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: ./dockerfiles/Dockerfile.frontend
-    image: aignostic/frontend
+      dockerfile: ./dockerfiles/Dockerfile.frontend.dev
+    command: npx nx serve frontend --host 0.0.0.0 --port 4200
     container_name: frontend
     volumes:
-      - .:/app
-      - venv:/app/.venv
-    command: npx nx serve frontend --host 0.0.0.0
+      - ./packages:/app/packages
     ports:
       - '4200:4200'
     networks:
       - aignostic_network
+    environment:
+      - NX_DAEMON=false
 
   ###
   # Backend services
@@ -53,6 +57,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
     depends_on:
       rabbitmq:
@@ -60,7 +66,7 @@ services:
     links:
       - rabbitmq
 
-  # Microservices
+  # # Microservices
   worker_ms:
     image: aignostic/dev
     volumes:
@@ -71,6 +77,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
     depends_on:
       rabbitmq:
@@ -92,6 +100,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
     depends_on:
       rabbitmq:
@@ -127,7 +137,7 @@ services:
     networks:
       - aignostic_network
     ports:
-      - '5000:5000'
+      - '5024:5024'
 
   scikit_mock_model_api:
     container_name: scikit-mock-model-api
@@ -141,6 +151,7 @@ services:
       - aignostic_network
     ports:
       - '5011:5011'
+
   finbert_mock_model_api:
     container_name: finbert-mock-model-api
     image: aignostic/dev

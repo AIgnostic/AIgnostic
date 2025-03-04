@@ -55,9 +55,7 @@ async def generate_metrics_from_info(
                 channel=channel,
             )
             print(f"Dispatched job {i+1}")
-        return JSONResponse(
-            {"message": "Created and dispatched jobs"}, status_code=202
-        )
+        return JSONResponse({"message": "Created and dispatched jobs"}, status_code=202)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error dispatching jobs - {e}")
 
@@ -102,4 +100,6 @@ def dispatch_job(
         "user_id": user_id,
     }
     message = json.dumps(job_json)
-    channel.basic_publish(exchange="", routing_key=JOB_QUEUE, body=message)
+    channel.basic_publish(
+        exchange="", routing_key=JOB_QUEUE, body=message, mandatory=True
+    )
