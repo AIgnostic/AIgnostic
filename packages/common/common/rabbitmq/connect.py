@@ -11,16 +11,18 @@ RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "guest")
 
 credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
 
+
 def connect_to_rabbitmq(
     host: str = "localhost",
     retries: int = 20,
-
 ):
     for i in range(retries):  # Retry up to 10 times
         print(f"Connecting to RabbitMQ at {host}")
         try:
             connection = pika.BlockingConnection(
-                pika.ConnectionParameters(host=host, heartbeat=600, credentials=credentials)
+                pika.ConnectionParameters(
+                    host=host, heartbeat=600, credentials=credentials
+                )
             )
             return connection
         except (pika.exceptions.AMQPConnectionError, socket.gaierror) as e:

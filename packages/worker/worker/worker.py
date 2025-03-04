@@ -66,7 +66,7 @@ class Worker:
         self._channel.basic_publish(
             exchange="",
             routing_key=RESULT_QUEUE,
-            body=result.model_dump_json(),
+            body=job.model_dump_json(),
             mandatory=True,
         )
 
@@ -84,7 +84,7 @@ class Worker:
         self._channel.basic_publish(
             exchange="",
             routing_key=RESULT_QUEUE,
-            body=json.dumps({"error": error}),
+            body=job.model_dump_json(),
             mandatory=True,
         )
 
