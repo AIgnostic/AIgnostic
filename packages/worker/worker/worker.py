@@ -39,6 +39,7 @@ RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
 class Worker:
     _channel: BlockingChannel
+
     def __init__(self, host="localhost"):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
@@ -216,7 +217,6 @@ class Worker:
             true_labels = dataset_response.labels
             predicted_labels = model_response.predictions
 
-
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
             print(f"Metrics to compute: {metrics_data.metrics}")
@@ -270,6 +270,7 @@ class Worker:
             self.queue_error(
                 WorkerError(error_message=e.detail, error_code=e.status_code)
             )
+            self.send_status_error(batch.job_id, batch.batch_id, e)
         except Exception as e:
             self.send_status_error(batch.job_id, batch.batch_id, e)
             raise WorkerException(f"Error while processing data: {e}")

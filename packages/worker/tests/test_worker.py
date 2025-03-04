@@ -6,7 +6,6 @@ from common.models.pipeline import Batch, MetricCalculationJob
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from common.models import (
-    MetricConfig,
     MetricValue,
     WorkerResults,
     MetricValue,
@@ -138,7 +137,9 @@ async def test_process_job_success(mock_calculate_metrics):
         worker, "query_model", new_callable=AsyncMock
     ) as mock_query_model, patch.object(
         worker, "queue_result", new_callable=MagicMock
-    ) as mock_queue_result:
+    ) as mock_queue_result, patch.object(
+        worker, "send_status_completed", new_callable=MagicMock
+    ) as mock_send_status_completed:
 
         mock_fetch_data.return_value = DatasetResponse(
             features=[[1, 2]], labels=[[0]], group_ids=[1]
@@ -150,6 +151,7 @@ async def test_process_job_success(mock_calculate_metrics):
         await worker.process_job(job)
 
         mock_queue_result.assert_called_once()
+        mock_send_status_completed.assert_called_once()
 
 
 @patch("worker.worker.requests.post")
@@ -190,16 +192,19 @@ def test_check_model_response():
 
 def test_invalid_job_format_raises_worker_exception():
     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
-        job = Job(
+        job = Batch(
+            job_id=str(uuid.uuid4()),
+            batch_id=str(uuid.uuid4()),
             batch_size=1,
-            total_sample_size=1,
-            metrics=["accuracy"],
-            model_type="regression",  # use a model type that bypasses label conversion
-            data_url="http://example.com/data",
-            model_url="http://example.com/model",
-            data_api_key="data_key",
-            model_api_key="model_key",
-            user_id="1234",
+            metrics=MetricCalculationJob(
+                data_url="http://example.com/data",
+                model_url="http://example.com/model",
+                data_api_key="data_key",
+                model_api_key="model_key",
+                metrics=["accuracy"],
+                model_type="binary classification",
+            ),
+            total_sample_size=500,
         )
         job_dict = job.model_dump()
         job_dict.pop("metrics")  # now an invalid Job
@@ -280,16 +285,19 @@ async def test_query_model_invalid_data_format_gives_worker_exception(mock_post)
 
 @pytest.mark.asyncio
 async def test_worker_exception_during_process_job_send_error_to_frontend():
-    job = Job(
+    job = Batch(
+        job_id=str(uuid.uuid4()),
+        batch_id=str(uuid.uuid4()),
         batch_size=1,
-        total_sample_size=1,
-        metrics=["accuracy"],
-        model_type="regression",  # use a model type that bypasses label conversion
-        data_url="http://example.com/data",
-        model_url="http://example.com/model",
-        data_api_key="data_key",
-        model_api_key="model_key",
-        user_id="1234",
+        metrics=MetricCalculationJob(
+            data_url="http://example.com/data",
+            model_url="http://example.com/model",
+            data_api_key="data_key",
+            model_api_key="model_key",
+            metrics=["accuracy"],
+            model_type="binary classification",
+        ),
+        total_sample_size=500,
     )
 
     with patch.object(
@@ -298,7 +306,9 @@ async def test_worker_exception_during_process_job_send_error_to_frontend():
         worker, "query_model", new_callable=AsyncMock
     ) as mock_query_model, patch.object(
         worker, "queue_error", new_callable=MagicMock
-    ) as mock_queue_error:
+    ) as mock_queue_error, patch.object(
+        worker, "send_status_error", new_callable=MagicMock
+    ) as mock_send_status_error:
 
         mock_fetch_data.return_value = DatasetResponse(
             features=[[1, 2]], labels=[[0]], group_ids=[1]
@@ -309,3 +319,4 @@ async def test_worker_exception_during_process_job_send_error_to_frontend():
         await worker.process_job(job)
 
         mock_queue_error.assert_called_once()
+        mock_send_status_error.assert_called_once()

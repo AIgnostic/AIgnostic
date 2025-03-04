@@ -1,6 +1,6 @@
 import redis
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch, MagicMock
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues

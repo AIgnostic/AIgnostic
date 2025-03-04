@@ -1,7 +1,9 @@
 from abc import ABC
 from enum import Enum
+
+from metrics.models import WorkerResults
 from pydantic import BaseModel  # , field_validator
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 
 class DatasetResponse(BaseModel):  # pragma: no cover
