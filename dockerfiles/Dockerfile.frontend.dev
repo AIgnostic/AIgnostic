@@ -1,0 +1,12 @@
+FROM node:lts
+
+WORKDIR /app
+
+COPY ./package.json ./package-lock.json ./
+RUN npm ci 
+
+RUN npm install -g vite
+
+COPY babel.config.js package.json package-lock.json tsconfig.base.json .
+
+CMD ["npx", "nx", "serve", "frontend", "--host", "0.0.0.0"]
