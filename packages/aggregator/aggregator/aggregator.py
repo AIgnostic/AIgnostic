@@ -102,7 +102,6 @@ class MetricsAggregator:
         self.samples_processed += batch_size
 
     def get_aggregated_metrics(self):
-        return self.metrics
         """
         Returns the aggregated metrics as a dictionary.
         Example:
@@ -120,6 +119,8 @@ class MetricsAggregator:
             ...
         }
         """
+        return self.metrics
+
         # results = {}
         # for metric, data in self.metrics.items():
         #     results[metric] = {

@@ -122,7 +122,6 @@ def test_execute_function(sample_script, sample_requirements):
     json_response = exec_response.json()
     # The response is of the form: {"result": { ... }}
     result = json_response["result"]
-    result = result["result"]
 
     # Expected values: computed_value=3, ideal_value=3, range=[3,3]
     assert result["computed_value"] == 3
@@ -151,8 +150,6 @@ def test_execute_numpy_function(sample_script, sample_requirements):
     result = json_response["result"]
     # Expected computed matrix is [[2,4],[6,8]] and the range from these values is [2, 8].
     expected_matrix = [[2, 4], [6, 8]]
-    print(result)
-    result = result["result"]
     assert result["computed_value"] == expected_matrix
     assert result["ideal_value"] == expected_matrix
     assert result["range"] == [2, 8]
