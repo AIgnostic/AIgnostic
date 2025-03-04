@@ -96,6 +96,8 @@ services:
         condition: service_healthy
     links:
       - rabbitmq
+    deploy:
+      replicas: 3
   aggregator_ms:
     container_name: aggregator
     image: aignostic/dev
@@ -129,6 +131,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
       - REDIS_HOST=redis
       - REDIS_PORT=6379
