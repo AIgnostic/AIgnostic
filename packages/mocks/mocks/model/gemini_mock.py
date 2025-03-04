@@ -3,6 +3,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
 from common.models import ModelInput, ModelResponse
+from dotenv import load_dotenv
+
+load_dotenv()
 app = FastAPI()
 
 # CORS setup (adjust origins as needed)
@@ -34,7 +37,6 @@ async def predict(request: ModelInput):
     """Generates text using Gemini to complete an answer."""
     try:
         predictions = []
-        confidence_scores = []
         prompt = request.features[0]
         print(f"Prompt: {prompt}")
         response = model.generate_content(prompt)
@@ -46,7 +48,7 @@ async def predict(request: ModelInput):
             )
         predictions.append([response.text])
         print("Reached this")
-        return ModelResponse(predictions=predictions, confidence_scores=confidence_scores)
+        return ModelResponse(predictions=predictions)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
 

@@ -202,15 +202,15 @@ def test_probabilities_sum_to_one():
         assert sum(confidence_scores) == pytest.approx(1), "Confidence scores do not sum to 1"
 
 
-# def test_gemini():
-#     response = gemini.post("/predict", json={
-#         "features": [["Hello world"]],
-#         "labels": [[""]],
-#         "group_ids": []
-#     })
-#     assert response.status_code == 200, response.text
-#     print(response.json())
-#     predictions = response.json()["predictions"]
-#     confidence_scores = response.json()["confidence_scores"]
-#     assert len(predictions) == 1, f"Expected 1 prediction, got {len(predictions)}"
-#     assert len(confidence_scores) == 1, f"Expected 1 confidence score, got {len(confidence_scores)}"
+def test_gemini():
+    response = gemini.post("/predict", json={
+        "features": [["Hello world"]],
+        "labels": [[""]],
+        "group_ids": []
+    })
+    assert response.status_code == 200, response.text
+    print(response.json())
+    predictions = response.json()["predictions"]
+    confidence_scores = response.json()["confidence_scores"]
+    assert len(predictions) == 1, f"Expected 1 prediction, got {len(predictions)}"
+    assert confidence_scores is None, "Confidence scores should be None"
