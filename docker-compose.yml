@@ -23,13 +23,20 @@ services:
   # Frontend services
   ###
   frontend:
-    image: aignostic/frontend
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile.frontend.dev
+    working_dir: /app/packages/frontend
+    command: npx vite --host 0.0.0.0 --port 4200
     container_name: frontend
-    command: npx nx serve frontend --host 0.0.0.0
+    volumes:
+      - ./packages:/app/packages
     ports:
       - '4200:4200'
     networks:
       - aignostic_network
+    environment:
+      - NX_DAEMON=false
 
   ###
   # Backend services
@@ -131,7 +138,7 @@ services:
     networks:
       - aignostic_network
     ports:
-      - '5000:5000'
+      - '5024:5024'
 
   scikit_mock_model_api:
     container_name: scikit-mock-model-api
