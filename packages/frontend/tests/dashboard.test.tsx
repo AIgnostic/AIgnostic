@@ -3,7 +3,8 @@ import { render, screen, act } from "@testing-library/react";
 import Dashboard from "../src/app/dashboard";
 import "@testing-library/jest-dom";
 import { pdf } from "@react-pdf/renderer";
-
+import { error } from "console";
+import fs from "fs";
 
 // Mock `ErrorMessage` and `ReportRenderer` components
 jest.mock("../src/app/components/ErrorMessage", () => () => (
@@ -48,7 +49,7 @@ describe("Dashboard Component", () => {
   });
 
   test("updates log on LOG message", async () => {
-    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket}/>);
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
 
     await act(async () => {
       (mockWebSocket.onmessage as any)({
@@ -72,34 +73,68 @@ describe("Dashboard Component", () => {
   });
 
   test("processes METRICS_INTERMEDIATE messages and updates progress", async () => {
-    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket}/>);
+    const { container } = render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
 
     await act(async () => {
       (mockWebSocket.onmessage as any)({
         data: JSON.stringify({
           messageType: "METRICS_INTERMEDIATE",
-          content: { metrics_results: { 
-            accuracy: {
-              value: 0.75,
-              ideal_value:0.85,
-              range:[0, 1]         
-            }, 
-            precision: {
-              value: 0.75,
-              ideal_value:0.85,
-              range:[0, 1]
-            },
-          } },
+          content: {
+            metrics_results: {
+              accuracy: {
+                value: 0.75,
+                ideal_value: 0.85,
+                range: [0, 1],
+                error: null
+              },
+              precision: {
+                value: 0.75,
+                ideal_value: 0.85,
+                range: [0, 1],
+                error: null
+              },
+              error_metric: {
+                value: 0,
+                ideal_value: 0,
+                range: [0, 1],
+                error: "Some error occured"
+              },
+              infty_metric: {
+                value: 0.75,
+                ideal_value: 0.85,
+                range: [0, null],
+                error: null
+              },
+              neginfty_metric: {
+                value: 0.75,
+                ideal_value: 0.85,
+                range: [null, 0],
+                error: null
+              },
+            }
+          },
         }),
       });
     });
 
     expect(screen.getByText("1 / 10 batches processed")).toBeInTheDocument();
+
+    // Ensure that the metrics are displayed
+    expect(screen.getByText("Accuracy")).toBeInTheDocument();
+    expect(screen.getByText("Precision")).toBeInTheDocument();
+    expect(screen.getByText("Error Metric")).toBeInTheDocument();
+    expect(screen.getByText("Infty Metric")).toBeInTheDocument();
+    expect(screen.getByText("∞")).toBeInTheDocument(); // check nulls are converted to infty symbols
+    expect(screen.getByText("Neginfty Metric")).toBeInTheDocument();
+    expect(screen.getByText("-∞")).toBeInTheDocument();  // check nulls are converted to infty symbols
+
+    // Ensure that the error message is displayed for erroring metrics
+    expect(screen.getByText("An error occurred during the computation of this metric.")).toBeInTheDocument();
   });
 
 
   test("generates and downloads the report on REPORT message", async () => {
-    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket}/>);
+    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
 
     const mockReportData = { /* Your mock report structure */ };
 
