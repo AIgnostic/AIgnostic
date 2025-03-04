@@ -35,7 +35,7 @@ from pydantic import ValidationError
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
 
-class Worker():
+class Worker:
     def __init__(self, host="localhost"):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
@@ -54,6 +54,7 @@ class Worker():
         """
         self._connection = connect_to_rabbitmq(host=self._host)
         self._channel = self._connection.channel()
+        self._channel.confirm_delivery()
         init_queues(self._channel)
         print("Connection established to RabbitMQ")
 
@@ -63,22 +64,28 @@ class Worker():
         """
         job = AggregatorJob(job_type=JobType.RESULT, content=result)
         self._channel.basic_publish(
-            exchange="", routing_key=RESULT_QUEUE, body=job.model_dump_json()
+            exchange="",
+            routing_key=RESULT_QUEUE,
+            body=result.model_dump_json(),
+            mandatory=True,
         )
 
     def queue_error(self, error: WorkerError):
         """
         Function to queue an error message
         """
-        job = AggregatorJob(job_type=JobType.ERROR,
-                            content=WorkerError(
-                                error_message=error,
-                                error_code=500,
-                            ))
+        job = AggregatorJob(
+            job_type=JobType.ERROR,
+            content=WorkerError(
+                error_message=error,
+                error_code=500,
+            ),
+        )
         self._channel.basic_publish(
             exchange="",
             routing_key=RESULT_QUEUE,
-            body=job.model_dump_json(),
+            body=json.dumps({"error": error}),
+            mandatory=True,
         )
 
     def close(self):
@@ -88,7 +95,9 @@ class Worker():
         """
         Function to fetch a job from the job queue
         """
-        method_frame, header_frame, body = self._channel.basic_get(queue=JOB_QUEUE, auto_ack=True)
+        method_frame, header_frame, body = self._channel.basic_get(
+            queue=JOB_QUEUE, auto_ack=True
+        )
         if method_frame:
             job_data = json.loads(body)
             print(f"Received job: {job_data}")
@@ -99,7 +108,9 @@ class Worker():
                 raise WorkerException(f"Invalid job format: {e}", status_code=400)
         return None
 
-    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> DatasetResponse:
+    async def fetch_data(
+        self, data_url: HttpUrl, dataset_api_key, batch_size: int
+    ) -> DatasetResponse:
         """
         Helper function to fetch data from the dataset API
 
@@ -113,7 +124,7 @@ class Worker():
             response = requests.get(
                 data_url,
                 headers={"Authorization": f"Bearer {dataset_api_key}"},
-                params={"n": batch_size}
+                params={"n": batch_size},
             )
 
         try:
@@ -130,9 +141,13 @@ class Worker():
             # Return the data
             return dataset_response
         except ValidationError as e:
-            raise WorkerException(f"Data error - data returned from data provider of incorrect format: \n{e}")
+            raise WorkerException(
+                f"Data error - data returned from data provider of incorrect format: \n{e}"
+            )
 
-    async def query_model(self, model_url: HttpUrl, data: DatasetResponse, model_api_key) -> ModelResponse:
+    async def query_model(
+        self, model_url: HttpUrl, data: DatasetResponse, model_api_key
+    ) -> ModelResponse:
         """
         Helper function to query the model API
 
@@ -156,12 +171,11 @@ class Worker():
         except requests.exceptions.HTTPError as e:
             if e.response and e.response.json():
                 raise WorkerException(
-                    detail=e.response.json()["detail"], status_code=e.response.status_code
+                    detail=e.response.json()["detail"],
+                    status_code=e.response.status_code,
                 )
             else:
-                raise WorkerException(
-                    detail="HTTP Exception", status_code=400
-                )
+                raise WorkerException(detail="HTTP Exception", status_code=400)
 
         try:
             # Check if the request was successful
@@ -182,12 +196,16 @@ class Worker():
 
         try:
             # fetch data from datasetURL
-            dataset_response = await self.fetch_data(job.data_url, job.data_api_key, job.batch_size)
+            dataset_response = await self.fetch_data(
+                job.data_url, job.data_api_key, job.batch_size
+            )
 
             # query model at modelURL
             # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
             # TODO: Refactor to use pydantic models
-            model_response = await self.query_model(job.model_url, dataset_response, job.model_api_key)
+            model_response = await self.query_model(
+                job.model_url, dataset_response, job.model_api_key
+            )
 
             true_labels = dataset_response.labels
             predicted_labels = model_response.predictions
@@ -199,9 +217,13 @@ class Worker():
             # some preprocessing for FinBERT
             # TODO: Need to sort out how to handle this properly
             if job.model_type == "binary_classification":
-                predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, true_labels)
+                predicted_labels, true_labels = self.binarize_finbert_output(
+                    predicted_labels, true_labels
+                )
             elif job.model_type == "multi_class_classification":
-                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, true_labels)
+                predicted_labels, true_labels = self.convert_to_numeric_classes(
+                    predicted_labels, true_labels
+                )
 
             print(f"Metrics to compute: {job.metrics}")
             print(f"Predicted labels: {predicted_labels}")
@@ -229,13 +251,17 @@ class Worker():
             metrics_results = metrics_lib.calculate_metrics(metrics_request)
             print(f"Final Results: {metrics_results}")
             # add user_id to the results
-            worker_results = WorkerResults(**metrics_results.model_dump(), user_id=job.user_id)
+            worker_results = WorkerResults(
+                **metrics_results.model_dump(), user_id=job.user_id
+            )
             self.queue_result(worker_results)
             return
         except WorkerException as e:
             # known/caught error
             # should be sent back to user
-            self.queue_error(WorkerError(error_message=e.detail, error_code=e.status_code))
+            self.queue_error(
+                WorkerError(error_message=e.detail, error_code=e.status_code)
+            )
         except Exception as e:
             # unknown/uncaught error
             # should be raised to be dealt with
@@ -281,7 +307,9 @@ class Worker():
                 )
 
             for col_index in range(len(labels[0])):
-                if not isinstance(predictions[0][col_index], type(labels[0][col_index])):
+                if not isinstance(
+                    predictions[0][col_index], type(labels[0][col_index])
+                ):
                     raise WorkerException(
                         "Model output type does not match target attribute type",
                         status_code=400,
@@ -337,7 +365,9 @@ class Worker():
         predicted_labels = [label for sublist in predicted_labels for label in sublist]
         true_labels = [label for sublist in true_labels for label in sublist]
         # binarize the labels
-        predicted_labels = [[1] if label == "positive" else [0] for label in predicted_labels]
+        predicted_labels = [
+            [1] if label == "positive" else [0] for label in predicted_labels
+        ]
         true_labels = [[1] if label == "positive" else [0] for label in true_labels]
         return predicted_labels, true_labels
 
