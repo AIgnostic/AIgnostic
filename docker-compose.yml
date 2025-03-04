@@ -26,8 +26,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.frontend.dev
-    working_dir: /app/packages/frontend
-    command: npx vite --host 0.0.0.0 --port 4200
+    command: npx nx serve frontend --host 0.0.0.0
     container_name: frontend
     volumes:
       - ./packages:/app/packages
