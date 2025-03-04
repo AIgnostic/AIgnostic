@@ -91,5 +91,7 @@ def dispatch_job(
         metrics=metrics,
     )
     message = job.json()
-    channel.basic_publish(exchange="", routing_key=JOB_QUEUE, body=message)
+    channel.basic_publish(
+        exchange="", routing_key=JOB_QUEUE, body=message, mandatory=True
+    )
     return job_id

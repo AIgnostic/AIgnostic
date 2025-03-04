@@ -107,6 +107,7 @@ FROM builder AS mocks-build
 # Some extra files are needed to make nx behave
 COPY ./eslint.config.cjs ./jest.config.ts ./jest.preset.js /app/
 # Run install
+ENV NX_DAEMON=false
 RUN poetry run npx nx install mocks --args="--only=main,dev"
 
 # Now build mocks production -> copy paste of code above with mocks builder instead

@@ -118,6 +118,19 @@ class MetricConfig(BaseModel):
     warning_msg: Optional[str] = None
 
 
+class WorkerException(Exception):
+    def __init__(self, detail: str, status_code: int = 500):
+        """Custom exception class for workers
+
+        Args:
+            detail (str): Description of error that occured
+            status_code (int, optional): HTTP status code to report back to the client. Defaults to 500.
+        """
+        self.detail = detail
+        self.status_code = status_code
+        super().__init__(self.detail)
+
+
 class WorkerResults(MetricConfig):
     """
     Inherit from MetricConfig

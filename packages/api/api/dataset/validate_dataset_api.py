@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 from api.pydantic_models.data_models import FetchDatasetRequest
-from common.models import ModelInput
+from common.models import DatasetResponse
 
 from fastapi import FastAPI, HTTPException
 import requests
@@ -9,9 +9,9 @@ import uvicorn
 app = FastAPI()
 
 
-def _validate_dataset_format(data_to_validate: dict) -> ModelInput:
+def _validate_dataset_format(data_to_validate: dict) -> DatasetResponse:
     try:
-        data = ModelInput(**data_to_validate)
+        data = DatasetResponse(**data_to_validate)
     except ValidationError as e:
         raise ValueError(f"Data format is invalid: {e}")
 
@@ -35,7 +35,7 @@ def _validate_dataset_format(data_to_validate: dict) -> ModelInput:
 
 
 @app.post("/fetch-data")
-def fetch_dataset(request: FetchDatasetRequest) -> ModelInput:
+def fetch_dataset(request: FetchDatasetRequest) -> DatasetResponse:
     """
     Validate a dataset URL and parse the data to be used in the model.
 

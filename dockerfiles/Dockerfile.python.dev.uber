@@ -75,6 +75,7 @@ RUN poetry install -v --only=$ROOT_DEPGROUP
 # Then install sub deps
 # Must use poetry run to ensure correct python used
 # Do one at a time to avoid conflicts/race conditions on install
+ENV NX_DAEMON=false
 RUN poetry run npx nx run-many --all --target=install --parallel=1 --args="--only=main"
 # Ensure we can run mock servers
 RUN poetry run npx nx install mocks --args="--only=main,dev"

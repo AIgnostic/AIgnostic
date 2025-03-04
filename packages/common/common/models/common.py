@@ -1,10 +1,10 @@
+from abc import ABC
+from enum import Enum
 from pydantic import BaseModel  # , field_validator
-from typing import Optional
-
-# from common.utils import nested_list_to_np
+from typing import Any, Optional
 
 
-class ModelInput(BaseModel):  # pragma: no cover
+class DatasetResponse(BaseModel):  # pragma: no cover
     """
     A model for a dataset to be sent to a model
 
@@ -36,7 +36,7 @@ class ModelResponse(BaseModel):  # pragma: no cover
     confidence_scores: Optional[list[list]] = None
 
 
-class LLMInput(ModelInput, BaseModel):
+class LLMInput(DatasetResponse, BaseModel):
     """
     A model for next token generation
 
@@ -49,7 +49,7 @@ class LLMInput(ModelInput, BaseModel):
     max_length: int
 
 
-class LLMResponse(ModelInput, BaseModel):
+class LLMResponse(DatasetResponse, BaseModel):
     """
     A model for next token generation
 
@@ -58,3 +58,57 @@ class LLMResponse(ModelInput, BaseModel):
     """
 
     response: str
+
+
+class AggregatorMessage(BaseModel, ABC):
+    """
+    Model for messages sent by the aggregator to the frontend
+    Params:
+    messageType: str - the type of the message (e.g. LOG)
+    message: str - the message to be displayed
+    statusCode: int - the status code of the message
+    content: Any - the additional content (e.g. the report for a REPORT type)
+    """
+
+    messageType: str
+    message: str
+    statusCode: int
+    content: Any
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class MessageType(str, Enum):
+    LOG = "LOG"
+    ERROR = "ERROR"
+    METRICS_INTERMEDIATE = "METRICS_INTERMEDIATE"
+    METRICS_COMPLETE = "METRICS_COMPLETE"
+    REPORT = "REPORT"
+
+
+class JobType(str, Enum):
+    RESULT = "RESULT"
+    ERROR = "ERROR"
+
+
+class WorkerError(BaseModel):
+    """
+    WorkerError pydantic model represents the structure of the errors found on the results queue
+    i.e. what worker sends to the queue
+    and what aggregator picks up from the queue
+    """
+
+    error_message: str
+    error_code: int
+
+
+class AggregatorJob(BaseModel):
+    """
+    AggregatorJob pydantic model represents the structure of the jobs found on the results queue
+    i.e. what worker sends to the queue
+    and what aggregator picks up from the queue
+    """
+
+    job_type: JobType
+    content: Union[WorkerResults, WorkerError]
