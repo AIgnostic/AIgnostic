@@ -194,14 +194,14 @@ class Worker():
         # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
 
         # TODO: Refactor to use pydantic models
-        predictions = await self.query_model(
+        model_response = await self.query_model(
             job.model_url,
             {"features": features, "labels": true_labels, "group_ids": group_ids},
             job.model_api_key,
         )
 
         try:
-            predicted_labels = predictions["predictions"]
+            predicted_labels = model_response["predictions"]
 
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
@@ -210,17 +210,17 @@ class Worker():
             # some preprocessing for FinBERT
             # TODO: Need to sort out how to handle this properly
             if job.model_type == "binary classification":
-                predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, labels)
+                predicted_labels, true_labels = self.binarize_finbert_output(predicted_labels, true_labels)
             elif job.model_type == "multi class classification":
-                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, labels)
+                predicted_labels, true_labels = self.convert_to_numeric_classes(predicted_labels, true_labels)
             elif job.model_type == "next token generation":
                 # TODO: (NTG) Implement this
-                predicted_labels = self.convert_to_numeric_classes(predicted_labels, labels)
+                predicted_labels = self.convert_to_numeric_classes(predicted_labels, true_labels)
                 true_labels = None
 
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
-            print(f"Confidence scores: {predictions['confidence_scores']}")
+            print(f"Confidence scores: {model_response['confidence_scores']}")
 
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
@@ -230,7 +230,7 @@ class Worker():
                 total_sample_size=job.total_sample_size,
                 true_labels=true_labels,
                 predicted_labels=predicted_labels,
-                confidence_scores=predictions["confidence_scores"],
+                confidence_scores=model_response["confidence_scores"],
                 # TODO: Do this group stuff properly
                 privileged_groups=[{"protected_attr": 1}],
                 unprivileged_groups=[{"protected_attr": 0}],

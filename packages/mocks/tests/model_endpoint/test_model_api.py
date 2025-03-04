@@ -4,13 +4,11 @@ from mocks.model.huggingface_binclassifier import app as huggingface_app
 from mocks.model.scikit_mock import app as scikit_app
 from mocks.model.finbert import app as finbert_app
 from mocks.model.mock import app as mock_app
-from mocks.model.next_token_gen_1 import app as llama
 from mocks.model.gemini_mock import app as gemini
 from folktables import ACSDataSource, ACSEmployment
 import pandas as pd
 import pytest
 from mocks.utils import load_scikit_model
-import os
 
 # TODO: Modify the tests to use pydantic models to ensure they are correctly validated
 
@@ -202,24 +200,6 @@ def test_probabilities_sum_to_one():
         assert confidence_scores[0] <= 1, "Probability score is greater than 1"
         assert confidence_scores[0] >= 0, "Probability score is less than 0"
         assert sum(confidence_scores) == pytest.approx(1), "Confidence scores do not sum to 1"
-
-# TODO: To test and debug this
-# def test_llama_multiple_inputs():
-#     response = llama.post("/predict", json={
-#         "features": [
-#             [{"role": "user", "content": "Generate a word about happiness: "}],
-#             [{"role": "user", "content": "Complete this sentence: The quick brown fox "}],
-#             [{"role": "user", "content": "What's the capital of France? "}]        ],
-#         "labels": [[""]],  # Empty labels as they're not used
-#         "group_ids": []
-#     })
-#     assert response.status_code == 200, response.text
-#     # print(response.json())
-#     assert len(response.json()["predictions"]) == 3, "Incorrect number of outputs produced given number of inputs"
-#     assert len(response.json()["confidence_scores"]) == 3, "Incorrect number of confidence scores produced"
-#     # assert all(len(prediction) == 1 for prediction in response.json()["predictions"]), "Each input should have one prediction"
-#     # assert all(len(scores) == 1 for scores in response.json()["confidence_scores"]), "Each input should have one confidence score"
-#     # assert all(isinstance(prediction[0], str) for prediction in response.json()["predictions"]), "Predictions should be strings"
 
 
 # def test_gemini():

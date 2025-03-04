@@ -18,6 +18,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-pro')
 
+
 def list_available_gemini_models():
     try:
         for model in genai.list_models():
@@ -39,7 +40,10 @@ async def predict(request: ModelInput):
         response = model.generate_content(prompt)
         print(f"Response: {response.text}")
         if response.prompt_feedback and response.prompt_feedback.block_reason:
-            raise HTTPException(status_code=400, detail=f"Gemini blocked the prompt due to: {response.prompt_feedback.block_reason}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Gemini blocked the prompt due to: {response.prompt_feedback.block_reason}"
+            )
         predictions.append([response.text])
         print("Reached this")
         return ModelResponse(predictions=predictions, confidence_scores=confidence_scores)

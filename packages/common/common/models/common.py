@@ -57,4 +57,3 @@ class ModelResponse(BaseModel):     # pragma: no cover
     """
     predictions: list[list]
     confidence_scores: Optional[list[list]] = None
-

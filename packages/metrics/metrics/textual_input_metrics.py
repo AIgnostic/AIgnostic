@@ -28,7 +28,6 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         inp = info.input_features[i][0]
 
         print(f"task_name: {info.task_name}")
-        print(f"task_name in ['next_token_generation', 'regression']: {info.task_name in ['next_token_generation', 'regression']}")
         # Obtain the confidence scores for the model
         if info.task_name in ['next_token_generation', 'regression']:
             targets = info.predicted_labels
@@ -62,7 +61,7 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         # the coefficients for each of the original samples are the same when comparing between each perturbed sample
         # and the original sample
         masked_coefs_resized.append(masked_coefs.tolist())
-        
+
         # Reset the input features and confidence scores to the original values after
         # obtaining the LIME coefficients for the synonym perturbations
         info.input_features = temp_input_features

@@ -7,9 +7,8 @@ import pandas as pd
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from datasets import load_dataset
-from common.models import ModelInput, ModelResponse
+from common.models import ModelInput
 from mocks.api_utils import get_dataset_api_key
-import os
 
 app: FastAPI = FastAPI()
 
@@ -31,9 +30,11 @@ old_df = pd.DataFrame(dataset["train"])
 if "text" not in old_df.columns:
     raise ValueError("Dataset must contain a 'text' column.")
 
+
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the WikiText-103 Next Token server!"}
+
 
 @app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=ModelInput)
 async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
@@ -74,5 +75,4 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=5025)
