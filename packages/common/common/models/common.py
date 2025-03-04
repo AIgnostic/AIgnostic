@@ -115,6 +115,7 @@ class AggregatorJob(BaseModel):
     job_type: JobType
     content: Union[WorkerResults, WorkerError]
 
+
 class ComputeUserMetricRequest(BaseModel):
     user_id: str
     function_name: str
