@@ -10,5 +10,5 @@
 	"editor.tabSize": 4,
 	"editor.comments.insertSpace": true,
 	"editor.insertSpaces": true,
-	"python.analysis.typeCheckingMode": "basic",
+	// "python.analysis.typeCheckingMode": "basic",
 }

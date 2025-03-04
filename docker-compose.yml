@@ -36,8 +36,9 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: ./dockerfiles/Dockerfile.frontend.dev
-    command: npx nx serve frontend --host 0.0.0.0 --port 4200
+      dockerfile: ./dockerfiles/Dockerfile.frontend
+    image: aignostic/frontend
+    command: npx nx serve frontend --host 0.0.0.0
     container_name: frontend
     volumes:
       - ./packages:/app/packages
@@ -98,6 +99,20 @@ services:
       - rabbitmq
     deploy:
       replicas: 3
+
+  user_added_metrics:
+    container_name: user-added-metrics
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python -u -m user_added_metrics.metric_server --host
+    ports:
+      - '8010:8010'
+    working_dir: /app/packages/user-added-metrics
+    networks:
+      - aignostic_network
+
   aggregator_ms:
     container_name: aggregator
     image: aignostic/dev
@@ -199,6 +214,7 @@ services:
       - aignostic_network
     ports:
       - '5001:5001'
+
 volumes:
   venv:
 networks:
