@@ -101,11 +101,16 @@ FROM python-prod-base AS worker
 WORKDIR /app/packages/worker
 CMD ["/app/.venv/bin/python", "-m", "worker.worker"]
 
+FROM python-prod-base AS dispatcher
+WORKDIR /app/packages/dispatcher
+CMD ["/app/.venv/bin/python", "-m", "dispatcher"]
+
 # Mocks has an extra build command
 FROM builder AS mocks-build
 # Some extra files are needed to make nx behave
 COPY ./eslint.config.cjs ./jest.config.ts ./jest.preset.js /app/
 # Run install
+ENV NX_DAEMON=false
 RUN poetry run npx nx install mocks --args="--only=main,dev"
 
 # Now build mocks production -> copy paste of code above with mocks builder instead

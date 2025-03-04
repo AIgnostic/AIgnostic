@@ -5,9 +5,10 @@ import queue
 import websockets.sync.server
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
-from common.models.aggregator_models import AggregatorMessage, MessageType
-from report_generation.utils import generate_report
 import time
+from common.models import AggregatorMessage, MessageType, JobType, AggregatorJob, WorkerError
+from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
+from report_generation.utils import get_legislation_extracts, add_llm_insights
 
 
 def aggregator_metrics_completion_log():
@@ -59,26 +60,49 @@ class MetricsAggregator:
         for metric, metric_value_obj in batch_metrics_results.items():
             if metric not in self.metrics:
                 # First time encountering this metric, initialize with the first batch value
+
+                if isinstance(metric_value_obj, MetricsPackageExceptionModel):
+                    self.metrics[metric] = {
+                        "value": None,
+                        "ideal_value": None,
+                        "range": None,
+                        "count": batch_size,
+                        "error": metric_value_obj.detail
+                    }
+                    continue
+                # otherwise of type MetricValue
                 self.metrics[metric] = {
-                    "value": metric_value_obj["computed_value"],
-                    "ideal_value": metric_value_obj["ideal_value"],
-                    "range": metric_value_obj["range"],
-                    "count": batch_size
+                    "value": metric_value_obj.computed_value,
+                    "ideal_value": metric_value_obj.ideal_value,
+                    "range": metric_value_obj.range,
+                    "count": batch_size,
+                    "error": None
                 }
+
             else:
+                if self.metrics[metric]["error"]:
+                    # If there was a previous error, skip update
+                    self.metrics[metric]["count"] += batch_size
+                    continue
+                if isinstance(metric_value_obj, MetricsPackageExceptionModel):
+                    self.metrics[metric]["count"] += batch_size
+                    self.metrics[metric]["error"] = metric_value_obj.error_message
+                    continue
+
                 # Update the running average incrementally
                 prev_value = self.metrics[metric]["value"]
                 prev_count = self.metrics[metric]["count"]
 
                 # Compute new weighted average
                 new_count = prev_count + batch_size
-                new_value = (prev_value * prev_count + metric_value_obj["computed_value"] * batch_size) / new_count
+                new_value = (prev_value * prev_count + metric_value_obj.computed_value * batch_size) / new_count
                 self.metrics[metric]["value"] = new_value
                 self.metrics[metric]["count"] = new_count  # Update the total count
 
         self.samples_processed += batch_size
 
     def get_aggregated_metrics(self):
+        return self.metrics
         """
         Returns the aggregated metrics as a dictionary.
         Example:
@@ -96,14 +120,14 @@ class MetricsAggregator:
             ...
         }
         """
-        results = {}
-        for metric, data in self.metrics.items():
-            results[metric] = {
-                "value": data["value"],
-                "ideal_value": data["ideal_value"],
-                "range": data["range"]
-            }
-        return results
+        # results = {}
+        # for metric, data in self.metrics.items():
+        #     results[metric] = {
+        #         "value": data["value"],
+        #         "ideal_value": data["ideal_value"],
+        #         "range": data["range"]
+        #     }
+        # return results
 
 
 class ResultsConsumer:
@@ -167,13 +191,14 @@ message_queue = queue.Queue()
 user_aggregators: dict = {}
 
 
-def on_result_fetched(ch, method, properties, body):
-    result_data = json.loads(body)
-    user_id = result_data["user_id"]
-    print(f"Received result for user {user_id}: {result_data}")
+def process_batch_result(worker_results: WorkerResults):
+    """Handles batch results from worker i.e. aggregating intermediate metric results"""
+    user_id = worker_results.user_id
+    print(f"Received result for user {user_id}: {worker_results}")
 
-    if result_data["user_defined_metrics"] is not None:
-        print(f"User-defined metrics received for user {user_id}: {result_data['user_defined_metrics']}")
+    if worker_results.user_defined_metrics is not None:
+        print(f"User-defined metrics received for user {user_id}: {worker_results.user_defined_metrics}")
+
 
     # ensure a metricsaffregator exists for the user
     if user_id not in user_aggregators:
@@ -182,14 +207,18 @@ def on_result_fetched(ch, method, properties, body):
     aggregator: MetricsAggregator = user_aggregators[user_id]
 
     if aggregator.total_sample_size == 0:
-        aggregator.set_total_sample_size(result_data["total_sample_size"])
+        aggregator.set_total_sample_size(worker_results.total_sample_size)
 
-    batch_metrics = result_data["metric_values"]
-    if result_data["user_defined_metrics"]:
-        for metric, metric_info in result_data["user_defined_metrics"].items():
-            batch_metrics[metric] = metric_info["result"]
+    batch_metrics = worker_results.metric_values
+    if worker_results.user_defined_metrics is not None:
+        for metric, metric_value in worker_results.user_defined_metrics.items():
 
-    aggregator.aggregate_new_batch(result_data["metric_values"], result_data["batch_size"])
+            metric_value_obj = MetricsPackageExceptionModel(**metric_value) if "error" in metric_value else MetricValue(**metric_value)
+            batch_metrics[metric] = metric_value_obj
+            
+
+
+    aggregator.aggregate_new_batch(worker_results.metric_values, worker_results.batch_size)
 
     aggregates = aggregator.get_aggregated_metrics()
     # send the intermediate metrics to the user
@@ -200,15 +229,27 @@ def on_result_fetched(ch, method, properties, body):
 
     if aggregator.samples_processed == aggregator.total_sample_size:
         print(f"Finished processing all batches for user {user_id}")
+        print("Creating and sending final report")
+        send_to_clients(AggregatorMessage(
+            messageType=MessageType.LOG,
+            message="Generating final report - this may take a few minutes",
+            statusCode=200,
+            content=None))
 
         # send completion message
         manager.send_to_user(user_id, aggregator_metrics_completion_log())
 
+        # send report
         report_thread = threading.Thread(target=generate_and_send_report, args=(user_id, aggregates, aggregator))
         report_thread.start()
 
         # cleanup completed aggregator
         del user_aggregators[user_id]
+
+
+def process_error_result(error_data: WorkerError):
+    """Handles error results from worker"""
+    send_to_clients(aggregator_error_log(error_data.error_message))
 
 
 def get_api_key():
@@ -220,8 +261,22 @@ def get_api_key():
 
 
 def aggregator_generate_report(aggregates, aggregator):
-    """Generates a report based on the aggregated metrics."""
-    report_properties_section = generate_report(aggregates, os.getenv("GOOGLE_API_KEY"))
+    """
+        Generates a report to send to the frontend
+        By collating the metrics, and pulling information from the report generator
+    """
+    print("Fetching Legislation Extracts")
+    send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
+                                      message="Fetching Legislation Extracts",
+                                      statusCode=200,
+                                      content=None))
+    report_properties_section = get_legislation_extracts(aggregates)
+    print("Adding LLM Insights")
+    send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
+                                      message="Adding LLM Insights",
+                                      statusCode=200,
+                                      content=None))
+    report_properties_section = add_llm_insights(report_properties_section, os.getenv("GOOGLE_API_KEY"))
     report_info_section = {
         # TODO: Update with codecarbon info and calls to model from metrics
         "calls_to_model": aggregator.total_sample_size,
@@ -241,6 +296,22 @@ def generate_and_send_report(user_id, aggregates, aggregator):
     except Exception as e:
         print(f"Error generating report for user {user_id}: {e}")
         manager.send_to_user(user_id, aggregator_error_log(str(e)))
+
+
+def on_result_fetched(ch, method, properties, body):
+    """Handles incoming messages and waits for at least one client before sending."""
+    global connected_clients
+    body = json.loads(body)
+    job = AggregatorJob(**body)
+
+    print(f"Received job: {job}")
+
+    if (job.job_type == JobType.RESULT):
+        process_batch_result(worker_results=job.content)
+    elif (job.job_type == JobType.ERROR):
+        process_error_result(error_data=job.content)
+    else:
+        raise ValueError(f"Invalid job type: {job.job_type}")
 
 
 def send_to_clients(message: AggregatorMessage):
@@ -300,7 +371,7 @@ manager = ConnectionManager()
 
 
 def websocket_handler(websocket):
-    """Handles Websocket connections and assigns them to users"""
+    """Handles incoming WebSocket connections."""
     try:
         user_id = websocket.recv()
         print(f"User {user_id} connected via websocket")
@@ -328,7 +399,6 @@ if __name__ == "__main__":
     # Load environment variables
 
     from dotenv import load_dotenv
-
     load_dotenv()
 
     # Start WebSocket server in a separate thread

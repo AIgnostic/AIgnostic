@@ -216,7 +216,11 @@ except Exception as e:
         raise HTTPException(status_code=500, detail=f"User-defined metric execution failed: {process.stderr}")
 
     print(process.stdout)
-    return {"result": json.loads(process.stdout.strip())}
+    try:
+        output = json.loads(process.stdout.strip())
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Failed to decode JSON from user function output")
+    return output
 
 
 if __name__ == "__main__":

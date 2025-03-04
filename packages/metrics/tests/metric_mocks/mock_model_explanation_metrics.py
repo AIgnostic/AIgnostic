@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from common.models import ModelInput, ModelResponse
+from common.models import DatasetResponse, ModelResponse
 import random
 
 app: FastAPI = FastAPI()
@@ -14,7 +14,7 @@ app.add_middleware(
 
 
 @app.post('/predict-10000-ESS', response_model=ModelResponse)
-async def predict_10000(input_data: ModelInput):
+async def predict_10000(input_data: DatasetResponse):
     return ModelResponse(
         predictions=[[10000] for _ in range(len(input_data.features))],
         confidence_scores=[[1] for _ in range(len(input_data.features))]
@@ -22,7 +22,7 @@ async def predict_10000(input_data: ModelInput):
 
 
 @app.post('/predict-different-ESS', response_model=ModelResponse)
-async def predict_different(input_data: ModelInput):
+async def predict_different(input_data: DatasetResponse):
     return ModelResponse(
         predictions=[[random.random()] for _ in range(len(input_data.features))],
         confidence_scores=[[random.random()] for _ in range(len(input_data.features))]
@@ -37,7 +37,7 @@ PERFECT_ESP_INPUT_FEATURES = (
 
 
 @app.post('/predict-perfect-ESP', response_model=ModelResponse)
-async def predict_esp(input_data: ModelInput):
+async def predict_esp(input_data: DatasetResponse):
     return ModelResponse(
         predictions=[[1] for _ in range(len(input_data.features))],
         confidence_scores=[[1] for _ in range(len(input_data.features))]
@@ -53,7 +53,7 @@ BIVARIATE_ESP_MARGIN = 0.15
 
 
 @app.post('/predict-bivariate-ESP', response_model=ModelResponse)
-async def predict_bivariate_esp(input_data: ModelInput):
+async def predict_bivariate_esp(input_data: DatasetResponse):
     # predictions required to test regression, confidence_scores required to test classification
     predictions = [[100]] * 10 + [[0]] * 10 + [[-180]] * 10
     confidence_scores = [[1]] * 10 + [[0]] * 10 + [[0.3]] * 10
@@ -66,7 +66,7 @@ FIDELITY_MARGIN = 0.05
 
 
 @app.post('/predict-perfect-fidelity', response_model=ModelResponse)
-async def predict_fidelity(input_data: ModelInput):
+async def predict_fidelity(input_data: DatasetResponse):
     return ModelResponse(
         # Predictions used for regression
         predictions=input_data.labels,
@@ -81,7 +81,7 @@ BAD_FIDELITY_EXPECTED_SCORE = 0
 
 
 @app.post('/predict-bad-fidelity', response_model=ModelResponse)
-async def predict_bad_fidelity(input_data: ModelInput):
+async def predict_bad_fidelity(input_data: DatasetResponse):
     confidence_scores = []
     # Maximise distance between confidence_scores
     for p in input_data.features:

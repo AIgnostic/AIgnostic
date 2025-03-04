@@ -2,5 +2,9 @@
 
 JOB_QUEUE = "job_queue"
 """Queue where jobs for evaluation are placed"""
+BATCH_QUEUE = "batch_queue"
+"""Queue where batches are placed for picking up by workers"""
 RESULT_QUEUE = "result_queue"
 """Queue where results are placed"""
+STATUS_QUEUE = "status_queue"
+"""Queue for status mssages from workers to dispatcher"""

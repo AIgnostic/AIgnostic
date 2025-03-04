@@ -1,6 +1,6 @@
 import React from 'react';
 import { Page, Text, View, Document, Link, StyleSheet } from '@react-pdf/renderer';
-import { Report } from '../types';
+import { Report, Metric } from '../types';
 import theme from '../theme';
 import MetricBarPDF from './MetricBarPDF';
 
@@ -107,21 +107,33 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                     </Text>
 
                     {/* Computed Metrics */}
-                    {section.computed_metrics.length > 0 ?
+                    {Object.entries(section.computed_metrics).length > 0 ?
                         <View>
                             <Text style={styles.subsection}>Computed Metrics</Text>
-                            {section.computed_metrics.map((metric, idx) => (
-                                <View key={idx} style={{ marginBottom: 10 }}>
-                                    <Text style={[styles.text, {fontSize: 14}]}>
-                                        {metric.metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
-                                    </Text>
-                                    <MetricBarPDF
-                                        value={parseFloat(metric.value)}
-                                        idealValue={parseFloat(metric.ideal_value)}
-                                        min={(metric.range[0] === null) ? -Infinity : parseFloat(metric.range[0])}
-                                        max={(metric.range[1] === null) ? Infinity : parseFloat(metric.range[1])}
-                                    />
-                                </View>
+                            {section.computed_metrics.map((metric_info, idx) => (
+
+                                (metric_info.error) ?
+                                    <View key={idx} style={{ marginBottom: 10 }}>
+                                        <Text style={[styles.text, {fontSize: 14}]}>
+                                            {metric_info.metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                                        </Text>
+                                        <Text style={styles.text}>An error occured during the computation of this metric.</Text>
+
+                                    </View>
+
+                                    :
+
+                                    <View key={idx} style={{ marginBottom: 10 }}>
+                                        <Text style={[styles.text, {fontSize: 14}]}>
+                                            {metric_info.metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                                        </Text>
+                                        <MetricBarPDF
+                                            value={parseFloat(metric_info.value)}
+                                            idealValue={parseFloat(metric_info.ideal_value)}
+                                            min={(metric_info.range[0] === null) ? -Infinity : parseFloat(metric_info.range[0])}
+                                            max={(metric_info.range[1] === null) ? Infinity : parseFloat(metric_info.range[1])}
+                                        />
+                                    </View>
                             ))}
                         </View>  
 
