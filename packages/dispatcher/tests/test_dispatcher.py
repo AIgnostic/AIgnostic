@@ -374,7 +374,7 @@ def test_should_delete_on_last_batch(dispatcher, mock_redis_client, sample_job):
     dispatcher.get_job = MagicMock()
     dispatcher.get_job.return_value = RunningJob(
         job_data=sample_job,
-        currently_running_batches=1,
+        currently_running_batches=2,  # 2: Only the second one should cause completion
         completed_batches=9,
         errored_batches=1,
         pending_batches=0,
@@ -391,12 +391,27 @@ def test_should_delete_on_last_batch(dispatcher, mock_redis_client, sample_job):
     )
 
     # Verify that the job was fetched from Redis
-    dispatcher.get_job.assert_called_once_with(str(sample_job.job_id))
+    dispatcher.get_job.assert_called_with(str(sample_job.job_id))
+
+    # Verify not deleted yet
+    assert not mock_redis_client.delete.called
+
+    # Call again
+    dispatcher.handle_job_completion(
+        JobStatusMessage(
+            job_id=str(sample_job.job_id),
+            batch_id="batch_id",
+            status=JobStatus.COMPLETED,
+        )
+    )
+
+    # Verify that the job was fetched from Redis
+    dispatcher.get_job.assert_called_with(str(sample_job.job_id))
 
     # Verify that the job was deleted
     mock_redis_client.delete.assert_called_once_with(
         dispatcher._get_job_redis_key(str(sample_job.job_id))
     )
 
-    # Verify that the job was not dispatched
-    assert not dispatcher.dispatch_as_required.called
+    # Verify that only one job was dispatched
+    dispatcher.dispatch_as_required.assert_called_once()
