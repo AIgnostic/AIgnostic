@@ -3,7 +3,8 @@ from fastapi.testclient import TestClient
 import os
 import uuid
 from user_added_metrics.metric_server import app
-
+from user_added_metrics.metric_server import ensure_json_serializable
+import numpy as np
 
 client = TestClient(app)
 
@@ -169,3 +170,38 @@ def test_clear_user_data(sample_script, sample_requirements):
     assert clear_response.status_code == 200
     json_response = clear_response.json()
     assert json_response["message"] == f"Data for user {user_id} cleared successfully"
+
+
+def test_ensure_json_serializable():
+    """Test the ensure_json_serializable function with various data types."""
+
+    # Test with numpy array
+    np_array = np.array([1, 2, 3])
+    assert ensure_json_serializable(np_array) == [1, 2, 3]
+
+    # Test with numpy scalar
+    np_scalar = np.float32(1.23)
+    assert ensure_json_serializable(np_scalar) == pytest.approx(1.23)
+
+    # Test with dictionary containing numpy array and scalar
+    np_dict = {"array": np.array([4, 5, 6]), "scalar": np.int32(7)}
+    assert ensure_json_serializable(np_dict) == {"array": [4, 5, 6], "scalar": 7}
+
+    # Test with list containing numpy array and scalar
+    np_list = [np.array([7, 8, 9]), np.float64(10.11)]
+    assert ensure_json_serializable(np_list) == [[7, 8, 9], 10.11]
+
+    # Test with base types
+    base_types = [1, 1.23, "string", True, None]
+    assert ensure_json_serializable(base_types) == base_types
+
+    # Test with nested structures
+    nested = {
+        "list": [np.array([1, 2]), {"nested_dict": np.float64(3.14)}],
+        "dict": {"nested_list": [np.int32(5), "test"]}
+    }
+    expected = {
+        "list": [[1, 2], {"nested_dict": 3.14}],
+        "dict": {"nested_list": [5, "test"]}
+    }
+    assert ensure_json_serializable(nested) == expected

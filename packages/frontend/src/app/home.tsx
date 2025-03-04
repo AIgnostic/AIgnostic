@@ -154,116 +154,6 @@ function Homepage() {
   const handleReset = () => {
     setStateWrapper('activeStep', 0);
   };
-  const handleFileUpload = async (
-    fileType: 'metrics' | 'requirements',
-    fileExtension: '.py' | '.txt',
-    uploadURL: string,
-    successStateKey: 'userMetricsUploaded' | 'userRequirementsUploaded',
-    errorMessage: string
-  ) => {
-    console.log(`Upload custom ${fileType}`);
-    const fileInput = document.querySelector(
-      'input[type="file"]'
-    ) as HTMLInputElement;
-    if (fileInput && fileInput.files) {
-      const file = fileInput.files[0];
-      if (file && file.name.endsWith(fileExtension)) {
-        console.log(`${fileType} file uploaded:`, file.name);
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('file_id', sessionStorage.getItem('userId') || '');
-
-        try {
-          const userId = sessionStorage.getItem('userId') || '';
-          const response = await fetch(`${uploadURL}?file_id=${userId}`, {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error(`Error: ${response.status}`, errorData.detail);
-            setStateWrapper('error', true);
-            setStateWrapper('errorMessage', {
-              header: `Error ${response.status}`,
-              text: errorData.detail,
-            });
-            return;
-          }
-
-          const responseData = await response.json();
-          console.log(`${fileType} uploaded successfully:`, responseData);
-          setStateWrapper(successStateKey, true);
-        } catch (error: unknown) {
-          if (error instanceof Error) {
-            console.error(`Error while uploading ${fileType}:`, error.message);
-            setStateWrapper('error', true);
-            setStateWrapper('errorMessage', {
-              header: 'Upload Error',
-              text: error.message,
-            });
-          }
-        }
-      } else {
-        setStateWrapper('error', true);
-        setStateWrapper('errorMessage', {
-          header: `Please ensure you upload a ${fileExtension} file`,
-          text: `The custom ${fileType} server currently only supports ${fileExtension} files.`,
-        });
-      }
-    }
-  };
-
-  const handleMetricUpload = () =>
-    handleFileUpload(
-      'metrics',
-      '.py',
-      `${USER_METRICS_SERVER_URL}/upload-metrics`,
-      'userMetricsUploaded',
-      'The custom metrics server currently only supports Python files.'
-    );
-
-  const handleReqsUpload = () =>
-    handleFileUpload(
-      'requirements',
-      '.txt',
-      `${USER_METRICS_SERVER_URL}/upload-dependencies`,
-      'userRequirementsUploaded',
-      'The custom requirements server currently only supports text files.'
-    );
-
-  const handleClearUploads = async () => {
-    try {
-      const response = await fetch(`${USER_METRICS_SERVER_URL}/clear-server`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error(`Error: ${response.status}`, errorData.detail);
-        setStateWrapper('error', true);
-        setStateWrapper('errorMessage', {
-          header: `Error ${response.status}`,
-          text: errorData.detail,
-        });
-        return;
-      }
-
-      console.log('Server cleared successfully');
-      setStateWrapper('userMetricsUploaded', false);
-      setStateWrapper('userRequirementsUploaded', false);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error('Error while clearing server:', error.message);
-        setStateWrapper('error', true);
-        setStateWrapper('errorMessage', {
-          header: 'Clear Server Error',
-          text: error.message,
-        });
-      }
-    }
-  };
 
   const handleSubmit = async () => {
     if (!state.modelURL || !state.datasetURL) {
@@ -486,7 +376,10 @@ function Homepage() {
                       style={{ margin: '5px' }}
                     />
                   ))}
-                  <FileUploadComponent state={state} setStateWrapper={setStateWrapper}/>
+                  <FileUploadComponent
+                    state={state}
+                    setStateWrapper={setStateWrapper}
+                  />
                 </Box>
               )}
 
