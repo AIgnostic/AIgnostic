@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.frontend.dev
-    command: npx nx serve frontend --host 0.0.0.0
+    command: npx nx serve frontend --host 0.0.0.0 --port 4200
     container_name: frontend
     volumes:
       - ./packages:/app/packages
