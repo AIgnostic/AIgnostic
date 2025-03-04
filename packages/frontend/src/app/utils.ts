@@ -59,15 +59,6 @@ function checkURL(url: string): boolean {
   }
 }
 
-// retrieves a dictionary mapping task types to the metrics that can be computed for them
-// returns a dictionary with the following structure:
-// {
-//     "binary_classification": ["metric_1", "metric_2", ...],
-//     "multi_class_classification": ["metric_1", "metric_2", ...],
-//     "regression": ["metric_1", "metric_2", ...],
-//     ...
-// }
-
 export interface TaskToMetricMap {
   [taskType: string]: string[];
 }
