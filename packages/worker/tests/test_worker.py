@@ -6,7 +6,6 @@ from common.models.pipeline import Batch, MetricCalculationJob
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from common.models import (
-    MetricValue,
     WorkerResults,
     MetricValue,
     MetricConfig,

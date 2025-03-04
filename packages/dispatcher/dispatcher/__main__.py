@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import atexit
 from os import getenv
@@ -19,7 +18,6 @@ logger = logging.getLogger("dispatcher")
 # gloals
 REDIS_HOST = getenv("REDIS_HOST", "localhost")
 REDIS_PORT = getenv("REDIS_PORT", 6379)
-RABBIT_MQ_HOST = getenv("RABBITMQ_HOST", "localhost")
 
 
 def redis_connect() -> redis.Redis:

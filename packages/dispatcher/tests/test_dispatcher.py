@@ -10,7 +10,7 @@ from common.models.pipeline import (
     PipelineJob,
 )
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from dispatcher.dispatcher import Dispatcher, DispatcherException
 from dispatcher.models import RunningJob
 

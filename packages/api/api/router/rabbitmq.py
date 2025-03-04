@@ -12,7 +12,7 @@ def get_channel():
 
 
 def ack_cb(method_frame):
-    print(f"Got Pika ack: {method_frame }")
+    print(f"Got Pika ack: {method_frame}")
 
 
 def fastapi_connect_rabbitmq():

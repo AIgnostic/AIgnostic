@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 
 from dispatcher.__main__ import startup, cleanup
