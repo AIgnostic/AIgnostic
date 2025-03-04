@@ -12,6 +12,7 @@ import os
 import json
 import asyncio
 import random
+from common.models.pipeline import Batch, JobStatus, JobStatusMessage
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from metrics.models import WorkerResults
 import requests
@@ -19,7 +20,6 @@ from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
 from typing import Optional
 from common.models import (
-    Job,
     CalculateRequest,
     DatasetResponse,
     ModelResponse,
@@ -27,15 +27,19 @@ from common.models import (
     JobType,
     WorkerError,
 )
-from common.rabbitmq.constants import JOB_QUEUE, RESULT_QUEUE
+from common.rabbitmq.constants import BATCH_QUEUE, RESULT_QUEUE, STATUS_QUEUE
 from metrics.models import WorkerException
 from pydantic import ValidationError
+
+from pika.adapters.blocking_connection import BlockingChannel
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
 
 class Worker:
+    _channel: BlockingChannel
+
     def __init__(self, host="localhost"):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
@@ -76,10 +80,7 @@ class Worker:
         """
         job = AggregatorJob(
             job_type=JobType.ERROR,
-            content=WorkerError(
-                error_message=error,
-                error_code=500,
-            ),
+            content=error,
         )
         self._channel.basic_publish(
             exchange="",
@@ -91,21 +92,21 @@ class Worker:
     def close(self):
         self._channel.close()
 
-    def fetch_job(self) -> Optional[Job]:
+    def fetch_batch(self) -> Optional[Batch]:
         """
-        Function to fetch a job from the job queue
+        Function to fetch a batch from the job queue
         """
         method_frame, header_frame, body = self._channel.basic_get(
-            queue=JOB_QUEUE, auto_ack=True
+            queue=BATCH_QUEUE, auto_ack=True
         )
         if method_frame:
-            job_data = json.loads(body)
-            print(f"Received job: {job_data}")
+            batch_data = json.loads(body)
+            print(f"Received job: {batch_data}")
             try:
-                print("Unpacking job data")
-                return Job(**job_data)
-            except (ValueError, ValidationError) as e:
-                raise WorkerException(f"Invalid job format: {e}", status_code=400)
+                print("Unpacking batcj data")
+                return Batch(**batch_data)
+            except ValueError as e:
+                raise WorkerException(f"Invalid batch format: {e}", status_code=400)
         return None
 
     async def fetch_data(
@@ -192,19 +193,25 @@ class Worker:
                 f"Could not parse model response - {e}; response = {response.text}"
             )
 
-    async def process_job(self, job: Job):
+    async def process_job(self, batch: Batch):
+
+        metrics_data = batch.metrics
 
         try:
             # fetch data from datasetURL
             dataset_response = await self.fetch_data(
-                job.data_url, job.data_api_key, job.batch_size
+                data_url=metrics_data.data_url,
+                dataset_api_key=metrics_data.data_api_key,
+                batch_size=batch.batch_size,
             )
 
             # query model at modelURL
             # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
             # TODO: Refactor to use pydantic models
             model_response = await self.query_model(
-                job.model_url, dataset_response, job.model_api_key
+                metrics_data.model_url,
+                dataset_response,
+                metrics_data.model_api_key,
             )
 
             true_labels = dataset_response.labels
@@ -212,30 +219,29 @@ class Worker:
 
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
-            print(f"Metrics to compute: {job.metrics}")
+            print(f"Metrics to compute: {metrics_data.metrics}")
 
             # some preprocessing for FinBERT
             # TODO: Need to sort out how to handle this properly
-            if job.model_type == "binary_classification":
+            if metrics_data.model_type == "binary_classification":
                 predicted_labels, true_labels = self.binarize_finbert_output(
                     predicted_labels, true_labels
                 )
-            elif job.model_type == "multi_class_classification":
+            elif metrics_data.model_type == "multi_class_classification":
                 predicted_labels, true_labels = self.convert_to_numeric_classes(
                     predicted_labels, true_labels
                 )
 
-            print(f"Metrics to compute: {job.metrics}")
+            print(f"Metrics to compute: {metrics_data.metrics}")
             print(f"Predicted labels: {predicted_labels}")
             print(f"True labels: {true_labels}")
             print(f"Confidence scores: {model_response.confidence_scores}")
 
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
-                metrics=job.metrics,
-                batch_size=job.batch_size,
+                metrics=metrics_data.metrics,
+                batch_size=batch.batch_size,
                 input_features=dataset_response.features,
-                total_sample_size=job.total_sample_size,
                 true_labels=true_labels,
                 predicted_labels=predicted_labels,
                 confidence_scores=model_response.confidence_scores,
@@ -243,8 +249,9 @@ class Worker:
                 privileged_groups=[{"protected_attr": 1}],
                 unprivileged_groups=[{"protected_attr": 0}],
                 protected_attr=[random.randint(0, 1) for _ in range(len(true_labels))],
-                model_url=job.model_url,
-                model_api_key=job.model_api_key,
+                model_url=metrics_data.model_url,
+                model_api_key=metrics_data.model_api_key,
+                total_sample_size=batch.total_sample_size,
             )
 
             # Calculate metrics
@@ -252,9 +259,10 @@ class Worker:
             print(f"Final Results: {metrics_results}")
             # add user_id to the results
             worker_results = WorkerResults(
-                **metrics_results.model_dump(), user_id=job.user_id
+                **metrics_results.model_dump(), user_id=batch.job_id
             )
             self.queue_result(worker_results)
+            self.send_status_completed(batch.job_id, batch.batch_id)
             return
         except WorkerException as e:
             # known/caught error
@@ -262,16 +270,43 @@ class Worker:
             self.queue_error(
                 WorkerError(error_message=e.detail, error_code=e.status_code)
             )
+            self.send_status_error(batch.job_id, batch.batch_id, e)
         except Exception as e:
-            # unknown/uncaught error
-            # should be raised to be dealt with
-            raise WorkerException(f"Unhandled error while processing job: {e}")
+            self.send_status_error(batch.job_id, batch.batch_id, e)
+            raise WorkerException(f"Error while processing data: {e}")
+
+    def send_status_completed(self, job_id: str, batch_id: str):
+        """
+        Function to send a status message to the status queue
+        """
+        self._channel.basic_publish(
+            exchange="",
+            routing_key=STATUS_QUEUE,
+            body=JobStatusMessage(
+                job_id=job_id, batch_id=batch_id, status=JobStatus.COMPLETED
+            ).model_dump_json(),
+        )
+
+    def send_status_error(self, job_id: str, batch_id: str, error):
+        """
+        Function to send a status message to the status queue
+        """
+        self._channel.basic_publish(
+            exchange="",
+            routing_key=STATUS_QUEUE,
+            body=JobStatusMessage(
+                job_id=job_id,
+                batch_id=batch_id,
+                status=JobStatus.ERRORED,
+                errorMessage=str(error),
+            ).model_dump_json(),
+        )
 
     def run(self):
         self.connect()
         try:
             while True:
-                job = self.fetch_job()
+                job = self.fetch_batch()
                 if job:
                     asyncio.run(self.process_job(job))
         except KeyboardInterrupt:

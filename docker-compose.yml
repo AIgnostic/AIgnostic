@@ -18,6 +18,17 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+  redis:
+    image: redis
+    ports:
+      - '6379:6379'
+    networks:
+      - aignostic_network
+    healthcheck:
+      test: redis-cli ping
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   ###
   # Frontend services
@@ -85,6 +96,8 @@ services:
         condition: service_healthy
     links:
       - rabbitmq
+    deploy:
+      replicas: 3
   aggregator_ms:
     container_name: aggregator
     image: aignostic/dev
@@ -108,7 +121,29 @@ services:
         condition: service_healthy
     links:
       - rabbitmq
-
+  dispatcher_ms:
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python -u -m dispatcher
+    working_dir: /app/packages/dispatcher
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    links:
+      - rabbitmq
+      - redis
   ####
   # Mock servers to test against
   ####

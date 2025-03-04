@@ -3,17 +3,17 @@ import pika
 import socket
 import time
 from pika.adapters.blocking_connection import BlockingChannel
-from .constants import JOB_QUEUE, RESULT_QUEUE
+from .constants import BATCH_QUEUE, JOB_QUEUE, RESULT_QUEUE, STATUS_QUEUE
 
 RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "guest")
 
 
-credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
-
-
 def connect_to_rabbitmq(
     host: str = "localhost",
+    credentials: pika.PlainCredentials = pika.PlainCredentials(
+        RABBITMQ_USER, RABBITMQ_PASS
+    ),
     retries: int = 20,
 ):
     for i in range(retries):  # Retry up to 10 times
@@ -35,3 +35,5 @@ def connect_to_rabbitmq(
 def init_queues(channel: BlockingChannel):
     channel.queue_declare(queue=JOB_QUEUE, durable=True)
     channel.queue_declare(queue=RESULT_QUEUE, durable=True)
+    channel.queue_declare(queue=BATCH_QUEUE, durable=True)
+    channel.queue_declare(queue=STATUS_QUEUE, durable=True)

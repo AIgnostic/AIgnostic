@@ -8,6 +8,7 @@ class MetricsInfo(BaseModel):
     """
     Format to receive information about types of metrics available
     """
+
     task_to_metric_map: dict[str, list]
 
 
@@ -38,10 +39,10 @@ class CalculateRequest(BaseModel):
     :param model_url: Optional[HttpUrl] - URL of the model endpoint.
     :param model_api_key: Optional[str] - API key for accessing the model endpoint.
     """
+
     metrics: list[str]
     task_name: Optional[str] = None
     batch_size: Optional[int] = None
-    total_sample_size: Optional[int] = None
     input_features: Optional[list[list]] = None
     confidence_scores: Optional[list[list]] = None
     true_labels: Optional[list[list]] = None
@@ -56,14 +57,16 @@ class CalculateRequest(BaseModel):
     # TODO: Refactor this to a better implementation
     regression_flag: bool = False
 
+    total_sample_size: int
+
     # Convert the 'true_labels' and 'predicted_labels' into np.arrays
     @field_validator(
-        'input_features',
-        'confidence_scores',
-        'true_labels',
-        'predicted_labels',
-        'protected_attr',
-        mode='after'
+        "input_features",
+        "confidence_scores",
+        "true_labels",
+        "predicted_labels",
+        "protected_attr",
+        mode="after",
     )
     def convert_to_np_arrays(cls, v):
         return nested_list_to_np(v)
@@ -74,6 +77,7 @@ class MetricsPackageExceptionModel(BaseModel):
     MetricsPackageExceptionModel is the pydantic model representing fields of the base exception
     class for the metrics package.
     """
+
     detail: str
     status_code: int
     exception_type: str = Field(default="")
@@ -90,6 +94,7 @@ class MetricValue(BaseModel):
     :param ideal_value: float - The ideal value of the metric
     :param range: Tuple[Optional[float], Optional[float]] - The acceptable range the metric can lie in
     """
+
     computed_value: float
     ideal_value: float
     range: Tuple[Optional[float], Optional[float]] = (None, None)
@@ -97,9 +102,10 @@ class MetricValue(BaseModel):
 
 class MetricConfig(BaseModel):
     """Receive calculated metric values and other relevant information"""
+
     metric_values: dict[str, Union[MetricsPackageExceptionModel, MetricValue]]
 
-    @field_validator('metric_values', mode='before')
+    @field_validator("metric_values", mode="before")
     def convert_exception_to_model(cls, v):
         if isinstance(v, dict):
             for key, value in v.items():
@@ -129,4 +135,5 @@ class WorkerResults(MetricConfig):
     """
     Inherit from MetricConfig
     """
+
     user_id: str
