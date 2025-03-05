@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pika.adapters.blocking_connection import BlockingChannel
 from common.rabbitmq.constants import JOB_QUEUE
+from common.rabbitmq.connect import publish_to_queue
 from metrics.metrics import task_type_to_metric
 from metrics.models import MetricsInfo
 
@@ -95,8 +96,8 @@ def dispatch_job(
         batch_size=batch_size,
         metrics=metrics,
     )
-    message = job.json()
-    channel.basic_publish(
-        exchange="", routing_key=JOB_QUEUE, body=message, mandatory=True
-    )
+    message = job.model_dump_json()
+
+    _ = publish_to_queue(channel, JOB_QUEUE, message)
+
     return job_id
