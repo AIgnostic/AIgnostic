@@ -30,7 +30,8 @@ function checkURL(url: string): boolean {
     MOCK_FINBERT_API_URL,
     MOCK_FOLKTABLES_DATASET_API_URL,
     MOCK_FINANCIAL_DATASET_API_URL,
-
+    "http://localhost:5001/predict",
+    "http://localhost:5024/fetch-datapoints",
     // Prod
     MOCK_SCIKIT_API_URL_PROD,
     MOCK_FINBERT_API_URL_PROD,
