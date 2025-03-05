@@ -3,6 +3,7 @@ from tests.metric_mocks.mock_model_explanation_metrics import app as expl_stabil
 from tests.metric_mocks.mock_model_ood_auroc import app as ood_auroc_app
 from tests.metric_mocks.mock_text_inp_classifier_expl_stability import app as txt_inp_expl_stability_app
 from mocks.model.finbert import app as finbert_app
+from mocks.model.gemini_mock import app as gemini_app
 from threading import Thread
 import pytest
 import uvicorn
@@ -33,6 +34,10 @@ server_configs = {
     "finbert_integration": {
         "port": 3004,
         "app": finbert_app,
+    },
+    "gemini_integration": {
+        "port": 3005,
+        "app": gemini_app,
     }
 }
 

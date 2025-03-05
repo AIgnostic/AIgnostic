@@ -144,7 +144,7 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
             ),
             status_code=400
         )
-
+    print("Reached here at query model first breakpoint")
     model_input = ModelInput(
         features=generated_input_features.tolist(),
         labels=np.zeros((len(generated_input_features), 1)).tolist(),
@@ -161,7 +161,8 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
             headers={"Authorization": f"Bearer {info.model_api_key}"},
         )
 
-    print(response)
+    print(f"response: {response}")
+    print("Reached here")
 
     try:
         response.raise_for_status()

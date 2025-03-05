@@ -209,8 +209,28 @@ def test_gemini():
         "group_ids": []
     })
     assert response.status_code == 200, response.text
-    print(response.json())
     predictions = response.json()["predictions"]
     confidence_scores = response.json()["confidence_scores"]
     assert len(predictions) == 1, f"Expected 1 prediction, got {len(predictions)}"
+    assert confidence_scores is None, "Confidence scores should be None"
+
+
+def test_gemini_multiple_inputs():
+    response = gemini.post("/predict", json={
+        "features": [
+            ["Hello World"],
+            ["Who am I? (Max response: 5 words)"],
+            ["One word answer only: Weather in London on average day?"]
+        ],
+        "labels": [
+            [""],
+            [""],
+            [""]
+        ],
+        "group_ids": [0, 1, 2]
+    })
+    assert response.status_code == 200, response.text
+    predictions = response.json()["predictions"]
+    confidence_scores = response.json()["confidence_scores"]
+    assert len(predictions) == 3, f"Expected 3 predictions, got {len(predictions)}"
     assert confidence_scores is None, "Confidence scores should be None"

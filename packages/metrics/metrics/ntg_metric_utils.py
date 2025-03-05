@@ -228,6 +228,8 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     words rather than the using normal distributions as in traditional LIME computation.
     """
     print("Running text_input_lime")
+    print(f"info.input_features: {info.input_features}")
+    print(f"info.input_features.shape: {info.input_features.shape}")
     _, d = info.input_features.shape
     # Each datapoint can only be a single sentence input
     if d != 1:

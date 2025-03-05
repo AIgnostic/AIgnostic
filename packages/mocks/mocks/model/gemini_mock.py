@@ -37,16 +37,16 @@ async def predict(request: ModelInput):
     """Generates text using Gemini to complete an answer."""
     try:
         predictions = []
-        prompt = request.features[0]
-        print(f"Prompt: {prompt}")
-        response = model.generate_content(prompt)
-        print(f"Response: {response.text}")
-        if response.prompt_feedback and response.prompt_feedback.block_reason:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Gemini blocked the prompt due to: {response.prompt_feedback.block_reason}"
-            )
-        predictions.append([response.text])
+        for prompt in request.features:
+            print(f"Prompt: {prompt}")
+            response = model.generate_content(prompt)
+            print(f"Response: {response.text}")
+            if response.prompt_feedback and response.prompt_feedback.block_reason:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Gemini blocked the prompt due to: {response.prompt_feedback.block_reason}"
+                )
+            predictions.append([response.text])
         print("Reached this")
         return ModelResponse(predictions=predictions)
     except Exception as e:
