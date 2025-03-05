@@ -122,12 +122,15 @@ class Worker:
             )
 
         try:
-            # Raise errpr if the request was not successful
             response.raise_for_status()
-        except requests.exceptions.HTTPError:
-            raise WorkerException(
-                response.json()["detail"], status_code=response.status_code
-            )
+        except Exception as e:
+            if e.response and e.response.json():
+                raise WorkerException(
+                    detail=e.response.json()["detail"],
+                    status_code=e.response.status_code,
+                )
+            else:
+                raise WorkerException(detail="An unknown exception occured.", status_code=400)
 
         try:
             # Parse the response JSON
@@ -162,14 +165,14 @@ class Worker:
 
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
+        except Exception as e:
             if e.response and e.response.json():
                 raise WorkerException(
                     detail=e.response.json()["detail"],
                     status_code=e.response.status_code,
                 )
             else:
-                raise WorkerException(detail="HTTP Exception", status_code=400)
+                raise WorkerException(detail="An unknown exception occured.", status_code=400)
 
         try:
             # Check if the request was successful
@@ -328,7 +331,10 @@ class Worker:
             self._channel,
             STATUS_QUEUE,
             JobStatusMessage(
-                job_id=job_id, batch_id=batch_id, status=JobStatus.ERRORED
+                job_id=job_id,
+                batch_id=batch_id,
+                status=JobStatus.ERRORED,
+                errorMessage=str(error)
             ).model_dump_json(),
         )
 
