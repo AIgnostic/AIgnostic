@@ -4,7 +4,8 @@ from fastapi.testclient import TestClient
 import pytest
 
 gemini = TestClient(gemini_app)
-tinystories= TestClient(tinystories_app)
+tinystories = TestClient(tinystories_app)
+
 
 @pytest.mark.skip(reason="Skip to enable testing multiple inputs within API limits")
 def test_gemini():

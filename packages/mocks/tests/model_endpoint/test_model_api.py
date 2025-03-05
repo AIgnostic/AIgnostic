@@ -198,4 +198,3 @@ def test_probabilities_sum_to_one():
         assert confidence_scores[0] <= 1, "Probability score is greater than 1"
         assert confidence_scores[0] >= 0, "Probability score is less than 0"
         assert sum(confidence_scores) == pytest.approx(1), "Confidence scores do not sum to 1"
-

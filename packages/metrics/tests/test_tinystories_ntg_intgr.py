@@ -1,4 +1,4 @@
-from metrics.models import CalculateRequest
+from metrics.models import CalculateRequest, MetricValue
 from metrics.metrics import calculate_metrics
 import pytest
 from tests.server_factory import (
@@ -9,7 +9,7 @@ from tests.server_factory import (
 
 server_factory = server_factory  # To suppress lint errors
 
-mock_name = "gemini_integration"
+mock_name = "tinystories_integration"
 
 
 @pytest.fixture(scope="module")
@@ -18,12 +18,14 @@ def apply_server_factory(server_factory):
         yield
 
 
-@pytest.mark.skip(reason="Cannot run test due to API Usage Limits")
-def test_gemini_works_with_explanation_metrics(apply_server_factory):
+def test_tinystories_works_with_explanation_metrics(apply_server_factory):
     metrics = ["expl_stability_text_input"]
 
-    features = [["Respond with the exact output: \"Hello world\""]]
-    labels = [["Hello world"]]
+    features = [["Once upon a time, in a land far, far away, there was a magical forest where"]]
+    labels = [["every creature lived in harmony, and the trees whispered secrets of ancient times."]]
+
+    # features = [["We can't go over it! We can't go under it!"]]
+    # labels = [["Oh no! We've got to go through it!"]]
 
     info = CalculateRequest(
         batch_size=1,
@@ -41,5 +43,6 @@ def test_gemini_works_with_explanation_metrics(apply_server_factory):
 
     result = calculate_metrics(info)
     print(result)
-    assert isinstance(result.metric_values["expl_stability_text_input"], float), result
-    assert 0 <= result.metric_values["expl_stability_text_input"] <= 1, result
+    assert isinstance(result.metric_values["expl_stability_text_input"], MetricValue), result
+    value = result.metric_values["expl_stability_text_input"].computed_value
+    assert 0 <= value <= 1, result

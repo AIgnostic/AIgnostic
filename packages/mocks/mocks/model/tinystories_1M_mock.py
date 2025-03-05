@@ -8,6 +8,7 @@ app = FastAPI()
 model_name = "roneneldan/TinyStories-1M"
 tokenizer_name = "EleutherAI/gpt-neo-125M"
 
+
 @app.post("/predict", response_model=ModelResponse)
 def predict(input: ModelInput) -> ModelResponse:
     return predict_causal_LM(

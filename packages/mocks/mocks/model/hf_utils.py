@@ -10,11 +10,11 @@ import torch
 
 
 def predict_t2class(
-        input: ModelInput,
-        model_name: str,
-        tokenizer_name: str = None,
-        max_length: int = None
-    ) -> ModelResponse:
+    input: ModelInput,
+    model_name: str,
+    tokenizer_name: str = None,
+    max_length: int = None
+) -> ModelResponse:
     """
     Default predict function for text classification models from huggingface.
 
@@ -30,10 +30,11 @@ def predict_t2class(
     try:
         if not input.features:
             return ModelResponse(predictions=[], confidence_scores=[])
-        
-        model = AutoModelForSequenceClassification.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer_name if tokenizer_name else model_name)
 
+        model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer_name if tokenizer_name else model_name
+        )
 
         # Convert nested list to list of strings
         texts = [" ".join(map(str, features)) for features in input.features]
@@ -62,12 +63,12 @@ def predict_t2class(
 
 
 def predict_causal_LM(
-        input: ModelInput,
-        model_name: str,
-        tokenizer_name: str = None,
-        max_length: int = None,
-        num_beams: int = 1,
-    ) -> ModelResponse:
+    input: ModelInput,
+    model_name: str,
+    tokenizer_name: str = None,
+    max_length: int = None,
+    num_beams: int = 1,
+) -> ModelResponse:
     """
     Default predict function for causal language models from huggingface.
 
@@ -85,7 +86,8 @@ def predict_causal_LM(
     try:
         model = AutoModelForCausalLM.from_pretrained(model_name)
         tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_name if tokenizer_name else model_name
+            tokenizer_name if tokenizer_name else model_name,
+            padding_side="left"
         )
 
         # Convert nested list to list of strings

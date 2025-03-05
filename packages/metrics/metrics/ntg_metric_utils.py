@@ -262,6 +262,7 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     # that is compatible with the expected implementation
     perturbed_samples = np.array(perturbed_samples).reshape(-1).reshape(-1, 1)
     # TODO: Consider batching inputs to the model API
+    print(f"perturbed_samples: {perturbed_samples}")
     response: ModelResponse = _query_model(perturbed_samples, info)
 
     # If output is regression, use predictions, otherwise use confidence scores for classification
@@ -272,6 +273,8 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
         if info.task_name in ['next_token_generation', 'regression']
         else response.confidence_scores
     )
+
+    print(f"outputs: {outputs}")
 
     # outputs should only be None if it we use confidence_scores as pydantic enforces predictions are present
     if outputs is None:
