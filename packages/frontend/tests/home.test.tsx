@@ -134,6 +134,93 @@ describe('Form Validation', () => {
   });
 });
 
+describe('Batch Configuration Tests', () => {
+  test('should display error message for invalid batch configuration', async () => {
+    render(<Homepage />);
+
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+    
+    // Set invalid batch size and number of batches (for example: total sample size out of valid range)
+    fireEvent.change(batchSizeInput, { target: { value: '50' } });
+    fireEvent.change(numberOfBatchesInput, { target: { value: '15' } });
+    
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput);
+    
+    // Wait for the error message
+    await waitFor(() => screen.getByText('Total sample size must be between 1000 and 10000'));
+
+    // Check if the error message is displayed
+    expect(screen.getByText('Total sample size must be between 1000 and 10000')).toBeInTheDocument();
+  });
+
+  test('should allow valid batch configuration', async () => {
+    render(<Homepage />);
+    
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+    
+    // Set valid batch size and number of batches
+    fireEvent.change(batchSizeInput, { target: { value: '200' } });
+    fireEvent.change(numberOfBatchesInput, { target: { value: '10' } });
+    
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput);
+    
+    // Check if error message disappears
+    await waitFor(() => expect(screen.queryByText('Total sample size must be between 1000 and 10000')).not.toBeInTheDocument());
+  });
+
+  test('should display error for max concurrent batches value out of range', async () => {
+    render(<Homepage />);
+    
+    const maxConcurrentBatchesInput = screen.getByLabelText('Maximum Concurrent Batches');
+    
+    // Set invalid max concurrent batches value
+    fireEvent.change(maxConcurrentBatchesInput, { target: { value: '50' } });
+    
+    fireEvent.blur(maxConcurrentBatchesInput);
+    
+    // Check if error message is displayed
+    await waitFor(() => screen.getByText('Value must be between 1 and 30'));
+    
+    expect(screen.getByText('Value must be between 1 and 30')).toBeInTheDocument();
+  });
+
+  test('should allow valid max concurrent batches value', async () => {
+    render(<Homepage />);
+    
+    const maxConcurrentBatchesInput = screen.getByLabelText('Maximum Concurrent Batches');
+    
+    // Set valid max concurrent batches value
+    fireEvent.change(maxConcurrentBatchesInput, { target: { value: '10' } });
+    
+    fireEvent.blur(maxConcurrentBatchesInput);
+    
+    // Check if error message disappears
+    await waitFor(() => expect(screen.queryByText('Value must be between 1 and 30')).not.toBeInTheDocument());
+  });
+
+  test('should correctly update state when batch size or number of batches changes', async () => {
+    render(<Homepage />);
+    
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+    
+    // Set valid values for batch size and number of batches
+    fireEvent.change(batchSizeInput, { target: { value: '300' } });
+    fireEvent.change(numberOfBatchesInput, { target: { value: '20' } });
+    
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput);
+    
+    // Check if the values are updated correctly
+    expect(batchSizeInput).toBe('300');
+    expect(numberOfBatchesInput).toBe('20');
+  });
+});
+
 describe('UI Components', () => {
   it('should render the homepage correctly', () => {
     render(<Homepage />);
