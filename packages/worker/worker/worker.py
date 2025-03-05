@@ -318,8 +318,12 @@ class Worker:
             )
             self.send_status_error(batch.job_id, batch.batch_id, e)
         except Exception as e:
+            self.queue_error(
+                WorkerError(
+                    error_message="An unknown error occurred", error_code=500
+                )
+            )
             self.send_status_error(batch.job_id, batch.batch_id, e)
-            raise WorkerException(f"Error while processing data: {e}")
 
     def send_status_completed(self, job_id: str, batch_id: str):
         """
