@@ -162,11 +162,54 @@ describe('Batch Configuration Validation', () => {
     
     // Wait for the state change and check if the error message appears
     await waitFor(() => {
-      expect(screen.getByText('Total sample size must be between 1000 and 10000')).toBeInTheDocument();
+      expect(screen.getByText('Total sample size must be between 1000 and 10000, not 750.')).toBeInTheDocument();
     });
+  });
 
-    // Ensure that isBatchConfigValid is set to false or validation state has been updated
-    // Optionally check for the state in your component (if accessible)
+  test('should set isBatchConfigValid to false for negative batch size', async () => {
+    // Mock checkBatchConfig to return false for invalid batch config
+    (checkBatchConfig as jest.Mock).mockReturnValue(false);
+
+    render(<Homepage />);
+    
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+    
+    // Set invalid values for batch size and number of batches
+    fireEvent.change(batchSizeInput, { target: { value: '-50' } }); // Invalid batch size (negative)
+    fireEvent.change(numberOfBatchesInput, { target: { value: '15' } }); // Valid number of batches
+    
+    // Trigger onBlur event to validate the inputs
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput); 
+    
+    // Wait for the state change and check if the error message appears
+    await waitFor(() => {
+      expect(screen.getByText('Batch size and number of batches must be positive.')).toBeInTheDocument();
+    });
+  });
+
+  test('should set isBatchConfigValid to false for negative number of batches', async () => {
+    // Mock checkBatchConfig to return false for invalid batch config
+    (checkBatchConfig as jest.Mock).mockReturnValue(false);
+    
+    render(<Homepage />);
+
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+
+    // Set invalid values for batch size and number of batches
+    fireEvent.change(batchSizeInput, { target: { value: '50' } }); // Valid batch size
+    fireEvent.change(numberOfBatchesInput, { target: { value: '-15' } }); // Invalid number of batches (negative)
+
+    // Trigger onBlur event to validate the inputs
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput);
+
+    // Wait for the state change and check if the error message appears
+    await waitFor(() => {
+      expect(screen.getByText('Batch size and number of batches must be positive.')).toBeInTheDocument();
+    });
   });
 
   test('should set isBatchConfigValid to true for valid total sample size', async () => {

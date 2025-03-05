@@ -401,10 +401,19 @@ function Homepage() {
                     </Box>
                   </Box>
                   {!state.isBatchConfigValid && (
-                    <Typography color="error">
-                      Total sample size must be between 1000 and 10000, not {state.batchSize * state.numberOfBatches}. 
-                      Batch size and number of batches must be positive.
-                    </Typography>
+                    <Box>
+                      <Typography color="error">
+                        Total sample size must be between 1000 and 10000, not {state.batchSize * state.numberOfBatches}. 
+                      </Typography>
+                      {
+                        (state.batchSize < 1 || state.numberOfBatches < 1) && (
+                          <Typography color="error">
+                            Batch size and number of batches must be positive. 
+                          </Typography>
+                        )
+                      }
+                      
+                    </Box>
                   )}
                 </Box>
               )}
