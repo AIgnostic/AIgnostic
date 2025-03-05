@@ -49,7 +49,7 @@ COPY ./package.json /app
 COPY ./package-lock.json /app
 
 # Run npm ci to install nx
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy the application monorepo to the container
 COPY ./nx.json /app

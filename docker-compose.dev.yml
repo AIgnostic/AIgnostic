@@ -187,6 +187,7 @@ services:
     networks:
       - aignostic_network
     ports:
+<<<<<<< HEAD:docker-compose.yml
       - '5050:5050'
   
   gemini_model_api:
@@ -196,6 +197,9 @@ services:
       - .:/app
       - venv:/app/.venv
     command: poetry run python3 -u -m mocks.model.gemini_mock --host
+=======
+      - '5024:5024'
+>>>>>>> 8feb633afe6a89b887801e3bec8a1807defa4a82:docker-compose.dev.yml
 
     
   scikit_mock_model_api:
