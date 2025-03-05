@@ -26,6 +26,14 @@ class ModelEvaluationRequest(BaseModel):
     metrics: list[str]
     model_type: str
     user_id: str
+    batch_size: int = BATCH_SIZE
+    num_batches: int = NUM_BATCHES
+    max_conc_batches: int = MAX_CONCURRENT_BATCHES
+
+
+@api.get("/")
+async def read_root():
+    return {"message": "Welcome to the model evaluation server!"}
 
 
 @api.post("/evaluate")
@@ -51,9 +59,9 @@ async def generate_metrics_from_info(
                 metrics=request.metrics,
                 model_type=request.model_type,
             ),
-            batches=NUM_BATCHES,
-            batch_size=BATCH_SIZE,
-            max_concurrent_batches=MAX_CONCURRENT_BATCHES,
+            batches=request.num_batches,
+            batch_size=request.batch_size,
+            max_concurrent_batches=request.max_conc_batches,
             channel=channel,
             job_id=request.user_id,
         )

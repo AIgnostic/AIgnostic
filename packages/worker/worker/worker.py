@@ -32,11 +32,20 @@ from metrics.models import WorkerException
 from pydantic import ValidationError
 
 from pika.adapters.blocking_connection import BlockingChannel
+import re
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
 USER_METRIC_SERVER_URL = os.environ.get("USER_METRIC_SERVER_URL", "http://user-added-metrics:8010")
+
+
+def convert_localhost_url(url: str) -> str:
+    """
+    Function to convert a URL to localhost if the URL is not localhost
+    """
+    pattern = re.compile(r"http://localhost:(\d+)/(\S*)")
+    return pattern.sub(r"http://host.docker.internal:\1/\2", url)
 
 
 class Worker:
@@ -96,7 +105,7 @@ class Worker:
             batch_data = json.loads(body)
             print(f"Received job: {batch_data}")
             try:
-                print("Unpacking batcj data")
+                print("Unpacking batch data")
                 return Batch(**batch_data)
             except ValueError as e:
                 raise WorkerException(f"Invalid batch format: {e}", status_code=400)
@@ -113,10 +122,10 @@ class Worker:
         """
         # Send a GET request to the dataset API
         if dataset_api_key is None:
-            response = requests.get(str(data_url), params={"n": batch_size})
+            response = requests.get(convert_localhost_url(str(data_url)), params={"n": batch_size})
         else:
             response = requests.get(
-                str(data_url),
+                convert_localhost_url(str(data_url)),
                 headers={"Authorization": f"Bearer {dataset_api_key}"},
                 params={"n": batch_size},
             )
@@ -155,10 +164,10 @@ class Worker:
         """
         # Send a POST request to the model API
         if model_api_key is None:
-            response = requests.post(url=str(model_url), json=data.model_dump_json())
+            response = requests.post(url=convert_localhost_url(str(model_url)), json=data.model_dump_json())
         else:
             response = requests.post(
-                url=str(model_url),
+                url=convert_localhost_url(str(model_url)),
                 json=data.model_dump(),
                 headers={"Authorization": f"Bearer {model_api_key}"},
             )
@@ -318,8 +327,12 @@ class Worker:
             )
             self.send_status_error(batch.job_id, batch.batch_id, e)
         except Exception as e:
+            self.queue_error(
+                WorkerError(
+                    error_message="An unknown error occurred", error_code=500
+                )
+            )
             self.send_status_error(batch.job_id, batch.batch_id, e)
-            raise WorkerException(f"Error while processing data: {e}")
 
     def send_status_completed(self, job_id: str, batch_id: str):
         """

@@ -43,13 +43,19 @@ describe("Dashboard Component", () => {
   });
 
   test("renders progress bar and waiting message initially", () => {
-    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
+    render(<Dashboard
+      onComplete={onCompleteMock}
+      socket={mockWebSocket as WebSocket}
+      expectedItems={10} />);
     expect(screen.getByText("0 / 10 batches processed")).toBeInTheDocument();
     expect(screen.getByText("Waiting for messages...")).toBeInTheDocument();
   });
 
   test("updates log on LOG message", async () => {
-    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
+    render(<Dashboard
+      onComplete={onCompleteMock}
+      socket={mockWebSocket as WebSocket}
+      expectedItems={10} />);
 
     await act(async () => {
       (mockWebSocket.onmessage as any)({
@@ -61,7 +67,10 @@ describe("Dashboard Component", () => {
   });
 
   test("displays error message on ERROR event", async () => {
-    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
+    render(<Dashboard
+      onComplete={onCompleteMock}
+      socket={mockWebSocket as WebSocket}
+      expectedItems={10} />);
 
     await act(async () => {
       (mockWebSocket.onmessage as any)({
@@ -73,7 +82,10 @@ describe("Dashboard Component", () => {
   });
 
   test("processes METRICS_INTERMEDIATE messages and updates progress", async () => {
-    const { container } = render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
+    const { container } = render(<Dashboard
+      onComplete={onCompleteMock}
+      socket={mockWebSocket as WebSocket}
+      expectedItems={10} />);
 
     await act(async () => {
       (mockWebSocket.onmessage as any)({
@@ -134,7 +146,11 @@ describe("Dashboard Component", () => {
 
 
   test("generates and downloads the report on REPORT message", async () => {
-    render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
+    render(<Dashboard 
+      onComplete={onCompleteMock}
+      socket={mockWebSocket as WebSocket}
+      expectedItems={10}/>
+    );
 
     const mockReportData = { /* Your mock report structure */ };
 
@@ -150,7 +166,10 @@ describe("Dashboard Component", () => {
 
 
   test("closes WebSocket on unmount", () => {
-    const { unmount } = render(<Dashboard onComplete={onCompleteMock} socket={mockWebSocket as WebSocket} />);
+    const { unmount } = render(<Dashboard
+      onComplete={onCompleteMock}
+      socket={mockWebSocket as WebSocket}
+      expectedItems={10}/>);
     unmount();
     expect(mockWebSocket.close).toHaveBeenCalled();
   });

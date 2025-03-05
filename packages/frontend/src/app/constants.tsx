@@ -15,12 +15,14 @@ const MOCK_FINANCIAL_DATASET_API_URL =
   'http://financial-dataset-api:5024/fetch-datapoints';
 
 // PROD URL
-const MOCK_SCIKIT_API_URL_PROD = 'http://scikit_mock_model_api:5011/predict';
-const MOCK_FINBERT_API_URL_PROD = 'http://finbert_mock_model_api:5001/predict';
+const MOCK_SCIKIT_API_URL_PROD = 
+  'http://206.189.119.159:5011/fetch-datapoints';
+const MOCK_FINBERT_API_URL_PROD = 
+  'http://206.189.119.159:5001/fetch-datapoints';
 const MOCK_FOLKTABLES_DATASET_API_URL_PROD =
-  'http://folktables_dataset_api:5010/fetch-datapoints';
+  'http://206.189.119.159:5010/fetch-datapoints';
 const MOCK_FINANCIAL_DATASET_API_URL_PROD =
-  'http://financial_dataset_api:5024/fetch-datapoints';
+  'http://206.189.119.159:5024/fetch-datapoints';
 
 const USER_METRICS_SERVER_URL = 'http://localhost:8010';
 
