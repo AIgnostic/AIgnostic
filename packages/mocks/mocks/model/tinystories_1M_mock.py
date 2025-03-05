@@ -15,5 +15,5 @@ def predict(input: ModelInput) -> ModelResponse:
         model_name,
         tokenizer_name=tokenizer_name,
         max_length=50,
-        num_beams=1
+        num_beams=1,
     )

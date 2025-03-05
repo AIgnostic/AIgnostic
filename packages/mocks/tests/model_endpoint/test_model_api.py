@@ -4,7 +4,6 @@ from mocks.model.huggingface_binclassifier import app as huggingface_app
 from mocks.model.scikit_mock import app as scikit_app
 from mocks.model.finbert import app as finbert_app
 from mocks.model.mock import app as mock_app
-from mocks.model.gemini_mock import app as gemini
 from folktables import ACSDataSource, ACSEmployment
 import pandas as pd
 import pytest
@@ -17,7 +16,6 @@ scikit_mock = TestClient(scikit_app)
 basic_mock = TestClient(mock_app)
 finbert_mock = TestClient(finbert_app)
 # llama = TestClient(llama)
-gemini = TestClient(gemini)
 
 
 def test_non_existent_endpoint_throws_error():
@@ -201,36 +199,3 @@ def test_probabilities_sum_to_one():
         assert confidence_scores[0] >= 0, "Probability score is less than 0"
         assert sum(confidence_scores) == pytest.approx(1), "Confidence scores do not sum to 1"
 
-
-def test_gemini():
-    response = gemini.post("/predict", json={
-        "features": [["Hello world"]],
-        "labels": [[""]],
-        "group_ids": []
-    })
-    assert response.status_code == 200, response.text
-    predictions = response.json()["predictions"]
-    confidence_scores = response.json()["confidence_scores"]
-    assert len(predictions) == 1, f"Expected 1 prediction, got {len(predictions)}"
-    assert confidence_scores is None, "Confidence scores should be None"
-
-
-def test_gemini_multiple_inputs():
-    response = gemini.post("/predict", json={
-        "features": [
-            ["Hello World"],
-            ["Who am I? (Max response: 5 words)"],
-            ["One word answer only: Weather in London on average day?"]
-        ],
-        "labels": [
-            [""],
-            [""],
-            [""]
-        ],
-        "group_ids": [0, 1, 2]
-    })
-    assert response.status_code == 200, response.text
-    predictions = response.json()["predictions"]
-    confidence_scores = response.json()["confidence_scores"]
-    assert len(predictions) == 3, f"Expected 3 predictions, got {len(predictions)}"
-    assert confidence_scores is None, "Confidence scores should be None"

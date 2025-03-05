@@ -66,7 +66,7 @@ def predict_causal_LM(
         model_name: str,
         tokenizer_name: str = None,
         max_length: int = None,
-        num_beams: int = 1
+        num_beams: int = 1,
     ) -> ModelResponse:
     """
     Default predict function for causal language models from huggingface.
@@ -92,6 +92,9 @@ def predict_causal_LM(
         texts = [" ".join(map(str, features)) for features in input.features]
 
         # Tokenize the input texts
+        if not tokenizer.pad_token:
+            tokenizer.pad_token = tokenizer.eos_token
+
         inputs = tokenizer(
             texts,
             padding=True,
