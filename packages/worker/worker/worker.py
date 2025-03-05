@@ -302,7 +302,7 @@ class Worker:
 
                 except Exception as e:
                     print(f"ERROR EXECUTING USER METRIC: {e}")
-            
+
             if len(user_defined_metrics) != 0 or user_defined_metrics is not None:
                 print(f"Final Results with user metrics: {worker_results}")
                 try:
