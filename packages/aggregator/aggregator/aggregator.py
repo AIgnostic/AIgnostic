@@ -7,7 +7,7 @@ from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 import time
 from common.models import AggregatorMessage, MessageType, JobType, AggregatorJob, WorkerError
-from metrics.models import WorkerResults, MetricsPackageExceptionModel
+from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
 
 
@@ -102,7 +102,6 @@ class MetricsAggregator:
         self.samples_processed += batch_size
 
     def get_aggregated_metrics(self):
-        return self.metrics
         """
         Returns the aggregated metrics as a dictionary.
         Example:
@@ -120,6 +119,8 @@ class MetricsAggregator:
             ...
         }
         """
+        return self.metrics
+
         # results = {}
         # for metric, data in self.metrics.items():
         #     results[metric] = {
@@ -196,6 +197,9 @@ def process_batch_result(worker_results: WorkerResults):
     user_id = worker_results.user_id
     print(f"Received result for user {user_id}: {worker_results}")
 
+    if worker_results.user_defined_metrics is not None:
+        print(f"User-defined metrics received for user {user_id}: {worker_results.user_defined_metrics}")
+
     # ensure a metricsaffregator exists for the user
     if user_id not in user_aggregators:
         user_aggregators[user_id] = MetricsAggregator()
@@ -204,6 +208,17 @@ def process_batch_result(worker_results: WorkerResults):
 
     if aggregator.total_sample_size == 0:
         aggregator.set_total_sample_size(worker_results.total_sample_size)
+
+    batch_metrics = worker_results.metric_values
+    if worker_results.user_defined_metrics is not None:
+        for metric, metric_value in worker_results.user_defined_metrics.items():
+
+            metric_value_obj = (
+                MetricsPackageExceptionModel(**metric_value)
+                if "error" in metric_value
+                else MetricValue(**metric_value)
+            )
+            batch_metrics[metric] = metric_value_obj
 
     aggregator.aggregate_new_batch(worker_results.metric_values, worker_results.batch_size)
 

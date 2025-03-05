@@ -20,6 +20,8 @@ const MOCK_FOLKTABLES_DATASET_API_URL_PROD =
 const MOCK_FINANCIAL_DATASET_API_URL_PROD =
   'http://financial_dataset_api:5024/fetch-datapoints';
 
+const USER_METRICS_SERVER_URL = 'http://localhost:8010';
+
 const steps = [
   {
     label: 'Enter model and dataset API URLs',
@@ -113,4 +115,5 @@ export {
   MOCK_FINBERT_API_URL_PROD,
   MOCK_FOLKTABLES_DATASET_API_URL_PROD,
   MOCK_FINANCIAL_DATASET_API_URL_PROD,
+  USER_METRICS_SERVER_URL,
 };

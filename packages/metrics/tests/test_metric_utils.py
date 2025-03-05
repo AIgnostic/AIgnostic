@@ -14,6 +14,7 @@ from sklearn.linear_model import Ridge
 import numpy as np
 import requests
 import pytest
+from metrics.models import convert_calculate_request_to_dict
 
 
 def test_fgsm_attack():
@@ -152,3 +153,47 @@ def test_query_model_returns_http_error(mock_post):
     # Act & Assert
     with pytest.raises(ModelQueryException):
         _query_model(generated_input_features, info)
+
+
+""" general utils """
+
+
+def test_convert_calculate_request_to_dict():
+    """
+    Test conversion of CalculateRequest to dictionary
+    """
+    info = CalculateRequest(
+        metrics=["accuracy", "precision"],
+        task_name="classification",
+        input_features=np.array([[1, 2], [3, 4]]),
+        confidence_scores=[[0.8], [0.9]],
+        true_labels=[[1], [0]],
+        predicted_labels=[[1], [1]],
+        target_class=1,
+        privileged_groups=[{"sex": 1}],
+        unprivileged_groups=[{"sex": 0}],
+        protected_attr=[1],
+        model_url="http://model-api.com",
+        model_api_key="fake_api_key",
+        batch_size=10,
+        total_sample_size=100,
+        regression_flag=False
+    )
+
+    result = convert_calculate_request_to_dict(info)
+
+    assert result["metrics"] == ["accuracy", "precision"]
+    assert result["task_name"] == "classification"
+    assert result["input_data"] == [[1, 2], [3, 4]]
+    assert result["confidence_scores"] == [[0.8], [0.9]]
+    assert result["true_labels"] == [[1], [0]]
+    assert result["predicted_labels"] == [[1], [1]]
+    assert result["target_class"] == 1
+    assert result["privileged_groups"] == [{"sex": 1}]
+    assert result["unprivileged_groups"] == [{"sex": 0}]
+    assert result["protected_attr"] == [1]
+    assert result["model_url"] == "http://model-api.com/"
+    assert result["model_api_key"] == "fake_api_key"
+    assert result["batch_size"] == 10
+    assert result["total_sample_size"] == 100
+    assert result["regression_flag"] is False
