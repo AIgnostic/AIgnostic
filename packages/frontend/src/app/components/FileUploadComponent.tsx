@@ -136,40 +136,55 @@ function FileUploadComponent({
       sx={{
         padding: 2,
         backgroundColor: theme.palette.background.default,
-        border: `10px solid ${theme.palette.background.paper}`,
+        border: `1px solid ${theme.palette.background.paper}`,
         borderRadius: 2,
         margin: 2,
         boxShadow: theme.shadows[3],
       }}
     >
       <Typography variant="h6">Upload Your Metrics</Typography>
-
-      <Button variant="contained" component="label" sx={{ margin: 1 }}>
-        Upload Python File
-        <input
-          type="file"
-          hidden
-          onChange={(e) => handleFileChange(e, 'python')}
-        />
-      </Button>
-      {pythonFile && (
-        <Typography variant="body2">Python File: {pythonFile.name}</Typography>
-      )}
-
-      <Button variant="contained" component="label" sx={{ margin: 1 }}>
-        Upload Requirements (Optional)
-        <input
-          type="file"
-          hidden
-          onChange={(e) => handleFileChange(e, 'requirements')}
-        />
-      </Button>
-      {requirementsFile && (
-        <Typography variant="body2">
-          Requirements: {requirementsFile.name}
-        </Typography>
-      )}
-
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}
+      >
+        <Button variant="contained" component="label" sx={{ margin: 1 }}>
+          Upload Python File
+          <input
+            type="file"
+            hidden
+            onChange={(e) => handleFileChange(e, 'python')}
+          />
+        </Button>
+        {pythonFile && (
+          <Typography variant="body2">
+            Python File: {pythonFile.name}
+          </Typography>
+        )}
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}
+      >
+        <Button variant="contained" component="label" sx={{ margin: 1 }}>
+          Upload Requirements (Optional)
+          <input
+            type="file"
+            hidden
+            onChange={(e) => handleFileChange(e, 'requirements')}
+          />
+        </Button>
+        {requirementsFile && (
+          <Typography variant="body2">
+            Requirements: {requirementsFile.name}
+          </Typography>
+        )}
+      </div>
       {error && <Typography color="error">{error}</Typography>}
 
       <Button
@@ -206,21 +221,17 @@ function FileUploadComponent({
             <Box
               sx={{
                 marginTop: 2,
-                bgcolor: theme.palette.primary.main,
+                bgcolor: theme.palette.background.default,
+                padding: 2,
                 p: 2,
+                border: `1px solid ${theme.palette.background.paper}`,
                 shadow: 3,
                 elevation: 4,
                 boxShadow: theme.shadows[3],
+                borderRadius: 2,
               }}
             >
               <Typography variant="h6">Functions in Uploaded File:</Typography>
-              {/* <ul>
-                {functions.map((func, index) => (
-                  <li key={index}>
-                    <Typography variant="body2">{func}</Typography>
-                  </li>
-                ))}
-              </ul> */}
               {functions.map((func, index) => (
                 <Chip
                   key={index}
