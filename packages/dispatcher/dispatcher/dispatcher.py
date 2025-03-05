@@ -5,6 +5,7 @@ import uuid
 
 from common.models.pipeline import Batch, JobStatusMessage, JobStatus, PipelineJob
 from common.rabbitmq.constants import BATCH_QUEUE, JOB_QUEUE, STATUS_QUEUE
+from common.rabbitmq.connect import publish_to_queue
 from dispatcher.models import RunningJob
 from dispatcher.utils import redis_key
 from worker.worker import WorkerException
@@ -84,11 +85,7 @@ class Dispatcher:
         """Dispatch a single batch for the given job id"""
         try:
             logger.info(f"Dispatching batch for job {job_id}")
-            self._channel.basic_publish(
-                exchange="",
-                routing_key=BATCH_QUEUE,
-                body=job_data.model_dump_json(),
-            )
+            self._channel = publish_to_queue(self._channel, BATCH_QUEUE, job_data.model_dump_json())
             logger.info(f"Batch dispatched for job {job_id}")
         except Exception as e:
             self.propogate_error(job_id, e)

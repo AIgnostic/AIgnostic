@@ -13,7 +13,7 @@ import json
 import asyncio
 import random
 from common.models.pipeline import Batch, JobStatus, JobStatusMessage
-from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
+from common.rabbitmq.connect import connect_to_rabbitmq, init_queues, publish_to_queue
 from metrics.models import WorkerResults
 import requests
 from pydantic.networks import HttpUrl
@@ -67,12 +67,8 @@ class Worker:
         Function to queue the results of a job
         """
         job = AggregatorJob(job_type=JobType.RESULT, content=result)
-        self._channel.basic_publish(
-            exchange="",
-            routing_key=RESULT_QUEUE,
-            body=job.model_dump_json(),
-            mandatory=True,
-        )
+
+        self._channel = publish_to_queue(self._channel, RESULT_QUEUE, job.model_dump_json())
 
     def queue_error(self, error: WorkerError):
         """
@@ -82,12 +78,7 @@ class Worker:
             job_type=JobType.ERROR,
             content=error,
         )
-        self._channel.basic_publish(
-            exchange="",
-            routing_key=RESULT_QUEUE,
-            body=job.model_dump_json(),
-            mandatory=True,
-        )
+        self._channel = publish_to_queue(self._channel, RESULT_QUEUE, job.model_dump_json())
 
     def close(self):
         self._channel.close()
@@ -120,10 +111,10 @@ class Worker:
         """
         # Send a GET request to the dataset API
         if dataset_api_key is None:
-            response = requests.get(data_url, params={"n": batch_size})
+            response = requests.get(str(data_url), params={"n": batch_size})
         else:
             response = requests.get(
-                data_url,
+                str(data_url),
                 headers={"Authorization": f"Bearer {dataset_api_key}"},
                 params={"n": batch_size},
             )
@@ -159,10 +150,10 @@ class Worker:
         """
         # Send a POST request to the model API
         if model_api_key is None:
-            response = requests.post(url=model_url, json=data.model_dump_json())
+            response = requests.post(url=str(model_url), json=data.model_dump_json())
         else:
             response = requests.post(
-                url=model_url,
+                url=str(model_url),
                 json=data.model_dump(),
                 headers={"Authorization": f"Bearer {model_api_key}"},
             )
@@ -279,10 +270,10 @@ class Worker:
         """
         Function to send a status message to the status queue
         """
-        self._channel.basic_publish(
-            exchange="",
-            routing_key=STATUS_QUEUE,
-            body=JobStatusMessage(
+        self._channel = publish_to_queue(
+            self._channel,
+            STATUS_QUEUE,
+            JobStatusMessage(
                 job_id=job_id, batch_id=batch_id, status=JobStatus.COMPLETED
             ).model_dump_json(),
         )
@@ -291,14 +282,11 @@ class Worker:
         """
         Function to send a status message to the status queue
         """
-        self._channel.basic_publish(
-            exchange="",
-            routing_key=STATUS_QUEUE,
-            body=JobStatusMessage(
-                job_id=job_id,
-                batch_id=batch_id,
-                status=JobStatus.ERRORED,
-                errorMessage=str(error),
+        self._channel = publish_to_queue(
+            self._channel,
+            STATUS_QUEUE,
+            JobStatusMessage(
+                job_id=job_id, batch_id=batch_id, status=JobStatus.ERRORED
             ).model_dump_json(),
         )
 
