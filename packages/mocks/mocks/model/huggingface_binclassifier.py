@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from common.models import ModelInput, ModelResponse
-from mocks.model.hf_utils import predict as text_classification_predict
+from mocks.model.hf_utils import predict_t2class as text_classification_predict
 
 app = FastAPI()
 
