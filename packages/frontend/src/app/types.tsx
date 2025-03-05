@@ -50,6 +50,11 @@ export interface HomepageState {
   datasetAPIKey: string;
   isModelURLValid: boolean;
   isDatasetURLValid: boolean;
+  batchSize: number;
+  numberOfBatches: number;
+  isBatchConfigValid: boolean;
+  maxConcurrentBatches: number;
+  isMaxConcurrentBatchesValid: boolean;
   activeStep: number;
   selectedItem: string;
   metricChips: { id: string; label: string; selected: boolean }[];
