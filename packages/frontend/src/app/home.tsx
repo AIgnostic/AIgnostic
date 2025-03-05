@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { checkURL } from './utils';
+import { checkBatchConfig, checkURL } from './utils';
 import {
   steps,
   BACKEND_EVALUATE_URL,
@@ -45,6 +45,11 @@ function Homepage() {
     datasetAPIKey: '',
     isModelURLValid: true,
     isDatasetURLValid: true,
+    batchSize: 50,
+    numberOfBatches: 20,
+    isBatchConfigValid: true,
+    maxConcurrentBatches: 3,
+    isMaxConcurrentBatchesValid: true,
     activeStep: 0,
     selectedItem: '',
     metricChips: [],
@@ -192,6 +197,9 @@ function Homepage() {
         .map((metricChip) => metricChip.label.toLowerCase()),
       model_type: state.selectedModelType.toLowerCase(),
       user_id: userId,
+      batch_size: state.batchSize,
+      num_batches: state.numberOfBatches,
+      max_conc_batches: state.maxConcurrentBatches,
     };
 
     try {
@@ -322,6 +330,69 @@ function Homepage() {
                       />
                     );
                   })}
+                  <Box mt={2} display="flex" gap={2} flexWrap="wrap">
+                    <Box flex={1}>
+                      <TextField
+                        label="Number of Batches"
+                        type="number"
+                        defaultValue={state.numberOfBatches}
+                        error={!state.isBatchConfigValid}
+                        helperText={!state.isBatchConfigValid ? "Invalid batch configuration" : ""}
+                        onChange={(e) => setStateWrapper(
+                          'numberOfBatches' as keyof typeof state,
+                          e.target.value
+                        )}
+                        onBlur={() => {
+                          const isValid = checkBatchConfig(state.batchSize, state.numberOfBatches);
+                          setStateWrapper('isBatchConfigValid', isValid);
+                        }}
+                        style={styles.input}
+                      />
+                    </Box>
+                    <Box flex={1}>
+                      <TextField
+                        label="Batch Size"
+                        type="number"
+                        defaultValue={state.batchSize}
+                        error={!state.isBatchConfigValid}
+                        helperText={!state.isBatchConfigValid ? "Invalid batch configuration" : ""}
+                        onChange={(e) => setStateWrapper(
+                          'batchSize' as keyof typeof state,
+                          e.target.value
+                        )}
+                        onBlur={() => {
+                          const isValid = checkBatchConfig(state.batchSize, state.numberOfBatches);
+                          setStateWrapper('isBatchConfigValid', isValid);
+                        }}
+                        style={styles.input}
+                      />
+                    </Box>
+                    <Box flex={1}>
+                      <TextField
+                        label="Maximum Concurrent Batches"
+                        type="number"
+                        defaultValue={state.maxConcurrentBatches}
+                        error={!state.isMaxConcurrentBatchesValid}
+                        helperText={!state.isMaxConcurrentBatchesValid ? "Value must be between 1 and 30" : ""}
+                        onChange={(e) => setStateWrapper(
+                          'maxConcurrentBatches' as keyof typeof state,
+                          e.target.value
+                        )}
+                        onBlur={(e) => {
+                          const value = Math.min(Math.max(parseInt(e.target.value), 1), 30);
+                          const isValid = value === parseInt(e.target.value);
+                          setStateWrapper('maxConcurrentBatches', value);
+                          setStateWrapper('isMaxConcurrentBatchesValid', isValid);
+                        }}
+                        style={styles.input}
+                      />
+                    </Box>
+                  </Box>
+                  {!state.isBatchConfigValid && (
+                    <Typography color="error">
+                      Total sample size must be between 1000 and 10000
+                    </Typography>
+                  )}
                 </Box>
               )}
               {/* 2. SELECT MODEL TYPE */}
@@ -391,21 +462,29 @@ function Homepage() {
                 <Box style={{ padding: '15px' }}>
                   <h3>Summary</h3>
                   <Typography variant="body1">
-                    <strong>Model URL:</strong>{' '}
-                    {state.modelURL || 'You have not entered a model URL'}
-                    <br /> <br />
-                    <strong>Dataset URL:</strong>{' '}
-                    {state.datasetURL || 'You have not entered a dataset URL'}
-                    <br /> <br />
-                    <strong>Metrics:</strong>{' '}
-                    {state.metricChips.filter(
-                      (metricChip) => metricChip.selected
-                    ).length === 0
-                      ? 'You have not selected any metrics'
-                      : state.metricChips
-                          .filter((metricChip) => metricChip.selected)
-                          .map((metricChip) => metricChip.label)
-                          .join(', ')}
+                  <strong>Model URL:</strong>{' '}
+                  {state.modelURL || 'You have not entered a model URL'}
+                  <br /> <br />
+                  <strong>Dataset URL:</strong>{' '}
+                  {state.datasetURL || 'You have not entered a dataset URL'}
+                  <br /> <br />
+                  <strong>Metrics:</strong>{' '}
+                  {state.metricChips.filter(
+                    (metricChip) => metricChip.selected
+                  ).length === 0
+                    ? 'You have not selected any metrics'
+                    : state.metricChips
+                      .filter((metricChip) => metricChip.selected)
+                      .map((metricChip) => metricChip.label)
+                      .join(', ')}
+                  <br /> <br />
+                  <strong>Batch Configuration:</strong>
+                  <br />
+                  Batch Size: {state.batchSize}
+                  <br />
+                  Number of Batches: {state.numberOfBatches}
+                  <br />
+                  Max Concurrent Batches: {state.maxConcurrentBatches}
                   </Typography>
                 </Box>
               )}
@@ -471,6 +550,7 @@ function Homepage() {
                           setStateWrapper('isGeneratingReport', false);
                         }}
                         socket={socket}
+                        expectedItems={state.numberOfBatches}
                       />
                     )}
                   </div>

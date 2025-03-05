@@ -14,10 +14,11 @@ import { pdf } from '@react-pdf/renderer';
 interface DashboardProps {
   onComplete: () => void;
   socket: WebSocket | null;
+  expectedItems: number;
 }
 
 // Each item from the websocket is an array of Metric objects.
-const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems }) => {
   // 'items' holds each item (which is an array of Metric objects) received from the socket.
   const [items, setItems] = useState<Metric[]>([]);
   const [log, setLog] = useState<string>('');
@@ -27,10 +28,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
   });
   const [showError, setShowError] = useState<boolean>(false);
 
-  const [report, setReport] = useState<Report | null>(null);
+  // const [report, setReport] = useState<Report | null>(null);
 
-  // We expect to receive 20 items total.
-  const expectedItems = 10;
 
   useEffect(() => {
     if (socket) {
@@ -74,7 +73,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket }) => {
           case 'REPORT': {
             const generateReport = async () => {
               console.log('Results received:', data.content);
-              setReport(data.content);
+              // setReport(data.content);
               console.log('Report:', data.content);
               const blob = await pdf(
                 <ReportRenderer report={data.content} />
