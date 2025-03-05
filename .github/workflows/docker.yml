@@ -69,6 +69,3 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           target: ${{ inputs.build_target }}
-      # Inject secrets into the Docker build environment
-      - name: Inject secrets into Docker environment
-        run: echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_GEMINI_API_KEY }}" >> $GITHUB_ENV
