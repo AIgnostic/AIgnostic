@@ -27,6 +27,11 @@ class ModelEvaluationRequest(BaseModel):
     user_id: str
 
 
+@api.get("/")
+async def read_root():
+    return {"message": "Welcome to the model evaluation server!"}
+
+
 @api.post("/evaluate")
 async def generate_metrics_from_info(
     request: ModelEvaluationRequest, channel=Depends(get_channel)

@@ -1,0 +1,55 @@
+services:
+  ####
+  # Mock servers to test against
+  ####
+
+  folktables_dataset_api:
+    container_name: folktables-dataset-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+    command: poetry run python3 -u -m mocks.dataset.mock_server --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_mocks
+    ports:
+      - '5010:5010'
+
+  financial_dataset_api:
+    container_name: financial-dataset-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+    command: poetry run python3 -u -m mocks.dataset.financial_data_server --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_mocks
+    ports:
+      - '5024:5024'
+
+  scikit_mock_model_api:
+    container_name: scikit-mock-model-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+    command: poetry run python3 -u -m mocks.model.scikit_mock --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_mocks
+    ports:
+      - '5011:5011'
+
+  finbert_mock_model_api:
+    container_name: finbert-mock-model-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+    command: poetry run python3 -u -m mocks.model.finbert --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_mocks
+    ports:
+      - '5001:5001'
+
+networks:
+  aignostic_mocks:
