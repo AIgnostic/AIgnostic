@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from mocks.api_utils import MOCK_MODEL_API_KEY
 from mocks.model.huggingface_binclassifier import app as huggingface_app
-from mocks.model.scikit_mock import app as scikit_app
+from mocks.model.scikit_mock_classifier import app as scikit_app
 from mocks.model.finbert import app as finbert_app
 from mocks.model.mock import app as mock_app
 from folktables import ACSDataSource, ACSEmployment
