@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 from mocks.api_utils import get_model_api_key
 from mocks.utils import load_scikit_model
-from common.models import ModelInput, ModelResponse
+from common.models import DatasetResponse, ModelResponse
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -28,7 +28,7 @@ def read_root():
 
 
 @app.post("/predict", dependencies=[Depends(get_model_api_key)], response_model=ModelResponse)
-def predict(input: ModelInput) -> ModelResponse:
+def predict(input: DatasetResponse) -> ModelResponse:
     """
     Given a dataset, predict the expected outputs for the model
     """

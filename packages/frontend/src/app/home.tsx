@@ -7,6 +7,7 @@ import {
   modelTypesToMetrics,
   activeStepToInputConditions,
   WEBSOCKET_URL,
+  USER_METRICS_SERVER_URL,
 } from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
@@ -31,6 +32,9 @@ import { HomepageState } from './types';
 import Dashboard from './dashboard';
 import theme from './theme';
 import { v4 as uuidv4 } from 'uuid';
+import { FileUpload } from '@mui/icons-material';
+import FileUploadComponent from './components/FileUploadComponent';
+import { IS_PROD } from './env';
 
 function Homepage() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -51,6 +55,8 @@ function Homepage() {
     showDashboard: false,
     dashboardKey: 0, // Added key to force Dashboard remount
     isGeneratingReport: false,
+    userMetricsUploaded: false,
+    userRequirementsUploaded: false,
   });
 
   const getValues = {
@@ -371,6 +377,12 @@ function Homepage() {
                       style={{ margin: '5px' }}
                     />
                   ))}
+                  {!IS_PROD && (
+                    <FileUploadComponent
+                      state={state}
+                      setStateWrapper={setStateWrapper}
+                    />
+                  )}
                 </Box>
               )}
 

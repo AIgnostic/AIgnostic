@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
-from common.models import ModelInput, ModelResponse
+from common.models import DatasetResponse, ModelResponse
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -33,7 +33,7 @@ def list_available_gemini_models():
 
 
 @app.post("/predict", response_model=ModelResponse)
-async def predict(request: ModelInput):
+async def predict(request: DatasetResponse):
     """Generates text using Gemini to complete an answer."""
     try:
         predictions = []

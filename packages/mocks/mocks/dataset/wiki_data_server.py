@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from datasets import load_dataset
-from common.models import ModelInput
+from common.models import DatasetResponse
 from mocks.api_utils import get_dataset_api_key
 
 app: FastAPI = FastAPI()
@@ -36,17 +36,17 @@ async def read_root():
     return {"message": "Welcome to the WikiText-103 Next Token server!"}
 
 
-@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=ModelInput)
+@app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=DatasetResponse)
 async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
     """
-    Fetch num_datapoints raw text samples from WikiText-103 and return them as JSON in ModelInput format.
-    The ModelInput will contain ONLY the 'features' field, which is a list of prompts.
+    Fetch num_datapoints raw text samples from WikiText-103 and return them as JSON in DatasetResponse format.
+    The DatasetResponse will contain ONLY the 'features' field, which is a list of prompts.
 
     Args:
         num_datapoints (int): Number of text samples to fetch.
 
     Returns:
-        JSONResponse: A JSON response containing the datapoints in ModelInput format.
+        JSONResponse: A JSON response containing the datapoints in DatasetResponse format.
                        Only the 'features' field will be populated.
     """
     df = old_df.dropna(subset=["text"])
@@ -67,7 +67,7 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
         features = [[prompt] for prompt in selected_data]
         print("features: ", features)
         print("length of features: ", len(features))
-        return ModelInput(features=features, labels=[], group_ids=[])
+        return DatasetResponse(features=features, labels=[], group_ids=[])
 
     except Exception as e:
         raise HTTPException(detail=f"Error: {e}", status_code=500)

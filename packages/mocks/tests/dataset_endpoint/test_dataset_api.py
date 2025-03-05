@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from mocks.api_utils import MOCK_DATASET_API_KEY
 from mocks.dataset.mock_server import app as client_mock
 from api.dataset.validate_dataset_api import _validate_dataset_format
-from common.models import ModelInput
+from common.models import DatasetResponse
 import pytest
 
 client_mock = TestClient(client_mock)
@@ -54,7 +54,7 @@ def test_valid_dataset():
         "group_ids": [1, 2]
     }
     result = _validate_dataset_format(valid_data)
-    assert isinstance(result, ModelInput)
+    assert isinstance(result, DatasetResponse)
 
 
 def test_mismatched_list_lengths():
@@ -94,7 +94,7 @@ def test_empty_dataset():
         "group_ids": []
     }
     result = _validate_dataset_format(empty_data)
-    assert isinstance(result, ModelInput)
+    assert isinstance(result, DatasetResponse)
 
 
 def test_invalid_data_type():

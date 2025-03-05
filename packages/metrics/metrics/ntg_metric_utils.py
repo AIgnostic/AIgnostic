@@ -122,6 +122,7 @@ def prompt_perturbation_cosine_similarities(
     return embedding_perturbation_cosine_similarities(embeddings, embeddings_perturbed)
 
 
+# TODO: Write tests
 def compute_batch_sentence_bleu(target_sentences: list[str], perturbed_sentences: list[str]) -> list[float]:
     """
     Given two lists of target and perturbed sentences, calculate the BLEU score for each pair.
@@ -137,6 +138,7 @@ def compute_batch_sentence_bleu(target_sentences: list[str], perturbed_sentences
     return bleu_scores
 
 
+# TODO: Write tests
 def compute_batch_rouge_scores(target_sentences: list[str], perturbed_sentences: list[str]) -> list[float]:
     """
     Given two lists of target and perturbed sentences, calculate the ROUGE score for each pair.
@@ -151,6 +153,7 @@ def compute_batch_rouge_scores(target_sentences: list[str], perturbed_sentences:
     return scores
 
 
+# TODO: Write tests
 def compute_edit_distances(target_sentences: list[str], perturbed_sentences: list[str]) -> list[int]:
     """
     Given two lists of target and perturbed sentences, calculate the edit distance for each pair.
@@ -166,7 +169,7 @@ def compute_edit_distances(target_sentences: list[str], perturbed_sentences: lis
     return edit_distances
 
 
-# TODO
+# TODO: Write tests
 def compute_bert_scores(target_sentences: list[str], perturbed_sentences: list[str]) -> list[float]:
     """
     Given two lists of target and perturbed sentences, calculate the BERT score for each pair.

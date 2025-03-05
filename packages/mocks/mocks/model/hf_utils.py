@@ -4,13 +4,13 @@ from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM
 )
-from common.models import ModelInput, ModelResponse
+from common.models import DatasetResponse, ModelResponse
 import torch
 # Load model directly
 
 
 def predict_t2class(
-    input: ModelInput,
+    input: DatasetResponse,
     model_name: str,
     tokenizer_name: str = None,
     max_length: int = None
@@ -18,7 +18,7 @@ def predict_t2class(
     """
     Default predict function for text classification models from huggingface.
 
-    :param: input: ModelInput object containing input features
+    :param: input: DatasetResponse object containing input features
     :param: model_name: Name of the model to be used for prediction
     :param: tokenizer_name = None: Name of the tokenizer to be used for tokenization.
         If not provided, the model_name is used to load the tokenizer.
@@ -63,7 +63,7 @@ def predict_t2class(
 
 
 def predict_causal_LM(
-    input: ModelInput,
+    input: DatasetResponse,
     model_name: str,
     tokenizer_name: str = None,
     max_length: int = None,
@@ -72,7 +72,7 @@ def predict_causal_LM(
     """
     Default predict function for causal language models from huggingface.
 
-    :param: input: ModelInput object containing input features
+    :param: input: DatasetResponse object containing input features
     :param: model_name: Name of the model to be used for prediction
     :param: tokenizer_name = None: Name of the tokenizer to be used for tokenization.
         If not provided, the model_name is used to load the tokenizer.

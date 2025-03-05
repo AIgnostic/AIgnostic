@@ -19,7 +19,7 @@ services:
     container_name: worker
     image: ghcr.io/aignostic/worker:latest
     deploy:
-      replicas: 3
+      replicas: 30
     networks:
       - aignostic_network
     environment:
@@ -36,6 +36,14 @@ services:
     secrets:
       - google_ai_api_key # Google AI API key
 
+  dispatcher_ms:
+    container_name: dispatcher
+    image: ghcr.io/aignostic/dispatcher:latest
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+
   # Reverse proxy
   reverse_proxy:
     image: ghcr.io/aignostic/nginx_reverse_proxy:latest
@@ -49,6 +57,14 @@ services:
       - aignostic_network
     depends_on:
       - api_router
+
+  user_added_metrics:
+    container_name: user_added_metrics
+    image: ghcr.io/aignostic/useraddedmetrics:latest
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_HOST=rabbitmq
 
 networks:
   aignostic_network:

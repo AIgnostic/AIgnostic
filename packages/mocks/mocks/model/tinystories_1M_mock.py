@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from common.models import ModelInput, ModelResponse
+from common.models import DatasetResponse, ModelResponse
 from mocks.model.hf_utils import predict_causal_LM
 
 app = FastAPI()
@@ -10,7 +10,7 @@ tokenizer_name = "EleutherAI/gpt-neo-125M"
 
 
 @app.post("/predict", response_model=ModelResponse)
-def predict(input: ModelInput) -> ModelResponse:
+def predict(input: DatasetResponse) -> ModelResponse:
     return predict_causal_LM(
         input,
         model_name,
