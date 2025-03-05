@@ -20,7 +20,7 @@ COPY ./package.json /app
 COPY ./package-lock.json /app
 
 # Run npm ci
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 COPY ./nx.json /app
 # Have to copy these manually - means we can change code without rebuilding it all as deps didn't change
