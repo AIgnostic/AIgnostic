@@ -61,10 +61,7 @@ function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
   }
 
   const totalSampleSize = batchSize * numberOfBatches;
-  if (totalSampleSize < 1000 || totalSampleSize > 10000) {
-    return false;
-  }
-  return true;
+  return 1000 <= totalSampleSize && totalSampleSize <= 10000;
 }
 
 // retrieves a dictionary mapping task types to the metrics that can be computed for them

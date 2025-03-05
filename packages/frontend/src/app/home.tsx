@@ -337,7 +337,13 @@ function Homepage() {
                         type="number"
                         defaultValue={state.numberOfBatches}
                         error={!state.isBatchConfigValid}
-                        helperText={!state.isBatchConfigValid ? "Invalid batch configuration" : ""}
+                        helperText={
+                          state.numberOfBatches < 1
+                            ? "Number of batches must be greater than 0"
+                            : !state.isBatchConfigValid 
+                              ? "Invalid batch configuration" 
+                              : ""
+                        }
                         onChange={(e) => setStateWrapper(
                           'numberOfBatches' as keyof typeof state,
                           e.target.value
@@ -355,7 +361,13 @@ function Homepage() {
                         type="number"
                         defaultValue={state.batchSize}
                         error={!state.isBatchConfigValid}
-                        helperText={!state.isBatchConfigValid ? "Invalid batch configuration" : ""}
+                        helperText={
+                          state.batchSize < 1
+                            ? "Batch size must be greater than 0"
+                            : !state.isBatchConfigValid 
+                              ? "Invalid batch configuration" 
+                              : ""
+                        }
                         onChange={(e) => setStateWrapper(
                           'batchSize' as keyof typeof state,
                           e.target.value
@@ -390,7 +402,8 @@ function Homepage() {
                   </Box>
                   {!state.isBatchConfigValid && (
                     <Typography color="error">
-                      Total sample size must be between 1000 and 10000
+                      Total sample size must be between 1000 and 10000, not {state.batchSize * state.numberOfBatches}. 
+                      Batch size and number of batches must be positive.
                     </Typography>
                   )}
                 </Box>
