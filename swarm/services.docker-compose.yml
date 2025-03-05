@@ -8,8 +8,21 @@ services:
     image: rabbitmq:3-management
     networks:
       - aignostic_network
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=securepassword
     healthcheck:
       test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  redis:
+    image: redis
+    networks:
+      - aignostic_network
+    healthcheck:
+      test: redis-cli ping
       interval: 10s
       timeout: 10s
       retries: 5

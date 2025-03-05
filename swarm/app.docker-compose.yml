@@ -12,6 +12,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
 
   # Microservices
@@ -23,6 +25,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
 
   aggregator_ms:
@@ -31,6 +35,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
       - GOOGLE_API_KEY_FILE=/run/secrets/google_ai_api_key
     secrets:
@@ -42,7 +48,11 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   # Reverse proxy
   reverse_proxy:
