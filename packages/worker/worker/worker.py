@@ -105,7 +105,7 @@ class Worker:
             batch_data = json.loads(body)
             print(f"Received job: {batch_data}")
             try:
-                print("Unpacking batcj data")
+                print("Unpacking batch data")
                 return Batch(**batch_data)
             except ValueError as e:
                 raise WorkerException(f"Invalid batch format: {e}", status_code=400)
@@ -327,8 +327,12 @@ class Worker:
             )
             self.send_status_error(batch.job_id, batch.batch_id, e)
         except Exception as e:
+            self.queue_error(
+                WorkerError(
+                    error_message="An unknown error occurred", error_code=500
+                )
+            )
             self.send_status_error(batch.job_id, batch.batch_id, e)
-            raise WorkerException(f"Error while processing data: {e}")
 
     def send_status_completed(self, job_id: str, batch_id: str):
         """
