@@ -195,6 +195,72 @@ describe('Batch Configuration Validation', () => {
   });
 });
 
+describe('Maximum Concurrent Batches Validation', () => {
+  it('should update maxConcurrentBatches state on change', () => {
+    render(<Homepage />);
+
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+    
+    // Simulate onChange event (user typing a value)
+    fireEvent.change(input, { target: { value: '10' } });
+
+    // Check if the state was updated correctly
+    expect(input).toHaveValue(10);
+  });
+
+  it('should show error if value is out of range onBlur', async () => {
+    render(<Homepage />);
+
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+
+    // Simulate an invalid input (less than 1)
+    fireEvent.change(input, { target: { value: '0' } });
+    fireEvent.blur(input);
+
+    // Check if the error message appears
+    expect(screen.getByText('Value must be between 1 and 30')).toBeInTheDocument();
+  });
+
+  it('should not show error if value is within range onBlur', async () => {
+    render(<Homepage />);
+
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+
+    // Simulate a valid input (within the range of 1 to 30)
+    fireEvent.change(input, { target: { value: '15' } });
+    fireEvent.blur(input);
+
+    // Check if the error message does not appear
+    expect(screen.queryByText('Value must be between 1 and 30')).not.toBeInTheDocument();
+  });
+
+  it('should clamp value to 30 if input is greater than 30 onBlur', async () => {
+    render(<Homepage />);
+
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+
+    // Simulate an invalid input (greater than 30)
+    fireEvent.change(input, { target: { value: '35' } });
+    fireEvent.blur(input);
+
+    // Check if the value is clamped to 30
+    expect(input).toHaveValue(30);
+  });
+
+  it('should clamp value to 1 if input is less than 1 onBlur', async () => {
+    render(<Homepage />);
+
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+
+    // Simulate an invalid input (less than 1)
+    fireEvent.change(input, { target: { value: '0' } });
+    fireEvent.blur(input);
+
+    // Check if the value is clamped to 1
+    expect(input).toHaveValue(1);
+  });
+});
+
 describe('UI Components', () => {
   it('should render the Homepage correctly', () => {
     render(<Homepage />);
