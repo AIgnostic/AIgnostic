@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from mocks.api_utils import MOCK_DATASET_API_KEY
-from mocks.dataset.mock_server import app as client_mock
+from mocks.dataset.boston_housing_data_server import app as client_mock
 from api.dataset.validate_dataset_api import _validate_dataset_format
 from common.models import DatasetResponse
 import pytest
@@ -10,7 +10,7 @@ client_mock = TestClient(client_mock)
 valid_api_key = {"Authorization": f"Bearer {MOCK_DATASET_API_KEY}"}
 invalid_api_key = {"Authorization": "Bearer INVALID_KEY"}
 
-
+# TODO: Make test for each dataset server mock
 def test_client_non_existent_endpoint_throws_404():
     response = client_mock.get("/hello")
     assert response.status_code == 404, response.text

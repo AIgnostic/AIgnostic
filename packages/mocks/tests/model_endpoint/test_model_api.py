@@ -79,10 +79,20 @@ def test_valid_data_scikit_folktables():
     model = load_scikit_model('scikit_model.sav')
     y_hat = model.predict(features)
 
-    assert response.json() == {
-        "predictions": [y_hat.tolist()],
-        "confidence_scores": None
-    }, "Model output does not match expected output"
+    assert response.json()["predictions"] == [y_hat.tolist()], (
+        "Model output does not match expected output"
+    )
+    assert len(response.json()["confidence_scores"]) == len(y_hat), (
+        "Confidence scores do not match the number of predictions"
+    )
+    for scores in response.json()["confidence_scores"]:
+        assert all([0 <= score <= 1 for score in scores]), (
+            "Confidence scores are not probabilities"
+        )
+
+
+def test_scikit_regression_on_valid_data():
+    pass
 
 
 def test_valid_data_huggingface():

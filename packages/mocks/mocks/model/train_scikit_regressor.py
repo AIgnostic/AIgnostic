@@ -1,22 +1,21 @@
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
-import numpy as np
 import pickle
 import pandas as pd
+from mocks.dataset.boston_housing_data_server import (
+    BOSTON_FEATURES as features,
+    BOSTON_LABELS as labels
+)
 
 
 print("Training a scikit-learn regression model...")
 boston = fetch_openml(name="boston", version=1, as_frame=True)
 df = boston.frame
 
-# Select numeric features and label
-features = ['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT']
-label = 'MEDV'
 # Convert all columns to numeric type
 X = df[features].apply(pd.to_numeric, errors='coerce')
-y = pd.to_numeric(df[label], errors='coerce')
+y = pd.to_numeric(df[labels], errors='coerce')
 
 
 # Split the data
