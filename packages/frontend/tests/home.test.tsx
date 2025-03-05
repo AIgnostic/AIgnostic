@@ -234,31 +234,29 @@ describe('Maximum Concurrent Batches Validation', () => {
     expect(screen.queryByText('Value must be between 1 and 30')).not.toBeInTheDocument();
   });
 
-  it('should clamp value to 30 if input is greater than 30 onBlur', async () => {
+  it('should show an error if input is greater than 30 onBlur', async () => {
     render(<Homepage />);
-
+  
     const input = screen.getByLabelText('Maximum Concurrent Batches');
-
+  
     // Simulate an invalid input (greater than 30)
     fireEvent.change(input, { target: { value: '35' } });
     fireEvent.blur(input);
-
-    // Check if the value is clamped to 30
-    expect(input).toHaveValue(30);
+  
+    expect(screen.getByText('Value must be between 1 and 30')).toBeInTheDocument();
   });
-
-  it('should clamp value to 1 if input is less than 1 onBlur', async () => {
+  
+  it('should show an error if input is less than 1 onBlur', async () => {
     render(<Homepage />);
-
+  
     const input = screen.getByLabelText('Maximum Concurrent Batches');
-
+  
     // Simulate an invalid input (less than 1)
     fireEvent.change(input, { target: { value: '0' } });
     fireEvent.blur(input);
-
-    // Check if the value is clamped to 1
-    expect(input).toHaveValue(1);
-  });
+  
+    expect(screen.getByText('Value must be between 1 and 30')).toBeInTheDocument();
+  });  
 });
 
 describe('UI Components', () => {
