@@ -93,14 +93,17 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=Fa
         size=(num_samples, d)
     )
 
-    if not info.regression_flag:
-        # probabilities cannot exceed 1 or be less than 0
-        perturbed_samples = np.clip(perturbed_samples, 0, 1)
 
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
     # Compute model probabilities for perturbed samples
+    # TODO: Remove ESP param for alternatives
     outputs = response.predictions if (info.regression_flag or esp) else response.confidence_scores
+
+    print(f"Outputs: {outputs}")
+
+    if not info.regression_flag:
+        outputs = np.clip(outputs, 0, 1)
 
     if outputs is None:
         raise ModelQueryException(
@@ -144,14 +147,12 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
             ),
             status_code=400
         )
-    print("Reached here at query model first breakpoint")
     model_input = DatasetResponse(
         features=generated_input_features.tolist(),
         labels=np.zeros((len(generated_input_features), 1)).tolist(),
         group_ids=np.zeros(len(generated_input_features), dtype=int).tolist(),
     )
 
-    print(f"Attempting to query model at {info.model_url}")
     if info.model_api_key is None:
         response = requests.post(url=info.model_url, json=model_input.model_dump(mode="json"))
     else:
@@ -160,9 +161,6 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
             json=model_input.model_dump(mode="json"),
             headers={"Authorization": f"Bearer {info.model_api_key}"},
         )
-
-    print(f"response: {response}")
-    print("Reached here")
 
     try:
         response.raise_for_status()

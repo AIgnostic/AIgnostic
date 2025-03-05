@@ -83,7 +83,7 @@ task_type_to_metric = {
         "mean_absolute_error",
         "mean_squared_error",
         "r_squared",
-        # "explanation_stability_score",
+        "explanation_stability_score",
         # "explanation_sparsity_score",
         # "explanation_fidelity_score",
     ],
