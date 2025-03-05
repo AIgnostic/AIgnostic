@@ -19,6 +19,11 @@ app.add_middleware(
 name = "ProsusAI/finbert"
 
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the FinBERT Model API"}
+
+
 @app.post("/predict", response_model=ModelResponse)
 def predict(input: DatasetResponse) -> ModelResponse:
     return text_classification_predict(input, name)

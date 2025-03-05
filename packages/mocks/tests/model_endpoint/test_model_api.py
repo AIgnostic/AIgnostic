@@ -23,6 +23,18 @@ def test_non_existent_endpoint_throws_error():
     assert response.status_code == 404, response.text
 
 
+def test_scikit_read_root():
+    response = scikit_mock.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Welcome to the Scikit-Learn Model API"}
+
+
+def test_finbert_read_root():
+    response = finbert_mock.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Welcome to the FinBERT Model API"}
+
+
 def test_mock_returns_empty():
     # post empty pandas dataframe
     response = basic_mock.post("/predict", json={
