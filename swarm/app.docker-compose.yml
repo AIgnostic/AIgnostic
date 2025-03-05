@@ -51,6 +51,8 @@ services:
       - RABBITMQ_USER=admin
       - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   # Reverse proxy
   reverse_proxy:
