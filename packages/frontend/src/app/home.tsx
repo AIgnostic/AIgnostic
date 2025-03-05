@@ -34,6 +34,7 @@ import theme from './theme';
 import { v4 as uuidv4 } from 'uuid';
 import { FileUpload } from '@mui/icons-material';
 import FileUploadComponent from './components/FileUploadComponent';
+import { IS_PROD } from './env';
 
 function Homepage() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -376,10 +377,12 @@ function Homepage() {
                       style={{ margin: '5px' }}
                     />
                   ))}
-                  <FileUploadComponent
-                    state={state}
-                    setStateWrapper={setStateWrapper}
-                  />
+                  {!IS_PROD && (
+                    <FileUploadComponent
+                      state={state}
+                      setStateWrapper={setStateWrapper}
+                    />
+                  )}
                 </Box>
               )}
 

@@ -302,6 +302,16 @@ class Worker:
 
                 except Exception as e:
                     print(f"ERROR EXECUTING USER METRIC: {e}")
+            
+            if len(user_defined_metrics) != 0 or user_defined_metrics is not None:
+                print(f"Final Results with user metrics: {worker_results}")
+                try:
+                    clear_response = requests.delete(
+                        f"{USER_METRIC_SERVER_URL}/clear-user-data/{worker_results.user_id}"
+                    )
+                    print(f"Clear response: {clear_response}")
+                except Exception as e:
+                    print(f"Error clearing user data: {e}")
 
             self.queue_result(worker_results)
             self.send_status_completed(batch.job_id, batch.batch_id)
