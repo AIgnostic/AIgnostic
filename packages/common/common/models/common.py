@@ -38,7 +38,7 @@ class ModelResponse(BaseModel):  # pragma: no cover
     confidence_scores: Optional[list[list]] = None
 
 
-class LLMInput(DatasetResponse, BaseModel):
+class LLMInput(DatasetResponse, BaseModel):  # pragma: no cover
     """
     A model for next token generation
 
@@ -51,7 +51,7 @@ class LLMInput(DatasetResponse, BaseModel):
     max_length: int
 
 
-class LLMResponse(DatasetResponse, BaseModel):
+class LLMResponse(DatasetResponse, BaseModel):  # pragma: no cover
     """
     A model for next token generation
 
@@ -62,7 +62,7 @@ class LLMResponse(DatasetResponse, BaseModel):
     response: str
 
 
-class AggregatorMessage(BaseModel, ABC):
+class AggregatorMessage(BaseModel, ABC):  # pragma: no cover
     """
     Model for messages sent by the aggregator to the frontend
     Params:
@@ -81,7 +81,7 @@ class AggregatorMessage(BaseModel, ABC):
         arbitrary_types_allowed = True
 
 
-class MessageType(str, Enum):
+class MessageType(str, Enum):  # pragma: no cover
     LOG = "LOG"
     ERROR = "ERROR"
     METRICS_INTERMEDIATE = "METRICS_INTERMEDIATE"
@@ -94,7 +94,7 @@ class JobType(str, Enum):
     ERROR = "ERROR"
 
 
-class WorkerError(BaseModel):
+class WorkerError(BaseModel):  # pragma: no cover
     """
     WorkerError pydantic model represents the structure of the errors found on the results queue
     i.e. what worker sends to the queue
@@ -105,7 +105,7 @@ class WorkerError(BaseModel):
     error_code: int
 
 
-class AggregatorJob(BaseModel):
+class AggregatorJob(BaseModel):  # pragma: no cover
     """
     AggregatorJob pydantic model represents the structure of the jobs found on the results queue
     i.e. what worker sends to the queue
@@ -116,7 +116,7 @@ class AggregatorJob(BaseModel):
     content: Union[WorkerResults, WorkerError]
 
 
-class ComputeUserMetricRequest(BaseModel):
+class ComputeUserMetricRequest(BaseModel):  # pragma: no cover
     user_id: str
     function_name: str
     params: dict

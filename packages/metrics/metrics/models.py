@@ -40,7 +40,6 @@ class CalculateRequest(BaseModel):
     :param model_url: Optional[HttpUrl] - URL of the model endpoint.
     :param model_api_key: Optional[str] - API key for accessing the model endpoint.
     """
-
     metrics: list[str]
     task_name: Optional[str] = None
     batch_size: Optional[int] = None

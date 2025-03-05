@@ -77,6 +77,8 @@ const APIDocs: React.FC<APIDocsProps> = ({ getMarkdownFiles }) => {
               <ReactMarkdown
                 children={md.body}
                 components={{
+                  br: () => <br />,
+                  
                   p: ({
                     node,
                     inline,
