@@ -10,6 +10,10 @@ client_mock = TestClient(client_mock)
 valid_api_key = {"Authorization": f"Bearer {MOCK_DATASET_API_KEY}"}
 invalid_api_key = {"Authorization": "Bearer INVALID_KEY"}
 
+def test_read_root():
+    response = client_mock.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Welcome to the Folktables data server!"}
 
 def test_client_non_existent_endpoint_throws_404():
     response = client_mock.get("/hello")
