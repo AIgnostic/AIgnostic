@@ -12,6 +12,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
 
   # Microservices
@@ -23,6 +25,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
 
   aggregator_ms:
@@ -42,6 +46,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
 
   # Reverse proxy
@@ -64,6 +70,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
 
 networks:
