@@ -57,6 +57,16 @@ function checkURL(url: string): boolean {
   }
 }
 
+function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
+  // Check batchSize and numberOfBatches greater than 1
+  if (batchSize < 1 || numberOfBatches < 1) {
+    return false;
+  }
+
+  const totalSampleSize = batchSize * numberOfBatches;
+  return 1000 <= totalSampleSize && totalSampleSize <= 10000;
+}
+
 // retrieves a dictionary mapping task types to the metrics that can be computed for them
 // returns a dictionary with the following structure:
 // {
@@ -79,4 +89,4 @@ function applyStyle(doc: jsPDF, style: any) {
   doc.setFontSize(style.size);
 }
 
-export { checkURL, applyStyle, fetchMetricInfo };
+export { checkURL, checkBatchConfig, applyStyle, fetchMetricInfo };

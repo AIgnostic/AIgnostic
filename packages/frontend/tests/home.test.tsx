@@ -8,7 +8,7 @@ import {
   activeStepToInputConditions,
 } from '../src/app/constants';
 import '@testing-library/jest-dom';
-import { checkURL } from '../src/app/utils';
+import { checkBatchConfig, checkURL } from '../src/app/utils';
 
 // mock modelTypesToMetrics
 jest.mock('../src/app/constants', () => ({
@@ -134,8 +134,176 @@ describe('Form Validation', () => {
   });
 });
 
+jest.mock('../src/app/utils', () => ({
+  __esModule: true,
+  checkBatchConfig: jest.fn(),
+  checkURL: jest.fn(),
+  generateReportText: jest.fn(),
+  fetchMetricInfo: jest.fn(),
+}));
+
+describe('Batch Configuration Validation', () => {
+  test('should set isBatchConfigValid to false for invalid total sample size', async () => {
+    // Mock checkBatchConfig to return false for invalid batch config
+    (checkBatchConfig as jest.Mock).mockReturnValue(false);
+
+    render(<Homepage />);
+    
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+    
+    // Set invalid values for batch size and number of batches
+    fireEvent.change(batchSizeInput, { target: { value: '50' } }); // Invalid batch size (too small)
+    fireEvent.change(numberOfBatchesInput, { target: { value: '15' } }); // Invalid number of batches (too small)
+    
+    // Trigger onBlur event to validate the inputs
+    fireEvent.blur(batchSizeInput); 
+    fireEvent.blur(numberOfBatchesInput); 
+    
+    // Wait for the state change and check if the error message appears
+    await waitFor(() => {
+      expect(screen.getByText('Total sample size must be between 1000 and 10000, not 750.')).toBeInTheDocument();
+    });
+  });
+
+  test('should set isBatchConfigValid to false for negative batch size', async () => {
+    // Mock checkBatchConfig to return false for invalid batch config
+    (checkBatchConfig as jest.Mock).mockReturnValue(false);
+
+    render(<Homepage />);
+    
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+    
+    // Set invalid values for batch size and number of batches
+    fireEvent.change(batchSizeInput, { target: { value: '-50' } }); // Invalid batch size (negative)
+    fireEvent.change(numberOfBatchesInput, { target: { value: '15' } }); // Valid number of batches
+    
+    // Trigger onBlur event to validate the inputs
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput); 
+    
+    // Wait for the state change and check if the error message appears
+    await waitFor(() => {
+      expect(screen.getByText('Batch size and number of batches must be positive.')).toBeInTheDocument();
+    });
+  });
+
+  test('should set isBatchConfigValid to false for negative number of batches', async () => {
+    // Mock checkBatchConfig to return false for invalid batch config
+    (checkBatchConfig as jest.Mock).mockReturnValue(false);
+    
+    render(<Homepage />);
+
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+
+    // Set invalid values for batch size and number of batches
+    fireEvent.change(batchSizeInput, { target: { value: '50' } }); // Valid batch size
+    fireEvent.change(numberOfBatchesInput, { target: { value: '-15' } }); // Invalid number of batches (negative)
+
+    // Trigger onBlur event to validate the inputs
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput);
+
+    // Wait for the state change and check if the error message appears
+    await waitFor(() => {
+      expect(screen.getByText('Batch size and number of batches must be positive.')).toBeInTheDocument();
+    });
+  });
+
+  test('should set isBatchConfigValid to true for valid total sample size', async () => {
+    // Mock checkBatchConfig to return true for valid batch config
+    (checkBatchConfig as jest.Mock).mockReturnValue(true);
+
+    render(<Homepage />);
+    
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+    
+    // Set valid values for batch size and number of batches
+    fireEvent.change(batchSizeInput, { target: { value: '200' } }); // Valid batch size
+    fireEvent.change(numberOfBatchesInput, { target: { value: '10' } }); // Valid number of batches
+    
+    // Trigger onBlur event to validate the inputs
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput); 
+    
+    // Wait for the state change and check if the error message disappears
+    await waitFor(() => {
+      expect(screen.queryByText('Total sample size must be between 1000 and 10000')).not.toBeInTheDocument();
+    });
+
+    // Optionally check if the validation state is set to true (if accessible)
+  });
+});
+
+describe('Maximum Concurrent Batches Validation', () => {
+  it('should update maxConcurrentBatches state on change', () => {
+    render(<Homepage />);
+
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+    
+    // Simulate onChange event (user typing a value)
+    fireEvent.change(input, { target: { value: '10' } });
+
+    // Check if the state was updated correctly
+    expect(input).toHaveValue(10);
+  });
+
+  it('should show error if value is out of range onBlur', async () => {
+    render(<Homepage />);
+
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+
+    // Simulate an invalid input (less than 1)
+    fireEvent.change(input, { target: { value: '0' } });
+    fireEvent.blur(input);
+
+    // Check if the error message appears
+    expect(screen.getByText('Value must be between 1 and 30')).toBeInTheDocument();
+  });
+
+  it('should not show error if value is within range onBlur', async () => {
+    render(<Homepage />);
+
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+
+    // Simulate a valid input (within the range of 1 to 30)
+    fireEvent.change(input, { target: { value: '15' } });
+    fireEvent.blur(input);
+
+    // Check if the error message does not appear
+    expect(screen.queryByText('Value must be between 1 and 30')).not.toBeInTheDocument();
+  });
+
+  it('should show an error if input is greater than 30 onBlur', async () => {
+    render(<Homepage />);
+  
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+  
+    // Simulate an invalid input (greater than 30)
+    fireEvent.change(input, { target: { value: '35' } });
+    fireEvent.blur(input);
+  
+    expect(screen.getByText('Value must be between 1 and 30')).toBeInTheDocument();
+  });
+  
+  it('should show an error if input is less than 1 onBlur', async () => {
+    render(<Homepage />);
+  
+    const input = screen.getByLabelText('Maximum Concurrent Batches');
+  
+    // Simulate an invalid input (less than 1)
+    fireEvent.change(input, { target: { value: '0' } });
+    fireEvent.blur(input);
+  
+    expect(screen.getByText('Value must be between 1 and 30')).toBeInTheDocument();
+  });  
+});
+
 describe('UI Components', () => {
-  it('should render the homepage correctly', () => {
+  it('should render the Homepage correctly', () => {
     render(<Homepage />);
 
     expect(screen.getAllByText(/AIgnostic/i).length).toBeGreaterThan(0);
