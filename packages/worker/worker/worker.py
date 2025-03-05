@@ -96,7 +96,7 @@ class Worker:
             batch_data = json.loads(body)
             print(f"Received job: {batch_data}")
             try:
-                print("Unpacking batcj data")
+                print("Unpacking batch data")
                 return Batch(**batch_data)
             except ValueError as e:
                 raise WorkerException(f"Invalid batch format: {e}", status_code=400)
