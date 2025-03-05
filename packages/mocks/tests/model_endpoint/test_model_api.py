@@ -76,7 +76,7 @@ def test_valid_data_scikit_folktables():
     assert response.status_code == 200, response.text
 
     # Test the response is the same as the expected response from the pickled model
-    model = load_scikit_model()
+    model = load_scikit_model('scikit_model.sav')
     y_hat = model.predict(features)
 
     assert response.json() == {
