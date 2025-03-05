@@ -1,4 +1,4 @@
-import { checkURL } from '../src/app/utils';
+import { checkURL, checkBatchConfig } from '../src/app/utils';
 import '@testing-library/jest-dom';
 import {
   MOCK_SCIKIT_API_URL,
@@ -57,6 +57,36 @@ describe('checkURL function', () => {
 
     invalidUrls.forEach((url) => {
       expect(checkURL(url)).toBe(false);
+    });
+  });
+});
+
+describe('checkBatchConfig function', () => {
+  it('should return true for valid batch configurations', () => {
+    const validConfigs = [
+      { batchSize: 10, numberOfBatches: 100 }, // 10 * 100 = 1000
+      { batchSize: 50, numberOfBatches: 200 }, // 50 * 200 = 10000
+      { batchSize: 25, numberOfBatches: 40 }, // 25 * 40 = 1000
+      { batchSize: 100, numberOfBatches: 50 }, // 100 * 50 = 5000
+    ];
+
+    validConfigs.forEach(({ batchSize, numberOfBatches }) => {
+      expect(checkBatchConfig(batchSize, numberOfBatches)).toBe(true);
+    });
+  });
+
+  it('should return false for invalid batch configurations', () => {
+    const invalidConfigs = [
+      { batchSize: 0, numberOfBatches: 100 }, // batchSize < 1
+      { batchSize: 10, numberOfBatches: 0 }, // numberOfBatches < 1
+      { batchSize: 5, numberOfBatches: 50 }, // 5 * 50 = 250 (less than 1000)
+      { batchSize: 100, numberOfBatches: 101 }, // 100 * 101 = 10100 (greater than 10000)
+      { batchSize: -10, numberOfBatches: 50 }, // Negative batchSize
+      { batchSize: 50, numberOfBatches: -20 }, // Negative numberOfBatches
+    ];
+
+    invalidConfigs.forEach(({ batchSize, numberOfBatches }) => {
+      expect(checkBatchConfig(batchSize, numberOfBatches)).toBe(false);
     });
   });
 });
