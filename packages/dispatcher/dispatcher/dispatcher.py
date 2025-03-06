@@ -105,16 +105,9 @@ class Dispatcher:
         logger.debug(f"Running job: {running_job}")
         # How many batches can we run?
         left_batches = running_job.pending_batches
-        if left_batches == 0 and running_job.currently_running_batches == 0:
+        if left_batches == 0:
             logger.info(
-                f"No batches left to run for job {job_id} & no batches running - regarding as complete"
-            )
-            # TODO: Handle completion & report errored batches
-            # Delete key
-            self._redis_client.delete(self._get_job_redis_key(job_id))
-            logger.info(f"Job {job_id} marked as complete & deleted")
-            logger.warning(
-                f"Job {job_id} is complete but this is unhandled! Erroed batches are not reproted"
+                f"No batches left to run for job {job_id}. All batches complete={running_job.completed_batches}, errored={running_job.errored_batches}, pending={running_job.currently_running_batches}"
             )
             return
         # If we can run more batches, do so
@@ -212,7 +205,7 @@ class Dispatcher:
             running_job.pending_batches == 0
             and running_job.currently_running_batches == 0
         ):
-            logger.info(f"Job {msg.job_id} is complete!")
+            logger.info(f"Job {msg.job_id} is complete! Finished with {running_job.errored_batches} errored batches, {running_job.completed_batches} completed batches")
             # Delete key
             self._redis_client.delete(self._get_job_redis_key(msg.job_id))
             logger.info(f"Job {msg.job_id} marked as complete & deleted")

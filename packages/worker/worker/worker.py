@@ -139,7 +139,7 @@ class Worker:
                     status_code=e.response.status_code,
                 )
             else:
-                raise WorkerException(detail="An unknown exception occured.", status_code=400)
+                raise WorkerException(detail=f"An unknown exception occured", status_code=400)
 
         try:
             # Parse the response JSON
@@ -181,7 +181,7 @@ class Worker:
                     status_code=e.response.status_code,
                 )
             else:
-                raise WorkerException(detail="An unknown exception occured.", status_code=400)
+                raise WorkerException(detail=f"An unknown exception occured: {e}", status_code=400)
 
         try:
             # Check if the request was successful
