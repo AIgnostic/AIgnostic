@@ -255,11 +255,11 @@ def process_error_result(error_data: WorkerError):
 
 
 def get_api_key():
-    # if GOOGLE_API_KEY_FILE is set, read the key from the file
-    if os.getenv("GOOGLE_API_KEY_FILE"):
-        with open(os.getenv("GOOGLE_API_KEY_FILE")) as f:
+    # if GOOGLE_GEMINI_API_KEY_FILE is set, read the key from the file
+    if os.getenv("GOOGLE_GEMINI_API_KEY_FILE"):
+        with open(os.getenv("GOOGLE_GEMINI_API_KEY_FILE")) as f:
             return f.read().strip()
-    return os.getenv("GOOGLE_API_KEY")
+    return os.getenv("GOOGLE_GEMINI_API_KEY")
 
 
 def aggregator_generate_report(aggregates, aggregator):
@@ -278,7 +278,7 @@ def aggregator_generate_report(aggregates, aggregator):
                                       message="Adding LLM Insights",
                                       statusCode=200,
                                       content=None))
-    report_properties_section = add_llm_insights(report_properties_section, os.getenv("GOOGLE_API_KEY"))
+    report_properties_section = add_llm_insights(report_properties_section, os.getenv("GOOGLE_GEMINI_API_KEY"))
     report_info_section = {
         # TODO: Update with codecarbon info and calls to model from metrics
         "calls_to_model": aggregator.total_sample_size,

@@ -22,7 +22,7 @@ on:
         type: string
         default: 'dist/'
     secrets:
-      GOOGLE_API_KEY:
+      GOOGLE_GEMINI_API_KEY:
         description: 'Google API Key'
         required: true
 
@@ -74,7 +74,7 @@ jobs:
 
       - name: Set environment variables
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
         run: echo "Google API Key is set"
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World

@@ -40,7 +40,7 @@ jobs:
       artifact_name: 'test-coverage'
       artifact_path: 'coverage/'
     secrets:
-      GOOGLE_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+      GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
   build:
     uses: ./.github/workflows/nx-run.yml
     with:
