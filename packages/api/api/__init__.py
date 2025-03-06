@@ -1,5 +1,6 @@
 """Root entrypoint of the application: starts our FastAPI Server"""
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,16 +15,27 @@ origins = [
 ]
 
 
+@asynccontextmanager
+async def lifespan():
+    from api.router.rabbitmq import create_publisher
+
+    publisher = create_publisher()
+    publisher.start()
+    print("RabbitMQ publisher ready")
+    yield publisher
+    print("Shutting down RabbitMQ publisher")
+    publisher.stop()
+    publisher.join()
+
+
 def create_application():
+
     api = FastAPI(
-        title="AIgnostic", description="A FastAPI server for AIgnostic", version="0.1.0"
+        title="AIgnostic",
+        description="A FastAPI server for AIgnostic",
+        version="0.1.0",
+        lifespan=lifespan,
     )
-
-    @api.on_event("startup")
-    def connect_rabbit_mq():
-        from api.router.rabbitmq import fastapi_connect_rabbitmq
-
-        return fastapi_connect_rabbitmq()
 
     api.add_middleware(
         CORSMiddleware,

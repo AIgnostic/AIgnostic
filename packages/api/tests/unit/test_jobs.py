@@ -5,11 +5,9 @@ from common.models.pipeline import MetricCalculationJob
 from common.rabbitmq.constants import JOB_QUEUE
 
 
-@patch("pika.BlockingConnection")
-def test_dispatch_job(mock_connection):
+def test_dispatch_job():
     # Mock the channel object returned by the connection
-    mock_channel = MagicMock()
-    mock_connection.return_value.channel.return_value = mock_channel
+    mock_publisher = MagicMock()
 
     # Sample data for testing
     metrics = ["accuracy", "precision"]
@@ -32,15 +30,13 @@ def test_dispatch_job(mock_connection):
         batches=10,
         batch_size=10,
         max_concurrent_batches=1,
-        channel=mock_channel,
+        publisher=mock_publisher,
         job_id=str(uuid.uuid4()),
     )
 
-    # Assert that `basic_publish` was called once
-    mock_channel.basic_publish.assert_called_once()
+    # Assert that `publish` was called once
+    mock_publisher.publish.assert_called_once()
 
-    # Extract the call arguments
-    call_args = mock_channel.basic_publish.call_args[1]
-    assert call_args["exchange"] == ""
-    assert call_args["routing_key"] == JOB_QUEUE
-    assert call_args["body"] is not None
+    # Check publish called with a str
+    args, _ = mock_publisher.publish.call_args
+    assert isinstance(args[0], str)
