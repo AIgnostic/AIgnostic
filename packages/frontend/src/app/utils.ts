@@ -10,6 +10,7 @@ import {
   MOCK_FOLKTABLES_DATASET_API_URL_PROD,
   MOCK_SCIKIT_API_URL_PROD,
   BACKEND_FETCH_METRIC_INFO_URL,
+  AGGREGATOR_SERVER_URL
 } from './constants';
 
 async function fetchMetricInfo(): Promise<TaskToMetricMap> {
@@ -17,6 +18,25 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
     const response = await fetch(BACKEND_FETCH_METRIC_INFO_URL);
     const data: MetricInfo = await response.json();
     return data.task_to_metric_map;
+  } catch (error) {
+    console.error('Error:', error);
+    throw error; // Rethrow the error so the caller can handle it
+  }
+}
+
+async function fetchLegislationInfo(): Promise<LegislationInfo> {
+  try {
+    console.log('fetching legislation info');
+    const response = await fetch(AGGREGATOR_SERVER_URL);
+    console.log('fetched legislation info');
+    console.log("response", response);
+    const data: FrontendInfo = await response.json();
+    console.log("data", data);
+    if (!data.legislation) {
+      throw new Error('No legislation found');
+    }
+    console.log('acquired legislation info');
+    return { legislation: data.legislation };
   } catch (error) {
     console.error('Error:', error);
     throw error; // Rethrow the error so the caller can handle it
@@ -71,9 +91,16 @@ export interface MetricInfo {
   task_to_metric_map: TaskToMetricMap;
 }
 
+export interface LegislationInfo {
+  legislation: string[];
+}
+
+export interface FrontendInfo {
+  legislation: string[];
+}
 function applyStyle(doc: jsPDF, style: any) {
   doc.setFont(style.font, style.style);
   doc.setFontSize(style.size);
 }
 
-export { checkURL, applyStyle, fetchMetricInfo };
+export { checkURL, applyStyle, fetchMetricInfo, fetchLegislationInfo };

@@ -1,7 +1,7 @@
 import { IS_PROD } from './env';
 import { ConditionAlertFailure, HomepageState } from './types';
-import { fetchMetricInfo } from './utils';
-
+import { fetchLegislationInfo, fetchMetricInfo } from './utils';
+import { LegislationInfo } from './utils';
 const AIGNOSTIC = 'AIgnostic';
 const HOME = '/';
 
@@ -61,8 +61,16 @@ const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/retrieve-metric-info'
   : 'http://localhost:8000/retrieve-metric-info';
 
-let modelTypesToMetrics: { [key: string]: string[] } = {};
+  const AGGREGATOR_SERVER_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/fetch-frontend-information'
+  : 'http://localhost:8005/fetch-frontend-information';
 
+  const AGGREGATOR_UPLOAD_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/upload-selected-legislation'
+  : 'http://localhost:8005/upload-selected-legislation';
+
+let modelTypesToMetrics: { [key: string]: string[] } = {};
+let legislation: { id: string; label: string; selected: boolean }[] = [];
 export async function initializeModelTypesToMetrics() {
   try {
     modelTypesToMetrics = await fetchMetricInfo();
@@ -72,8 +80,26 @@ export async function initializeModelTypesToMetrics() {
 }
 
 // Call the initialization function
-initializeModelTypesToMetrics();
+await initializeModelTypesToMetrics();
 
+export async function initalizeLegislationLabels() {
+  try {
+    const legislation_info: LegislationInfo = await fetchLegislationInfo();
+    legislation = legislation_info.legislation.map((item: string) => {
+      return {
+        id: item,
+        label: item,
+        selected: true,
+      };
+    });
+  } catch (error) {
+    console.error('Failed to fetch metric info:', error);
+  }
+}
+
+
+// Call the initialization function
+await initalizeLegislationLabels();
 /*
   These conditions indicate the requirements for the user to proceed the next step
   i.e. we can only proceed to the next step if the given conditions are met
@@ -91,14 +117,21 @@ const activeStepToInputConditions: { [key: number]: ConditionAlertFailure } = {
     pred: (state: HomepageState) => state.selectedModelType !== '',
     error_msg: 'Please select a model type.',
   },
+
+  2: {
+    pred: (state: HomepageState) => state.legislationChips.length > 0,
+    error_msg: 'Please select at least one legislation.',
+  },
   3: {
     pred: (state: HomepageState) => state.metricChips.length > 0,
     error_msg: 'Please select at least one metric.',
   },
 };
 
+
 export {
   steps,
+  legislation,
   BACKEND_EVALUATE_URL,
   BACKEND_FETCH_METRIC_INFO_URL,
   RESULTS_URL,
@@ -116,4 +149,7 @@ export {
   MOCK_FOLKTABLES_DATASET_API_URL_PROD,
   MOCK_FINANCIAL_DATASET_API_URL_PROD,
   USER_METRICS_SERVER_URL,
+  AGGREGATOR_SERVER_URL,
+  AGGREGATOR_UPLOAD_URL
 };
+

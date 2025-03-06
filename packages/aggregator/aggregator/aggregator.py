@@ -9,7 +9,46 @@ import time
 from common.models import AggregatorMessage, MessageType, JobType, AggregatorJob, WorkerError
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
+from fastapi import FastAPI, Request
+import uvicorn 
+from fastapi.middleware.cors import CORSMiddleware
+from .utils import LEGISLATION_INFORMATION, update_legislation_information, FrontendInfo
 
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def read_root():
+    return {"Welcome to the Aggregator Service"}
+
+@app.get("/fetch-frontend-information")
+def fetch_frontend_information():
+    try:
+        labels = []
+        print("LEGISLATION_INFORMATION", LEGISLATION_INFORMATION)
+        for legislation in LEGISLATION_INFORMATION.values():
+            labels.append(legislation["name"])
+        print("Labels", labels)
+        return FrontendInfo(legislation=labels)
+    except Exception as e:
+        return {"error": str(e)} #TODO: Catch the error
+
+
+@app.post("/upload-selected-legislation")
+async def upload_selected_legislation(request: Request):
+    try:
+        print("entered into upload selected legislation")
+        body = await request.json()
+        legislation_list = body.get('legislation', [])
+        update_legislation_information(legislation_list)
+    except Exception as e:
+        return {"error": str(e)}
 
 def aggregator_metrics_completion_log():
     return AggregatorMessage(
@@ -272,7 +311,8 @@ def aggregator_generate_report(aggregates, aggregator):
                                       message="Fetching Legislation Extracts",
                                       statusCode=200,
                                       content=None))
-    report_properties_section = get_legislation_extracts(aggregates)
+    print("LEGISLATION INFORMATION: ", LEGISLATION_INFORMATION)
+    report_properties_section = get_legislation_extracts(aggregates, LEGISLATION_INFORMATION)
     print("Adding LLM Insights")
     send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
                                       message="Adding LLM Insights",
@@ -396,6 +436,10 @@ def start_websocket_server():
     print("WebSocket server started on ws://0.0.0.0:5005")
     server.serve_forever()  # Blocking call
 
+def start_http_server():
+    print("HTTP Server started on port 8005")
+    uvicorn.run(app, host="0.0.0.0", port=8005)
+
 
 if __name__ == "__main__":
     # Load environment variables
@@ -403,9 +447,12 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
 
+    # Start HTTP server in a separate thread
+    threading.Thread(target=start_http_server, daemon=True).start()
     # Start WebSocket server in a separate thread
     threading.Thread(target=start_websocket_server, daemon=True).start()
 
     # Start RabbitMQ consumer (blocking)
     consumer = ResultsConsumer(RABBIT_MQ_HOST)
     consumer.run(on_result_fetched)
+

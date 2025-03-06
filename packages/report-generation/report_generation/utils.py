@@ -40,6 +40,7 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     Parses the raw article content into structured data.
     """
     data = {
+        "article_type": "GDPR", #TODO: Extend to LegislationType enum
         "article_number": article,
         "article_title": "",
         "link": "",
@@ -88,7 +89,7 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     return data
 
 
-def get_legislation_extracts(metrics_data: dict) -> list[dict]:
+def get_legislation_extracts(metrics_data: dict, legislation: list[str]) -> list[dict]:
     """
     Generates a comprehensive report based on the provided metrics data and API key.
 

@@ -125,6 +125,7 @@ services:
     ports:
       - '5002:5002'
       - '5005:5005'
+      - '8005:8005'
     networks:
       - aignostic_network
     environment:
