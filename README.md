@@ -25,6 +25,7 @@ To get started with the local environment (runs a Docker Compose under the hood 
 - navigate to http://localhost:4200 and you should see the AIgnostic landing page (should look the same as the interface on our prod server, linked above)
 
 - Currently we can only guarantee that this works on Linux and WSL systems
+- Note that the first build can take a long time (10/20 minutes)
 
 ## Contact
 If you run into any issues or face any bugs that require troubleshooting, feel free to reach out to us via the Discussions section of the AIgnostic repo. We will get back to you at earliest convenience.
