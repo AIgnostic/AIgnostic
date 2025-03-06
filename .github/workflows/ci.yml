@@ -39,8 +39,7 @@ jobs:
       nx_tasks: 'affected -t test'
       artifact_name: 'test-coverage'
       artifact_path: 'coverage/'
-    secrets:
-      GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+    secrets: inherit
   build:
     uses: ./.github/workflows/nx-run.yml
     with:
