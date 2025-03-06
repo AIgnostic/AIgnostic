@@ -5,7 +5,7 @@ import os
 import threading
 from time import sleep
 from common.rabbitmq.connect import connect_to_rabbitmq
-from pika import ConnectionParameters, BlockingConnection, PlainCredentials
+from pika import BlockingConnection, PlainCredentials
 from pika.adapters.blocking_connection import BlockingChannel
 
 
@@ -15,8 +15,10 @@ RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "guest")
 
 class Publisher(threading.Thread):
     """
-    Long lived publisher that publishes messages to a RabbitMQ queue from https://github.com/pika/pika/blob/main/examples/long_running_publisher.py.
-    Uses its own thread so it can respond to rabbitmq heartbeats and other events while the main thread is doing other things.
+    Long lived publisher that publishes messages to a RabbitMQ queue from
+    https://github.com/pika/pika/blob/main/examples/long_running_publisher.py.
+    Uses its own thread so it can respond to rabbitmq heartbeats and other
+    events while the main thread is doing other things.
 
     Usage:
     publisher = Publisher(queue="my_queue")
@@ -50,10 +52,14 @@ class Publisher(threading.Thread):
 
         Args:
             queue (str): Queue name to publish to (will be declared durable if it doesn't exist)
-            name (str, optional): Name of this publisher. Defaults to "Publisher".
-            host (str, optional): Hostname to connect to. Defaults to os.getenv("RABBITMQ_HOST", "rabbitmq").
-            credentials (PlainCredentials, optional): Creds to connect with. Defaults to PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS).
-            retries (int, optional): Number of times to retry connecting to RabbitMQ. Defaults to 10.
+            name (str, optional): Name of this publisher.
+                Defaults to "Publisher".
+            host (str, optional): Hostname to connect to.
+            Defaults to os.getenv("RABBITMQ_HOST", "rabbitmq").
+            credentials (PlainCredentials, optional): Creds to connect with.
+            Defaults to PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS).
+            retries (int, optional): Number of times to retry connecting
+                to RabbitMQ. Defaults to 10.
         """
         super().__init__(*args, **kwargs)
         self.daemon = True

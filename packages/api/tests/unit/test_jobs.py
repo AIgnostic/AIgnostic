@@ -1,8 +1,7 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 import uuid
 from api.router.api import dispatch_job
 from common.models.pipeline import MetricCalculationJob
-from common.rabbitmq.constants import JOB_QUEUE
 
 
 def test_dispatch_job():

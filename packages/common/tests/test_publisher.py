@@ -1,13 +1,11 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from common.rabbitmq.publisher import Publisher
 
 
 @pytest.fixture
 def publisher():
-    with patch("common.rabbitmq.publisher.BlockingConnection"), patch(
-        "common.rabbitmq.publisher.BlockingChannel"
-    ):
+    with patch("common.rabbitmq.publisher.connect_to_rabbitmq"):
         return Publisher(queue="test_queue")
 
 
@@ -26,7 +24,6 @@ def test_publisher_publish(publisher):
         # And check we add _publish to the connection
         publisher.publish("test message")
         publisher.connection.add_callback_threadsafe.assert_called_once()
-
 
 
 def test_publisher_stop(publisher):
