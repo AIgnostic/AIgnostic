@@ -15,7 +15,6 @@ huggingface_mock = TestClient(huggingface_app)
 scikit_mock = TestClient(scikit_app)
 basic_mock = TestClient(mock_app)
 finbert_mock = TestClient(finbert_app)
-# llama = TestClient(llama)
 
 
 def test_non_existent_endpoint_throws_error():

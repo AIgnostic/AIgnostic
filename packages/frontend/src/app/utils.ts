@@ -1,4 +1,3 @@
-import { Article } from "@mui/icons-material";
 import isURL from 'validator/lib/isURL';
 import jsPDF from 'jspdf';
 import {
