@@ -320,5 +320,4 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
 
     return reg_model.coef_, reg_model
 
-
 # TODO: Implement a method to convert sentences to a fixed-length embedding space for semantic comparison. e.g. SONAR

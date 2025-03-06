@@ -53,7 +53,7 @@ class CalculateRequest(BaseModel):
     privileged_groups: Optional[list[dict[str, Any]]] = None
     unprivileged_groups: Optional[list[dict[str, Any]]] = None
     protected_attr: Optional[list[int]] = None
-    model_url: Optional[str] = None
+    model_url: Optional[HttpUrl] = None
     model_api_key: Optional[str] = None
 
     # TODO: Refactor this to a better implementation

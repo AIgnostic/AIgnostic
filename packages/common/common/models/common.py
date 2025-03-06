@@ -3,6 +3,8 @@ from enum import Enum
 from metrics.models import WorkerResults
 from pydantic import BaseModel  # , field_validator
 from typing import Any, Optional, Union
+
+
 class DatasetResponse(BaseModel):  # pragma: no cover
     """
     A model for a dataset to be sent to a model
@@ -14,9 +16,12 @@ class DatasetResponse(BaseModel):  # pragma: no cover
     features: list[list]
     labels: list[list]
     group_ids: list[int]
+
     # @field_validator('features', 'labels', mode='after')
     # def convert_to_np_array(cls, v):
     #     return nested_list_to_np(v)
+
+
 class ModelResponse(BaseModel):  # pragma: no cover
     """
     A model for a response from a model
@@ -41,17 +46,24 @@ class AggregatorMessage(BaseModel, ABC):
     message: str
     statusCode: int
     content: Any
+
     class Config:
         arbitrary_types_allowed = True
+
+
 class MessageType(str, Enum):
     LOG = "LOG"
     ERROR = "ERROR"
     METRICS_INTERMEDIATE = "METRICS_INTERMEDIATE"
     METRICS_COMPLETE = "METRICS_COMPLETE"
     REPORT = "REPORT"
+
+
 class JobType(str, Enum):
     RESULT = "RESULT"
     ERROR = "ERROR"
+
+
 class WorkerError(BaseModel):
     """
     WorkerError pydantic model represents the structure of the errors found on the results queue
@@ -60,6 +72,8 @@ class WorkerError(BaseModel):
     """
     error_message: str
     error_code: int
+
+
 class AggregatorJob(BaseModel):
     """
     AggregatorJob pydantic model represents the structure of the jobs found on the results queue
@@ -68,6 +82,8 @@ class AggregatorJob(BaseModel):
     """
     job_type: JobType
     content: Union[WorkerResults, WorkerError]
+
+
 class ComputeUserMetricRequest(BaseModel):
     user_id: str
     function_name: str

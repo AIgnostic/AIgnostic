@@ -236,7 +236,6 @@ class Worker:
                 metrics_data.model_api_key,
             )
 
-
             true_labels = dataset_response.labels
             predicted_labels = model_response.predictions
 
@@ -252,7 +251,7 @@ class Worker:
                 predicted_labels, true_labels = self.convert_to_numeric_classes(
                     predicted_labels, true_labels
                 )
-        
+
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
                 metrics=metrics_data.metrics,

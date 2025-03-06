@@ -1,4 +1,4 @@
-from metrics.metrics import (
+from metrics.numerical_metrics import (
     is_valid_for_per_class_metrics,
     accuracy,
     class_precision,
@@ -6,14 +6,16 @@ from metrics.metrics import (
     class_recall,
     macro_recall,
     create_fairness_metric_fn,
-    _prepare_datasets,
-    calculate_metrics,
+    _prepare_datasets_for_aif360,
     class_f1,
     macro_f1,
     roc_auc,
     mean_absolute_error,
     mean_squared_error,
     r_squared,
+)
+from metrics.metrics import (
+    calculate_metrics,
 )
 from metrics.exceptions import (
     MetricsComputationException,
@@ -280,7 +282,7 @@ def test_error_if_no_protected_attrs():
         unprivileged_groups=[{"protected_attr": 0}],
     )
     with pytest.raises(ValueError) as e:
-        _prepare_datasets(info)
+        _prepare_datasets_for_aif360(info)
     assert "protected_attr is missing" in str(e.value)
 
 

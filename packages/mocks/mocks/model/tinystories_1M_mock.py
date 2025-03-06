@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 
-@app.get("/") 
+@app.get("/")
 def read_root():
     return {"message": "Welcome to the TinyStories-1M Model API"}
 
@@ -33,6 +33,7 @@ def predict(input: DatasetResponse) -> ModelResponse:
         max_length=50,
         num_beams=1,
     )
+
 
 if __name__ == "__main__":
     import uvicorn
