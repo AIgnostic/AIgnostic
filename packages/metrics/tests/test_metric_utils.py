@@ -1,199 +1,410 @@
-from metrics.utils import (
-    _fgsm_attack,
-    _lime_explanation,
-    _query_model
+from metrics.numerical_metrics import (
+    is_valid_for_per_class_metrics,
+    accuracy,
+    class_precision,
+    macro_precision,
+    class_recall,
+    macro_recall,
+    create_fairness_metric_fn,
+    _prepare_datasets_for_aif360,
+    class_f1,
+    macro_f1,
+    roc_auc,
+    mean_absolute_error,
+    mean_squared_error,
+    r_squared,
 )
-from metrics.exceptions import ModelQueryException
-from metrics.models import CalculateRequest
-from common.models import (
-    DatasetResponse,
-    ModelResponse
+from metrics.metrics import calculate_metrics
+from metrics.exceptions import (
+    MetricsComputationException,
+    DataInconsistencyException,
+    DataProvisionException
 )
-from unittest.mock import patch, MagicMock
-from sklearn.linear_model import Ridge
-import numpy as np
-import requests
+from metrics.models import CalculateRequest, MetricsPackageExceptionModel
 import pytest
-from metrics.models import convert_calculate_request_to_dict
 
 
-def test_fgsm_attack():
-    """
-    Test perturbations for fgsm attack are correctly computed given gradients, epsilon and input
-    """
-    x = np.array([1, 2, 3])
-    grad = np.array([1, -1, 1])
-    epsilon = 0.5
-    perturbed_x = np.array([1.5, 1.5, 3.5])
-    assert _fgsm_attack(x, grad, epsilon).all() == perturbed_x.all()
-
-
-"""
-    _lime_explanation tests
-"""
-
-
-@pytest.fixture
-def mock_info():
-    """
-    Mock input object for testing
-    """
-    class MockInfo:
-        def __init__(self):
-            self.metrics = ["explanation_stability_score"]
-            self.input_features = np.array([[1, 2], [3, 4], [5, 6]])
-            self.model_url = "http://model-api.com"
-            self.model_api_key = "fake_api_key"
-            self.regression_flag = False
-    return MockInfo()
-
-
-def mock_query_model(perturbed_samples, info):
-    """
-    Mock output of querying a model
-    """
-    class MockResponse:
-        def __init__(self):
-            self.predictions = np.random.rand(perturbed_samples.shape[0])
-            self.confidence_scores = np.random.rand(perturbed_samples.shape[0])
-    return MockResponse()
-
-
-@patch('metrics.utils._query_model', side_effect=mock_query_model)
-def test_lime_explanation(mock_query, mock_info):
-    kernel_width = 1.5
-
-    # Call the function with the mock data
-    coefficients, model = _lime_explanation(mock_info, kernel_width)
-
-    # Check if the returned coefficients are a numpy array
-    assert isinstance(coefficients, np.ndarray), "Expected output to be a numpy array"
-
-    # Ensure the coefficients shape matches the number of features
-    assert coefficients.shape[0] == mock_info.input_features.shape[1], "Coefficient shape mismatch"
-
-    # Ensure the model is of type Ridge
-    assert isinstance(model, Ridge), "Expected the regression model to be of type Ridge"
-
-
-"""
-    _query_model tests
-"""
-
-
-@pytest.fixture(scope='function')
-def mock_post():
-    with patch('requests.post') as mock:
-        yield mock
-
-
-def test_query_model_success(mock_post):
-    """
-    Test the _query_model successfully retrieves predictions and confidence scores given valid model
-    inputs.
-    """
-    # Arrange
-    generated_input_features = np.array([[1, 2, 3], [4, 5, 6]])
+@pytest.mark.parametrize(
+    "true_labels, predicted_labels, expected",
+    [
+        (
+            [[1], [0], [1], [1], [0], [1], [0], [0]],
+            [[1], [0], [1], [0], [0], [1], [1], [0]],
+            0.75,
+        ),
+    ],
+)
+def test_accuracy(true_labels, predicted_labels, expected):
     info = CalculateRequest(
         batch_size=1,
         total_sample_size=10,
-        metrics=[],
-        model_url="http://fakeurl.com"
+        metrics=["accuracy"],
+        true_labels=true_labels,
+        predicted_labels=predicted_labels,
     )
+    result = accuracy(info)
+    assert result == expected
 
-    predictions = [[0], [1]]
-    confidence_scores = [[0.5], [0.6]]
 
-    # Mock the response object
-    mock_response = MagicMock()
-    mock_response.raise_for_status.return_value = None
-    mock_response.json.return_value = {
-        "predictions": predictions,
-        "confidence_scores": confidence_scores
+@pytest.mark.parametrize(
+    "true_labels, exception_message, expected_exception_type",
+    [
+        (
+            [[2, 3], [0, 3], [2, 3], [2, 3], [0, 3], [2, 3], [0, 3], [0, 3]],
+            "Multiple attributes provided",
+            MetricsComputationException,
+        ),
+        ([], "No labels provided", DataProvisionException),
+    ],
+)
+def test_multiple_labels_causes_per_class_metrics_to_error(true_labels, exception_message,
+                                                           expected_exception_type):
+    with pytest.raises(expected_exception_type) as e:
+        is_valid_for_per_class_metrics("class_precision", true_labels)
+    assert exception_message in e.value.detail
+
+
+@pytest.mark.parametrize(
+    "metric_fn, metric_name, true_labels, predicted_labels, target_class, expected",
+    [
+        (
+            class_precision,
+            "class_precision",
+            [[2], [0], [2], [2], [0], [2], [0], [0]],
+            [[2], [0], [2], [0], [0], [2], [2], [2]],
+            2,
+            0.6,
+        ),
+        (
+            macro_precision,
+            "precision",
+            [[2], [0], [2], [2], [0], [2], [0], [0]],
+            [[2], [0], [2], [0], [0], [2], [2], [2]],
+            None,
+            0.6333333,
+        ),
+        (
+            class_recall,
+            "class_recall",
+            [[2], [0], [2], [2], [0], [2], [0], [0]],
+            [[2], [0], [2], [0], [0], [2], [2], [2]],
+            2,
+            0.75,
+        ),
+        (
+            macro_recall,
+            "recall",
+            [[2], [0], [2], [2], [0], [2], [0], [0]],
+            [[2], [0], [2], [0], [0], [2], [2], [2]],
+            None,
+            0.625,
+        ),
+        (
+            class_f1,
+            "class_f1",
+            [[1], [0], [1], [1], [0], [1], [0], [0]],
+            [[1], [0], [1], [0], [0], [1], [1], [0]],
+            1,
+            0.75,
+        ),
+        (
+            macro_f1,
+            "macro_f1",
+            [[1], [0], [1], [1], [0], [1], [0], [0]],
+            [[1], [0], [1], [0], [0], [1], [1], [0]],
+            None,
+            0.75,
+        ),
+        (
+            roc_auc,
+            "roc_auc",
+            [[1], [0], [1], [1], [0], [1], [0], [0]],
+            [[1], [0], [1], [0], [0], [1], [1], [0]],
+            None,
+            0.75,
+        ),
+        (
+            mean_absolute_error,
+            "mean_absolute_error",
+            [[1.0], [0.0], [1.0], [1.0]],
+            [[0.8], [0.1], [0.9], [1.2]],
+            None,
+            0.15,
+        ),
+        (
+            mean_squared_error,
+            "mean_squared_error",
+            [[1.0], [0.0], [1.0], [1.0]],
+            [[0.8], [0.1], [0.9], [1.2]],
+            None,
+            0.025,
+        ),
+        (
+            r_squared,
+            "r_squared",
+            [[3.0], [5.0], [2.5], [7.0]],
+            [[2.8], [5.1], [2.6], [6.8]],
+            None,
+            0.9921182,
+        ),
+    ],
+)
+def test_metrics(
+    metric_fn, metric_name, true_labels, predicted_labels, target_class, expected
+):
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=[metric_name],
+        true_labels=true_labels,
+        predicted_labels=predicted_labels,
+        target_class=target_class,
+    )
+    result = metric_fn(info)
+    assert round(result, 7) == round(expected, 7)
+
+
+@pytest.mark.parametrize(
+    "metric_name, expected",
+    [
+        ("disparate_impact", 0.5),
+        ("equal_opportunity_difference", 0.25),
+        ("equalized_odds_difference", 0.0),
+        ("false_negative_rate_difference", -0.25),
+        ("negative_predictive_value", 0.2),
+        ("positive_predictive_value", 1 / 3),
+        ("statistical_parity_difference", -0.25),
+        ("true_positive_rate_difference", 0.25),
+    ],
+)
+def test_fairness_metrics(metric_name, expected):
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=[metric_name],
+        true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
+        predicted_labels=[[1], [0], [0], [0], [1], [0], [1], [0]],
+        privileged_groups=[{"protected_attr": 1}],
+        unprivileged_groups=[{"protected_attr": 0}],
+        protected_attr=[0, 1, 0, 0, 1, 0, 1, 1],
+    )
+    result = create_fairness_metric_fn(lambda metric: getattr(metric, metric_name)())(info)
+    assert result == expected
+
+
+def test_multiple_metrics():
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=["accuracy", "class_precision", "class_recall"],
+        true_labels=[[2], [0], [2], [2], [0], [2], [0], [0]],
+        predicted_labels=[[2], [0], [2], [0], [0], [2], [2], [2]],
+        target_class=2,
+    )
+    results = {
+        "accuracy": accuracy(info),
+        "class_precision": class_precision(info),
+        "class_recall": class_recall(info),
     }
-    mock_post.return_value = mock_response
-
-    # Act
-    response = _query_model(generated_input_features, info)
-
-    # Assert
-    mock_post.assert_called_once_with(
-        url=info.model_url,
-        json=DatasetResponse(
-            features=generated_input_features.tolist(),
-            labels=np.zeros((len(generated_input_features), 1)).tolist(),
-            group_ids=np.zeros(len(generated_input_features), dtype=int).tolist(),
-        ).model_dump(mode="json")
-    )
-    assert isinstance(response, ModelResponse)
-    assert response.predictions == predictions
-    assert response.confidence_scores == confidence_scores
+    assert results == {
+        "accuracy": 0.625,
+        "class_precision": 0.6,
+        "class_recall": 0.75,
+    }
 
 
-def test_query_model_returns_http_error(mock_post):
-    """
-    Assert a ModelQueryException is raised when the model API returns an HTTP error.
-    """
-    # Arrange
-    generated_input_features = np.array([[1, 2, 3], [4, 5, 6]])
+def test_multiple_binary_classifier_metrics():
     info = CalculateRequest(
         batch_size=1,
         total_sample_size=10,
-        metrics=[],
-        model_url="http://fakeurl.com"
+        metrics=[
+            "disparate_impact",
+            "equal_opportunity_difference",
+            "equalized_odds_difference",
+        ],
+        true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
+        predicted_labels=[[1], [0], [0], [0], [1], [0], [1], [0]],
+        privileged_groups=[{"protected_attr": 1}],
+        unprivileged_groups=[{"protected_attr": 0}],
+        protected_attr=[0, 1, 0, 0, 1, 0, 1, 1],
     )
+    results = {
+        "disparate_impact": create_fairness_metric_fn(
+            lambda metric: metric.disparate_impact()
+        )(info),
+        "equal_opportunity_difference": create_fairness_metric_fn(
+            lambda metric: metric.equal_opportunity_difference()
+        )(info),
+        "equalized_odds_difference": create_fairness_metric_fn(
+            lambda metric: metric.equalized_odds_difference()
+        )(info),
+    }
+    expected_metrics = {
+        "disparate_impact": 0.5,
+        "equal_opportunity_difference": 0.25,
+        "equalized_odds_difference": 0.0,
+    }
+    for metric, value in expected_metrics.items():
+        assert round(results[metric], 7) == round(
+            value, 7
+        ), f"Expected {metric} to be {value}, but got {results.metric_values[metric]}"
 
-    # Mock the response object to simulate an HTTP 404 error
-    mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-        response=MagicMock(status_code=404, json=lambda: {"detail": "Not Found"})
-    )
-    mock_post.return_value = mock_response
 
-    # Act & Assert
-    with pytest.raises(ModelQueryException):
-        _query_model(generated_input_features, info)
-
-
-""" general utils """
-
-
-def test_convert_calculate_request_to_dict():
-    """
-    Test conversion of CalculateRequest to dictionary
-    """
+def test_zero_division_fairness_metrics_return_0():
     info = CalculateRequest(
-        metrics=["accuracy", "precision"],
-        task_name="classification",
-        input_features=np.array([[1, 2], [3, 4]]),
-        confidence_scores=[[0.8], [0.9]],
-        true_labels=[[1], [0]],
-        predicted_labels=[[1], [1]],
-        target_class=1,
-        privileged_groups=[{"sex": 1}],
-        unprivileged_groups=[{"sex": 0}],
-        protected_attr=[1],
-        model_url="http://model-api.com",
-        model_api_key="fake_api_key",
-        batch_size=10,
-        total_sample_size=100,
-        regression_flag=False
+        batch_size=1,
+        total_sample_size=10,
+        metrics=[
+            "equal_opportunity_difference",
+        ],
+        true_labels=[[1], [0], [1], [1], [0], [1], [0], [0]],
+        predicted_labels=[[1], [0], [1], [1], [0], [1], [1], [1]],
+        privileged_groups=[{"protected_attr": 1}],
+        unprivileged_groups=[{"protected_attr": 0}],
+        protected_attr=[0, 1, 0, 0, 1, 0, 1, 1],
     )
+    results = create_fairness_metric_fn(
+        lambda metric: metric.equal_opportunity_difference()
+    )(info)
+    assert results == 0
 
-    result = convert_calculate_request_to_dict(info)
 
-    assert result["metrics"] == ["accuracy", "precision"]
-    assert result["task_name"] == "classification"
-    assert result["input_data"] == [[1, 2], [3, 4]]
-    assert result["confidence_scores"] == [[0.8], [0.9]]
-    assert result["true_labels"] == [[1], [0]]
-    assert result["predicted_labels"] == [[1], [1]]
-    assert result["target_class"] == 1
-    assert result["privileged_groups"] == [{"sex": 1}]
-    assert result["unprivileged_groups"] == [{"sex": 0}]
-    assert result["protected_attr"] == [1]
-    assert result["model_url"] == "http://model-api.com/"
-    assert result["model_api_key"] == "fake_api_key"
-    assert result["batch_size"] == 10
-    assert result["total_sample_size"] == 100
-    assert result["regression_flag"] is False
+def test_error_if_no_protected_attrs():
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=["disparate_impact"],
+        true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
+        predicted_labels=[[1], [0], [0], [0], [1], [0], [1], [0]],
+        privileged_groups=[{"protected_attr": 1}],
+        unprivileged_groups=[{"protected_attr": 0}],
+    )
+    with pytest.raises(ValueError) as e:
+        _prepare_datasets_for_aif360(info)
+    assert "protected_attr is missing" in str(e.value)
+
+
+async def test_calculate_metrics():
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=["accuracy", "class_precision", "class_recall"],
+        true_labels=[[2], [0], [2], [2], [0], [2], [0], [0]],
+        predicted_labels=[[2], [0], [2], [0], [0], [2], [2], [2]],
+        target_class=2,
+    )
+    results = calculate_metrics(info)
+    expected_results = {
+        "accuracy": 0.625,
+        "class_precision": 0.6,
+        "class_recall": 0.75,
+    }
+    for metric, value in expected_results.items():
+        computed_value = results.metric_values[metric].computed_value
+        assert round(computed_value) == round(
+            value, 7
+        ), f"Expected {metric} to be {value}, but got {computed_value}"
+
+
+async def test_calculate_performance_metrics():
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=[
+            "mean_absolute_error",
+            "mean_squared_error",
+            "r_squared",
+            "roc_auc",
+            "class_f1",
+            "macro_f1",
+        ],
+        true_labels=[[1.0], [0.0], [1.0], [1.0], [0.0], [1.0], [0.0], [1.0], [0.0], [1.0]],
+        predicted_labels=[[0.9], [0.3], [0.6], [0.7], [0.2], [0.8], [0.1], [0.4], [0.5], [0.35]],
+        target_class=1,
+    )
+    results = calculate_metrics(info)
+    expected_results = {
+        "mean_absolute_error": 0.335,
+        "mean_squared_error": 0.14725,
+        "r_squared": 0.3864583,
+        "roc_auc": 0.9166667,
+        "class_f1": 1.0,
+        "macro_f1": 1.0,
+    }
+    for metric, value in expected_results.items():
+        computed_value = results.metric_values[metric].computed_value
+        assert round(computed_value, 7) == round(
+            value, 7
+        ), f"Expected {metric} to be {value}, but got {computed_value}"
+
+
+def test_calculate_fairness_metrics():
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=[
+            "statistical_parity_difference",
+            "disparate_impact",
+            "equal_opportunity_difference",
+            "equalized_odds_difference",
+            "false_negative_rate_difference",
+            "negative_predictive_value",
+            "positive_predictive_value",
+            "true_positive_rate_difference",
+        ],
+        true_labels=[[1], [0], [1], [1], [0], [1], [0], [1]],
+        predicted_labels=[[1], [1], [0], [1], [0], [0], [1], [1]],
+        privileged_groups=[{"protected_attr": 1}],
+        unprivileged_groups=[{"protected_attr": 0}],
+        protected_attr=[0, 1, 0, 1, 1, 0, 1, 0],
+    )
+    results = calculate_metrics(info)
+    expected_results = {
+        "statistical_parity_difference": -0.25,
+        "disparate_impact":  0.6666667,
+        "equal_opportunity_difference": -0.5,
+        "equalized_odds_difference": 0.1666667,
+        "false_negative_rate_difference": 0.5,
+        "negative_predictive_value": 1 / 3,
+        "positive_predictive_value": 0.6,
+        "true_positive_rate_difference": -0.5,
+    }
+    for metric, value in expected_results.items():
+        computed_value = results.metric_values[metric].computed_value
+        assert round(computed_value, 7) == round(
+            value, 7
+        ), f"Expected {metric} to be {value}, but got {computed_value}"
+
+
+def test_calculate_metrics_with_missing_information_returns_insufficient_data_errors():
+    info = CalculateRequest(
+        metrics=["accuracy"],
+        task_name="binary_classification",
+        batch_size=1,
+        total_sample_size=10,
+    )
+    results = calculate_metrics(info)
+    assert results.metric_values == {
+        "accuracy": MetricsPackageExceptionModel(
+            detail="Insufficient or invalid data provided to calculate user metrics: "
+                   "The following missing fields are required to calculate metric "
+                   "accuracy:\n['true_labels', 'predicted_labels']",
+            status_code=400,
+            exception_type="DataProvisionException",
+        )
+    }
+
+
+def test_calculate_metrics_with_invalid_data_throws_data_inconsistency_error():
+    info = CalculateRequest(
+        batch_size=1,
+        total_sample_size=10,
+        metrics=["accuracy"],
+        true_labels=[[1], [0], [1]],
+        predicted_labels=[[1], [0], [1]],
+        confidence_scores=[[1]]
+    )
+    with pytest.raises(DataInconsistencyException) as e:
+        calculate_metrics(info)
+        assert "Data inconsistency error" in e.value.detail
+        assert "Length mismatch between confidence scores and true labels" in e.value.detail

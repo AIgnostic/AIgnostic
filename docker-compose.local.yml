@@ -98,7 +98,7 @@ services:
     links:
       - rabbitmq
     deploy:
-      replicas: 1
+      replicas: 3
     extra_hosts:
       - 'host.docker.internal:host-gateway'
 

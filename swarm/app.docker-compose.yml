@@ -39,9 +39,9 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USER=admin
       - RABBITMQ_PASS=securepassword
-      - GOOGLE_API_KEY_FILE=/run/secrets/google_ai_api_key
+      - GOOGLE_GEMINI_API_KEY_FILE=/run/secrets/google_ai_api_key
     secrets:
-      - google_ai_api_key # Google AI API key
+      - google_ai_api_key # Google AI API key    secrets:
 
   dispatcher_ms:
     container_name: dispatcher
