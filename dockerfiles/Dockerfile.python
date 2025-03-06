@@ -105,6 +105,10 @@ FROM python-prod-base AS dispatcher
 WORKDIR /app/packages/dispatcher
 CMD ["/app/.venv/bin/python", "-m", "dispatcher"]
 
+FROM python-prod-base AS user_added_metrics
+WORKDIR /app/packages/user-added-metrics
+CMD ["/app/.venv/bin/python", "-m", "uvicorn", "user_added_metrics.metric_server:app", "--host", "0.0.0.0", "--port", "8010"]
+
 # Mocks has an extra build command
 FROM builder AS mocks-build
 # Some extra files are needed to make nx behave
