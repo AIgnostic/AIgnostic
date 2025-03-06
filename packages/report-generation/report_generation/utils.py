@@ -89,7 +89,8 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
     return data
 
 
-def get_legislation_extracts(metrics_data: dict, legislation: list[str]) -> list[dict]:
+
+def get_legislation_extracts(metrics_data: dict, legislation: dict) -> list[dict]:
     """
     Generates a comprehensive report based on the provided metrics data and API key.
 
@@ -119,7 +120,7 @@ def get_legislation_extracts(metrics_data: dict, legislation: list[str]) -> list
         computed_metrics_list = []
         for metric in common_metrics:
             metric_data = metrics_data.get(metric, {})
-            error = metric_data.get("error")
+            error = metric_data.get("error", False)
 
             computed_metrics_list.append({
                 "metric": metric.replace("_", " "),

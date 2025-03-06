@@ -6,7 +6,13 @@ import websockets.sync.server
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 import time
-from common.models import AggregatorMessage, MessageType, JobType, AggregatorJob, WorkerError
+from common.models import (
+    AggregatorMessage,
+    MessageType,
+    JobType,
+    AggregatorJob,
+    WorkerError,
+)
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
 from fastapi import FastAPI, Request
@@ -47,6 +53,7 @@ async def upload_selected_legislation(request: Request):
         body = await request.json()
         legislation_list = body.get('legislation', [])
         update_legislation_information(legislation_list)
+        print('LEGISLATION_INFORMATION UPDATED', LEGISLATION_INFORMATION)
     except Exception as e:
         return {"error": str(e)}
 
@@ -106,7 +113,7 @@ class MetricsAggregator:
                         "ideal_value": None,
                         "range": None,
                         "count": batch_size,
-                        "error": metric_value_obj.detail
+                        "error": metric_value_obj.detail,
                     }
                     continue
                 # otherwise of type MetricValue
@@ -115,7 +122,7 @@ class MetricsAggregator:
                     "ideal_value": metric_value_obj.ideal_value,
                     "range": metric_value_obj.range,
                     "count": batch_size,
-                    "error": None
+                    "error": None,
                 }
 
             else:
@@ -134,7 +141,10 @@ class MetricsAggregator:
 
                 # Compute new weighted average
                 new_count = prev_count + batch_size
-                new_value = (prev_value * prev_count + metric_value_obj.computed_value * batch_size) / new_count
+                new_value = (
+                    prev_value * prev_count
+                    + metric_value_obj.computed_value * batch_size
+                ) / new_count
                 self.metrics[metric]["value"] = new_value
                 self.metrics[metric]["count"] = new_count  # Update the total count
 
@@ -237,7 +247,9 @@ def process_batch_result(worker_results: WorkerResults):
     print(f"Received result for user {user_id}: {worker_results}")
 
     if worker_results.user_defined_metrics is not None:
-        print(f"User-defined metrics received for user {user_id}: {worker_results.user_defined_metrics}")
+        print(
+            f"User-defined metrics received for user {user_id}: {worker_results.user_defined_metrics}"
+        )
 
     # ensure a metricsaffregator exists for the user
     if user_id not in user_aggregators:
@@ -259,29 +271,38 @@ def process_batch_result(worker_results: WorkerResults):
             )
             batch_metrics[metric] = metric_value_obj
 
-    aggregator.aggregate_new_batch(worker_results.metric_values, worker_results.batch_size)
+    aggregator.aggregate_new_batch(
+        worker_results.metric_values, worker_results.batch_size
+    )
 
     aggregates = aggregator.get_aggregated_metrics()
     # send the intermediate metrics to the user
     manager.send_to_user(user_id, aggregator_intermediate_metrics_log(aggregates))
-    print(f"{aggregator.samples_processed} / {aggregator.total_sample_size} Processed for user {user_id}")
+    print(
+        f"{aggregator.samples_processed} / {aggregator.total_sample_size} Processed for user {user_id}"
+    )
 
     # if all batches have been processed, send final result
 
     if aggregator.samples_processed == aggregator.total_sample_size:
         print(f"Finished processing all batches for user {user_id}")
         print("Creating and sending final report")
-        send_to_clients(AggregatorMessage(
-            messageType=MessageType.LOG,
-            message="Generating final report - this may take a few minutes",
-            statusCode=200,
-            content=None))
+        send_to_clients(
+            AggregatorMessage(
+                messageType=MessageType.LOG,
+                message="Generating final report - this may take a few minutes",
+                statusCode=200,
+                content=None,
+            )
+        )
 
         # send completion message
         manager.send_to_user(user_id, aggregator_metrics_completion_log())
 
         # send report
-        report_thread = threading.Thread(target=generate_and_send_report, args=(user_id, aggregates, aggregator))
+        report_thread = threading.Thread(
+            target=generate_and_send_report, args=(user_id, aggregates, aggregator)
+        )
         report_thread.start()
 
         # cleanup completed aggregator
@@ -303,28 +324,35 @@ def get_api_key():
 
 def aggregator_generate_report(aggregates, aggregator):
     """
-        Generates a report to send to the frontend
-        By collating the metrics, and pulling information from the report generator
+    Generates a report to send to the frontend
+    By collating the metrics, and pulling information from the report generator
     """
     print("Fetching Legislation Extracts")
-    send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
-                                      message="Fetching Legislation Extracts",
-                                      statusCode=200,
-                                      content=None))
-    print("LEGISLATION INFORMATION: ", LEGISLATION_INFORMATION)
+    send_to_clients(
+        AggregatorMessage(
+            messageType=MessageType.LOG,
+            message="Fetching Legislation Extracts",
+            statusCode=200,
+            content=None,
+        )
+    )
     report_properties_section = get_legislation_extracts(aggregates, LEGISLATION_INFORMATION)
     print("Adding LLM Insights")
-    send_to_clients(AggregatorMessage(messageType=MessageType.LOG,
-                                      message="Adding LLM Insights",
-                                      statusCode=200,
-                                      content=None))
-    report_properties_section = add_llm_insights(report_properties_section, os.getenv("GOOGLE_API_KEY"))
+    send_to_clients(
+        AggregatorMessage(
+            messageType=MessageType.LOG,
+            message="Adding LLM Insights",
+            statusCode=200,
+            content=None,
+        )
+    )
+    report_properties_section = add_llm_insights(
+        report_properties_section, get_api_key()
+    )
     report_info_section = {
         # TODO: Update with codecarbon info and calls to model from metrics
         "calls_to_model": aggregator.total_sample_size,
-        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-
-
+        "date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
     }
     report_json = {"properties": report_properties_section, "info": report_info_section}
     return report_json
@@ -348,9 +376,9 @@ def on_result_fetched(ch, method, properties, body):
 
     print(f"Received job: {job}")
 
-    if (job.job_type == JobType.RESULT):
+    if job.job_type == JobType.RESULT:
         process_batch_result(worker_results=job.content)
-    elif (job.job_type == JobType.ERROR):
+    elif job.job_type == JobType.ERROR:
         process_error_result(error_data=job.content)
     else:
         raise ValueError(f"Invalid job type: {job.job_type}")
@@ -445,6 +473,7 @@ if __name__ == "__main__":
     # Load environment variables
 
     from dotenv import load_dotenv
+
     load_dotenv()
 
     # Start HTTP server in a separate thread

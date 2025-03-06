@@ -13,6 +13,9 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=securepassword
 
 networks:
   aignostic_network:

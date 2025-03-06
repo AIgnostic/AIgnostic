@@ -23,7 +23,7 @@ features, labels, groups = ACSEmployment.df_to_pandas(acs_data)
 
 @app.get("/")
 async def read_root():
-    return {"message": "Welcome to the mock server!"}
+    return {"message": "Welcome to the Folktables data server!"}
 
 
 @app.get('/fetch-datapoints', dependencies=[Depends(get_dataset_api_key)], response_model=DatasetResponse)

@@ -12,6 +12,8 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
 
   # Microservices
@@ -19,11 +21,14 @@ services:
     container_name: worker
     image: ghcr.io/aignostic/worker:latest
     deploy:
-      replicas: 30
+      replicas: 10
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
+      - USER_METRIC_SERVER_URL=http://user_added_metrics:8010
 
   aggregator_ms:
     container_name: aggregator
@@ -32,6 +37,8 @@ services:
       - aignostic_network
     environment:
       - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - GOOGLE_API_KEY_FILE=/run/secrets/google_ai_api_key
     secrets:
       - google_ai_api_key # Google AI API key
@@ -42,7 +49,11 @@ services:
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   # Reverse proxy
   reverse_proxy:
@@ -60,10 +71,12 @@ services:
 
   user_added_metrics:
     container_name: user_added_metrics
-    image: ghcr.io/aignostic/useraddedmetrics:latest
+    image: ghcr.io/aignostic/user_added_metrics:latest
     networks:
       - aignostic_network
     environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
       - RABBITMQ_HOST=rabbitmq
 
 networks:

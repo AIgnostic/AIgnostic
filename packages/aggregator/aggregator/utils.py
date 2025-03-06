@@ -18,6 +18,7 @@ def get_legislation_information():
         "eu_ai": create_legislation_info("EU AI Act", "https://ai-act-law.eu/")
     }
 
+# FIX FUNCTION
 def update_legislation_information(labels: list[str]):
     global LEGISLATION_INFORMATION
     legislation_information = get_legislation_information()

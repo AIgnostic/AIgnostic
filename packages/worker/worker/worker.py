@@ -13,7 +13,7 @@ import json
 import asyncio
 import random
 from common.models.pipeline import Batch, JobStatus, JobStatusMessage
-from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
+from common.rabbitmq.connect import connect_to_rabbitmq, init_queues, publish_to_queue
 from metrics.models import WorkerResults, convert_calculate_request_to_dict
 import requests
 from pydantic.networks import HttpUrl
@@ -32,11 +32,22 @@ from metrics.models import WorkerException
 from pydantic import ValidationError
 
 from pika.adapters.blocking_connection import BlockingChannel
+import re
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
-USER_METRIC_SERVER_URL = os.environ.get("USER_METRIC_SERVER_URL", "http://user-added-metrics:8010")
+USER_METRIC_SERVER_URL = os.environ.get(
+    "USER_METRIC_SERVER_URL", "http://user-added-metrics:8010"
+)
+
+
+def convert_localhost_url(url: str) -> str:
+    """
+    Function to convert a URL to localhost if the URL is not localhost
+    """
+    pattern = re.compile(r"http://localhost:(\d+)/(\S*)")
+    return pattern.sub(r"http://host.docker.internal:\1/\2", url)
 
 
 class Worker:
@@ -69,11 +80,9 @@ class Worker:
         Function to queue the results of a job
         """
         job = AggregatorJob(job_type=JobType.RESULT, content=result)
-        self._channel.basic_publish(
-            exchange="",
-            routing_key=RESULT_QUEUE,
-            body=job.model_dump_json(),
-            mandatory=True,
+
+        self._channel = publish_to_queue(
+            self._channel, RESULT_QUEUE, job.model_dump_json()
         )
 
     def queue_error(self, error: WorkerError):
@@ -84,11 +93,8 @@ class Worker:
             job_type=JobType.ERROR,
             content=error,
         )
-        self._channel.basic_publish(
-            exchange="",
-            routing_key=RESULT_QUEUE,
-            body=job.model_dump_json(),
-            mandatory=True,
+        self._channel = publish_to_queue(
+            self._channel, RESULT_QUEUE, job.model_dump_json()
         )
 
     def close(self):
@@ -105,7 +111,7 @@ class Worker:
             batch_data = json.loads(body)
             print(f"Received job: {batch_data}")
             try:
-                print("Unpacking batcj data")
+                print("Unpacking batch data")
                 return Batch(**batch_data)
             except ValueError as e:
                 raise WorkerException(f"Invalid batch format: {e}", status_code=400)
@@ -121,22 +127,33 @@ class Worker:
         - dataURL : API URL of the dataset
         """
         # Send a GET request to the dataset API
+        print("fetch_data: enters into fetch_data")
         if dataset_api_key is None:
-            response = requests.get(data_url, params={"n": batch_size})
-        else:
+            print("fetch_data: no api key found")
             response = requests.get(
-                data_url,
+                convert_localhost_url(str(data_url)), params={"n": batch_size}
+            )
+        else:
+            print("fetch_data: checking api key")
+            response = requests.get(
+                convert_localhost_url(str(data_url)),
                 headers={"Authorization": f"Bearer {dataset_api_key}"},
                 params={"n": batch_size},
             )
+            print(f"fetch_data: response {response}")
 
         try:
-            # Raise errpr if the request was not successful
             response.raise_for_status()
-        except requests.exceptions.HTTPError:
-            raise WorkerException(
-                response.json()["detail"], status_code=response.status_code
-            )
+        except Exception as e:
+            if e.response and e.response.json():
+                raise WorkerException(
+                    detail=e.response.json()["detail"],
+                    status_code=e.response.status_code,
+                )
+            else:
+                raise WorkerException(
+                    detail=f"An unknown exception occured: {e}", status_code=400
+                )
 
         try:
             # Parse the response JSON
@@ -161,24 +178,29 @@ class Worker:
         """
         # Send a POST request to the model API
         if model_api_key is None:
-            response = requests.post(url=model_url, json=data.model_dump_json())
+            print("Entering into ")
+            response = requests.post(
+                url=convert_localhost_url(str(model_url)), json=data.model_dump_json()
+            )
         else:
             response = requests.post(
-                url=model_url,
+                url=convert_localhost_url(str(model_url)),
                 json=data.model_dump(),
                 headers={"Authorization": f"Bearer {model_api_key}"},
             )
 
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
+        except Exception as e:
             if e.response and e.response.json():
                 raise WorkerException(
                     detail=e.response.json()["detail"],
                     status_code=e.response.status_code,
                 )
             else:
-                raise WorkerException(detail="HTTP Exception", status_code=400)
+                raise WorkerException(
+                    detail=f"An unknown exception occured: {e}", status_code=400
+                )
 
         try:
             # Check if the request was successful
@@ -200,13 +222,14 @@ class Worker:
         metrics_data = batch.metrics
 
         try:
+            print("process_job: enters into process job")
             # fetch data from datasetURL
             dataset_response = await self.fetch_data(
                 data_url=metrics_data.data_url,
                 dataset_api_key=metrics_data.data_api_key,
                 batch_size=batch.batch_size,
             )
-
+            print("process_job: fetched data")
             # query model at modelURL
             # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
             # TODO: Refactor to use pydantic models
@@ -215,7 +238,7 @@ class Worker:
                 dataset_response,
                 metrics_data.model_api_key,
             )
-
+            print("process_job: finishes querying model")
             true_labels = dataset_response.labels
             predicted_labels = model_response.predictions
 
@@ -261,7 +284,9 @@ class Worker:
             print(f"Final Results: {metrics_results}")
             # add user_id to the results
             worker_results = WorkerResults(
-                **metrics_results.model_dump(), user_id=batch.job_id, user_defined_metrics=None
+                **metrics_results.model_dump(),
+                user_id=batch.job_id,
+                user_defined_metrics=None,
             )
             try:
                 # query the user metric server to get the user-defined metrics
@@ -271,10 +296,14 @@ class Worker:
 
                 user_defined_metrics = []
                 if user_metrics_server_response.status_code == 200:
-                    user_defined_metrics = user_metrics_server_response.json()["functions"]
+                    user_defined_metrics = user_metrics_server_response.json()[
+                        "functions"
+                    ]
                     print(f"User defined metrics: {user_defined_metrics}")
                 else:
-                    print(f"SERVER RESPONSE NOT OKAY: {user_metrics_server_response.text}")
+                    print(
+                        f"SERVER RESPONSE NOT OKAY: {user_metrics_server_response.text}"
+                    )
             except Exception as e:
                 print(f"Exception occurred while fetching user metrics: {e}")
                 user_defined_metrics = []
@@ -303,6 +332,16 @@ class Worker:
                 except Exception as e:
                     print(f"ERROR EXECUTING USER METRIC: {e}")
 
+            if len(user_defined_metrics) != 0 or user_defined_metrics is not None:
+                print(f"Final Results with user metrics: {worker_results}")
+                try:
+                    clear_response = requests.delete(
+                        f"{USER_METRIC_SERVER_URL}/clear-user-data/{worker_results.user_id}"
+                    )
+                    print(f"Clear response: {clear_response}")
+                except Exception as e:
+                    print(f"Error clearing user data: {e}")
+
             self.queue_result(worker_results)
             self.send_status_completed(batch.job_id, batch.batch_id)
             return
@@ -314,17 +353,19 @@ class Worker:
             )
             self.send_status_error(batch.job_id, batch.batch_id, e)
         except Exception as e:
+            self.queue_error(
+                WorkerError(error_message="An unknown error occurred", error_code=500)
+            )
             self.send_status_error(batch.job_id, batch.batch_id, e)
-            raise WorkerException(f"Error while processing data: {e}")
 
     def send_status_completed(self, job_id: str, batch_id: str):
         """
         Function to send a status message to the status queue
         """
-        self._channel.basic_publish(
-            exchange="",
-            routing_key=STATUS_QUEUE,
-            body=JobStatusMessage(
+        self._channel = publish_to_queue(
+            self._channel,
+            STATUS_QUEUE,
+            JobStatusMessage(
                 job_id=job_id, batch_id=batch_id, status=JobStatus.COMPLETED
             ).model_dump_json(),
         )
@@ -333,10 +374,10 @@ class Worker:
         """
         Function to send a status message to the status queue
         """
-        self._channel.basic_publish(
-            exchange="",
-            routing_key=STATUS_QUEUE,
-            body=JobStatusMessage(
+        self._channel = publish_to_queue(
+            self._channel,
+            STATUS_QUEUE,
+            JobStatusMessage(
                 job_id=job_id,
                 batch_id=batch_id,
                 status=JobStatus.ERRORED,
@@ -350,6 +391,7 @@ class Worker:
             while True:
                 job = self.fetch_batch()
                 if job:
+                    print("Running process job")
                     asyncio.run(self.process_job(job))
         except KeyboardInterrupt:
             self.close()

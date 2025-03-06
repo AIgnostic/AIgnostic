@@ -1,0 +1,168 @@
+services:
+  ###
+  # Services
+  ###
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - aignostic_network
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=securepassword
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  redis:
+    image: redis
+    ports:
+      - '6379:6379'
+    networks:
+      - aignostic_network
+    healthcheck:
+      test: redis-cli ping
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  ###
+  # Frontend services
+  ###
+  frontend:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile.frontend
+    image: aignostic/frontend
+    command: npx nx serve frontend --host 0.0.0.0
+    container_name: frontend
+    volumes:
+      - ./packages:/app/packages
+    ports:
+      - '4200:4200'
+    networks:
+      - aignostic_network
+    environment:
+      - NX_DAEMON=false
+
+  ###
+  # Backend services
+  ###
+  # Api Router
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile.python.dev.uber
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run uvicorn main:app --host 0.0.0.0 --reload
+    working_dir: /app/packages/api
+    ports:
+      - '8000:8000'
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    links:
+      - rabbitmq
+
+  # # Microservices
+  worker_ms:
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python -u -m worker.worker
+    working_dir: /app/packages/worker
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    links:
+      - rabbitmq
+    deploy:
+      replicas: 1
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+  user_added_metrics:
+    container_name: user-added-metrics
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python -u -m user_added_metrics.metric_server --host
+    ports:
+      - '8010:8010'
+    working_dir: /app/packages/user-added-metrics
+    networks:
+      - aignostic_network
+
+  aggregator_ms:
+    container_name: aggregator
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    # command: poetry run uvicorn aggregator.aggregator:aggregator_app --host 0.0.0.0 --reload
+    command: poetry run python -u -m aggregator.aggregator
+    working_dir: /app/packages/aggregator
+    ports:
+      - '5002:5002'
+      - '5005:5005'
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    links:
+      - rabbitmq
+  dispatcher_ms:
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python -u -m dispatcher
+    working_dir: /app/packages/dispatcher
+    networks:
+      - aignostic_network
+    environment:
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=securepassword
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    links:
+      - rabbitmq
+      - redis
+
+volumes:
+  venv:
+networks:
+  aignostic_network:
