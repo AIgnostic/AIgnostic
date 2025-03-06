@@ -96,16 +96,16 @@ class Publisher(threading.Thread):
         print("Stopped")
 
 
-if __name__ == "__main__":
-    publisher = Publisher()
-    publisher.start()
-    try:
-        for i in range(9999):
-            msg = f"Message {i}"
-            print(f"Publishing: {msg!r}")
-            publisher.publish(msg)
-            sleep(1)
-    except KeyboardInterrupt:
-        publisher.stop()
-    finally:
-        publisher.join()
+# if __name__ == "__main__":
+#     publisher = Publisher()
+#     publisher.start()
+#     try:
+#         for i in range(9999):
+#             msg = f"Message {i}"
+#             print(f"Publishing: {msg!r}")
+#             publisher.publish(msg)
+#             sleep(1)
+#     except KeyboardInterrupt:
+#         publisher.stop()
+#     finally:
+#         publisher.join()
