@@ -33,6 +33,7 @@ from pydantic import ValidationError
 
 from pika.adapters.blocking_connection import BlockingChannel
 import re
+from requests.exceptions import RequestException, HTTPError, ConnectionError, Timeout
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
@@ -117,53 +118,60 @@ class Worker:
                 raise WorkerException(f"Invalid batch format: {e}", status_code=400)
         return None
 
-    async def fetch_data(
-        self, data_url: HttpUrl, dataset_api_key, batch_size: int
-    ) -> DatasetResponse:
+
+    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> DatasetResponse:
         """
-        Helper function to fetch data from the dataset API
+        Helper function to fetch data from the dataset API.
 
         Params:
-        - dataURL : API URL of the dataset
+        - data_url : API URL of the dataset
+        - dataset_api_key : API key for authentication
+        - batch_size : Number of records to fetch
         """
-        # Send a GET request to the dataset API
-        if dataset_api_key is None:
-            response = requests.get(
-                convert_localhost_url(str(data_url)), params={"n": batch_size}
-            )
-        else:
-            response = requests.get(
-                convert_localhost_url(str(data_url)),
-                headers={"Authorization": f"Bearer {dataset_api_key}"},
-                params={"n": batch_size},
-            )
+
+        url = convert_localhost_url(str(data_url))
+        headers = {"Authorization": f"Bearer {dataset_api_key}"} if dataset_api_key else {}
+        params = {"n": batch_size}
 
         try:
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+
+            # Raise for HTTP errors (4xx, 5xx)
             response.raise_for_status()
-        except Exception as e:
-            if e.response and e.response.json():
-                raise WorkerException(
-                    detail=e.response.json()["detail"],
-                    status_code=e.response.status_code,
-                )
-            else:
-                raise WorkerException(
-                    detail=f"An unknown exception occured: {e}", status_code=400
-                )
+
+        except ConnectionError:
+            raise WorkerException(detail=f"Failed to connect to dataset API at {url}", status_code=503)
+
+        except Timeout:
+            raise WorkerException(detail=f"Request to dataset API at {url} timed out", status_code=504)
+
+        except HTTPError as e:
+            try:
+                error_detail = response.json().get("detail", "Unknown error")
+            except Exception:
+                error_detail = f"HTTP error {response.status_code} but response is not JSON: {response.text}"
+            raise WorkerException(detail=error_detail, status_code=response.status_code)
+
+        except RequestException as e:
+            raise WorkerException(detail=f"An error occurred while contacting the dataset API: {e}", status_code=500)
 
         try:
-            # Parse the response JSON
-            dataset_response = DatasetResponse(**response.json())
-            # Return the data
-            return dataset_response
-        except ValidationError as e:
-            raise WorkerException(
-                f"Data error - data returned from data provider of incorrect format: \n{e}"
-            )
+            # Ensure response is JSON
+            if "application/json" not in response.headers.get("Content-Type", ""):
+                raise WorkerException(f"Unexpected response type from dataset API: {response.headers.get('Content-Type')}", status_code=500)
 
-    async def query_model(
-        self, model_url: HttpUrl, data: DatasetResponse, model_api_key
-    ) -> ModelResponse:
+            dataset_response = DatasetResponse(**response.json())
+            return dataset_response
+
+        except ValidationError as e:
+            raise WorkerException(f"Data error - Incorrect format from dataset API: \n{e}", status_code=500)
+
+        except Exception as e:
+            raise WorkerException(f"Could not parse dataset response - {e}; response = {response.text}", status_code=500)
+
+
+
+    async def query_model(self, model_url: HttpUrl, data: DatasetResponse, model_api_key) -> ModelResponse:
         """
         Helper function to query the model API
 
@@ -172,45 +180,50 @@ class Worker:
         - data : Data to be passed to the model in JSON format with DataSet pydantic model type
         - modelAPIKey : API key for the model
         """
-        # Send a POST request to the model API
-        if model_api_key is None:
-            response = requests.post(
-                url=convert_localhost_url(str(model_url)), json=data.model_dump_json()
-            )
-        else:
-            response = requests.post(
-                url=convert_localhost_url(str(model_url)),
-                json=data.model_dump(),
-                headers={"Authorization": f"Bearer {model_api_key}"},
-            )
+        url = convert_localhost_url(str(model_url))
+        headers = {"Authorization": f"Bearer {model_api_key}"} if model_api_key else {}
 
         try:
+            response = requests.post(url, json=data.model_dump(), headers=headers, timeout=10)
+
+            # Raise for status (HTTPError for 4xx, 5xx)
             response.raise_for_status()
+
+        except ConnectionError:
+            raise WorkerException(detail=f"Failed to connect to model at {url}", status_code=503)
+
+        except Timeout:
+            raise WorkerException(detail=f"Request to model at {url} timed out", status_code=504)
+
+        except HTTPError as e:
+            try:
+                error_detail = response.json().get("detail", "Unknown error")
+            except Exception:
+                error_detail = f"HTTP error {response.status_code} but response is not JSON: {response.text}"
+            raise WorkerException(detail=error_detail, status_code=response.status_code)
+
+        except RequestException as e:
+            raise WorkerException(detail=f"An error occurred while contacting the model: {e}", status_code=500)
+        
         except Exception as e:
-            if e.response and e.response.json():
-                raise WorkerException(
-                    detail=e.response.json()["detail"],
-                    status_code=e.response.status_code,
-                )
-            else:
-                raise WorkerException(
-                    detail=f"An unknown exception occured: {e}", status_code=400
-                )
+            raise WorkerException(detail=f"An unknown error occurred while querying the model: {e}", status_code=500)
 
         try:
-            # Check if the request was successful
+            # Ensure response is JSON
+            if "application/json" not in response.headers.get("Content-Type", ""):
+                raise WorkerException(f"Unexpected response type from model: {response.headers.get('Content-Type')}", status_code=500)
 
-            # Parse the response JSON
             model_response = ModelResponse(**response.json())
             print(f"Model response: {model_response}")
             self._check_model_response(model_response.predictions, data.labels)
 
-            # Return the model response
             return model_response
+
         except Exception as e:
             raise WorkerException(
-                f"Could not parse model response - {e}; response = {response.text}"
+                f"Could not parse model response - {e}; response = {response.text}", status_code=500
             )
+
 
     async def process_job(self, batch: Batch):
 
