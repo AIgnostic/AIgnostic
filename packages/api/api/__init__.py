@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.router.api import api as api_router
+from api.router.rabbitmq import create_publisher
 
 
 origins = [
@@ -16,13 +17,11 @@ origins = [
 
 
 @asynccontextmanager
-async def lifespan():
-    from api.router.rabbitmq import create_publisher
-
+async def lifespan(app: FastAPI):
     publisher = create_publisher()
     publisher.start()
     print("RabbitMQ publisher ready")
-    yield publisher
+    yield
     print("Shutting down RabbitMQ publisher")
     publisher.stop()
     publisher.join()

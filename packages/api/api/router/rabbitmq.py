@@ -10,7 +10,7 @@ def get_jobs_publisher():
     return publisher
 
 
-def fastapi_connect_rabbitmq():
+def create_publisher():
     global publisher
     publisher = Publisher(queue=JOB_QUEUE)
     print("Connection established to RabbitMQ")
