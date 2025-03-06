@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3'
 services:
   ###
   # Backend services
@@ -68,6 +68,10 @@ services:
       - aignostic_network
     depends_on:
       - api_router
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
 
   user_added_metrics:
     container_name: user_added_metrics
@@ -81,8 +85,7 @@ services:
 
 networks:
   aignostic_network:
-    driver: overlay
-    attachable: true
+    external: true
     name: aignostic
 
 secrets:
