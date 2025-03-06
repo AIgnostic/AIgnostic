@@ -19,10 +19,7 @@ To get started with the local environment (runs a Docker Compose under the hood 
 - navigate to http://localhost:4200 and you should see the AIgnostic landing page (should look the same as the interface on our prod server, linked above)
 
 ## Contact
-If you run into any issues or face any bugs that require troubleshooting, feel free to reach out to us via email:
-- tisya.varghese@gmail.com
--
-
+If you run into any issues or face any bugs that require troubleshooting, feel free to reach out to us via the Discussions section of the AIgnostic repo. We will get back to you at earliest convenience.
 
 ## PRs and Extending AIgnostic
 AIgnostic is designed as a free open-source tool. Our vision is to encourage research into AI explainability and accountability, and make it easier to evaluate models before putting them into production, to make advancements in AI as safe-to-use as possible. We welcome PRs and our team will aim to get the reviewed at earliest convenience.
