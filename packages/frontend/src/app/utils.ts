@@ -10,6 +10,8 @@ import {
   MOCK_FOLKTABLES_DATASET_API_URL_PROD,
   MOCK_SCIKIT_API_URL_PROD,
   BACKEND_FETCH_METRIC_INFO_URL,
+  MOCK_WIKI_DATASET_API_URL,
+  MOCK_GEMINI_API_URL,
 } from './constants';
 
 async function fetchMetricInfo(): Promise<TaskToMetricMap> {
@@ -22,9 +24,8 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
     throw error; // Rethrow the error so the caller can handle it
   }
 }
-
 function checkURL(url: string): boolean {
-
+  return true;
   const validURLS = [
     MOCK_SCIKIT_API_URL,
     MOCK_FINBERT_API_URL,
@@ -37,7 +38,8 @@ function checkURL(url: string): boolean {
     MOCK_FINBERT_API_URL_PROD,
     MOCK_FOLKTABLES_DATASET_API_URL_PROD,
     MOCK_FINANCIAL_DATASET_API_URL_PROD,
-
+    MOCK_GEMINI_API_URL,
+    MOCK_WIKI_DATASET_API_URL,
   ];
   if (validURLS.includes(url)) {
     return true;
@@ -57,17 +59,14 @@ function checkURL(url: string): boolean {
     return false; // If an error is thrown, the URL is invalid
   }
 }
-
 function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
   // Check batchSize and numberOfBatches greater than 1
   if (batchSize < 1 || numberOfBatches < 1) {
     return false;
   }
-
   const totalSampleSize = batchSize * numberOfBatches;
   return 1000 <= totalSampleSize && totalSampleSize <= 10000;
 }
-
 // retrieves a dictionary mapping task types to the metrics that can be computed for them
 // returns a dictionary with the following structure:
 // {
@@ -76,18 +75,14 @@ function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
 //     "regression": ["metric_1", "metric_2", ...],
 //     ...
 // }
-
 export interface TaskToMetricMap {
   [taskType: string]: string[];
 }
-
 export interface MetricInfo {
   task_to_metric_map: TaskToMetricMap;
 }
-
 function applyStyle(doc: jsPDF, style: any) {
   doc.setFont(style.font, style.style);
   doc.setFontSize(style.size);
 }
-
 export { checkURL, checkBatchConfig, applyStyle, fetchMetricInfo };

@@ -172,6 +172,7 @@ class Worker:
         - data : Data to be passed to the model in JSON format with DataSet pydantic model type
         - modelAPIKey : API key for the model
         """
+
         # Send a POST request to the model API
         if model_api_key is None:
             response = requests.post(
@@ -202,7 +203,6 @@ class Worker:
 
             # Parse the response JSON
             model_response = ModelResponse(**response.json())
-            print(f"Model response: {model_response}")
             self._check_model_response(model_response.predictions, data.labels)
 
             # Return the model response
@@ -214,16 +214,19 @@ class Worker:
 
     async def process_job(self, batch: Batch):
 
+        print("Processing Job")
+
         metrics_data = batch.metrics
 
         try:
             # fetch data from datasetURL
+            print("Fetching data")
             dataset_response = await self.fetch_data(
                 data_url=metrics_data.data_url,
                 dataset_api_key=metrics_data.data_api_key,
                 batch_size=batch.batch_size,
             )
-
+            print(f"Data fetched: {dataset_response}")
             # query model at modelURL
             # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
             # TODO: Refactor to use pydantic models
@@ -232,6 +235,7 @@ class Worker:
                 dataset_response,
                 metrics_data.model_api_key,
             )
+
 
             true_labels = dataset_response.labels
             predicted_labels = model_response.predictions
@@ -256,6 +260,7 @@ class Worker:
             print(f"True labels: {true_labels}")
             print(f"Confidence scores: {model_response.confidence_scores}")
 
+        
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
                 metrics=metrics_data.metrics,
@@ -264,11 +269,12 @@ class Worker:
                 true_labels=true_labels,
                 predicted_labels=predicted_labels,
                 confidence_scores=model_response.confidence_scores,
+                task_name=metrics_data.model_type,
                 # TODO: Do this group stuff properly
                 privileged_groups=[{"protected_attr": 1}],
                 unprivileged_groups=[{"protected_attr": 0}],
                 protected_attr=[random.randint(0, 1) for _ in range(len(true_labels))],
-                model_url=metrics_data.model_url,
+                model_url=convert_localhost_url(str(metrics_data.model_url)),
                 model_api_key=metrics_data.model_api_key,
                 total_sample_size=batch.total_sample_size,
             )
