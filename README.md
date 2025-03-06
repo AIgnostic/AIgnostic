@@ -6,17 +6,22 @@ The product comes in two forms:
 - a local environment (getting started guide below)
 
 ## Getting Started
-To use the web application, go to https://aignostic.docsoc.co.uk.
+To use the web application, go to https://aignostic.docsoc.co.uk
 Click the 'Getting Started' button to go to our docs page containing information on how to:
 - Set up your model and dataset APIs to interface with our product
 - Add your own metrics
 - ...and a lot more information about how you can get the most out of AIgnostic
 
 To get started with the local environment (runs a Docker Compose under the hood to run the services in containers locally):
+- Prerequisites: ensure that you have the following dependencies installed
+    - docker
+    - poetry
 - Clone the repo into your desired location within your home directory
 - run ```./aignostic.py run```
 - ...and you're done! It should all start running out-of-box
 - navigate to http://localhost:4200 and you should see the AIgnostic landing page (should look the same as the interface on our prod server, linked above)
+
+- Currently we can only guarantee that this works on Linux and WSL systems
 
 ## Contact
 If you run into any issues or face any bugs that require troubleshooting, feel free to reach out to us via the Discussions section of the AIgnostic repo. We will get back to you at earliest convenience.
