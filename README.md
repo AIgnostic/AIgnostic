@@ -14,8 +14,11 @@ Click the 'Getting Started' button to go to our docs page containing information
 
 To get started with the local environment (runs a Docker Compose under the hood to run the services in containers locally):
 - Prerequisites: ensure that you have the following dependencies installed
-    - docker
-    - poetry
+    - ```docker```
+    - ```poetry```
+- Run ```poetry intall``` in your root
+- Run ```./scripts/install_all.sh```
+- Run ```npm i```
 - Clone the repo into your desired location within your home directory
 - run ```./aignostic.py run```
 - ...and you're done! It should all start running out-of-box
