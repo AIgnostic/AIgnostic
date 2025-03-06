@@ -109,7 +109,7 @@ class Dispatcher:
         left_batches = running_job.pending_batches
         if left_batches == 0:
             logger.info(
-                f"No batches left to run for job {job_id}. All batches complete={running_job.completed_batches}, errored={running_job.errored_batches}, pending={running_job.currently_running_batches}"
+                f"No batches left to run for job {job_id}. All batches complete={running_job.completed_batches}, errored={running_job.errored_batches}, pending={running_job.currently_running_batches}"  # noqa
             )
             return
         # If we can run more batches, do so
@@ -208,7 +208,7 @@ class Dispatcher:
             and running_job.currently_running_batches == 0
         ):
             logger.info(
-                f"Job {msg.job_id} is complete! Finished with {running_job.errored_batches} errored batches, {running_job.completed_batches} completed batches"
+                f"Job {msg.job_id} is complete! Finished with {running_job.errored_batches} errored batches, {running_job.completed_batches} completed batches"  # noqa
             )
             # Delete key
             self._redis_client.delete(self._get_job_redis_key(msg.job_id))
