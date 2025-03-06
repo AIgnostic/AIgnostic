@@ -4,6 +4,7 @@
 import os
 import threading
 from time import sleep
+from common.rabbitmq.connect import connect_to_rabbitmq
 from pika import ConnectionParameters, BlockingConnection, PlainCredentials
 from pika.adapters.blocking_connection import BlockingChannel
 
@@ -41,6 +42,7 @@ class Publisher(threading.Thread):
         name: str = "Publisher",
         host: str = os.getenv("RABBITMQ_HOST", "rabbitmq"),
         credentials: PlainCredentials = PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS),
+        retries: int = 10,
         *args,
         **kwargs,
     ):
@@ -51,6 +53,7 @@ class Publisher(threading.Thread):
             name (str, optional): Name of this publisher. Defaults to "Publisher".
             host (str, optional): Hostname to connect to. Defaults to os.getenv("RABBITMQ_HOST", "rabbitmq").
             credentials (PlainCredentials, optional): Creds to connect with. Defaults to PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS).
+            retries (int, optional): Number of times to retry connecting to RabbitMQ. Defaults to 10.
         """
         super().__init__(*args, **kwargs)
         self.daemon = True
@@ -58,10 +61,9 @@ class Publisher(threading.Thread):
         self.name = name
         self.queue = queue
 
-        parameters = ConnectionParameters(
-            host=host, heartbeat=600, credentials=credentials
+        self.connection = connect_to_rabbitmq(
+            host=host, credentials=credentials, retries=retries
         )
-        self.connection = BlockingConnection(parameters)
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self.queue, durable=True)
 
