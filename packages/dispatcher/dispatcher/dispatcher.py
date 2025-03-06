@@ -85,7 +85,9 @@ class Dispatcher:
         """Dispatch a single batch for the given job id"""
         try:
             logger.info(f"Dispatching batch for job {job_id}")
-            self._channel = publish_to_queue(self._channel, BATCH_QUEUE, job_data.model_dump_json())
+            self._channel = publish_to_queue(
+                self._channel, BATCH_QUEUE, job_data.model_dump_json()
+            )
             logger.info(f"Batch dispatched for job {job_id}")
         except Exception as e:
             self.propogate_error(job_id, e)
@@ -205,7 +207,9 @@ class Dispatcher:
             running_job.pending_batches == 0
             and running_job.currently_running_batches == 0
         ):
-            logger.info(f"Job {msg.job_id} is complete! Finished with {running_job.errored_batches} errored batches, {running_job.completed_batches} completed batches")
+            logger.info(
+                f"Job {msg.job_id} is complete! Finished with {running_job.errored_batches} errored batches, {running_job.completed_batches} completed batches"
+            )
             # Delete key
             self._redis_client.delete(self._get_job_redis_key(msg.job_id))
             logger.info(f"Job {msg.job_id} marked as complete & deleted")

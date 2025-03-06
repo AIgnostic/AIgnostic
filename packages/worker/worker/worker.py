@@ -37,7 +37,9 @@ import re
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
-USER_METRIC_SERVER_URL = os.environ.get("USER_METRIC_SERVER_URL", "http://user-added-metrics:8010")
+USER_METRIC_SERVER_URL = os.environ.get(
+    "USER_METRIC_SERVER_URL", "http://user-added-metrics:8010"
+)
 
 
 def convert_localhost_url(url: str) -> str:
@@ -79,7 +81,9 @@ class Worker:
         """
         job = AggregatorJob(job_type=JobType.RESULT, content=result)
 
-        self._channel = publish_to_queue(self._channel, RESULT_QUEUE, job.model_dump_json())
+        self._channel = publish_to_queue(
+            self._channel, RESULT_QUEUE, job.model_dump_json()
+        )
 
     def queue_error(self, error: WorkerError):
         """
@@ -89,7 +93,9 @@ class Worker:
             job_type=JobType.ERROR,
             content=error,
         )
-        self._channel = publish_to_queue(self._channel, RESULT_QUEUE, job.model_dump_json())
+        self._channel = publish_to_queue(
+            self._channel, RESULT_QUEUE, job.model_dump_json()
+        )
 
     def close(self):
         self._channel.close()
@@ -122,7 +128,9 @@ class Worker:
         """
         # Send a GET request to the dataset API
         if dataset_api_key is None:
-            response = requests.get(convert_localhost_url(str(data_url)), params={"n": batch_size})
+            response = requests.get(
+                convert_localhost_url(str(data_url)), params={"n": batch_size}
+            )
         else:
             response = requests.get(
                 convert_localhost_url(str(data_url)),
@@ -139,7 +147,9 @@ class Worker:
                     status_code=e.response.status_code,
                 )
             else:
-                raise WorkerException(detail=f"An unknown exception occured", status_code=400)
+                raise WorkerException(
+                    detail=f"An unknown exception occured: {e}", status_code=400
+                )
 
         try:
             # Parse the response JSON
@@ -164,7 +174,9 @@ class Worker:
         """
         # Send a POST request to the model API
         if model_api_key is None:
-            response = requests.post(url=convert_localhost_url(str(model_url)), json=data.model_dump_json())
+            response = requests.post(
+                url=convert_localhost_url(str(model_url)), json=data.model_dump_json()
+            )
         else:
             response = requests.post(
                 url=convert_localhost_url(str(model_url)),
@@ -181,7 +193,9 @@ class Worker:
                     status_code=e.response.status_code,
                 )
             else:
-                raise WorkerException(detail=f"An unknown exception occured: {e}", status_code=400)
+                raise WorkerException(
+                    detail=f"An unknown exception occured: {e}", status_code=400
+                )
 
         try:
             # Check if the request was successful
@@ -264,7 +278,9 @@ class Worker:
             print(f"Final Results: {metrics_results}")
             # add user_id to the results
             worker_results = WorkerResults(
-                **metrics_results.model_dump(), user_id=batch.job_id, user_defined_metrics=None
+                **metrics_results.model_dump(),
+                user_id=batch.job_id,
+                user_defined_metrics=None,
             )
             try:
                 # query the user metric server to get the user-defined metrics
@@ -274,10 +290,14 @@ class Worker:
 
                 user_defined_metrics = []
                 if user_metrics_server_response.status_code == 200:
-                    user_defined_metrics = user_metrics_server_response.json()["functions"]
+                    user_defined_metrics = user_metrics_server_response.json()[
+                        "functions"
+                    ]
                     print(f"User defined metrics: {user_defined_metrics}")
                 else:
-                    print(f"SERVER RESPONSE NOT OKAY: {user_metrics_server_response.text}")
+                    print(
+                        f"SERVER RESPONSE NOT OKAY: {user_metrics_server_response.text}"
+                    )
             except Exception as e:
                 print(f"Exception occurred while fetching user metrics: {e}")
                 user_defined_metrics = []
@@ -328,9 +348,7 @@ class Worker:
             self.send_status_error(batch.job_id, batch.batch_id, e)
         except Exception as e:
             self.queue_error(
-                WorkerError(
-                    error_message="An unknown error occurred", error_code=500
-                )
+                WorkerError(error_message="An unknown error occurred", error_code=500)
             )
             self.send_status_error(batch.job_id, batch.batch_id, e)
 
@@ -357,7 +375,7 @@ class Worker:
                 job_id=job_id,
                 batch_id=batch_id,
                 status=JobStatus.ERRORED,
-                errorMessage=str(error)
+                errorMessage=str(error),
             ).model_dump_json(),
         )
 
