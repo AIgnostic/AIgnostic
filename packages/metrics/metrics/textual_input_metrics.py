@@ -27,13 +27,11 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         # Obtain the text input string to the model
         inp = info.input_features[i][0]
 
-        print(f"task_name: {info.task_name}")
         # Obtain the confidence scores for the model
         if info.task_name in ['next_token_generation', 'regression']:
             targets = info.predicted_labels
         else:
             targets = info.confidence_scores
-        print(f"targets: {targets}")
 
         # Generate synonym perturbations for one input at a time - shape = (num_perturbations, 1)
         synonym_sentences = np.array(generate_synonym_perturbations(inp)).reshape(-1, 1)
@@ -45,16 +43,13 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         # Duplicate the confidence scores for the synonym perturbations shape = (num_perturbations, c)
         # where c is the number classes in the model
         if info.task_name in ['next_token_generation', 'regression']:
-            print(f"targets[i]: {targets[i]}")
             info.predicted_labels = np.array([targets[i]] * synonym_sentences.shape[0])
             assert info.predicted_labels.ndim == 2
         else:
             info.confidence_scores = np.array([targets[i]] * synonym_sentences.shape[0])
             assert info.confidence_scores.ndim == 2
         info.input_features = synonym_sentences
-        print(f"synonym_sentences: {synonym_sentences}")
         mask_with_synonyms_coefs, _ = text_input_lime(info)
-        print(f"mask_with_synonyms_coefs: {mask_with_synonyms_coefs}")
 
         # Append the LIME coefficients for the synonym perturbations to the list of coefficients
         synonym_coefs += mask_with_synonyms_coefs.tolist()
@@ -69,8 +64,6 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
             info.predicted_labels = temp_scores
         else:
             info.confidence_scores = temp_scores
-        print(f"info.predicted_labels: {info.predicted_labels}")
-        print(f"info.confidence_scores: {info.confidence_scores}")
         print(f"mask_with_synonyms_coefs.shape: {mask_with_synonyms_coefs.shape}")
     synonym_coefs = np.array(synonym_coefs)
     synonym_coefs = synonym_coefs.reshape(synonym_coefs.shape[0], -1)

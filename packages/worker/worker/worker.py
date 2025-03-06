@@ -240,8 +240,6 @@ class Worker:
             true_labels = dataset_response.labels
             predicted_labels = model_response.predictions
 
-            print(f"Predicted labels: {predicted_labels}")
-            print(f"True labels: {true_labels}")
             print(f"Metrics to compute: {metrics_data.metrics}")
 
             # some preprocessing for FinBERT
@@ -254,12 +252,6 @@ class Worker:
                 predicted_labels, true_labels = self.convert_to_numeric_classes(
                     predicted_labels, true_labels
                 )
-
-            print(f"Metrics to compute: {metrics_data.metrics}")
-            print(f"Predicted labels: {predicted_labels}")
-            print(f"True labels: {true_labels}")
-            print(f"Confidence scores: {model_response.confidence_scores}")
-
         
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
@@ -342,6 +334,7 @@ class Worker:
                 except Exception as e:
                     print(f"Error clearing user data: {e}")
 
+            print(f"Final Results: {worker_results}")
             self.queue_result(worker_results)
             self.send_status_completed(batch.job_id, batch.batch_id)
             return

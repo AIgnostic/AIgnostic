@@ -193,7 +193,9 @@ metric_to_fn_and_requirements = {
     },
     "hello_score": {
         "function": hello_score,
-        "required_inputs": ["predicted_labels"]
+        "required_inputs": ["predicted_labels"],
+        "range": (0, 1),
+        "ideal_value": 0.8
     },
     # Fairness metrics
     **{
@@ -243,7 +245,7 @@ metric_to_fn_and_requirements = {
     # TODO: Cross check ideal values
     "expl_stability_text_input": {
         "function": expl_stability_text_input,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "required_inputs": ["input_features", "model_url", "model_api_key"],
         "range": (0, 1),
         "ideal_value": 0.7
     },
@@ -336,7 +338,7 @@ def calculate_metrics(info: CalculateRequest) -> MetricConfig:
     :return: MetricConfig - contains the calculated metrics and their scores
     """
     current_metric = "calculate_metrics"
-
+    info.metrics = list(map(lambda metric: metric.replace(" ", "_"), info.metrics))
     # Input validation
     if info.confidence_scores is not None:
         if info.predicted_labels is not None:
@@ -358,7 +360,6 @@ def calculate_metrics(info: CalculateRequest) -> MetricConfig:
 
     for metric in info.metrics:
         # Replace spaces with underscores in metric names to map to function names
-        metric = metric.replace(" ", "_")
         try:
             # Skip the metric if it is known to throw an error
             if metric in results:

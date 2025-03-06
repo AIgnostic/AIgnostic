@@ -231,7 +231,6 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     words rather than the using normal distributions as in traditional LIME computation.
     """
     print("Running text_input_lime")
-    print(f"info.input_features: {info.input_features}")
     print(f"info.input_features.shape: {info.input_features.shape}")
     _, d = info.input_features.shape
     # Each datapoint can only be a single sentence input
@@ -265,11 +264,7 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     # that is compatible with the expected implementation
     perturbed_samples = np.array(perturbed_samples).reshape(-1).reshape(-1, 1)
     # TODO: Consider batching inputs to the model API
-    print(f"perturbed_samples: {perturbed_samples}")
     response: ModelResponse = _query_model(perturbed_samples, info)
-    print(f"response: {response}")
-    print(f"response.predictions: {response.predictions}")
-    print(f"response.confidence_scores: {response.confidence_scores}")
     # If output is regression, use predictions, otherwise use confidence scores for classification
     # outputs.shape = (num_samples * num_perturbations_per_sample, 1) if regression
     # outputs.shape = (num_samples * num_perturbations_per_sample, num_classes) if classification
@@ -278,10 +273,6 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
         if info.task_name in ['next_token_generation', 'regression']
         else response.confidence_scores
     )
-
-
-
-    print(f"outputs: {outputs}")
 
     print("info.task_name: ", info.task_name)
 
