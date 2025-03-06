@@ -21,14 +21,12 @@ on:
         required: true
         type: string
         default: 'dist/'
-    secrets:
-      GOOGLE_GEMINI_API_KEY:
-        description: 'Google API Key'
-        required: true
 
 jobs:
   nx_run:
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -71,11 +69,6 @@ jobs:
       - name: Install per project dev dependencies
         if: ${{ inputs.run_poetry_install }}
         run: poetry run npx nx run-many -t install --all --parallel 1
-
-      - name: Set environment variables
-        env:
-          GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
-        run: echo "Google API Key is set"
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
       # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
