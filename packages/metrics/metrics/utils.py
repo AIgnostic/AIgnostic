@@ -93,7 +93,6 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=Fa
         size=(num_samples, d)
     )
 
-
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
     # Compute model probabilities for perturbed samples

@@ -20,6 +20,7 @@ app.add_middleware(
 
 model: Pipeline = load_scikit_model("scikit_regressor.sav")
 
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Scikit-Learn Regression Model API"}
