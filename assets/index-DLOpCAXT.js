@@ -68,7 +68,9 @@ Error generating stack: `+a.message+`
 
 The Dataset API should expose a "/fetch-datapoints" GET endpoint.
 
-An important assumption that our metrics make is that the data obtained is independent and identically distributes (i.i.d.).
+If you are using the Production version of AIgnostic (i.e. hosted on https://aignostic.docsoc.co.uk) then you will need to be hosting your API endpoint on a URL on the public internet in order for AIgnostic to interface with it. If you are using the local deployment (i.e. running AIgnostic on localhost via \`\`\`./aignostic.py run\`\`\`) then you can use locally hosted servers for your APIs.
+
+An important assumption that our metrics make is that the data obtained is independent and identically distributed (i.i.d.).
 Therefore please ensure that your dataset is as such, and that it returns a batch of such random samples. The return type of fetch_datapoints is a \`ModelInput\` pydantic model. Since numpy types are not serialisable, you will need to convert them to a serialisable type. e.g. np.bool_ types are converted to python bools in the example below.
 
 \`\`\`python
@@ -116,6 +118,8 @@ async def fetch_datapoints(indices: list[int] = Body([0, 1])):
     except Exception as e:
         return HTTPException(detail=f"error: {e}", status_code=500)
 `,W0e=`# How do I create a Model API for the model I wish to evaluate?
+
+If you are using the Production version of AIgnostic (i.e. hosted on https://aignostic.docsoc.co.uk) then you will need to be hosting your API endpoint on a URL on the public internet in order for AIgnostic to interface with it. If you are using the local deployment (i.e. running AIgnostic on localhost via \`\`\`./aignostic.py run\`\`\`) then you can use locally hosted servers for your APIs.
 
 The Model API takes in \`{features : List[List], labels: List[List], groups: List}\`
 and should return a List of labels 
