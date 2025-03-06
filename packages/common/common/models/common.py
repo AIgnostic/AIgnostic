@@ -18,7 +18,7 @@ class DatasetResponse(BaseModel):  # pragma: no cover
 
     features: list[list]
     labels: list[list]
-    group_ids: list[int]
+    group_ids: Optional[list[int]]
 
     # @field_validator('features', 'labels', mode='after')
     # def convert_to_np_array(cls, v):

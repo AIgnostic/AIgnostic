@@ -4,10 +4,14 @@ The Dataset API should expose a '/fetch-datapoints' GET endpoint, which expects 
 
 ```python
 class DatasetResponse(BaseModel):
-    features: List[List]
-    labels: List[List]
-    groups: List
+    features: List[List]  # Each row corresponds to one datapoint. Each column is a feature.
+    labels: List[List]  # Each row is a datapoint. Each column is a prediction feature.
+    groups: List[int]  # Each row corresponds to the group ID of the datapoint at that index
 ```
+
+Features and labels are mandatory inputs for prediction. The current version only contains metrics for single outputs (only one label), so the labels will look like a list of singleton lists. e.g. `labels=[['positive'], ['positive'], ['negative]]` or `labels=[[1], [2], [1]]`, etc. It is defined as a 2D list for extensibility in the future for models with multiple outputs.
+
+Group IDs is an optional field, though it is required for certain metrics, including many binary classification fairness metrics.
 
 #
 
@@ -15,7 +19,7 @@ An important assumption that our metrics make is that the data obtained is indep
 
 #
 
-Ensure that your dataset is independent and identically distributed (i.i.d.) and that it returns a batch of random samples. The 'fetch_datapoints' function returns a 'ModelInput' Pydantic model. Since NumPy types are not serializable, you need to convert them to a serializable type. For example, 'np.bool_' types are converted to Python 'bool' types in the example below.
+Ensure that your dataset is independent and identically distributed (i.i.d.) and that it returns a batch of random samples. The 'fetch*datapoints' function returns a 'ModelInput' Pydantic model. Since NumPy types are not serializable, you need to convert them to a serializable type. For example, 'np.bool*' types are converted to Python 'bool' types in the example below.
 
 ```python
 @app.get('/fetch-datapoints', response_model=DatasetResponse)
