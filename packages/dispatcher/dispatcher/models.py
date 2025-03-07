@@ -1,4 +1,4 @@
-from common.models.pipeline import PipelineJob
+from common.models.pipeline import PipelineJob, JobStatus
 from pydantic import BaseModel
 
 
@@ -7,7 +7,8 @@ class RunningJob(BaseModel):
 
     job_data: PipelineJob
     """Original data associated with the job"""
-
+    status: JobStatus
+    """Status of the job"""
     currently_running_batches: int
     """Number of batches currently being processed"""
     completed_batches: int

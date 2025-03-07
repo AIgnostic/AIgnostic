@@ -15,7 +15,7 @@ The API send the dispatcher a Job to dispatch, which it then breaks down into Ba
 """
 
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 from pydantic import (
     BaseModel,
     HttpUrl,
@@ -44,6 +44,21 @@ class MetricCalculationJob(BaseModel):
     """Type of model"""
 
 
+class PipelineJobType(str, Enum):
+    START_JOB = "start_job"
+    """Start a new job"""
+
+    HALT_JOB = "halt_job"
+    """Halt a job"""
+
+
+class PipelineHalt(BaseModel):
+    """Sent to the Dispatcher to halt a job"""
+
+    job_id: str
+    """Identifier for the job"""
+
+
 class PipelineJob(BaseModel):
     """Sent to the Dispatcher to start a new job and dispatch the appropriate number of batches"""
 
@@ -67,6 +82,13 @@ class PipelineJob(BaseModel):
     """Data for the metrics this Job should calculate"""
 
 
+class JobFromAPI(BaseModel):
+    job_type: PipelineJobType
+    """Type of job"""
+
+    job: Union[PipelineHalt, PipelineJob]
+
+
 class JobStatus(str, Enum):
     """Status of a job"""
 
@@ -74,6 +96,12 @@ class JobStatus(str, Enum):
     """Job is completed"""
     ERRORED = "errored"
     """Job has errored"""
+    RUNNING = "running"
+    """Job is running"""
+    PENDING = "pending"
+    """Job is pending"""
+    CANCELLED = "cancelled"
+    """Job has been cancelled"""
 
 
 class JobStatusMessage(BaseModel):

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ErrorMessage from './components/ErrorMessage';
 import theme from './theme';
 import { styled } from '@mui/material/styles';
@@ -10,26 +11,64 @@ import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
 import { pdf } from '@react-pdf/renderer';
+import { BACKEND_STOP_JOB_URL } from './constants';
+import { styles } from './home.styles';
+import { Button } from '@mui/material';
 
 interface DashboardProps {
   onComplete: () => void;
   socket: WebSocket | null;
+  disconnectRef: React.MutableRefObject<boolean>;
   expectedItems: number;
 }
 
 // Each item from the websocket is an array of Metric objects.
-const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef, expectedItems }) => {
   // 'items' holds each item (which is an array of Metric objects) received from the socket.
   const [items, setItems] = useState<Metric[]>([]);
-  const [log, setLog] = useState<string>('');
+  const [log, setLog] = useState<string>('Log: Processing metrics...');
   const [error, setError] = useState<{ header: string; text: string }>({
     header: '',
     text: '',
   });
   const [showError, setShowError] = useState<boolean>(false);
+  const [retryButton, setRetryButton] = useState<JSX.Element | null>(null);
+  const navigate = useNavigate();
+
+  const buttonRetry = (
+    <button
+      onClick={() => navigate(0)}
+      style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+    > 
+      Retry
+    </button>
+  );
 
   // const [report, setReport] = useState<Report | null>(null);
 
+  const earlyStop = async () => {
+    // close the socket so that you dont keep receiving errors
+    console.log("Closing socket due to error");
+    if (socket) {
+      disconnectRef.current = true; // intentional disconnect, don't retry
+      socket.close();
+    }
+
+    const id = sessionStorage.getItem('userId');
+    console.log("Stopping job with id: ", id);
+    // ping api to stop processing batches for this job
+    await fetch(BACKEND_STOP_JOB_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ job_id: id }),
+    });
+
+    // clear userId in session storage
+    // to avoid reconnecting with the same userId on reload
+    sessionStorage.removeItem('userId');
+  }
 
   useEffect(() => {
     if (socket) {
@@ -40,10 +79,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems
 
         switch (data.messageType) {
           case 'LOG':
-            setLog(data.message);
+            setLog(`Log: ${data.message}`);
             break;
           case 'METRICS_COMPLETE':
-            setLog(data.message);
+            setLog(`Log: ${data.message}`);
             break;
           case 'METRICS_INTERMEDIATE':
             try {
@@ -89,14 +128,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems
               if (error.header === 'Report is being generated') {
                 setShowError(false);
               }
+              setRetryButton(buttonRetry);
             };
             generateReport();
             break;
           }
-          case 'ERROR':
-            setShowError(true);
-            setError({ header: 'Error 500:', text: data.message });
+          case 'ERROR': {
+            const handleError = () => {
+              setShowError(true);
+              setError({ header: 'Error 500:', text: `${data.message} : ${data.content}` });
+              earlyStop()
+              setLog("Log: An error occurred during the computation of the metrics. Please try again later.");
+              setRetryButton(buttonRetry);
+            }
+            handleError();
             break;
+          }
           default:
             console.log(
               'Unknown response from server:',
@@ -165,7 +212,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems
         />
       )}
 
-      <p>{log}</p>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '10px',
+        }}
+      >
+
+        <p>{log}</p>
+
+        <Button onClick={async () => {
+          await earlyStop();
+          setItems([]);
+          setLog("Log: Evaluation pipeline cancelled. Reload page?");
+          setRetryButton(buttonRetry);
+        }}
+          style={styles.button}>
+          
+          Stop Early
+        </Button>
+      </div>
 
       <BorderLinearProgress
         variant="determinate"
@@ -216,30 +285,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems
                       >
                         <h3>{metric_name.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</h3>
                       </div>
-                    <div>
-                      {(metric_info.error !== null) ?
                       <div>
-                        <p style={{ color: 'red' }}>An error occurred during the computation of this metric.</p>
-                      </div>
-                      :
-                      <MetricBar 
+                        {(metric_info.error !== null) ?
+                          <div>
+                            <p style={{ color: 'red' }}>An error occurred during the computation of this metric.</p>
+                          </div>
+                          :
+                          <MetricBar
 
-                        min={metric_info.range[0]} 
-                        max={metric_info.range[1]}
-                        actual={metric_info.value}
-                        ideal={metric_info.ideal_value}
-                        label="" 
-                      />
-                      }
+                            min={metric_info.range[0]}
+                            max={metric_info.range[1]}
+                            actual={metric_info.value}
+                            ideal={metric_info.ideal_value}
+                            label=""
+                          />
+                        }
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             );
           })
-        ) : (
-          <p>Waiting for messages...</p>
-        )}
+        ) :
+          (retryButton === null) ? <p></p> : retryButton
+        }
       </div>
     </div>
   );

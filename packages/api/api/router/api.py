@@ -1,11 +1,17 @@
 from api.router.rabbitmq import get_jobs_publisher
-from common.models.pipeline import MetricCalculationJob, PipelineJob
 from common.rabbitmq.publisher import Publisher
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from metrics.metrics import task_type_to_metric
 from metrics.models import MetricsInfo
+from common.models.pipeline import (
+    MetricCalculationJob,
+    PipelineJob,
+    JobFromAPI,
+    PipelineJobType,
+    PipelineHalt,
+)
 
 api = APIRouter()
 BATCH_SIZE = 50
@@ -27,6 +33,10 @@ class ModelEvaluationRequest(BaseModel):
     batch_size: int = BATCH_SIZE
     num_batches: int = NUM_BATCHES
     max_conc_batches: int = MAX_CONCURRENT_BATCHES
+
+
+class StopJobRequest(BaseModel):
+    job_id: str
 
 
 @api.get("/")
@@ -69,6 +79,21 @@ async def generate_metrics_from_info(
         raise HTTPException(status_code=500, detail=f"Error dispatching jobs - {e}")
 
 
+@api.post("/stop-job")
+async def stop_job(request: StopJobRequest, publisher=Depends(get_jobs_publisher)):
+    """
+    Stop a job with the given job_id
+    """
+    try:
+        message = JobFromAPI(
+            job_type=PipelineJobType.HALT_JOB, job=PipelineHalt(job_id=request.job_id)
+        ).model_dump_json()
+        _ = publisher.publish(message)
+        return JSONResponse({"message": "Job stopped"}, status_code=202)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error during handling of request to /stop-job - {e}")
+
+
 @api.get("/retrieve-metric-info", response_model=MetricsInfo)
 async def retrieve_info() -> MetricsInfo:
     """
@@ -90,13 +115,17 @@ def dispatch_job(
     publisher: Publisher,
     job_id: str,
 ):
-    job = PipelineJob(
-        job_id=job_id,
-        max_concurrent_batches=max_concurrent_batches,
-        batches=batches,
-        batch_size=batch_size,
-        metrics=metrics,
+    job = JobFromAPI(
+        job_type=PipelineJobType.START_JOB,
+        job=PipelineJob(
+            job_id=job_id,
+            max_concurrent_batches=max_concurrent_batches,
+            batches=batches,
+            batch_size=batch_size,
+            metrics=metrics,
+        )
     )
+
     message = job.model_dump_json()
 
     _ = publisher.publish(message)
