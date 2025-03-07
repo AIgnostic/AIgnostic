@@ -6,7 +6,7 @@ The Dataset API should expose a '/fetch-datapoints' GET endpoint, which expects 
 class DatasetResponse(BaseModel):
     features: List[List]  # Each row corresponds to one datapoint. Each column is a feature.
     labels: List[List]  # Each row is a datapoint. Each column is a prediction feature.
-    groups: List[int]  # Each row corresponds to the group ID of the datapoint at that index
+    groups: Optional[List[int]]  # Each row corresponds to the group ID of the datapoint at that index
 ```
 
 Features and labels are mandatory inputs for prediction. The current version only contains metrics for single outputs (only one label), so the labels will look like a list of singleton lists. e.g. 'labels=[['positive'], ['positive'], ['negative]]' or 'labels=[[1], [2], [1]]' etc. It is defined as a 2D list for extensibility in the future for models with multiple outputs.
