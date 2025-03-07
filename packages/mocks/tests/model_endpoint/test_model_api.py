@@ -1,9 +1,11 @@
 from fastapi.testclient import TestClient
-from mocks.api_utils import MOCK_MODEL_API_KEY
+from mocks.api_utils import MOCK_MODEL_API_KEY, MOCK_DATASET_API_KEY
 from mocks.model.huggingface_binclassifier import app as huggingface_app
-from mocks.model.scikit_mock_classifier import app as scikit_app
+from mocks.model.scikit_mock_classifier import app as scikit_classifier_app
+from mocks.model.scikit_mock_regressor import app as scikit_regressor_app
 from mocks.model.finbert import app as finbert_app
 from mocks.model.mock import app as mock_app
+from mocks.dataset.boston_housing_data_server import app as boston_housing_app
 from folktables import ACSDataSource, ACSEmployment
 import pandas as pd
 import pytest
@@ -12,18 +14,20 @@ from mocks.utils import load_scikit_model
 # TODO: Modify the tests to use pydantic models to ensure they are correctly validated
 
 huggingface_mock = TestClient(huggingface_app)
-scikit_mock = TestClient(scikit_app)
+scikit_classifier_mock = TestClient(scikit_classifier_app)
 basic_mock = TestClient(mock_app)
 finbert_mock = TestClient(finbert_app)
+boston_housing_mock = TestClient(boston_housing_app)
+scikit_regressor_mock = TestClient(scikit_regressor_app)
 
 
 def test_non_existent_endpoint_throws_error():
-    response = scikit_mock.get("/hello")
+    response = scikit_classifier_mock.get("/hello")
     assert response.status_code == 404, response.text
 
 
 def test_scikit_read_root():
-    response = scikit_mock.get("/")
+    response = scikit_classifier_mock.get("/")
     assert response.status_code == 200
     assert response.json() == {"message": "Welcome to the Scikit-Learn Model API"}
 
@@ -49,7 +53,7 @@ def test_mock_returns_empty():
 
 
 def test_empty_data_scikit():
-    response = scikit_mock.post("/predict", json={
+    response = scikit_classifier_mock.post("/predict", json={
         "features": [],  # Empty list for no columns
         "labels": [],  # Empty list for no rows
         "group_ids": []  # Empty list for no group IDs
@@ -75,7 +79,7 @@ def test_valid_data_scikit_folktables():
     features, labels, groups = ACSEmployment.df_to_numpy(acs_data)
 
     # Test the response is not empty given a non-empty input
-    response = scikit_mock.post(
+    response = scikit_classifier_mock.post(
         "/predict",
         json={
             "features": features.tolist(),
@@ -100,6 +104,28 @@ def test_valid_data_scikit_folktables():
         assert all([0 <= score <= 1 for score in scores]), (
             "Confidence scores are not probabilities"
         )
+
+
+def test_scikit_regressor_valid_data():
+    data = boston_housing_mock.get(
+        "/fetch-datapoints",
+        headers={"Authorization": f"Bearer {MOCK_DATASET_API_KEY}"},
+        params={"n": 10}
+    )
+    assert data.status_code == 200, data.text
+    data = data.json()
+    response = scikit_regressor_mock.post(
+        "/predict",
+        json=data,
+        headers={"Authorization": f"Bearer {MOCK_MODEL_API_KEY}"}
+    )
+    assert response.status_code == 200, response.text
+    assert len(response.json()["predictions"]) == 10, (
+        "Incorrect number of predictions produced"
+    )
+    assert response.json()["confidence_scores"] is None, (
+        "Confidence scores should not be returned for regression"
+    )
 
 
 def test_valid_data_huggingface():
