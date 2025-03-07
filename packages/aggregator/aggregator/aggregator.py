@@ -4,6 +4,9 @@ import threading
 import queue
 import requests
 import websockets.sync.server
+
+from fastapi import APIRouter
+
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 import time
@@ -21,6 +24,14 @@ from aggregator.connection_manager import ConnectionManager
 
 
 manager = ConnectionManager()
+
+
+api = APIRouter()
+
+
+@api.get("/heartbeat")
+def heartbeat():
+    return {"status": "ok"}, 200
 
 
 def aggregator_metrics_completion_log():
