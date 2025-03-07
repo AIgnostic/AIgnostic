@@ -5,23 +5,58 @@ from transformers import (
     AutoModelForCausalLM
 )
 from common.models import DatasetResponse, ModelResponse
-import torch
+from torch.nn.functional import softmax
+from torch import no_grad
 # Load model directly
 
 
+def load_t2class_model(model_name: str, tokenizer_name: str = None):
+    """
+    Load a text classification model from huggingface.
+
+    :param: model_name: Name of the model to be loaded
+    :param: tokenizer_name = None: Name of the tokenizer to be loaded.
+        If not provided, the model_name is used to load the tokenizer.
+
+    :return: Tuple containing the model and tokenizer objects
+    """
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_name if tokenizer_name else model_name
+    )
+    return model, tokenizer
+
+
+def load_causal_LM(model_name: str, tokenizer_name: str = None):
+    """
+    Load a causal language model from huggingface.
+
+    :param: model_name: Name of the model to be loaded
+    :param: tokenizer_name = None: Name of the tokenizer to be loaded.
+        If not provided, the model_name is used to load the tokenizer.
+
+    :return: Tuple containing the model and tokenizer objects
+    """
+    model = AutoModelForCausalLM.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_name if tokenizer_name else model_name,
+        padding_side="left"
+    )
+    return model, tokenizer
+
+
 def predict_t2class(
+    model,
+    tokenizer,
     input: DatasetResponse,
-    model_name: str,
-    tokenizer_name: str = None,
-    max_length: int = None
+    max_length: int = None,
 ) -> ModelResponse:
     """
     Default predict function for text classification models from huggingface.
 
+    :param: model: Model object to be used for prediction
+    :param: tokenizer: Tokenizer object to be used for tokenization
     :param: input: DatasetResponse object containing input features
-    :param: model_name: Name of the model to be used for prediction
-    :param: tokenizer_name = None: Name of the tokenizer to be used for tokenization.
-        If not provided, the model_name is used to load the tokenizer.
     :param: max_length = None: Maximum length of the input sequence. If not provided,
         the maximum length supported by the model is used.
 
@@ -30,12 +65,7 @@ def predict_t2class(
     try:
         if not input.features:
             return ModelResponse(predictions=[], confidence_scores=[])
-
-        model = AutoModelForSequenceClassification.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_name if tokenizer_name else model_name
-        )
-
+        
         # Convert nested list to list of strings
         texts = [" ".join(map(str, features)) for features in input.features]
 
@@ -48,12 +78,12 @@ def predict_t2class(
             max_length=max_length
         )
 
-        with torch.no_grad():
+        with no_grad():
             outputs = model(**inputs)
             logits = outputs.logits
 
             # Apply softmax on output scores to get probabilities
-            probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
+            probabilities = softmax(outputs.logits, dim=-1)
 
             predicted_class_ids = logits.argmax(dim=-1).tolist()
             labels = [[model.config.id2label[class_id]] for class_id in predicted_class_ids]
@@ -63,9 +93,9 @@ def predict_t2class(
 
 
 def predict_causal_LM(
+    model,
+    tokenizer,
     input: DatasetResponse,
-    model_name: str,
-    tokenizer_name: str = None,
     max_length: int = None,
     num_beams: int = 1,
 ) -> ModelResponse:
@@ -84,12 +114,6 @@ def predict_causal_LM(
     :return: ModelResponse object containing predictions
     """
     try:
-        model = AutoModelForCausalLM.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_name if tokenizer_name else model_name,
-            padding_side="left"
-        )
-        print("Reached here - start of predict_causal_LM")
         # Convert nested list to list of strings
         texts = [" ".join(map(str, features)) for features in input.features]
 
@@ -106,22 +130,17 @@ def predict_causal_LM(
         )
         print(f"Tokenized input: {inputs}")
         # with torch.no_grad():
-        try:
-            if max_length is None:
-                outputs = model.generate(
-                    **inputs,
-                    num_beams=num_beams,
-                )
-            else:
-                outputs = model.generate(
-                    **inputs,
-                    max_length=max_length,
-                    num_beams=num_beams,
-                )
-        except Exception as e:
-            print(e)
-            print(e.__class__)
-            raise e
+        if max_length is None:
+            outputs = model.generate(
+                **inputs,
+                num_beams=num_beams,
+            )
+        else:
+            outputs = model.generate(
+                **inputs,
+                max_length=max_length,
+                num_beams=num_beams,
+            )
         print(f"Generated outputs: {outputs}")
         # Decode the generated tokens
         one_text = tokenizer.decode(outputs[0], skip_special_tokens=True)

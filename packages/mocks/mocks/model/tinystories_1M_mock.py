@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from common.models import DatasetResponse, ModelResponse
-from mocks.model.hf_utils import predict_causal_LM
+from mocks.model.hf_utils import load_causal_LM, predict_causal_LM
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -16,6 +16,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+model, tokenizer = load_causal_LM(model_name, tokenizer_name=tokenizer_name)
 
 
 @app.get("/")
@@ -27,9 +28,9 @@ def read_root():
 def predict(input: DatasetResponse) -> ModelResponse:
 
     output = predict_causal_LM(
-        input,
-        model_name,
-        tokenizer_name=tokenizer_name,
+        model=model,
+        tokenizer=tokenizer,
+        input=input,
         num_beams=1,
     )
     print(f"Model returing output: {output}")
