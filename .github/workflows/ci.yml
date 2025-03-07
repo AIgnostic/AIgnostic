@@ -121,6 +121,18 @@ jobs:
       build_target: 'dispatcher'
     secrets: inherit
 
+  docker-user-metrics:
+    uses: ./.github/workflows/docker.yml
+    needs:
+      - docker-base
+      - lint
+      - test
+      - build
+    with:
+      image_tag: 'user_added_metrics'
+      build_target: 'user_added_metrics'
+    secrets: inherit
+
   # Build nginx reverse proxy
   docker-nginx:
     # Build base image first to enable caching
@@ -138,6 +150,7 @@ jobs:
       - docker-aggregator
       - docker-dispatcher
       - docker-nginx
+      - docker-user-metrics
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
