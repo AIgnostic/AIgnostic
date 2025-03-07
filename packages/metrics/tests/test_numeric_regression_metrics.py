@@ -1,12 +1,10 @@
 from metrics.models import CalculateRequest, MetricValue
-from common.models import ModelResponse
 import pytest
 from tests.server_factory import (
     server_factory,
     HOST,
     server_configs
 )
-from fastapi.testclient import TestClient
 from metrics.metrics import calculate_metrics
 from tests.metric_mocks.mock_regressor_numeric_input import (
     TEST_DATA_REGRESSION

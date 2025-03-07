@@ -8,6 +8,7 @@ from mocks.dataset.boston_housing_data_server import (
     BOSTON_LABELS as labels
 )
 
+
 def main():
     print("Training a scikit-learn regression model...")
     boston = fetch_openml(name="boston", version=1, as_frame=True)
@@ -16,7 +17,6 @@ def main():
     # Convert all columns to numeric type
     X = df[features].apply(pd.to_numeric, errors='coerce')
     y = pd.to_numeric(df[labels], errors='coerce')
-
 
     # Split the data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
