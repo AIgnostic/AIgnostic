@@ -10,7 +10,7 @@ the implications of these metrics in relation to these laws.
 Below you are provided with:
 - The name of the property in question
 - A list of metrics linked to the property, each with a name and value
-- Extracts of articles of the EU AI Act related to the metrics/property to use
+- Extracts of articles of various legislations related to the metrics/property to use
 
 We want to know how 'good' our LLM would be and if it is compliant with the law - it is your job based on the
 information to provide a written response about this
@@ -41,21 +41,31 @@ Please provide your response in a maximum of 2 paragraphs.
 """
 
 
-def construct_articles(article_extracts: List[dict]) -> str:
+def construct_articles(article_extracts: List[List]) -> str:
     finalStr = ""
+    print("construct_articles: Article Extracts: ", article_extracts)
+    for legislations in article_extracts:
+        if len(legislations) != 0:
+            article_type = legislations[0]["article_type"]
 
-    for extract in article_extracts:
-        article_number = extract["article_number"]
-        article_title = extract["article_title"]
-        description = extract["description"]
+        print(f"construct_articles: Legislation: {legislations}")
+        for extract in legislations:
+            print (f"construct_articles: extract: {extract}")
+            article_number = extract["article_number"]
+            article_title = extract["article_title"]
+            description = extract["description"]
+            intermediateStr = f"""
+<article_number>{article_number}</article_number>
+<article_title>{article_title}</article_title>
+<description>{description}</description>
+        """
+
         finalStr += f"""
-<article>
-    <article_number>{article_number}</article_number>
-    <article_title>{article_title}</article_title>
-    <description>{description}</description>
-</article>
-                """
-
+<article_type>
+<article_type_text>{article_type}</article_type_text>
+    {intermediateStr}
+</article_type>
+        """
     return finalStr
 
 
