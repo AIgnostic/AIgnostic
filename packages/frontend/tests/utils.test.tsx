@@ -7,6 +7,8 @@ import {
   MOCK_FINANCIAL_DATASET_API_URL,
   MOCK_WIKI_DATASET_API_URL,
   MOCK_GEMINI_API_URL,
+  MOCK_SCIKIT_REGRESSION_DATASET_URL,
+  MOCK_SCIKIT_REGRESSOR_URL,
 } from '../src/app/constants';
 
 describe('checkURL function', () => {
@@ -25,6 +27,8 @@ describe('checkURL function', () => {
       MOCK_FINANCIAL_DATASET_API_URL,
       MOCK_GEMINI_API_URL,
       MOCK_WIKI_DATASET_API_URL,
+      MOCK_SCIKIT_REGRESSOR_URL,
+      MOCK_SCIKIT_REGRESSION_DATASET_URL,
 
       // Prod
       'http://206.189.119.159:5011/predict',
