@@ -1,11 +1,13 @@
 coverage:
+  ignore:
+    - 'mocks/mocks/model/train_*.py'
   status:
     project:
       default:
         # basic
         target: auto #default
         threshold: 5% # allow up to 5% drop in a PR
-        base: auto 
+        base: auto
     patch:
       default:
         # basic
