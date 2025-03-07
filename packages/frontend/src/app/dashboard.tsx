@@ -12,6 +12,7 @@ import LinearProgress, {
 import { pdf } from '@react-pdf/renderer';
 import { v4 as uuidv4 } from 'uuid';
 import { BACKEND_STOP_JOB_URL } from './constants';
+import { styles } from './home.styles';
 
 interface DashboardProps {
   onComplete: () => void;
@@ -32,8 +33,43 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
   const [showError, setShowError] = useState<boolean>(false);
   const [retryButton, setRetryButton] = useState<JSX.Element | null>(null);
 
+
+  const buttonRetry = (
+    <button
+      onClick={() => {
+        window.location.reload();
+      }}
+      style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+    >
+      Retry
+    </button>
+  );
+
   // const [report, setReport] = useState<Report | null>(null);
 
+  const earlyStop = async () => {
+    // close the socket so that you dont keep receiving errors
+    console.log("Closing socket due to error");
+    if (socket) {
+      disconnectRef.current = true; // intentional disconnect, don't retry
+      socket.close();
+    }
+
+    let id = sessionStorage.getItem('userId');
+    console.log("Stopping job with id: ", id);
+    // ping api to stop processing batches for this job
+    await fetch(BACKEND_STOP_JOB_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ job_id: id }),
+    });
+
+    // clear userId in session storage
+    // to avoid reconnecting with the same userId on reload
+    sessionStorage.removeItem('userId');
+  }
 
   useEffect(() => {
     if (socket) {
@@ -101,42 +137,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
             const handleError = async () => {
               setShowError(true);
               setError({ header: 'Error 500:', text: `${data.message} : ${data.content}` });
-              
-              // close the socket so that you dont keep receiving errors
-              console.log("Closing socket due to error");
-              disconnectRef.current = true; // intentional disconnect, don't retry
-              socket.close();
-              
-              let id = sessionStorage.getItem('userId');
-              console.log("Stopping job with id: ", id);
-              // ping api to stop processing batches for this job
-              await fetch(BACKEND_STOP_JOB_URL, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ job_id: id }),
-              });
-
-              // clear userId in session storage
-              // to avoid reconnecting with the same userId on reload
-              sessionStorage.removeItem('userId');
-
+              earlyStop()
               setLog("An error occurred during the computation of the metrics. Please try again later.");
-              // retry button, that reloads the page
-              const reloadPage = () => {
-                // essentially start a new session
-                // first clear session storage and set new uuid
-                // then reload the page
-                window.location.reload();
-              };
-
-              const retryButton = (
-                <button onClick={reloadPage} style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-                  Retry
-                </button>
-              );
-              setRetryButton(retryButton);
+              setRetryButton(buttonRetry);
             }
             handleError();
             break;
@@ -210,6 +213,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
       )}
 
       <p>{log}</p>
+      <button onClick={async () => {
+        await earlyStop();
+        setItems([]);
+        setLog("Evaluation pipeline cancelled. Reload page?");
+        setRetryButton(buttonRetry);
+      }}
+        style={styles.button}>
+        Stop Early
+      </button>
 
       <BorderLinearProgress
         variant="determinate"
@@ -229,7 +241,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
           marginTop: '16px',
         }}
       >
-        {items.length > 0 ? (
+        {retryButton !== null && items.length > 0 ? (
           items.slice(-1).map((item, itemIndex) => {
             return (
               <div
@@ -260,24 +272,24 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
                       >
                         <h3>{metric_name.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</h3>
                       </div>
-                    <div>
-                      {(metric_info.error !== null) ?
                       <div>
-                        <p style={{ color: 'red' }}>An error occurred during the computation of this metric.</p>
-                      </div>
-                      :
-                      <MetricBar 
+                        {(metric_info.error !== null) ?
+                          <div>
+                            <p style={{ color: 'red' }}>An error occurred during the computation of this metric.</p>
+                          </div>
+                          :
+                          <MetricBar
 
-                        min={metric_info.range[0]} 
-                        max={metric_info.range[1]}
-                        actual={metric_info.value}
-                        ideal={metric_info.ideal_value}
-                        label="" 
-                      />
-                      }
+                            min={metric_info.range[0]}
+                            max={metric_info.range[1]}
+                            actual={metric_info.value}
+                            ideal={metric_info.ideal_value}
+                            label=""
+                          />
+                        }
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             );
           })
