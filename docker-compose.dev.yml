@@ -99,6 +99,8 @@ services:
       - rabbitmq
     deploy:
       replicas: 3
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
   user_added_metrics:
     container_name: user-added-metrics
@@ -190,6 +192,19 @@ services:
     ports:
       - '5024:5024'
 
+  # tinystories_dataset_api:
+  #   container_name: tinystories-dataset-api
+  #   image: aignostic/dev
+  #   volumes:
+  #     - .:/app
+  #     - venv:/app/.venv
+  #   command: poetry run python3 -u -m mocks.dataset.tinystories_dataset_server --host 0.0.0.0 --reload
+  #   working_dir: /app/packages/mocks
+  #   networks:
+  #     - aignostic_network
+  #   ports:
+  #     - '5026:5026'
+
   scikit_mock_model_api:
     container_name: scikit-mock-model-api
     image: aignostic/dev
@@ -215,6 +230,19 @@ services:
       - aignostic_network
     ports:
       - '5001:5001'
+  
+  # tinystories_mock_model_api:
+  #   container_name: tinystories-mock-model-api
+  #   image: aignostic/dev
+  #   volumes:
+  #     - .:/app
+  #     - venv:/app/.venv
+  #   command: poetry run python3 -u -m mocks.model.tinystories_1M_mock --host 0.0.0.0 --reload
+  #   working_dir: /app/packages/mocks
+  #   networks:
+  #     - aignostic_network
+  #   ports:
+  #     - '5027:5027'
 
 volumes:
   venv:

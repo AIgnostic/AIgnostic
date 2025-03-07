@@ -6,9 +6,8 @@ services:
   ####
 
   folktables_dataset_api:
-    container_name: folktables-dataset-api
     image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -u -m mocks.dataset.mock_server --host 0.0.0.0 --reload
+    command: /app/.venv/bin/python -m uvicorn mocks.dataset.mock_server:app --host 0.0.0.0 --port 5010
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
@@ -16,9 +15,8 @@ services:
       - '5010:5010'
 
   financial_dataset_api:
-    container_name: financial-dataset-api
     image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -u -m mocks.dataset.financial_data_server --host 0.0.0.0 --reload
+    command: /app/.venv/bin/python -m uvicorn mocks.dataset.financial_data_server:app --host 0.0.0.0 --port 5024
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
@@ -26,23 +24,29 @@ services:
       - '5024:5024'
 
   scikit_mock_model_api:
-    container_name: scikit-mock-model-api
     image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -u -m mocks.model.scikit_mock --host 0.0.0.0 --reload
+    command: /app/.venv/bin/python -m uvicorn mocks.model.scikit_mock:app --host 0.0.0.0 --port 5011
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
     ports:
       - '5011:5011'
   finbert_mock_model_api:
-    container_name: finbert-mock-model-api
     image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -u -m mocks.model.finbert --host 0.0.0.0 --reload
+    command: /app/.venv/bin/python -m uvicorn mocks.model.finbert:app --host 0.0.0.0 --port 5001
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
     ports:
       - '5001:5001'
+  tinystories_dataset_api:
+    image: ghcr.io/aignostic/mocks
+    command: /app/.venv/bin/python -m uvicorn mocks.model.scikit_mock:app --host 0.0.0.0 --port 5026
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
+      - '5026:5026'
 
 networks:
   aignostic_network:

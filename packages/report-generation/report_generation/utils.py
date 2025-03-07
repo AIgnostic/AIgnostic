@@ -168,8 +168,8 @@ def get_legislation_extracts(metrics_data: dict, legislation: LegislationInforma
                     url,
                     article_extract)
                 parsed_data = parse_legislation_text(
-                    article_content,
                     regulations,
+                    article_content,
                     info)
                 final_legislation_extracts_per_leg.append(parsed_data)
             property_result["legislation_extracts"].append((

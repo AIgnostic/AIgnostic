@@ -2,6 +2,7 @@ import os
 import json
 import threading
 import queue
+import requests
 import websockets.sync.server
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
@@ -290,6 +291,17 @@ def process_batch_result(worker_results: WorkerResults):
 
     if aggregator.samples_processed == aggregator.total_sample_size:
         print(f"Finished processing all batches for user {user_id}")
+
+        # clear the user metric server :
+        try:
+            clear_response = requests.delete(
+                f"{USER_METRIC_SERVER_URL}/clear-user-data/{worker_results.user_id}"
+            )
+            clear_response.raise_for_status()
+            print(f"Clear response: {clear_response}")
+        except Exception as e:
+            print(f"Error clearing user data: {e}")
+
         print("Creating and sending final report")
         send_to_clients(
             AggregatorMessage(

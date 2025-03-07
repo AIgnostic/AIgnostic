@@ -14,7 +14,9 @@ mock_task_to_metric_map = {
 }
 
 
-@patch("api.router.api.task_type_to_metric", mock_task_to_metric_map)  # Use correct module path
+@patch(
+    "api.router.api.task_type_to_metric", mock_task_to_metric_map
+)  # Use correct module path
 def test_retrieve_metric_info():
     """Test GET /retrieve-metric-info"""
 
@@ -25,10 +27,7 @@ def test_retrieve_metric_info():
 
 
 def test_generate_metrics_from_info_success():
-    mock_channel = MagicMock()
-    mock_channel.configure_mock(basic_publish=MagicMock())
-    with patch("api.router.api.get_channel", return_value=mock_channel), \
-         patch("api.router.api.dispatch_job", return_value=None) as mock_dispatch_job:
+    with patch("api.router.api.dispatch_job", return_value=None) as mock_dispatch_job:
         """Test POST /evaluate with a valid request"""
 
         request_data = {
@@ -38,7 +37,7 @@ def test_generate_metrics_from_info_success():
             "model_api_key": "test_model_key",
             "metrics": ["accuracy", "precision"],
             "model_type": "binary_classification",
-            "user_id": "1234"
+            "user_id": "1234",
         }
 
         response = client.post("/evaluate", json=request_data)
@@ -46,12 +45,11 @@ def test_generate_metrics_from_info_success():
         assert response.status_code == 202
         assert response.json() == {"message": "Created and dispatched jobs"}
         mock_dispatch_job.assert_called()
-        # TODO: Check that channel.basic_publish was called with the correct arguments
 
 
 def test_generate_metrics_from_info_failure():
-    mock_channel = MagicMock()
-    with patch("api.router.api.get_channel", return_value=mock_channel):
+    mock_publisher = MagicMock()
+    with patch("api.router.api.get_jobs_publisher", return_value=mock_publisher):
 
         """Test POST /evaluate when dispatching fails"""
         request_data = {
@@ -61,12 +59,18 @@ def test_generate_metrics_from_info_failure():
             "model_api_key": "test_model_key",
             "metrics": ["accuracy", "precision"],
             "model_type": "binary_classification",
-            "user_id": "1234"
+            "user_id": "1234",
         }
 
         # Simulate an exception when dispatching jobs
         try:
-            with patch("api.router.api.dispatch_job", side_effect=Exception("RabbitMQ error")):
+            with patch(
+                "api.router.api.dispatch_job", side_effect=Exception("RabbitMQ error")
+            ):
                 client.post("/evaluate", json=request_data)
         except Exception as e:
-            assert str(e) == str(HTTPException(status_code=500, detail="Error dispatching jobs - RabbitMQ error"))
+            assert str(e) == str(
+                HTTPException(
+                    status_code=500, detail="Error dispatching jobs - RabbitMQ error"
+                )
+            )
