@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch
 from api.router.rabbitmq import create_publisher, get_jobs_publisher
 

@@ -3,7 +3,6 @@
 
 import os
 import threading
-from time import sleep
 from common.rabbitmq.connect import connect_to_rabbitmq
 from pika import BlockingConnection, PlainCredentials
 from pika.adapters.blocking_connection import BlockingChannel
