@@ -1,18 +1,13 @@
 import isURL from 'validator/lib/isURL';
 import jsPDF from 'jspdf';
 import {
-  MOCK_SCIKIT_API_URL,
-  MOCK_FINBERT_API_URL,
-  MOCK_FOLKTABLES_DATASET_API_URL,
-  MOCK_FINANCIAL_DATASET_API_URL,
-  MOCK_FINANCIAL_DATASET_API_URL_PROD,
-  MOCK_FINBERT_API_URL_PROD,
-  MOCK_FOLKTABLES_DATASET_API_URL_PROD,
-  MOCK_SCIKIT_API_URL_PROD,
   BACKEND_FETCH_METRIC_INFO_URL,
   MOCK_WIKI_DATASET_API_URL,
   MOCK_GEMINI_API_URL,
 } from './constants';
+
+const MIN_SAMPLE_SIZE = 1000;
+const MAX_SAMPLE_SIZE = 10000;
 
 async function fetchMetricInfo(): Promise<TaskToMetricMap> {
   try {
@@ -24,58 +19,30 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
     throw error; // Rethrow the error so the caller can handle it
   }
 }
-function checkURL(url: string): boolean {
-  const validURLS = [
-    MOCK_SCIKIT_API_URL,
-    MOCK_FINBERT_API_URL,
-    MOCK_FOLKTABLES_DATASET_API_URL,
-    MOCK_FINANCIAL_DATASET_API_URL,
-    "http://localhost:5001/predict",
-    "http://localhost:5024/fetch-datapoints",
-    "http://localhost:9001/predict",
-    "http://localhost:5025/fetch-datapoints",
-    // Prod
-    MOCK_SCIKIT_API_URL_PROD,
-    MOCK_FINBERT_API_URL_PROD,
-    MOCK_FOLKTABLES_DATASET_API_URL_PROD,
-    MOCK_FINANCIAL_DATASET_API_URL_PROD,
-    MOCK_GEMINI_API_URL,
-    MOCK_WIKI_DATASET_API_URL,
-  ];
-  if (validURLS.includes(url)) {
-    return true;
-  }
-  if (url === '') {
+
+function checkValidURL(str: string): boolean {
+  const regex = /^(https?:\/\/)?(([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*)(\.[a-zA-Z]{2,})?|([0-9]{1,3}\.){3}[0-9]{1,3})(:\d+)?(\/[^\s]*)?$/;
+  if (!regex.test(str)) {
     return false;
   }
-  // allow urls from
+
+  let url;
   try {
-    if (!isURL(url) || url.includes('%20')) {
-      throw new Error('Invalid URL ');
-    }
-    new URL(url); // If the URL is valid, this will not throw an error
-    return true;
-  } catch (e) {
-    console.log(e + url);
-    return false; // If an error is thrown, the URL is invalid
+    url = new URL(str);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_) {
+    return false;
   }
+
+  return url.protocol === "http:" || url.protocol === "https:";
 }
 function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
-  // Check batchSize and numberOfBatches greater than 1
   if (batchSize < 1 || numberOfBatches < 1) {
     return false;
   }
   const totalSampleSize = batchSize * numberOfBatches;
-  return 1000 <= totalSampleSize && totalSampleSize <= 10000;
+  return MIN_SAMPLE_SIZE <= totalSampleSize && totalSampleSize <= MAX_SAMPLE_SIZE;
 }
-// retrieves a dictionary mapping task types to the metrics that can be computed for them
-// returns a dictionary with the following structure:
-// {
-//     "binary_classification": ["metric_1", "metric_2", ...],
-//     "multi_class_classification": ["metric_1", "metric_2", ...],
-//     "regression": ["metric_1", "metric_2", ...],
-//     ...
-// }
 export interface TaskToMetricMap {
   [taskType: string]: string[];
 }
@@ -86,4 +53,5 @@ function applyStyle(doc: jsPDF, style: any) {
   doc.setFont(style.font, style.style);
   doc.setFontSize(style.size);
 }
-export { checkURL, checkBatchConfig, applyStyle, fetchMetricInfo };
+
+export { checkValidURL as checkURL, checkBatchConfig, applyStyle, fetchMetricInfo };

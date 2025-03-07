@@ -3,7 +3,14 @@ import logging
 from typing import Optional
 import uuid
 
-from common.models.pipeline import Batch, JobStatusMessage, JobStatus, PipelineJob
+from common.models.pipeline import (
+    Batch,
+    JobStatusMessage,
+    JobStatus,
+    PipelineJob,
+    JobFromAPI,
+    PipelineJobType,
+)
 from common.rabbitmq.constants import BATCH_QUEUE, JOB_QUEUE, STATUS_QUEUE
 from common.rabbitmq.connect import publish_to_queue
 from dispatcher.models import RunningJob
@@ -74,7 +81,7 @@ class Dispatcher:
                 job_data = json.loads(body)
                 logger.info(f"Received job: {job_data}")
                 logger.debug("Unpacking job data")
-                return PipelineJob(**job_data)
+                return JobFromAPI(**job_data)
             except ValueError as e:
                 self.handle_job_unpack_error(e)
         return None
@@ -104,7 +111,14 @@ class Dispatcher:
             self.propogate_error(job_id, ValueError("Job not found in Redis!"))
             logger.warning(f"This error for {job_id} is unhandled!")
             return
+
         logger.debug(f"Running job: {running_job}")
+
+        # Stop dispatching if the job is cancelled
+        if running_job.job_data == JobStatus.CANCELLED:
+            logger.info(f"Job {job_id} has been CANCELLED. No batches will be dispatched.")
+            return
+
         # How many batches can we run?
         left_batches = running_job.pending_batches
         if left_batches == 0:
@@ -112,6 +126,7 @@ class Dispatcher:
                 f"No batches left to run for job {job_id}. All batches complete={running_job.completed_batches}, errored={running_job.errored_batches}, pending={running_job.currently_running_batches}"  # noqa
             )
             return
+
         # If we can run more batches, do so
         # We can dispatch up to (no. batches we can run - batches currently running), but if we have fewer than
         # that batches left, dispatch that
@@ -137,6 +152,7 @@ class Dispatcher:
             logger.debug(f"Updating Redis for job {job_id}")
             running_job.currently_running_batches += 1
             running_job.pending_batches = max(0, running_job.pending_batches - 1)
+            running_job.status = JobStatus.RUNNING
             self.update_job(job_id, running_job)
             logger.info(
                 f"Updated running job in Redis for job {job_id}, pending={running_job.pending_batches}, running={running_job.currently_running_batches}, completed={running_job.completed_batches}, errored={running_job.errored_batches}"  # noqa
@@ -151,6 +167,7 @@ class Dispatcher:
         # Create object in redis
         running_job = RunningJob(
             job_data=job,
+            status=JobStatus.PENDING,
             currently_running_batches=0,
             completed_batches=0,
             errored_batches=0,
@@ -214,7 +231,7 @@ class Dispatcher:
             self._redis_client.delete(self._get_job_redis_key(msg.job_id))
             logger.info(f"Job {msg.job_id} marked as complete & deleted")
             logger.warning(
-                f"Job {msg.job_id} is complete but this is unhandled! Erroed batches are not reproted"
+                f"Job {msg.job_id} is complete but this is unhandled! Errored batches are not reported"
             )
         else:
             logger.info(f"Dispatching more batches for job {msg.job_id}...")
@@ -224,10 +241,10 @@ class Dispatcher:
         """Return the key to reference a job in redis"""
         return redis_key("jobs", job_id)
 
-    def update_job(self, job_id: str, running_job: RunningJob):
+    def update_job(self, job_id: str, running_job: RunningJob, ttl: Optional[int] = None):
         """Update a job in redis"""
         self._redis_client.set(
-            self._get_job_redis_key(job_id), running_job.model_dump_json()
+            self._get_job_redis_key(job_id), running_job.model_dump_json(), ex=ttl
         )
 
     def get_job(self, job_id: str) -> RunningJob | None:
@@ -244,9 +261,14 @@ class Dispatcher:
             job_data = json.loads(body)
             logger.info(f"Received job: {job_data}")
             logger.debug("Unpacking job data")
-            job = PipelineJob(**job_data)
-            # Process
-            self.process_new_job(job)
+            job = JobFromAPI(**job_data)
+            if (job.job_type == PipelineJobType.HALT_JOB):
+                self.stop_job(job.job.job_id)
+                return
+            elif (job.job_type == PipelineJobType.START_JOB):
+                self.process_new_job(job.job)
+            else:
+                logger.error(f"Invalid job type: {job.job_type}")
         except ValueError as e:
             self.handle_job_unpack_error(e)
 
@@ -259,6 +281,24 @@ class Dispatcher:
             self.handle_job_completion(msg)
         except ValueError as e:
             self.handle_status_unpack_error(e)
+
+    def stop_job(self, job_id: str):
+        """Stops a job by removing its pending batches from Redis"""
+        logger.info(f"Stopping job {job_id}...")
+
+        running_job = self.get_job(job_id)
+        if not running_job:
+            logger.error(f"Job {job_id} not found in Redis!")
+            return
+
+        # Mark as stopped
+        running_job.status = JobStatus.CANCELLED
+        # Clear pending batches
+        running_job.pending_batches = 0
+        self.update_job(job_id, running_job, ttl=600)
+        # Store updated job in Redis with TTL, 10 mins
+
+        logger.info(f"Job {job_id} stopped. Pending batches removed.")
 
     def run(self):
         """Main dispatcher loop"""

@@ -105,6 +105,7 @@ class AggregatorJob(BaseModel):  # pragma: no cover
     and what aggregator picks up from the queue
     """
     job_type: JobType
+    user_id: str
     content: Union[WorkerResults, WorkerError]
 
 
