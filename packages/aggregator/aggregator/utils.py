@@ -10,10 +10,6 @@ def create_legislation_info(name, url):
         article_extract=lambda article_number: f"art-{article_number}-{name.lower().replace(' ', '_')}"
     )
 
-# LEGISLATION_INFORMATION = {
-#     "gdpr": create_legislation_info("GDPR", "https://gdpr-info.eu/"),
-#     "eu_ai": create_legislation_info("EU AI Act", "https://ai-act-law.eu/")
-# }
 
 LEGISLATION_INFORMATION = {
     "gdpr": LegislationInfo(

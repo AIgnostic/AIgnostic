@@ -1,8 +1,9 @@
 import React from 'react';
 import { Page, Text, View, Document, Link, StyleSheet } from '@react-pdf/renderer';
-import { Report, Metric } from '../types';
+import { Report, Metric, LegislationExtract } from '../types';
 import theme from '../theme';
 import MetricBarPDF from './MetricBarPDF';
+import { legislation } from '../constants';
 
 // Create styles
 const styles = StyleSheet.create({
@@ -49,6 +50,12 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         backgroundColor: 'grey',
     },
+    boldText: {
+        marginLeft: 8,
+        fontSize: 12,
+        fontWeight: 'bold',
+        fontFamily: 'Times-Roman',
+    },
     bulletPoint: {
         marginLeft: 10,
         fontSize: 12,
@@ -59,7 +66,7 @@ const styles = StyleSheet.create({
     },
     text: {
         fontSize: 12,
-        marginBottom: 6,
+        marginBottom: 8,
         fontFamily: 'Times-Roman',
     },
     hyperlink: {
@@ -84,8 +91,13 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
             {/* Disclaimers Section */}
             <View style={styles.section}>
                 <Text style={styles.header}>Legal Information and Disclaimers</Text>
-                <Text style={styles.text}>AIgnostic is a tool for aiding audits and evaluations. It is merely a framework and guide.</Text>
-                <Text style={styles.text}>The developers of this tool cannot be held liable for any decisions, complaints and legal matters that arise from the AIgnostic evaluation or report.</Text>
+                <Text style={styles.text}>
+                    AIgnostic is a tool for aiding audits and evaluations. It is merely a framework and guide.
+                </Text>
+                <Text style={styles.text}>
+                    The developers of this tool cannot be held liable for any decisions, complaints, and legal matters
+                    that arise from the AIgnostic evaluation or report.
+                </Text>
             </View>
 
             {/* General Info Section */}
@@ -102,49 +114,38 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
             {report.properties.map((section, index) => (
                 <View key={index} style={styles.section}>
                     {/* Section Header */}
-                    <Text style={styles.header}>
-                        {formatUpperCase(section.property)}
-                    </Text>
+                    <Text style={styles.header}>{formatUpperCase(section.property)}</Text>
 
                     {/* Computed Metrics */}
-                    {Object.entries(section.computed_metrics).length > 0 ?
+                    {Object.entries(section.computed_metrics).length > 0 ? (
                         <View>
                             <Text style={styles.subsection}>Computed Metrics</Text>
                             {section.computed_metrics.map((metric_info, idx) => (
-
-                                (metric_info.error) ?
-                                    <View key={idx} style={{ marginBottom: 10 }}>
-                                        <Text style={[styles.text, {fontSize: 14}]}>
-                                            {metric_info.metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                                <View key={idx} style={{ marginBottom: 10 }}>
+                                    <Text style={[styles.text, { fontSize: 14 }]}>
+                                        {metric_info.metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                                    </Text>
+                                    {metric_info.error ? (
+                                        <Text style={styles.text}>
+                                            An error occurred during the computation of this metric.
                                         </Text>
-                                        <Text style={styles.text}>An error occured during the computation of this metric.</Text>
-
-                                    </View>
-
-                                    :
-
-                                    <View key={idx} style={{ marginBottom: 10 }}>
-                                        <Text style={[styles.text, {fontSize: 14}]}>
-                                            {metric_info.metric.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
-                                        </Text>
+                                    ) : (
                                         <MetricBarPDF
                                             value={parseFloat(metric_info.value)}
                                             idealValue={parseFloat(metric_info.ideal_value)}
-                                            min={(metric_info.range[0] === null) ? -Infinity : parseFloat(metric_info.range[0])}
-                                            max={(metric_info.range[1] === null) ? Infinity : parseFloat(metric_info.range[1])}
+                                            min={metric_info.range[0] === null ? -Infinity : parseFloat(metric_info.range[0])}
+                                            max={metric_info.range[1] === null ? Infinity : parseFloat(metric_info.range[1])}
                                         />
-                                    </View>
+                                    )}
+                                </View>
                             ))}
-                        </View>  
-
-                        :
-
-                        // TODO: Add suggested metrics
+                        </View>
+                    ) : (
                         <View>
                             <Text style={styles.subsection}>Computed Metrics</Text>
                             <Text style={styles.text}>No metrics were computed for this property.</Text>
                         </View>
-                    }
+                    )}
 
                     {/* LLM Insights */}
                     {section.llm_insights.length > 0 && (
@@ -156,28 +157,34 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                         </View>
                     )}
 
-                    
-                    {/* Legislation Extracts (Italicized) */}
+                    {/* Legislation Extracts (Detailed with Links) */}
                     {section.legislation_extracts.length > 0 && (
                         <View>
                             <Text style={styles.subsection}>Legislation</Text>
-                            <Text style={styles.text}>For more detailed information pertaining to the legislation, refer to the relevant legislation articles via the following links:</Text>
-                            {section.legislation_extracts.map((legislation, idx) => (
-                                <Text key={idx} style={[styles.bulletPoint, styles.quote]}>
-                                    • Article {legislation.article_number} [{legislation.article_title}]:  
-                                    <Link src={legislation.link} style={styles.hyperlink}>
-                                        {legislation.link}
-                                    </Link>
-                                </Text>
+                            {section.legislation_extracts.map((leg, idx) => (
+                                <View key={idx}>
+                                    <Text style={styles.boldText}>{leg[0].article_type}</Text>
+                                        {leg.map((extract: LegislationExtract, idx1: number) => (
+                                            <View key={idx1}>
+                                                <Text style={[styles.text, { fontStyle: 'italic' }]}> 
+                                                    Article {extract.article_number}: {extract.article_title}
+                                                </Text>
+                                                {}
+                                                <Text style={styles.bulletPoint}>
+                                                    • Link: <Link src={extract.link} style={styles.hyperlink}>{extract.link}</Link>
+                                                </Text>
+                                            </View>
+                                        ))}
+                                    </View>
                             ))}
                         </View>
                     )}
-
                 </View>
             ))}
         </Page>
     </Document>
 );
+
 
 export default ReportRenderer;
 

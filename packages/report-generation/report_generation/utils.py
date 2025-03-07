@@ -65,7 +65,7 @@ def parse_legislation_text(article_content: str, article_num: str, article_type:
         # Extract Article Title
         type = ""
         print("parse: article_type is ", article_type)
-        if article_type == "gdpr":
+        if article_type == "GDPR":
             type = "GDPR"
         else:
             type = "AI Act"  # TODO: EXTEND TO A SWITCH CASE STATEMENT
@@ -174,12 +174,13 @@ def get_legislation_extracts(metrics_data: dict, legislation: LegislationInforma
                 parsed_data = parse_legislation_text(
                     article_content, 
                     regulations, 
-                    id, 
+                    name, 
                     info, 
                     url, 
                     article_extract)
                 final_legislation_extracts_per_leg.append(parsed_data)
-            property_result["legislation_extracts"].append(final_legislation_extracts_per_leg)
+            property_result["legislation_extracts"].append((
+                final_legislation_extracts_per_leg))
         results.append(property_result)
 
     return results

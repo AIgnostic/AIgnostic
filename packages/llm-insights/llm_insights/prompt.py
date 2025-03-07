@@ -50,7 +50,6 @@ def construct_articles(article_extracts: List[List]) -> str:
 
         print(f"construct_articles: Legislation: {legislations}")
         for extract in legislations:
-            print (f"construct_articles: extract: {extract}")
             article_number = extract["article_number"]
             article_title = extract["article_title"]
             description = extract["description"]
