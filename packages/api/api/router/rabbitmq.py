@@ -1,22 +1,17 @@
 import os
-from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
+from common.rabbitmq.constants import JOB_QUEUE
+from common.rabbitmq.publisher import Publisher
 
-connection = None
-channel = None
-
+publisher: Publisher = None
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
 
-def get_channel():
-    return channel
+def get_jobs_publisher():
+    return publisher
 
 
-def fastapi_connect_rabbitmq():
-    global connection
-    global channel
-    connection = connect_to_rabbitmq(host=RABBIT_MQ_HOST, retries=10)
-    channel = connection.channel()
-    channel.confirm_delivery()
-    init_queues(channel)
+def create_publisher():
+    global publisher
+    publisher = Publisher(queue=JOB_QUEUE)
     print("Connection established to RabbitMQ")
-    return channel
+    return publisher
