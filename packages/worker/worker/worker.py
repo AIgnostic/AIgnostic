@@ -165,6 +165,12 @@ class Worker:
                 detail=f"An error occurred while contacting the dataset API: {e}",
                 status_code=500
             )
+        
+        except Exception as e:
+            raise WorkerException(
+                detail=f"An unknown error occurred while querying the model: {e}",
+                status_code=500
+            )
 
         try:
             # Ensure response is JSON
