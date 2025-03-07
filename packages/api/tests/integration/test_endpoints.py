@@ -1,7 +1,6 @@
 from fastapi import HTTPException
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
-from api.router.api import api
 from api.router.rabbitmq import get_jobs_publisher
 from api.__init__ import create_application
 from common.models.pipeline import PipelineJobType, JobFromAPI, PipelineHalt
@@ -33,11 +32,11 @@ def test_stop_job():
     """Test POST /stop-job"""
 
     mock_publisher = MagicMock()
-    
+
     app.dependency_overrides[get_jobs_publisher] = lambda: mock_publisher
 
     response = client.post("/stop-job", json={"job_id": "1234"})
-    
+
     mock_publisher.publish.assert_called_with(
         JobFromAPI(job_type=PipelineJobType.HALT_JOB, job=PipelineHalt(job_id="1234")).model_dump_json()
     )
