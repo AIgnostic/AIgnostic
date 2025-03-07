@@ -162,8 +162,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.SERVER_DOCKER_USERNAME }}
+          password: ${{ secrets.SERVER_DOCKER_PASSWORD }}
       - name: Make SSH Directory
         run: mkdir -p ~/.ssh
       - name: Commit SSH Key
@@ -199,8 +199,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.SERVER_DOCKER_USERNAME }}
+          password: ${{ secrets.SERVER_DOCKER_PASSWORD }}
       - name: Make SSH Directory
         run: mkdir -p ~/.ssh
       - name: Commit SSH Key
