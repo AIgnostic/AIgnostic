@@ -113,6 +113,7 @@ class AggregatorJob(BaseModel):
     """
 
     job_type: JobType
+    user_id: str
     content: Union[WorkerResults, WorkerError]
 
 

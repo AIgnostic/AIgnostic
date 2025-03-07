@@ -76,22 +76,26 @@ class Worker:
         init_queues(self._channel)
         print("Connection established to RabbitMQ")
 
-    def queue_result(self, result: WorkerResults):
+    def queue_result(self, result: WorkerResults, user_id: str):
         """
         Function to queue the results of a job
         """
-        job = AggregatorJob(job_type=JobType.RESULT, content=result)
+        job = AggregatorJob(
+            job_type=JobType.RESULT,
+            user_id=user_id,
+            content=result)
 
         self._channel = publish_to_queue(
             self._channel, RESULT_QUEUE, job.model_dump_json()
         )
 
-    def queue_error(self, error: WorkerError):
+    def queue_error(self, error: WorkerError, user_id: str):
         """
         Function to queue an error message
         """
         job = AggregatorJob(
             job_type=JobType.ERROR,
+            user_id=user_id,
             content=error,
         )
         self._channel = publish_to_queue(
@@ -298,7 +302,7 @@ class Worker:
             try:
                 # query the user metric server to get the user-defined metrics
                 user_metrics_server_response = requests.get(
-                    f"{USER_METRIC_SERVER_URL}/inspect-uploaded-functions/{worker_results.user_id}",
+                    f"{USER_METRIC_SERVER_URL}/inspect-uploaded-functions/{batch.job_id}",
                 )
 
                 user_defined_metrics = []
@@ -322,7 +326,7 @@ class Worker:
                     exec_response = requests.post(
                         f"{USER_METRIC_SERVER_URL}/compute-metric",
                         json={
-                            "user_id": worker_results.user_id,
+                            "user_id": batch.job_id,
                             "function_name": metric,
                             "params": params_dict,
                         },
@@ -343,25 +347,27 @@ class Worker:
                 print(f"Final Results with user metrics: {worker_results}")
                 try:
                     clear_response = requests.delete(
-                        f"{USER_METRIC_SERVER_URL}/clear-user-data/{worker_results.user_id}"
+                        f"{USER_METRIC_SERVER_URL}/clear-user-data/{batch.job_id}"
                     )
                     print(f"Clear response: {clear_response}")
                 except Exception as e:
                     print(f"Error clearing user data: {e}")
 
-            self.queue_result(worker_results)
+            self.queue_result(worker_results, batch.job_id)
             self.send_status_completed(batch.job_id, batch.batch_id)
             return
         except WorkerException as e:
             # known/caught error
             # should be sent back to user
             self.queue_error(
-                WorkerError(error_message=e.detail, error_code=e.status_code)
+                WorkerError(error_message=e.detail, error_code=e.status_code),
+                user_id=batch.job_id,
             )
             self.send_status_error(batch.job_id, batch.batch_id, e)
         except Exception as e:
             self.queue_error(
-                WorkerError(error_message="An unknown error occurred", error_code=500)
+                WorkerError(error_message="An unknown error occurred", error_code=500),
+                user_id=batch.job_id,
             )
             self.send_status_error(batch.job_id, batch.batch_id, e)
 

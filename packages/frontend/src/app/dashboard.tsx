@@ -10,15 +10,18 @@ import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
 import { pdf } from '@react-pdf/renderer';
+import { v4 as uuidv4 } from 'uuid';
+import { BACKEND_STOP_JOB_URL } from './constants';
 
 interface DashboardProps {
   onComplete: () => void;
   socket: WebSocket | null;
+  disconnectRef: React.MutableRefObject<boolean>;
   expectedItems: number;
 }
 
 // Each item from the websocket is an array of Metric objects.
-const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef, expectedItems }) => {
   // 'items' holds each item (which is an array of Metric objects) received from the socket.
   const [items, setItems] = useState<Metric[]>([]);
   const [log, setLog] = useState<string>('');
@@ -27,6 +30,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems
     text: '',
   });
   const [showError, setShowError] = useState<boolean>(false);
+  const [retryButton, setRetryButton] = useState<JSX.Element | null>(null);
 
   // const [report, setReport] = useState<Report | null>(null);
 
@@ -93,10 +97,50 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems
             generateReport();
             break;
           }
-          case 'ERROR':
-            setShowError(true);
-            setError({ header: 'Error 500:', text: data.message });
+          case 'ERROR': {
+            const handleError = async () => {
+              setShowError(true);
+              setError({ header: 'Error 500:', text: `${data.message} : ${data.content}` });
+              
+              // close the socket so that you dont keep receiving errors
+              console.log("Closing socket due to error");
+              disconnectRef.current = true; // intentional disconnect, don't retry
+              socket.close();
+              
+              let id = sessionStorage.getItem('userId');
+              console.log("Stopping job with id: ", id);
+              // ping api to stop processing batches for this job
+              await fetch(BACKEND_STOP_JOB_URL, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ job_id: id }),
+              });
+
+              // clear userId in session storage
+              // to avoid reconnecting with the same userId on reload
+              sessionStorage.removeItem('userId');
+
+              setLog("An error occurred during the computation of the metrics. Please try again later.");
+              // retry button, that reloads the page
+              const reloadPage = () => {
+                // essentially start a new session
+                // first clear session storage and set new uuid
+                // then reload the page
+                window.location.reload();
+              };
+
+              const retryButton = (
+                <button onClick={reloadPage} style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                  Retry
+                </button>
+              );
+              setRetryButton(retryButton);
+            }
+            handleError();
             break;
+          }
           default:
             console.log(
               'Unknown response from server:',
@@ -237,9 +281,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, expectedItems
               </div>
             );
           })
-        ) : (
-          <p>Waiting for messages...</p>
-        )}
+        ) :
+          (retryButton === null) ? <p></p> : retryButton
+        }
       </div>
     </div>
   );

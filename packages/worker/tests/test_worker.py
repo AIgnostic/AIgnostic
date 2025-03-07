@@ -92,7 +92,7 @@ def test_queue_result():
             total_sample_size=1,
             user_id="1234",
         )
-        worker.queue_result(result)
+        worker.queue_result(result, "1234")
         mock_channel.basic_publish.assert_called_once()
 
 
@@ -212,8 +212,9 @@ async def test_process_job_user_defined_metrics_server_error(mock_post, mock_get
 @patch("worker.worker.requests.post")
 @pytest.mark.asyncio
 async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_delete):
+    job_id = str(uuid.uuid4())
     job = Batch(
-        job_id=str(uuid.uuid4()),
+        job_id=job_id,
         batch_id=str(uuid.uuid4()),
         batch_size=1,
         metrics=MetricCalculationJob(
@@ -263,7 +264,7 @@ async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_
         mock_queue_result.assert_called_once()
         mock_send_status_completed.assert_called_once()
         mock_delete.assert_called_once_with(
-            f"{USER_METRIC_SERVER_URL}/clear-user-data/{mock_queue_result.call_args[0][0].user_id}"
+            f"{USER_METRIC_SERVER_URL}/clear-user-data/{job_id}"
         )
 
 
@@ -323,7 +324,7 @@ async def test_process_job_user_defined_metrics_execution_error(mock_post, mock_
 def test_queue_error():
     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
         error_message = "Some error occurred"
-        worker.queue_error(WorkerError(error_message=error_message, error_code=500))
+        worker.queue_error(WorkerError(error_message=error_message, error_code=500), user_id="1234")
         mock_channel.basic_publish.assert_called_once()
 
 
