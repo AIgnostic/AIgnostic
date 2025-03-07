@@ -2,9 +2,15 @@ from fastapi import HTTPException
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from api.router.api import api
+from api.router.rabbitmq import get_jobs_publisher
+from api.__init__ import create_application
+from common.models.pipeline import PipelineJobType, JobFromAPI, PipelineHalt
+
 
 # Create a FastAPI TestClient
-client = TestClient(api)
+app = create_application()
+client = TestClient(app)
+
 
 # Mock task_to_metric_map
 mock_task_to_metric_map = {
@@ -12,6 +18,55 @@ mock_task_to_metric_map = {
     "multi_class_classification": ["f1_score", "recall"],
     "regression": ["mse", "r2_score"],
 }
+
+
+def test_read_root():
+    """Test GET /"""
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Welcome to the model evaluation server!"}
+
+
+def test_stop_job():
+    """Test POST /stop-job"""
+
+    mock_publisher = MagicMock()
+    
+    app.dependency_overrides[get_jobs_publisher] = lambda: mock_publisher
+
+    response = client.post("/stop-job", json={"job_id": "1234"})
+    
+    mock_publisher.publish.assert_called_with(
+        JobFromAPI(job_type=PipelineJobType.HALT_JOB, job=PipelineHalt(job_id="1234")).model_dump_json()
+    )
+    assert response.status_code == 202
+    assert response.json() == {"message": "Job stopped"}
+
+    app.dependency_overrides.clear()  # Clean up overrides after the test
+
+
+def test_stop_job_exception():
+    """Test POST /stop-job with an exception"""
+
+    mock_publisher = MagicMock()
+    app.dependency_overrides[get_jobs_publisher] = lambda: mock_publisher
+
+    # Simulate an exception when stopping a job
+    try:
+        with patch(
+            "api.router.api.JobFromAPI", side_effect=Exception("RabbitMQ error")
+        ):
+            client.post("/stop-job", json={"job_id": "1234"})
+    except Exception as e:
+        assert str(e) == str(
+            HTTPException(
+                status_code=500, detail="Error during handling of request to /stop-job - RabbitMQ error"
+            )
+        )
+
+    app.dependency_overrides.clear()  # Clean up overrides after the test
 
 
 @patch(
