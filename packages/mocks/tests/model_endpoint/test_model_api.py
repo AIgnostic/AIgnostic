@@ -87,13 +87,19 @@ def test_valid_data_scikit_folktables():
     assert response.status_code == 200, response.text
 
     # Test the response is the same as the expected response from the pickled model
-    model = load_scikit_model()
+    model = model = load_scikit_model('scikit_model.sav')
     y_hat = model.predict(features)
 
-    assert response.json() == {
-        "predictions": [y_hat.tolist()],
-        "confidence_scores": None
-    }, "Model output does not match expected output"
+    assert response.json()["predictions"] == [y_hat.tolist()], (
+        "Model output does not match expected output"
+    )
+    assert len(response.json()["confidence_scores"]) == len(y_hat), (
+        "Confidence scores do not match the number of predictions"
+    )
+    for scores in response.json()["confidence_scores"]:
+        assert all([0 <= score <= 1 for score in scores]), (
+            "Confidence scores are not probabilities"
+        )
 
 
 def test_valid_data_huggingface():

@@ -2,7 +2,7 @@ import pickle
 import os
 
 
-def load_scikit_model():
+def load_scikit_model(name: str):
     """
     Load the mocke scikit-learn model from the pickle file
     """
@@ -10,7 +10,7 @@ def load_scikit_model():
         open(
             os.path.join(
                 os.path.dirname(__file__),
-                '../scikit_model.sav'
+                f'../{name}'
             ),
             'rb'
         )
