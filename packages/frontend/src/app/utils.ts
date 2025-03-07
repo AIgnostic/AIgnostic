@@ -12,6 +12,10 @@ import {
   BACKEND_FETCH_METRIC_INFO_URL,
   MOCK_WIKI_DATASET_API_URL,
   MOCK_GEMINI_API_URL,
+  MOCK_SCIKIT_REGRESSOR_URL,
+  MOCK_SCIKIT_REGRESSION_DATASET_URL,
+  MOCK_SCIKIT_REGRESSOR_URL_PROD,
+  MOCK_SCIKIT_REGRESSION_DATASET_URL_PROD,
 } from './constants';
 
 async function fetchMetricInfo(): Promise<TaskToMetricMap> {
@@ -30,10 +34,15 @@ function checkURL(url: string): boolean {
     MOCK_FINBERT_API_URL,
     MOCK_FOLKTABLES_DATASET_API_URL,
     MOCK_FINANCIAL_DATASET_API_URL,
+    MOCK_SCIKIT_REGRESSOR_URL,
+    MOCK_SCIKIT_REGRESSION_DATASET_URL,
     "http://localhost:5001/predict",
     "http://localhost:5024/fetch-datapoints",
     "http://localhost:9001/predict",
     "http://localhost:5025/fetch-datapoints",
+    // localhost scikit regressor instances
+    "http://localhost:5012/predict",
+    "http://localhost:5013/fetch-datapoints",
     // Prod
     MOCK_SCIKIT_API_URL_PROD,
     MOCK_FINBERT_API_URL_PROD,
@@ -41,6 +50,8 @@ function checkURL(url: string): boolean {
     MOCK_FINANCIAL_DATASET_API_URL_PROD,
     MOCK_GEMINI_API_URL,
     MOCK_WIKI_DATASET_API_URL,
+    MOCK_SCIKIT_REGRESSOR_URL_PROD,
+    MOCK_SCIKIT_REGRESSION_DATASET_URL_PROD,
   ];
   if (validURLS.includes(url)) {
     return true;

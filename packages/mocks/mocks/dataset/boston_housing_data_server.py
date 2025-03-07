@@ -70,4 +70,4 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5060)
+    uvicorn.run(app, host="0.0.0.0", port=5013)

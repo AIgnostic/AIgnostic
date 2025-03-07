@@ -215,7 +215,7 @@ services:
     networks:
       - aignostic_network
     ports:
-      - '5060:5060'
+      - '5013:5013'
 
   scikit_mock_model_api:
     container_name: scikit-mock-model-api
