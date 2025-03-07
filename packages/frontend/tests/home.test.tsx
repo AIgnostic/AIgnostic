@@ -9,6 +9,7 @@ import {
 } from '../src/app/constants';
 import '@testing-library/jest-dom';
 import { checkBatchConfig, checkURL } from '../src/app/utils';
+import { MemoryRouter } from 'react-router-dom';
 
 // mock modelTypesToMetrics
 jest.mock('../src/app/constants', () => ({
@@ -35,10 +36,44 @@ jest.mock('@react-pdf/renderer', () => ({
   StyleSheet: { create: (styles: any) => styles },
 }));
 
-jest.mock("react-router-dom", () => ({
-  ...jest.requireActual("react-router-dom"),
-  useNavigate: jest.fn(),
+const mockNavigate = jest.fn();
+    
+// Mock useNavigate to return our fake navigate function
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
 }));
+
+
+// Mock API Docs component
+jest.mock('../src/app/api_docs', () => () => <div>API Documentation</div>);
+
+describe('Title', () => {
+  it('should render the title correctly', () => {
+    render(
+      <MemoryRouter>
+        <Homepage />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('AIgnostic')).toBeInTheDocument();
+    expect(screen.getByText('New to AIgnostic? Read the docs to get started:')).toBeInTheDocument();
+    expect(screen.getByText('Getting Started')).toBeInTheDocument();
+  });
+
+  it('should navigate to /api-docs when "Getting Started" is clicked', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Homepage />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByText('Getting Started'));
+
+    // Verify that navigate was called with the expected path
+    expect(mockNavigate).toHaveBeenCalledWith('/api-docs');
+  });
+});
 
 describe('Stepper Navigation', () => {
   it('should disable Next state if no API URLs inputted', () => {
