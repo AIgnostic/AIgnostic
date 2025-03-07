@@ -142,21 +142,29 @@ class Worker:
             # Raise for HTTP errors (4xx, 5xx)
             response.raise_for_status()
 
-        except ConnectionError:
-            raise WorkerException(detail=f"Failed to connect to dataset API at {url}", status_code=503)
+        except ConnectionError as e:
+            raise WorkerException(
+                detail=f"Failed to connect to dataset API at {url}: {e}",
+                status_code=503
+            )
 
-        except Timeout:
-            raise WorkerException(detail=f"Request to dataset API at {url} timed out", status_code=504)
+        except Timeout as e:
+            raise WorkerException(
+                detail=f"Request to dataset API at {url} timed out: {e}",
+                status_code=504
+            )
 
-        except HTTPError:
-            try:
-                error_detail = response.json().get("detail", "Unknown error")
-            except Exception:
-                error_detail = f"HTTP error {response.status_code} but response is not JSON: {response.text}"
-            raise WorkerException(detail=error_detail, status_code=response.status_code)
+        except HTTPError as e:
+            raise WorkerException(
+                detail=f"HHTP Error on request to dataset API at {url}: {e}",
+                status_code=response.status_code
+            )
 
         except RequestException as e:
-            raise WorkerException(detail=f"An error occurred while contacting the dataset API: {e}", status_code=500)
+            raise WorkerException(
+                detail=f"An error occurred while contacting the dataset API: {e}",
+                status_code=500
+            )
 
         try:
             # Ensure response is JSON
@@ -199,18 +207,23 @@ class Worker:
             # Raise for status (HTTPError for 4xx, 5xx)
             response.raise_for_status()
 
-        except ConnectionError:
-            raise WorkerException(detail=f"Failed to connect to model at {url}", status_code=503)
+        except ConnectionError as e:
+            raise WorkerException(
+                detail=f"Failed to connect to model at {url}: {e}",
+                status_code=503
+            )
 
-        except Timeout:
-            raise WorkerException(detail=f"Request to model at {url} timed out", status_code=504)
+        except Timeout as e:
+            raise WorkerException(
+                detail=f"Request to model at {url} timed out: {e}",
+                status_code=504
+            )
 
-        except HTTPError:
-            try:
-                error_detail = response.json().get("detail", "Unknown error")
-            except Exception:
-                error_detail = f"HTTP error {response.status_code} but response is not JSON: {response.text}"
-            raise WorkerException(detail=error_detail, status_code=response.status_code)
+        except HTTPError as e:
+            raise WorkerException(
+                detail=f"HHTP Error on request to dataset API at {url}: {e}",
+                status_code=response.status_code
+            )
 
         except RequestException as e:
             raise WorkerException(
@@ -309,6 +322,8 @@ class Worker:
                 user_id=batch.job_id,
                 user_defined_metrics=None,
             )
+
+            # TODO: Add more robustness for server querying e.g. timeouts and retries
             try:
                 # query the user metric server to get the user-defined metrics
                 user_metrics_server_response = requests.get(

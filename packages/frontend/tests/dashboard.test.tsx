@@ -14,6 +14,11 @@ jest.mock("../src/app/components/ReportRenderer", () => () => (
   <div data-testid="report-renderer">Final Report</div>
 ));
 
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: jest.fn(),
+}));
+
 jest.mock("@react-pdf/renderer", () => ({
   pdf: jest.fn(() => ({
     toBlob: jest.fn(() => Promise.resolve(new Blob())),

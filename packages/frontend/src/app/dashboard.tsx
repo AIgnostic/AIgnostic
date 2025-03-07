@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ErrorMessage from './components/ErrorMessage';
 import theme from './theme';
 import { styled } from '@mui/material/styles';
@@ -10,7 +11,6 @@ import LinearProgress, {
   linearProgressClasses,
 } from '@mui/material/LinearProgress';
 import { pdf } from '@react-pdf/renderer';
-import { v4 as uuidv4 } from 'uuid';
 import { BACKEND_STOP_JOB_URL } from './constants';
 import { styles } from './home.styles';
 import { Button } from '@mui/material';
@@ -33,15 +33,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
   });
   const [showError, setShowError] = useState<boolean>(false);
   const [retryButton, setRetryButton] = useState<JSX.Element | null>(null);
-
+  const navigate = useNavigate();
 
   const buttonRetry = (
     <button
-      onClick={() => {
-        window.location.reload();
-      }}
+      onClick={() => navigate(0)}
       style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-    >
+    > 
       Retry
     </button>
   );
@@ -136,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
             break;
           }
           case 'ERROR': {
-            const handleError = async () => {
+            const handleError = () => {
               setShowError(true);
               setError({ header: 'Error 500:', text: `${data.message} : ${data.content}` });
               earlyStop()

@@ -17,6 +17,10 @@ from common.models import (
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
 from worker.worker import USER_METRIC_SERVER_URL
+from aggregator.connection_manager import ConnectionManager
+
+
+manager = ConnectionManager()
 
 
 def aggregator_metrics_completion_log():
@@ -322,6 +326,16 @@ def aggregator_generate_report(user_id, aggregates, aggregator):
     report_properties_section = add_llm_insights(
         report_properties_section, get_api_key()
     )
+
+    manager.send_to_user(
+        user_id,
+        AggregatorMessage(
+            messageType=MessageType.LOG,
+            message="Added LLM Insights. Sending final report...",
+            statusCode=200,
+            content=None,
+        )
+    )
     report_info_section = {
         # TODO: Update with codecarbon info and calls to model from metrics
         "calls_to_model": aggregator.total_sample_size,
@@ -353,39 +367,6 @@ def on_result_fetched(ch, method, properties, body):
         process_error_result(error_data=job.content, user_id=job.user_id)
     else:
         raise ValueError(f"Invalid job type: {job.job_type}")
-
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections = {}
-
-    def connect(self, user_id, websocket):
-        """Stores a Websocket connection for a specific user"""
-        self.active_connections[user_id] = websocket
-
-    def disconnect(self, user_id):
-        """Removes a Websocket connection for a specific user"""
-        if user_id in self.active_connections:
-            del self.active_connections[user_id]
-
-    def send_to_user(self, user_id, message: AggregatorMessage):
-        """Sends a message to the correct user."""
-
-        if user_id in self.active_connections:
-            print(f"Sending message to user {user_id}")
-            websocket = self.active_connections[user_id]
-            try:
-                websocket.send(json.dumps(message.dict()))
-                print(f"Sent message to user {user_id}: {json.dumps(message.dict())}")
-            except Exception as e:
-                print(f"Error sending message to user {user_id}: {e}")
-                self.disconnect(user_id)
-        else:
-            print(f"User not connected: {user_id}")
-            print(f"Active connections {self.active_connections}")
-
-
-manager = ConnectionManager()
 
 
 def websocket_handler(websocket):
