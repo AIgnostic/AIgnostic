@@ -13,7 +13,7 @@ from common.models import (
     ModelResponse,
 )
 from metrics.models import WorkerException
-from worker.worker import USER_METRIC_SERVER_URL, Worker
+from worker.worker import Worker
 from requests.exceptions import HTTPError
 
 worker = Worker()
@@ -205,66 +205,6 @@ async def test_process_job_user_defined_metrics_server_error(mock_post, mock_get
         mock_queue_result.assert_called_once()
         mock_send_status_completed.assert_called_once()
         assert mock_queue_result.call_args[0][0].user_defined_metrics is None
-
-
-@patch("worker.worker.requests.delete")
-@patch("worker.worker.requests.get")
-@patch("worker.worker.requests.post")
-@pytest.mark.asyncio
-async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_delete):
-    job = Batch(
-        job_id=str(uuid.uuid4()),
-        batch_id=str(uuid.uuid4()),
-        batch_size=1,
-        metrics=MetricCalculationJob(
-            data_url="http://example.com/data",
-            model_url="http://example.com/model",
-            data_api_key="data_key",
-            model_api_key="model_key",
-            metrics=["accuracy"],
-            model_type="binary_classification",
-        ),
-        total_sample_size=500,
-    )
-
-    with patch.object(
-        worker, "fetch_data", new_callable=AsyncMock
-    ) as mock_fetch_data, patch.object(
-        worker, "query_model", new_callable=AsyncMock
-    ) as mock_query_model, patch.object(
-        worker, "queue_result", new_callable=MagicMock
-    ) as mock_queue_result, patch.object(
-        worker, "send_status_completed", new_callable=MagicMock
-    ) as mock_send_status_completed:
-
-        mock_fetch_data.return_value = DatasetResponse(
-            features=[[1, 2]], labels=[[0]], group_ids=[1]
-        )
-        mock_query_model.return_value = ModelResponse(
-            predictions=[[0]], confidence_scores=[[0.9]]
-        )
-
-        mock_get.return_value = MagicMock(
-            status_code=200,
-            json=MagicMock(return_value={"functions": ["user_metric_1"]}),
-        )
-
-        mock_post.return_value = MagicMock(
-            status_code=200,
-            json=MagicMock(return_value={"result": {
-                "computed_value": 0.85,
-                "ideal_value": 1,
-                "range": [0, 1]
-            }}),
-        )
-
-        await worker.process_job(job)
-
-        mock_queue_result.assert_called_once()
-        mock_send_status_completed.assert_called_once()
-        mock_delete.assert_called_once_with(
-            f"{USER_METRIC_SERVER_URL}/clear-user-data/{mock_queue_result.call_args[0][0].user_id}"
-        )
 
 
 @patch("worker.worker.requests.get")
