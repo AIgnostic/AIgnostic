@@ -3,6 +3,9 @@ import json
 import threading
 import queue
 import websockets.sync.server
+
+from fastapi import APIRouter
+
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues
 from common.rabbitmq.constants import RESULT_QUEUE
 import time
@@ -15,6 +18,14 @@ from common.models import (
 )
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
+
+
+api = APIRouter()
+
+
+@api.get("/heartbeat")
+def heartbeat():
+    return {"status": "ok"}, 200
 
 
 def aggregator_metrics_completion_log():

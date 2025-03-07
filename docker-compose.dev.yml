@@ -121,6 +121,7 @@ services:
       - venv:/app/.venv
     # command: poetry run uvicorn aggregator.aggregator:aggregator_app --host 0.0.0.0 --reload
     command: poetry run python -u -m aggregator.aggregator
+    # command: poetry run uvicorn main:app --host 0.0.0.0 --reload
     working_dir: /app/packages/aggregator
     ports:
       - '5002:5002'
@@ -142,6 +143,7 @@ services:
       - .:/app
       - venv:/app/.venv
     command: poetry run python -u -m dispatcher
+    # command: /scripts/start_dispatcher.sh
     working_dir: /app/packages/dispatcher
     networks:
       - aignostic_network

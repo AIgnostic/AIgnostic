@@ -3,6 +3,8 @@ import logging
 from typing import Optional
 import uuid
 
+from fastapi import APIRouter
+
 from common.models.pipeline import (
     Batch,
     JobStatusMessage,
@@ -24,6 +26,14 @@ import redis as redis
 from common.rabbitmq.connect import init_queues
 
 logger = logging.getLogger(__name__)
+
+
+api = APIRouter()
+
+
+@api.get("/heartbeat")
+def heartbeat():
+    return {"status": "ok"}, 200
 
 
 class DispatcherException(Exception):

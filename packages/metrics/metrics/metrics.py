@@ -72,6 +72,7 @@ task_type_to_metric = {
         # "explanation_sparsity_score",
         # "explanation_fidelity_score",
         # "ood_auroc",
+        
     ],
     "regression": [
         "mean_absolute_error",
