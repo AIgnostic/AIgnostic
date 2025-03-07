@@ -25,7 +25,6 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
   }
 }
 function checkURL(url: string): boolean {
-  return true;
   const validURLS = [
     MOCK_SCIKIT_API_URL,
     MOCK_FINBERT_API_URL,
@@ -33,6 +32,8 @@ function checkURL(url: string): boolean {
     MOCK_FINANCIAL_DATASET_API_URL,
     "http://localhost:5001/predict",
     "http://localhost:5024/fetch-datapoints",
+    "http://localhost:9001/predict",
+    "http://localhost:5025/fetch-datapoints",
     // Prod
     MOCK_SCIKIT_API_URL_PROD,
     MOCK_FINBERT_API_URL_PROD,

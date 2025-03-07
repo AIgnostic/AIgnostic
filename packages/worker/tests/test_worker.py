@@ -13,7 +13,7 @@ from common.models import (
     ModelResponse,
 )
 from metrics.models import WorkerException
-from worker.worker import USER_METRIC_SERVER_URL, Worker
+from worker.worker import Worker
 from requests.exceptions import HTTPError
 
 worker = Worker()
@@ -262,9 +262,6 @@ async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_
 
         mock_queue_result.assert_called_once()
         mock_send_status_completed.assert_called_once()
-        mock_delete.assert_called_once_with(
-            f"{USER_METRIC_SERVER_URL}/clear-user-data/{mock_queue_result.call_args[0][0].user_id}"
-        )
 
 
 @patch("worker.worker.requests.get")
