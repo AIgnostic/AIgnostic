@@ -106,11 +106,22 @@ def predict_causal_LM(
         )
         print(f"Tokenized input: {inputs}")
         # with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_length=max_length,
-            num_beams=num_beams,
-        )
+        try:
+            if max_length is None:
+                outputs = model.generate(
+                    **inputs,
+                    num_beams=num_beams,
+                )
+            else:
+                outputs = model.generate(
+                    **inputs,
+                    max_length=max_length,
+                    num_beams=num_beams,
+                )
+        except Exception as e:
+            print(e)
+            print(e.__class__)
+            raise e
         print(f"Generated outputs: {outputs}")
         # Decode the generated tokens
         one_text = tokenizer.decode(outputs[0], skip_special_tokens=True)

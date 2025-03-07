@@ -26,15 +26,16 @@ def read_root():
 @app.post("/predict", response_model=ModelResponse)
 def predict(input: DatasetResponse) -> ModelResponse:
 
-    return predict_causal_LM(
+    output = predict_causal_LM(
         input,
         model_name,
         tokenizer_name=tokenizer_name,
-        max_length=50,
         num_beams=1,
     )
+    print(f"Model returing output: {output}")
+    return output
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=9001)
+    uvicorn.run(app, host="0.0.0.0", port=5027)

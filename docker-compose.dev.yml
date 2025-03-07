@@ -197,7 +197,7 @@ services:
   #   volumes:
   #     - .:/app
   #     - venv:/app/.venv
-  #   command: poetry run python3 -u -m mocks.dataset.tinystories_server --host 0.0.0.0 --reload
+  #   command: poetry run python3 -u -m mocks.dataset.tinystories_dataset_server --host 0.0.0.0 --reload
   #   working_dir: /app/packages/mocks
   #   networks:
   #     - aignostic_network
@@ -236,7 +236,7 @@ services:
   #   volumes:
   #     - .:/app
   #     - venv:/app/.venv
-  #   command: poetry run python3 -u -m mocks.model.tinystories --host 0.0.0.0 --reload
+  #   command: poetry run python3 -u -m mocks.model.tinystories_1M_mock --host 0.0.0.0 --reload
   #   working_dir: /app/packages/mocks
   #   networks:
   #     - aignostic_network

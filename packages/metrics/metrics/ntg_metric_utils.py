@@ -22,7 +22,7 @@ from math import ceil
 from sentence_transformers import SentenceTransformer
 import torch
 
-MIN_AVERAGE_SENTENCE_LENGTH = 3
+MIN_AVERAGE_SENTENCE_LENGTH = 4
 MASK_WORD = "[MASK]"
 DEFAULT_ENCODER = "sentence-transformers/distiluse-base-multilingual-cased-v1"
 
@@ -243,7 +243,8 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     # Generate masked sequences for each sentence
     # Choose number of generated masked texts to be proportional to the average sentence length
     average_sentence_length = ceil(np.mean([len(sentence.split()) for sentence in info.input_features.reshape(-1)]))
-
+    print(f"average_sentence_length: {average_sentence_length}")
+    print(f"info.input_features: {info.input_features}")
     # If average sentence length is too short, raise an exception - it is better to
     # raise a warning in the frontend about potentially inaccurate metrics
     if average_sentence_length <= MIN_AVERAGE_SENTENCE_LENGTH:

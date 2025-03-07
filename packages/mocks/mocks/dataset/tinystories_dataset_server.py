@@ -37,7 +37,10 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
     Returns:
         JSONResponse: A JSON response containing the datapoints.
     """
-    dataset_size = ds.num_rows
+    print(f"ds.num_rows: {ds.num_rows}")
+
+    dataset_size = ds.num_rows['validation']
+
     if num_datapoints > dataset_size:
         raise HTTPException(
             status_code=400,
@@ -46,9 +49,11 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
     random_indices = np.random.choice(dataset_size, num_datapoints, replace=False)
 
     try:
-        selected_data = ds.select(random_indices)
-
-        texts = selected_data.features
+        # print(f"validation data: {ds['validation']}")
+        # print(f"texts: {ds['validation']['text']}")
+        selected_data = ds['validation'].select(random_indices)
+        texts = selected_data['text']
+        # print(f"texts for sample: {texts}")
         features = [[text[:len(text) // 2]] for text in texts]
         labels = [[text[len(text) // 2:]] for text in texts]
 
@@ -63,4 +68,4 @@ async def fetch_datapoints(num_datapoints: int = Query(2, alias="n")):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=9002)
+    uvicorn.run(app, host="0.0.0.0", port=5026)
