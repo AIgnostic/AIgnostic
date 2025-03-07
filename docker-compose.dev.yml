@@ -99,6 +99,8 @@ services:
       - rabbitmq
     deploy:
       replicas: 3
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
   user_added_metrics:
     container_name: user-added-metrics

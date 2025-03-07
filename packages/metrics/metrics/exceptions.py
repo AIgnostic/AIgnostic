@@ -93,3 +93,17 @@ class DataProvisionException(_MetricsPackageException):
         if detail:
             err_msg += f": {detail}"
         super().__init__(err_msg, status_code)
+
+
+class InvalidParameterException(_MetricsPackageException):
+    """
+    Class representing invalid parameter values for metric calculations - this occurs when
+    the a function not accepting the provided parameter values.
+    """
+
+    # This is a 400 error as metrics is implemented as a microservice
+    def __init__(self, detail=None, status_code=400):
+        err_msg = "Invalid parameter values provided"
+        if detail:
+            err_msg += f": {detail}"
+        super().__init__(err_msg, status_code)
