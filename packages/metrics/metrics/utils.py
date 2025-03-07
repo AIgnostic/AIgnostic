@@ -123,7 +123,7 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=Fa
 
 def _query_model(generated_input_features: np.array, info: CalculateRequest) -> ModelResponse:
     """
-    Helper function to query the model API using the generated input features, 
+    Helper function to query the model API using the generated input features,
     not the input features from the CalculateRequest object.
 
     Params:
