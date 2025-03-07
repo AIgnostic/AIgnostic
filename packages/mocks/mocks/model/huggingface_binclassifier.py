@@ -10,6 +10,7 @@ name = "siebert/sentiment-roberta-large-english"
 
 model, tokenizer = load_t2class_model(name)
 
+
 @app.post("/predict", response_model=ModelResponse)
 def predict(input: DatasetResponse) -> ModelResponse:
     return predict_t2class(model, tokenizer, input)

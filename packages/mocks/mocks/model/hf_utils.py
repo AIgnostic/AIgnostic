@@ -65,7 +65,7 @@ def predict_t2class(
     try:
         if not input.features:
             return ModelResponse(predictions=[], confidence_scores=[])
-        
+
         # Convert nested list to list of strings
         texts = [" ".join(map(str, features)) for features in input.features]
 
