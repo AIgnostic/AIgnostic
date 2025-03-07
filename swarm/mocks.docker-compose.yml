@@ -24,8 +24,7 @@ services:
       - '5024:5024'
 
   tinystories_dataset_api:
-    container_name: tinystories-dataset-api
-    image: aignostic/dev
+    image: ghcr.io/aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
@@ -37,8 +36,7 @@ services:
       - '5026:5026'
 
   boston_housing_data_api:
-    container_name: boston-housing-data-api
-    image: aignostic/dev
+    image: ghcr.io/aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
@@ -68,8 +66,7 @@ services:
       - '5001:5001'
 
   tinystories_mock_model_api:
-    container_name: tinystories-mock-model-api
-    image: aignostic/dev
+    image: ghcr.io/aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
@@ -81,8 +78,7 @@ services:
       - '5027:5027'
 
   scikit_regression_mock_model_api:
-    container_name: scikit-regression-mock-model-api
-    image: aignostic/dev
+    image: ghcr.io/aignostic/dev
     volumes:
       - .:/app
       - venv:/app/.venv
