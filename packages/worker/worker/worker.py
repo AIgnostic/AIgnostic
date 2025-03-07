@@ -268,6 +268,7 @@ class Worker:
                 model_url=convert_localhost_url(str(metrics_data.model_url)),
                 model_api_key=metrics_data.model_api_key,
                 total_sample_size=batch.total_sample_size,
+                regression_flag=metrics_data.model_type == "regression",
             )
 
             # Calculate metrics
