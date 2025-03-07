@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import re
 from .constants import property_to_metrics, property_to_regulations
 from llm_insights.insights import init_llm, metric_insights
+from common.models.common import LegislationInfo, LegislationInformation
 
 
 def search_legislation(metric: str) -> list:
@@ -19,29 +20,33 @@ def search_legislation(metric: str) -> list:
     return result
 
 
-def extract_legislation_text(article: str) -> str:
+def extract_legislation_text(article_num: str, url: str, article_extension: callable) -> str:
     """
     Extracts text from the specified article of GDPR or AI Act.
     """
-    url = f"https://gdpr-info.eu/art-{article}-gdpr/"
-    response = requests.get(url)
+    print("extract_legislation_text: Entered into extract legislation text")
+    url_extension = article_extension(article_num)
+    legislation_url = url + url_extension
+    print("extract_legislation_text: url: ", legislation_url)
+
+    response = requests.get(legislation_url)
     if response.status_code != 200:
-        return f"Failed to fetch Article {article}."
+        return f"Failed to fetch Article {article_num}."
     soup = BeautifulSoup(response.text, "html.parser")
     article_content = soup.find("article")
     if not article_content:
-        return f"Could not parse content for Article {article}."
+        return f"Could not parse content for Article {article_num}."
 
     return article_content.get_text(separator="\n").strip()
 
 
-def parse_legislation_text(article: str, article_content: str) -> dict:
+def parse_legislation_text(article_content: str, article_num: str, article_type: str, info: LegislationInfo, url: str, article_extension: callable) -> dict:
     """
     Parses the raw article content into structured data.
     """
     data = {
-        "article_type": "GDPR", #TODO: Extend to LegislationType enum
-        "article_number": article,
+        "article_type": article_type,
+        "article_number": article_num,
         "article_title": "",
         "link": "",
         "description": "",
@@ -58,7 +63,13 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
         line = text_lines[i]
 
         # Extract Article Title
-        if line.startswith(f"Art. {article} GDPR") and i + 1 < len(text_lines):
+        type = ""
+        if article_type.upper() == "GDPR":
+            type = "GDPR"
+        else:
+            type = "AI Act"  # TODO: EXTEND TO A SWITCH CASE STATEMENT
+        
+        if line.startswith(f"Art. {article_num} {type}") and i + 1 < len(text_lines):
             data["article_title"] = text_lines[i + 1]
             i += 1
 
@@ -66,7 +77,7 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
         elif (
             "Suitable Recitals" not in line
             and not line.startswith("Art.")
-            and "GDPR" not in line
+            and type not in line
         ):
             data["description"] += line + " "
 
@@ -77,26 +88,35 @@ def parse_legislation_text(article: str, article_content: str) -> dict:
                 match = re.search(r"\b(\d+)\b", text_lines[i])
                 if match:
                     recital_number = match.group(1)
-                    recital_link = f"https://gdpr-info.eu/recitals/no-{recital_number}/"
+                    recital_number_extension = ""
+                    if type.lower() == "gdpr":
+                        recital_number_extension = f"no-{recital_number}"
+                    else:
+                        # EU-AI Act
+                        recital_number_extension = recital_number
+                    recital_link = f"{info.url}/recitals/{recital_number_extension}/"
                     data["suitable_recitals"].append(recital_link)
                 i += 1
             break
 
         i += 1
 
-    data["link"] = f"https://gdpr-info.eu/art-{article}-gdpr/"
+
+    link = url + article_extension(article_num)
+    data["link"] = link
     data["description"] = data["description"].strip()
     return data
 
 
 
-def get_legislation_extracts(metrics_data: dict, legislation: dict) -> list[dict]:
+def get_legislation_extracts(metrics_data: dict, legislation: LegislationInformation) -> list[dict]:
     """
     Generates a comprehensive report based on the provided metrics data and API key.
 
     Args:
         metrics_data (dict): A dictionary mapping metrics to a similar form of a MetricValue model.
         api_key (str): The API key required to initialize the language model (LLM).
+        legislation (dict): A dictionary mapping legislation ids to information for accessing extracts.
 
     Returns:
         list[dict]: Each includes:
@@ -107,7 +127,7 @@ def get_legislation_extracts(metrics_data: dict, legislation: dict) -> list[dict
     """
     results = []
     computed_metrics = set(metrics_data.keys())
-
+    print("Legislation:", legislation)
     for property in property_to_metrics.keys():
         property_result = {}
         # find the intersection of computed metrics and metrics for the property
@@ -132,11 +152,40 @@ def get_legislation_extracts(metrics_data: dict, legislation: dict) -> list[dict
 
         property_result["computed_metrics"] = computed_metrics_list
 
+        print("Reached this point before legislation insight.")
+        print("Legislation", legislation)
         property_result["legislation_extracts"] = []
-        for regulations in property_to_regulations[property]:
-            article_content = extract_legislation_text(regulations)
-            parsed_data = parse_legislation_text(regulations, article_content)
-            property_result["legislation_extracts"].append(parsed_data)
+        dictionary = legislation
+        for id, info in dictionary.items():
+            name = info.name
+            url = info.url
+            article_extract = info.article_extract 
+            print(f"Legislation checker: {name}, {url}, {article_extract}")
+            for regulations in property_to_regulations[property]:
+                print(f"Entered in regulations")
+                article_content = extract_legislation_text(
+                    regulations, 
+                    url, 
+                    article_extract)
+                print(f"Finished extracting article content")
+                parsed_data = parse_legislation_text(
+                    article_content, 
+                    regulations, 
+                    id, 
+                    info, 
+                    url, 
+                    article_extract)
+                print(f"Finished parsing the data")
+                property_result["legislation_extracts"].append(parsed_data)
+
+        # print("get legislation extract: ", legislation.legislation)
+        # for leg_key, leg_info in legislation.legislation.items():
+        #     print("Leg key: ", leg_key, "Leg info:", leg_info)
+        #     for regulations in property_to_regulations[property]:
+        #         print("Legislation:", leg_info.name)
+        #         article_content = extract_legislation_text(regulations, leg_info.url, leg_info.article_extract)
+        #         parsed_data = parse_legislation_text(regulations, article_content)
+        #         property_result["legislation_extracts"].append(parsed_data)
 
         results.append(property_result)
 

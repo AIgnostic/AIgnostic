@@ -1,7 +1,7 @@
 import { IS_PROD } from './env';
 import { ConditionAlertFailure, HomepageState } from './types';
 import { fetchLegislationInfo, fetchMetricInfo } from './utils';
-import { LegislationInfo } from './utils';
+import { LegislationList } from './utils';
 const AIGNOSTIC = 'AIgnostic';
 const HOME = '/';
 
@@ -84,7 +84,7 @@ await initializeModelTypesToMetrics();
 
 export async function initalizeLegislationLabels() {
   try {
-    const legislation_info: LegislationInfo = await fetchLegislationInfo();
+    const legislation_info: LegislationList = await fetchLegislationInfo();
     legislation = legislation_info.legislation.map((item: string) => {
       return {
         id: item,

@@ -1,5 +1,6 @@
 import isURL from 'validator/lib/isURL';
 import jsPDF from 'jspdf';
+
 import {
   MOCK_SCIKIT_API_URL,
   MOCK_FINBERT_API_URL,
@@ -24,13 +25,13 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
   }
 }
 
-async function fetchLegislationInfo(): Promise<LegislationInfo> {
+async function fetchLegislationInfo(): Promise<LegislationList> {
   try {
     console.log('fetching legislation info');
     const response = await fetch(AGGREGATOR_SERVER_URL);
     console.log('fetched legislation info');
     console.log("response", response);
-    const data: FrontendInfo = await response.json();
+    const data: LegislationList = await response.json();
     console.log("data", data);
     if (!data.legislation) {
       throw new Error('No legislation found');
@@ -105,13 +106,10 @@ export interface MetricInfo {
   task_to_metric_map: TaskToMetricMap;
 }
 
-export interface LegislationInfo {
+export interface LegislationList {
   legislation: string[];
 }
 
-export interface FrontendInfo {
-  legislation: string[];
-}
 function applyStyle(doc: jsPDF, style: any) {
   doc.setFont(style.font, style.style);
   doc.setFontSize(style.size);

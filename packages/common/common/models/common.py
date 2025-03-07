@@ -37,11 +37,22 @@ class ModelResponse(BaseModel):  # pragma: no cover
     predictions: list[list]
     confidence_scores: Optional[list[list]] = None
 
-class Legislation(BaseModel): 
-    name: str
-    
+class LegislationList(BaseModel):
+    legislation: list[str]
+
 class LegislationInfo(BaseModel):
-    information : list[Legislation]
+    name: str
+    url: str
+    article_extract: Optional[callable] = lambda article_number: f"art-{article_number}-{name.lower().replace(' ', '_')}"
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class LegislationInformation(BaseModel):
+    user_id: str
+    legislation: dict[str, LegislationInfo]
+
 
 class AggregatorMessage(BaseModel, ABC):
     """

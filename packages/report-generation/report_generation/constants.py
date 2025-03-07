@@ -1,7 +1,5 @@
 import pydantic
 from pydantic import BaseModel
-
-legislation_type = ["GDPR", "EU"]
   
 property_to_regulations = {
     "adversarial robustness": ["15"],

@@ -12,13 +12,14 @@ from common.models import (
     JobType,
     AggregatorJob,
     WorkerError,
+    LegislationList
 )
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
 from fastapi import FastAPI, Request
 import uvicorn 
 from fastapi.middleware.cors import CORSMiddleware
-from .utils import LEGISLATION_INFORMATION, update_legislation_information, FrontendInfo
+from .utils import LEGISLATION_INFORMATION, update_legislation_information
 
 app = FastAPI()
 app.add_middleware(
@@ -29,9 +30,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def read_root():
     return {"Welcome to the Aggregator Service"}
+
 
 @app.get("/fetch-frontend-information")
 def fetch_frontend_information():
@@ -39,9 +42,9 @@ def fetch_frontend_information():
         labels = []
         print("LEGISLATION_INFORMATION", LEGISLATION_INFORMATION)
         for legislation in LEGISLATION_INFORMATION.values():
-            labels.append(legislation["name"])
+            labels.append(legislation.name)
         print("Labels", labels)
-        return FrontendInfo(legislation=labels)
+        return LegislationList(legislation=labels)
     except Exception as e:
         return {"error": str(e)} #TODO: Catch the error
 
@@ -52,7 +55,7 @@ async def upload_selected_legislation(request: Request):
         print("entered into upload selected legislation")
         body = await request.json()
         legislation_list = body.get('legislation', [])
-        update_legislation_information(legislation_list)
+        LEGISLATION_INFORMATION = update_legislation_information(legislation_list)
         print('LEGISLATION_INFORMATION UPDATED', LEGISLATION_INFORMATION)
     except Exception as e:
         return {"error": str(e)}
