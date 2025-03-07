@@ -40,7 +40,6 @@ class CalculateRequest(BaseModel):
     :param model_url: Optional[HttpUrl] - URL of the model endpoint.
     :param model_api_key: Optional[str] - API key for accessing the model endpoint.
     """
-
     metrics: list[str]
     # TODO: Refactor to make task_name non-optional and remove regression_flag
     task_name: Optional[str] = None

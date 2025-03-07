@@ -61,9 +61,9 @@ task_type_to_metric = {
         "positive_predictive_value",
         "true_positive_rate_difference",
         "explanation_stability_score",
-        # "explanation_sparsity_score",
-        # "explanation_fidelity_score",
-        # "ood_auroc",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
+        "ood_auroc",
     ],
     "multi_class_classification": [
         "accuracy",
@@ -77,7 +77,7 @@ task_type_to_metric = {
         # "explanation_stability_score",
         # "explanation_sparsity_score",
         # "explanation_fidelity_score",
-        # "ood_auroc",
+        "ood_auroc",
     ],
     "regression": [
         "mean_absolute_error",
