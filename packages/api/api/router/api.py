@@ -1,10 +1,9 @@
-from api.router.rabbitmq import get_channel
+from api.router.rabbitmq import get_jobs_publisher
+from common.models.pipeline import MetricCalculationJob, PipelineJob
+from common.rabbitmq.publisher import Publisher
 from pydantic import BaseModel, HttpUrl
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from pika.adapters.blocking_connection import BlockingChannel
-from common.rabbitmq.constants import JOB_QUEUE
-from common.rabbitmq.connect import publish_to_queue
 from metrics.metrics import task_type_to_metric
 from metrics.models import MetricsInfo
 from common.models.pipeline import (
@@ -47,7 +46,7 @@ async def read_root():
 
 @api.post("/evaluate")
 async def generate_metrics_from_info(
-    request: ModelEvaluationRequest, channel=Depends(get_channel)
+    request: ModelEvaluationRequest, publisher=Depends(get_jobs_publisher)
 ):
     """
     Controller function. Takes data from the frontend, received at the endpoint and then:
@@ -71,7 +70,7 @@ async def generate_metrics_from_info(
             batches=request.num_batches,
             batch_size=request.batch_size,
             max_concurrent_batches=request.max_conc_batches,
-            channel=channel,
+            publisher=publisher,
             job_id=request.user_id,
         )
         print("Dispatched jobs")
@@ -81,7 +80,7 @@ async def generate_metrics_from_info(
 
 
 @api.post("/stop-job")
-async def stop_job(request: StopJobRequest, channel=Depends(get_channel)):
+async def stop_job(request: StopJobRequest, publisher=Depends(get_jobs_publisher)):
     """
     Stop a job with the given job_id
     """
@@ -89,7 +88,7 @@ async def stop_job(request: StopJobRequest, channel=Depends(get_channel)):
         message = JobFromAPI(
             job_type=PipelineJobType.HALT_JOB, job=PipelineHalt(job_id=request.job_id)
         ).model_dump_json()
-        _ = publish_to_queue(channel, JOB_QUEUE, message)
+        _ = publisher.publish(message)
         return JSONResponse({"message": "Job stopped"}, status_code=202)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during handling of request to /stop-job - {e}")
@@ -113,7 +112,7 @@ def dispatch_job(
     max_concurrent_batches: int,
     batches: int,
     batch_size: int,
-    channel: BlockingChannel,
+    publisher: Publisher,
     job_id: str,
 ):
     job = JobFromAPI(
@@ -130,6 +129,6 @@ def dispatch_job(
     
     message = job.model_dump_json()
 
-    _ = publish_to_queue(channel, JOB_QUEUE, message)
+    _ = publisher.publish(message)
 
     return job_id

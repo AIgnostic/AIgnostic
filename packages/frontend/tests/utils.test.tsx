@@ -1,5 +1,13 @@
 import { checkURL, checkBatchConfig } from '../src/app/utils';
 import '@testing-library/jest-dom';
+import {
+  MOCK_SCIKIT_API_URL,
+  MOCK_FINBERT_API_URL,
+  MOCK_FOLKTABLES_DATASET_API_URL,
+  MOCK_FINANCIAL_DATASET_API_URL,
+  MOCK_WIKI_DATASET_API_URL,
+  MOCK_GEMINI_API_URL,
+} from '../src/app/constants';
 
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {
@@ -11,12 +19,12 @@ describe('checkURL function', () => {
       'https://example.co.uk',
       'http://example.com/?search=test#anchor',
       'https://www.example.com/path?query=value#fragment',
-
-      
-      'http://scikit-mock-model-api:5011/predict',
-      'http://finbert-mock-model-api:5001/predict',
-      'http://folktables-dataset-api:5010/fetch-datapoints',
-      'http://financial-dataset-api:5024/fetch-datapoints',
+      MOCK_SCIKIT_API_URL,
+      MOCK_FINBERT_API_URL,
+      MOCK_FOLKTABLES_DATASET_API_URL,
+      MOCK_FINANCIAL_DATASET_API_URL,
+      MOCK_GEMINI_API_URL,
+      MOCK_WIKI_DATASET_API_URL,
 
       // Prod
       'http://206.189.119.159:5011/predict',

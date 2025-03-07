@@ -13,6 +13,7 @@ import { pdf } from '@react-pdf/renderer';
 import { v4 as uuidv4 } from 'uuid';
 import { BACKEND_STOP_JOB_URL } from './constants';
 import { styles } from './home.styles';
+import { Button } from '@mui/material';
 
 interface DashboardProps {
   onComplete: () => void;
@@ -25,7 +26,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef, expectedItems }) => {
   // 'items' holds each item (which is an array of Metric objects) received from the socket.
   const [items, setItems] = useState<Metric[]>([]);
-  const [log, setLog] = useState<string>('');
+  const [log, setLog] = useState<string>('Log: Processing metrics...');
   const [error, setError] = useState<{ header: string; text: string }>({
     header: '',
     text: '',
@@ -80,10 +81,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
 
         switch (data.messageType) {
           case 'LOG':
-            setLog(data.message);
+            setLog(`Log: ${data.message}`);
             break;
           case 'METRICS_COMPLETE':
-            setLog(data.message);
+            setLog(`Log: ${data.message}`);
             break;
           case 'METRICS_INTERMEDIATE':
             try {
@@ -129,6 +130,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
               if (error.header === 'Report is being generated') {
                 setShowError(false);
               }
+              setRetryButton(buttonRetry);
             };
             generateReport();
             break;
@@ -138,7 +140,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
               setShowError(true);
               setError({ header: 'Error 500:', text: `${data.message} : ${data.content}` });
               earlyStop()
-              setLog("An error occurred during the computation of the metrics. Please try again later.");
+              setLog("Log: An error occurred during the computation of the metrics. Please try again later.");
               setRetryButton(buttonRetry);
             }
             handleError();
@@ -212,16 +214,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
         />
       )}
 
-      <p>{log}</p>
-      <button onClick={async () => {
-        await earlyStop();
-        setItems([]);
-        setLog("Evaluation pipeline cancelled. Reload page?");
-        setRetryButton(buttonRetry);
-      }}
-        style={styles.button}>
-        Stop Early
-      </button>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '10px',
+        }}
+      >
+
+        <p>{log}</p>
+
+        <Button onClick={async () => {
+          await earlyStop();
+          setItems([]);
+          setLog("Log: Evaluation pipeline cancelled. Reload page?");
+          setRetryButton(buttonRetry);
+        }}
+          style={styles.button}>
+          
+          Stop Early
+        </Button>
+      </div>
 
       <BorderLinearProgress
         variant="determinate"
@@ -241,7 +256,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
           marginTop: '16px',
         }}
       >
-        {retryButton !== null && items.length > 0 ? (
+        {items.length > 0 ? (
           items.slice(-1).map((item, itemIndex) => {
             return (
               <div

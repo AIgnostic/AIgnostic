@@ -218,7 +218,6 @@ class Worker:
                 raise WorkerException(f"Unexpected response type from model: {response.headers.get('Content-Type')}", status_code=500)
 
             model_response = ModelResponse(**response.json())
-            print(f"Model response: {model_response}")
             self._check_model_response(model_response.predictions, data.labels)
 
             return model_response
@@ -231,16 +230,19 @@ class Worker:
 
     async def process_job(self, batch: Batch):
 
+        print("Processing Job")
+
         metrics_data = batch.metrics
 
         try:
             # fetch data from datasetURL
+            print("Fetching data")
             dataset_response = await self.fetch_data(
                 data_url=metrics_data.data_url,
                 dataset_api_key=metrics_data.data_api_key,
                 batch_size=batch.batch_size,
             )
-
+            print(f"Data fetched: {dataset_response}")
             # query model at modelURL
             # TODO: Separate model input and dataset output so labels and group IDs are not passed to the model
             # TODO: Refactor to use pydantic models
@@ -253,8 +255,6 @@ class Worker:
             true_labels = dataset_response.labels
             predicted_labels = model_response.predictions
 
-            print(f"Predicted labels: {predicted_labels}")
-            print(f"True labels: {true_labels}")
             print(f"Metrics to compute: {metrics_data.metrics}")
 
             # some preprocessing for FinBERT
@@ -268,11 +268,6 @@ class Worker:
                     predicted_labels, true_labels
                 )
 
-            print(f"Metrics to compute: {metrics_data.metrics}")
-            print(f"Predicted labels: {predicted_labels}")
-            print(f"True labels: {true_labels}")
-            print(f"Confidence scores: {model_response.confidence_scores}")
-
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
                 metrics=metrics_data.metrics,
@@ -281,11 +276,12 @@ class Worker:
                 true_labels=true_labels,
                 predicted_labels=predicted_labels,
                 confidence_scores=model_response.confidence_scores,
+                task_name=metrics_data.model_type,
                 # TODO: Do this group stuff properly
                 privileged_groups=[{"protected_attr": 1}],
                 unprivileged_groups=[{"protected_attr": 0}],
                 protected_attr=[random.randint(0, 1) for _ in range(len(true_labels))],
-                model_url=metrics_data.model_url,
+                model_url=convert_localhost_url(str(metrics_data.model_url)),
                 model_api_key=metrics_data.model_api_key,
                 total_sample_size=batch.total_sample_size,
             )

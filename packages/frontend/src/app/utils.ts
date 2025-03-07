@@ -2,6 +2,8 @@ import isURL from 'validator/lib/isURL';
 import jsPDF from 'jspdf';
 import {
   BACKEND_FETCH_METRIC_INFO_URL,
+  MOCK_WIKI_DATASET_API_URL,
+  MOCK_GEMINI_API_URL,
 } from './constants';
 
 const MIN_SAMPLE_SIZE = 1000;
@@ -34,7 +36,6 @@ function checkValidURL(str: string): boolean {
 
   return url.protocol === "http:" || url.protocol === "https:";
 }
-
 function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
   if (batchSize < 1 || numberOfBatches < 1) {
     return false;
@@ -42,15 +43,12 @@ function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
   const totalSampleSize = batchSize * numberOfBatches;
   return MIN_SAMPLE_SIZE <= totalSampleSize && totalSampleSize <= MAX_SAMPLE_SIZE;
 }
-
 export interface TaskToMetricMap {
   [taskType: string]: string[];
 }
-
 export interface MetricInfo {
   task_to_metric_map: TaskToMetricMap;
 }
-
 function applyStyle(doc: jsPDF, style: any) {
   doc.setFont(style.font, style.style);
   doc.setFontSize(style.size);
