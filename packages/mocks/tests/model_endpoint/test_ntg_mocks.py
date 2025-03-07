@@ -7,7 +7,7 @@ gemini = TestClient(gemini_app)
 tinystories = TestClient(tinystories_app)
 
 
-@pytest.mark.skip(reason="Skip to enable testing multiple inputs within API limits")
+@pytest.mark.skip(reason="Skip due to API rate limit issues during deployment")
 def test_gemini():
     response = gemini.post("/predict", json={
         "features": [["Hello world"]],
@@ -21,6 +21,7 @@ def test_gemini():
     assert confidence_scores is None, "Confidence scores should be None"
 
 
+@pytest.mark.skip(reason="Skip due to API rate limit issues during deployment")
 def test_gemini_multiple_inputs():
     response = gemini.post("/predict", json={
         "features": [

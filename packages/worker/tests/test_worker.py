@@ -50,7 +50,7 @@ def test_fetch_job_success():
                 data_api_key="data_key",
                 model_api_key="model_key",
                 metrics=["accuracy"],
-                model_type="binary classification",
+                model_type="binary_classification",
             ),
             total_sample_size=500,
         )
@@ -110,7 +110,7 @@ async def test_process_job_with_user_defined_metrics(mock_post, mock_get):
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary classification",
+            model_type="binary_classification",
         ),
         total_sample_size=500,
     )
@@ -173,7 +173,7 @@ async def test_process_job_user_defined_metrics_server_error(mock_post, mock_get
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary classification",
+            model_type="binary_classification",
         ),
         total_sample_size=500,
     )
@@ -222,7 +222,7 @@ async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary classification",
+            model_type="binary_classification",
         ),
         total_sample_size=500,
     )
@@ -281,7 +281,7 @@ async def test_process_job_user_defined_metrics_execution_error(mock_post, mock_
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary classification",
+            model_type="binary_classification",
         ),
         total_sample_size=500,
     )
@@ -349,7 +349,7 @@ async def test_process_job_success(mock_calculate_metrics):
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary classification",
+            model_type="binary_classification",
         ),
         total_sample_size=500,
     )
@@ -425,7 +425,7 @@ def test_invalid_job_format_raises_worker_exception():
                 data_api_key="data_key",
                 model_api_key="model_key",
                 metrics=["accuracy"],
-                model_type="binary classification",
+                model_type="binary_classification",
             ),
             total_sample_size=500,
         )
@@ -518,7 +518,7 @@ async def test_worker_exception_during_process_job_send_error_to_frontend():
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary classification",
+            model_type="binary_classification",
         ),
         total_sample_size=500,
     )
