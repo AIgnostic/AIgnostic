@@ -1,6 +1,3 @@
-import pydantic
-from pydantic import BaseModel
-  
 property_to_regulations = {
     "adversarial robustness": ["15"],
     "explainability": ["13",

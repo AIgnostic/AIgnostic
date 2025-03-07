@@ -40,7 +40,7 @@ def extract_legislation_text(article_num: str, url: str, article_extension: call
     return article_content.get_text(separator="\n").strip()
 
 
-def parse_legislation_text(article_content: str, article_num: str, info: LegislationInfo) -> dict:
+def parse_legislation_text(article_num: str, article_content: str, info: LegislationInfo) -> dict:
     """
     Parses the raw article content into structured data.
     """
@@ -64,12 +64,10 @@ def parse_legislation_text(article_content: str, article_num: str, info: Legisla
 
         # Extract Article Title
         type = ""
-        print("parse: article_type is ", article_type)
-        if article_type == "GDPR":
+        if info.name == "GDPR":
             type = "GDPR"
         else:
             type = "AI Act"  # TODO: EXTEND TO A SWITCH CASE STATEMENT
-        
         print("parse: type is ", type)
 
         if line.startswith(f"Art. {article_num} {type}") and i + 1 < len(text_lines):
@@ -97,19 +95,23 @@ def parse_legislation_text(article_content: str, article_num: str, info: Legisla
                     else:
                         # EU-AI Act
                         recital_number_extension = recital_number
-                    recital_link = f"{info.url}/recitals/{recital_number_extension}/"
+                    recital_link = f"{info.url}recitals/{recital_number_extension}/"
                     data["suitable_recitals"].append(recital_link)
                 i += 1
             break
 
         i += 1
 
+    extension = info.article_extract(article_num)
+    print("parse: article number: ", article_num)
+    print("parse: exttra is: ", info.article_extract("12"))
+    print("parse: extension is ", extension)
+    link = info.url + extension
+    print("parse: link is ", link)
 
-    link = info.url + info.article_extract(article_num)
     data["link"] = link
     data["description"] = data["description"].strip()
     return data
-
 
 
 def get_legislation_extracts(metrics_data: dict, legislation: LegislationInformation) -> list[dict]:
@@ -159,15 +161,15 @@ def get_legislation_extracts(metrics_data: dict, legislation: LegislationInforma
         for id, info in legislation.items():
             final_legislation_extracts_per_leg = []
             url = info.url
-            article_extract = info.article_extract 
+            article_extract = info.article_extract
             for regulations in property_to_regulations[property]:
                 article_content = extract_legislation_text(
-                    regulations, 
-                    url, 
+                    regulations,
+                    url,
                     article_extract)
                 parsed_data = parse_legislation_text(
-                    article_content, 
-                    regulations, 
+                    article_content,
+                    regulations,
                     info)
                 final_legislation_extracts_per_leg.append(parsed_data)
             property_result["legislation_extracts"].append((

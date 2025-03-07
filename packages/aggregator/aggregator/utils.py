@@ -1,6 +1,4 @@
-from pydantic import BaseModel
-from common.models import LegislationList, LegislationInfo, LegislationInformation 
-
+from common.models import LegislationInfo
 
 
 def create_legislation_info(name, url):
@@ -16,7 +14,7 @@ LEGISLATION_INFORMATION = {
         name="GDPR",
         url="https://gdpr-info.eu/",
         article_extract=lambda article_number: f"art-{article_number}-gdpr"
-    ), 
+    ),
     "eu_ai": LegislationInfo(
         name="EU AI Act",
         url="https://ai-act-law.eu/",
@@ -24,8 +22,12 @@ LEGISLATION_INFORMATION = {
     )
 }
 
-# FIX FUNCTION
+
 def update_legislation_information(labels: list[str]):
-    legislation_information = get_legislation_information()
-    filtered_legislation_information = {key: value for key, value in legislation_information.items() if value["name"] in labels}
+    legislation_information = LEGISLATION_INFORMATION
+    filtered_legislation_information = {
+        key: value
+        for key, value in legislation_information.items()
+        if value["name"] in labels
+    }
     return filtered_legislation_information

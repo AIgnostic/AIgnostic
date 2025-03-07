@@ -17,7 +17,7 @@ from common.models import (
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
 from fastapi import FastAPI, Request
-import uvicorn 
+import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from .utils import LEGISLATION_INFORMATION, update_legislation_information
 
@@ -46,7 +46,7 @@ def fetch_frontend_information():
         print("Labels", labels)
         return LegislationList(legislation=labels)
     except Exception as e:
-        return {"error": str(e)} #TODO: Catch the error
+        return {"error": str(e)}  # TODO: Catch the error
 
 
 @app.post("/upload-selected-legislation")
@@ -59,6 +59,7 @@ async def upload_selected_legislation(request: Request):
         print('LEGISLATION_INFORMATION UPDATED', LEGISLATION_INFORMATION)
     except Exception as e:
         return {"error": str(e)}
+
 
 def aggregator_metrics_completion_log():
     return AggregatorMessage(
@@ -467,6 +468,7 @@ def start_websocket_server():
     print("WebSocket server started on ws://0.0.0.0:5005")
     server.serve_forever()  # Blocking call
 
+
 def start_http_server():
     print("HTTP Server started on port 8005")
     uvicorn.run(app, host="0.0.0.0", port=8005)
@@ -487,4 +489,3 @@ if __name__ == "__main__":
     # Start RabbitMQ consumer (blocking)
     consumer = ResultsConsumer(RABBIT_MQ_HOST)
     consumer.run(on_result_fetched)
-

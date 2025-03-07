@@ -37,13 +37,15 @@ class ModelResponse(BaseModel):  # pragma: no cover
     predictions: list[list]
     confidence_scores: Optional[list[list]] = None
 
+
 class LegislationList(BaseModel):
     legislation: list[str]
+
 
 class LegislationInfo(BaseModel):
     name: str
     url: str
-    article_extract: Optional[callable] = lambda article_number: f"art-{article_number}-{name.lower().replace(' ', '_')}"
+    article_extract: callable
 
     class Config:
         arbitrary_types_allowed = True
