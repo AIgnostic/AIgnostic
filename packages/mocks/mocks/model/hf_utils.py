@@ -2,18 +2,23 @@ from fastapi import HTTPException
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
-    AutoModelForCausalLM
+    AutoModelForCausalLM,
 )
 from common.models import DatasetResponse, ModelResponse
 import torch
+
 # Load model directly
+
+
+t2class_models = {}
+t2class_tokenizers = {}
 
 
 def predict_t2class(
     input: DatasetResponse,
     model_name: str,
     tokenizer_name: str = None,
-    max_length: int = None
+    max_length: int = None,
 ) -> ModelResponse:
     """
     Default predict function for text classification models from huggingface.
@@ -31,10 +36,19 @@ def predict_t2class(
         if not input.features:
             return ModelResponse(predictions=[], confidence_scores=[])
 
-        model = AutoModelForSequenceClassification.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_name if tokenizer_name else model_name
-        )
+        if model_name not in t2class_models:
+            print(f"Loading t2class model into RAM for the first time: {model_name}")
+            t2class_models[model_name] = (
+                AutoModelForSequenceClassification.from_pretrained(model_name)
+            )
+            t2class_tokenizers[tokenizer_name if tokenizer_name else model_name] = (
+                AutoTokenizer.from_pretrained(
+                    tokenizer_name if tokenizer_name else model_name
+                )
+            )
+
+        model = t2class_models[model_name]
+        tokenizer = t2class_tokenizers[tokenizer_name if tokenizer_name else model_name]
 
         # Convert nested list to list of strings
         texts = [" ".join(map(str, features)) for features in input.features]
@@ -45,7 +59,7 @@ def predict_t2class(
             padding=True,
             truncation=True,
             return_tensors="pt",
-            max_length=max_length
+            max_length=max_length,
         )
 
         with torch.no_grad():
@@ -56,10 +70,20 @@ def predict_t2class(
             probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
 
             predicted_class_ids = logits.argmax(dim=-1).tolist()
-            labels = [[model.config.id2label[class_id]] for class_id in predicted_class_ids]
-            return ModelResponse(predictions=labels, confidence_scores=probabilities.tolist())
+            labels = [
+                [model.config.id2label[class_id]] for class_id in predicted_class_ids
+            ]
+            return ModelResponse(
+                predictions=labels, confidence_scores=probabilities.tolist()
+            )
     except Exception as e:
-        raise HTTPException(detail=f"Error occured during model prediction: {e}", status_code=400)
+        raise HTTPException(
+            detail=f"Error occured during model prediction: {e}", status_code=400
+        )
+
+
+lm_models = {}
+lm_tokenizers = {}
 
 
 def predict_causal_LM(
@@ -84,11 +108,18 @@ def predict_causal_LM(
     :return: ModelResponse object containing predictions
     """
     try:
-        model = AutoModelForCausalLM.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_name if tokenizer_name else model_name,
-            padding_side="left"
-        )
+        if model_name not in lm_models:
+            print(f"Loading LLM model into RAM for the first time: {model_name}")
+            lm_models[model_name] = AutoModelForCausalLM.from_pretrained(model_name)
+            lm_tokenizers[tokenizer_name if tokenizer_name else model_name] = (
+                AutoTokenizer.from_pretrained(
+                    tokenizer_name if tokenizer_name else model_name,
+                    padding_side="left",
+                )
+            )
+        model = lm_models[model_name]
+        tokenizer = lm_tokenizers[tokenizer_name if tokenizer_name else model_name]
+
         print("Reached here - start of predict_causal_LM")
         # Convert nested list to list of strings
         texts = [" ".join(map(str, features)) for features in input.features]
@@ -102,7 +133,7 @@ def predict_causal_LM(
             padding=True,
             truncation=True,
             return_tensors="pt",
-            max_length=max_length
+            max_length=max_length,
         )
         print(f"Tokenized input: {inputs}")
         # with torch.no_grad():
@@ -119,4 +150,6 @@ def predict_causal_LM(
         print(f"Decoded generated texts: {generated_texts}")
         return ModelResponse(predictions=[[text] for text in generated_texts])
     except Exception as e:
-        raise HTTPException(detail=f"Error occured during model prediction: {e}", status_code=400)
+        raise HTTPException(
+            detail=f"Error occured during model prediction: {e}", status_code=400
+        )
