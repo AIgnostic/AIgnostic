@@ -17,6 +17,10 @@ from common.models import (
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
 from worker.worker import USER_METRIC_SERVER_URL
+from aggregator.connection_manager import ConnectionManager
+
+
+manager = ConnectionManager()
 
 
 def aggregator_metrics_completion_log():
@@ -195,17 +199,14 @@ class ResultsConsumer:
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
-# Store multiple WebSocket clients
-connected_clients = set()
 # Store messages until a client connects
 message_queue = queue.Queue()
 # user_id -> MetricsAggregator
 user_aggregators: dict = {}
 
 
-def process_batch_result(worker_results: WorkerResults):
+def process_batch_result(worker_results: WorkerResults, user_id: str):
     """Handles batch results from worker i.e. aggregating intermediate metric results"""
-    user_id = worker_results.user_id
     print(f"Received result for user {user_id}: {worker_results}")
 
     if worker_results.user_defined_metrics is not None:
@@ -260,7 +261,8 @@ def process_batch_result(worker_results: WorkerResults):
             print(f"Error clearing user data: {e}")
 
         print("Creating and sending final report")
-        send_to_clients(
+        manager.send_to_user(
+            user_id,
             AggregatorMessage(
                 messageType=MessageType.LOG,
                 message="Generating final report - this may take a few minutes",
@@ -282,9 +284,9 @@ def process_batch_result(worker_results: WorkerResults):
         del user_aggregators[user_id]
 
 
-def process_error_result(error_data: WorkerError):
+def process_error_result(error_data: WorkerError, user_id: str):
     """Handles error results from worker"""
-    send_to_clients(aggregator_error_log(error_data.error_message))
+    manager.send_to_user(user_id, aggregator_error_log(error_data.error_message))
 
 
 def get_api_key():
@@ -295,13 +297,14 @@ def get_api_key():
     return os.getenv("GOOGLE_API_KEY")
 
 
-def aggregator_generate_report(aggregates, aggregator):
+def aggregator_generate_report(user_id, aggregates, aggregator):
     """
     Generates a report to send to the frontend
     By collating the metrics, and pulling information from the report generator
     """
     print("Fetching Legislation Extracts")
-    send_to_clients(
+    manager.send_to_user(
+        user_id,
         AggregatorMessage(
             messageType=MessageType.LOG,
             message="Fetching Legislation Extracts",
@@ -311,7 +314,8 @@ def aggregator_generate_report(aggregates, aggregator):
     )
     report_properties_section = get_legislation_extracts(aggregates)
     print("Adding LLM Insights")
-    send_to_clients(
+    manager.send_to_user(
+        user_id,
         AggregatorMessage(
             messageType=MessageType.LOG,
             message="Adding LLM Insights",
@@ -321,6 +325,16 @@ def aggregator_generate_report(aggregates, aggregator):
     )
     report_properties_section = add_llm_insights(
         report_properties_section, get_api_key()
+    )
+
+    manager.send_to_user(
+        user_id,
+        AggregatorMessage(
+            messageType=MessageType.LOG,
+            message="Added LLM Insights. Sending final report...",
+            statusCode=200,
+            content=None,
+        )
     )
     report_info_section = {
         # TODO: Update with codecarbon info and calls to model from metrics
@@ -334,7 +348,7 @@ def aggregator_generate_report(aggregates, aggregator):
 def generate_and_send_report(user_id, aggregates, aggregator):
     """Generates the report and sends it without blocking the main process."""
     try:
-        report_json = aggregator_generate_report(aggregates, aggregator)
+        report_json = aggregator_generate_report(user_id, aggregates, aggregator)
         manager.send_to_user(user_id, aggregator_final_report_log(report_json))
     except Exception as e:
         print(f"Error generating report for user {user_id}: {e}")
@@ -342,75 +356,17 @@ def generate_and_send_report(user_id, aggregates, aggregator):
 
 
 def on_result_fetched(ch, method, properties, body):
-    """Handles incoming messages and waits for at least one client before sending."""
-    global connected_clients
     body = json.loads(body)
     job = AggregatorJob(**body)
 
     print(f"Received job: {job}")
 
     if job.job_type == JobType.RESULT:
-        process_batch_result(worker_results=job.content)
+        process_batch_result(worker_results=job.content, user_id=job.user_id)
     elif job.job_type == JobType.ERROR:
-        process_error_result(error_data=job.content)
+        process_error_result(error_data=job.content, user_id=job.user_id)
     else:
         raise ValueError(f"Invalid job type: {job.job_type}")
-
-
-def send_to_clients(message: AggregatorMessage):
-    """Sends messages to all connected WebSocket clients."""
-    global connected_clients
-    disconnected_clients = set()
-
-    # If clients exist, send immediately; otherwise, store in the queue
-    if not connected_clients:
-        print("No clients connected, storing message in queue...")
-        message_queue.put(message)
-        return
-
-    for client in connected_clients:
-        try:
-            client.send(message.model_dump_json())
-            print(f"Sent message to client: {message.model_dump_json()}")
-        except Exception as e:
-            print(f"Error sending message to client: {e}")
-            disconnected_clients.add(client)  # Mark client for removal
-
-    # Remove disconnected clients
-    connected_clients.difference_update(disconnected_clients)
-
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections = {}
-
-    def connect(self, user_id, websocket):
-        """Stores a Websocket connection for a specific user"""
-        self.active_connections[user_id] = websocket
-
-    def disconnect(self, user_id):
-        """Removes a Websocket connection for a specific user"""
-        if user_id in self.active_connections:
-            del self.active_connections[user_id]
-
-    def send_to_user(self, user_id, message):
-        """Sends a message to the correct user."""
-
-        if user_id in self.active_connections:
-            print(f"Sending message to user {user_id}")
-            websocket = self.active_connections[user_id]
-            try:
-                websocket.send(json.dumps(message.dict()))
-                print(f"Sent message to user {user_id}: {json.dumps(message.dict())}")
-            except Exception as e:
-                print(f"Error sending message to user {user_id}: {e}")
-                self.disconnect(user_id)
-        else:
-            print(f"User not connected: {user_id}")
-            print(f"Active connections {self.active_connections}")
-
-
-manager = ConnectionManager()
 
 
 def websocket_handler(websocket):

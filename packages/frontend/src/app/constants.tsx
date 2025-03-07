@@ -58,6 +58,10 @@ const WEBSOCKET_URL = IS_PROD
 const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/retrieve-metric-info'
   : 'http://localhost:8000/retrieve-metric-info';
+const BACKEND_STOP_JOB_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/stop-job'
+  : 'http://localhost:8000/stop-job';
+
 let modelTypesToMetrics: { [key: string]: string[] } = {};
 export async function initializeModelTypesToMetrics() {
   try {
@@ -94,6 +98,7 @@ export {
   steps,
   BACKEND_EVALUATE_URL,
   BACKEND_FETCH_METRIC_INFO_URL,
+  BACKEND_STOP_JOB_URL,
   RESULTS_URL,
   MOCK_SCIKIT_API_URL,
   MOCK_FINBERT_API_URL,
@@ -106,9 +111,5 @@ export {
   modelTypesToMetrics,
   activeStepToInputConditions,
   WEBSOCKET_URL,
-  MOCK_SCIKIT_API_URL_PROD,
-  MOCK_FINBERT_API_URL_PROD,
-  MOCK_FOLKTABLES_DATASET_API_URL_PROD,
-  MOCK_FINANCIAL_DATASET_API_URL_PROD,
   USER_METRICS_SERVER_URL,
 };
