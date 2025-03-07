@@ -191,18 +191,31 @@ services:
     ports:
       - '5024:5024'
 
-  # tinystories_dataset_api:
-  #   container_name: tinystories-dataset-api
-  #   image: aignostic/dev
-  #   volumes:
-  #     - .:/app
-  #     - venv:/app/.venv
-  #   command: poetry run python3 -u -m mocks.dataset.tinystories_dataset_server --host 0.0.0.0 --reload
-  #   working_dir: /app/packages/mocks
-  #   networks:
-  #     - aignostic_network
-  #   ports:
-  #     - '5026:5026'
+  tinystories_dataset_api:
+    container_name: tinystories-dataset-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.dataset.tinystories_dataset_server --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
+      - '5026:5026'
+
+  boston_housing_data_api:
+    container_name: boston-housing-data-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.dataset.boston_housing_data_server --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
+      - '5060:5060'
 
   scikit_mock_model_api:
     container_name: scikit-mock-model-api
@@ -230,18 +243,31 @@ services:
     ports:
       - '5001:5001'
   
-  # tinystories_mock_model_api:
-  #   container_name: tinystories-mock-model-api
-  #   image: aignostic/dev
-  #   volumes:
-  #     - .:/app
-  #     - venv:/app/.venv
-  #   command: poetry run python3 -u -m mocks.model.tinystories_1M_mock --host 0.0.0.0 --reload
-  #   working_dir: /app/packages/mocks
-  #   networks:
-  #     - aignostic_network
-  #   ports:
-  #     - '5027:5027'
+  tinystories_mock_model_api:
+    container_name: tinystories-mock-model-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.model.tinystories_1M_mock --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
+      - '5027:5027'
+
+  scikit_regression_mock_model_api:
+    container_name: scikit-regression-mock-model-api
+    image: aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.model.scikit_mock_regressor --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
+      - '5012:5012'
 
 volumes:
   venv:
