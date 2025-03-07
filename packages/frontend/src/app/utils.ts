@@ -1,4 +1,3 @@
-import isURL from 'validator/lib/isURL';
 import jsPDF from 'jspdf';
 import {
   MOCK_SCIKIT_API_URL,
@@ -24,7 +23,9 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
     throw error; // Rethrow the error so the caller can handle it
   }
 }
-function checkURL(url: string): boolean {
+function checkURL(str: string): boolean {
+  const regex = /^(https?:\/\/)?(([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*)(\.[a-zA-Z]{2,})?|([0-9]{1,3}\.){3}[0-9]{1,3})(:\d+)?(\/[^\s]*)?$/;
+
   const validURLS = [
     MOCK_SCIKIT_API_URL,
     MOCK_FINBERT_API_URL,
@@ -34,6 +35,8 @@ function checkURL(url: string): boolean {
     "http://localhost:5024/fetch-datapoints",
     "http://localhost:9001/predict",
     "http://localhost:5025/fetch-datapoints",
+    "http://localhost:5011/predict",
+    "http://localhost:5010/fetch-datapoints",
     // Prod
     MOCK_SCIKIT_API_URL_PROD,
     MOCK_FINBERT_API_URL_PROD,
@@ -42,23 +45,24 @@ function checkURL(url: string): boolean {
     MOCK_GEMINI_API_URL,
     MOCK_WIKI_DATASET_API_URL,
   ];
-  if (validURLS.includes(url)) {
+
+  if (validURLS.includes(str)) {
     return true;
   }
-  if (url === '') {
+
+  if (!regex.test(str)) {
     return false;
   }
-  // allow urls from
+  
+  let url;
   try {
-    if (!isURL(url) || url.includes('%20')) {
-      throw new Error('Invalid URL ');
-    }
-    new URL(url); // If the URL is valid, this will not throw an error
-    return true;
-  } catch (e) {
-    console.log(e + url);
-    return false; // If an error is thrown, the URL is invalid
+    url = new URL(str);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_) {
+    return false;
   }
+
+  return url.protocol === "http:" || url.protocol === "https:";
 }
 function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
   // Check batchSize and numberOfBatches greater than 1
@@ -68,22 +72,18 @@ function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
   const totalSampleSize = batchSize * numberOfBatches;
   return 1000 <= totalSampleSize && totalSampleSize <= 10000;
 }
-// retrieves a dictionary mapping task types to the metrics that can be computed for them
-// returns a dictionary with the following structure:
-// {
-//     "binary_classification": ["metric_1", "metric_2", ...],
-//     "multi_class_classification": ["metric_1", "metric_2", ...],
-//     "regression": ["metric_1", "metric_2", ...],
-//     ...
-// }
+
 export interface TaskToMetricMap {
   [taskType: string]: string[];
 }
+
 export interface MetricInfo {
   task_to_metric_map: TaskToMetricMap;
 }
+
 function applyStyle(doc: jsPDF, style: any) {
   doc.setFont(style.font, style.style);
   doc.setFontSize(style.size);
 }
+
 export { checkURL, checkBatchConfig, applyStyle, fetchMetricInfo };
