@@ -93,14 +93,10 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=Fa
         size=(num_samples, d)
     )
 
-    if not info.regression_flag:
-        # probabilities cannot exceed 1 or be less than 0
-        perturbed_samples = np.clip(perturbed_samples, 0, 1)
-
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(perturbed_samples, info)
-    print(f"Model Response = {response}")
     # Compute model probabilities for perturbed samples
+    # TODO: Remove ESP param for alternatives
     outputs = response.predictions if (info.regression_flag or esp) else response.confidence_scores
 
     if outputs is None:
@@ -108,6 +104,9 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=Fa
             detail="Model response does not contain probability scores for outputs",
             status_code=400
         )
+
+    if not info.regression_flag:
+        outputs = np.clip(outputs, 0, 1)
 
     # Compute similarity weights using an RBF kernel
     distances = np.array([euclidean(info.input_features[i], sample) for i, sample in enumerate(perturbed_samples)])

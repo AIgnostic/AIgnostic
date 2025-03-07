@@ -5,6 +5,7 @@ from tests.metric_mocks.mock_text_inp_classifier_expl_stability import app as tx
 from mocks.model.finbert import app as finbert_app
 from mocks.model.gemini_mock import app as gemini_app
 from mocks.model.tinystories_1M_mock import app as tinystories_app
+from tests.metric_mocks.mock_regressor_numeric_input import app as numeric_regression_app
 from threading import Thread
 import pytest
 import uvicorn
@@ -43,7 +44,11 @@ server_configs = {
     "tinystories_integration": {
         "port": 3006,
         "app": tinystories_app,
-    }
+    },
+    "numeric_regression": {
+        "port": 3007,
+        "app": numeric_regression_app,
+    },
 }
 
 
