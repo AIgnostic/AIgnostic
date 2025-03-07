@@ -58,8 +58,6 @@ def sample_job():
         )
 
 
-
-
 def test_dispatcher_exception_has_detail_and_status_code():
     """Should have a detail and status code"""
     detail = "This is a test"

@@ -1,5 +1,4 @@
 from api.router.rabbitmq import get_jobs_publisher
-from common.models.pipeline import MetricCalculationJob, PipelineJob
 from common.rabbitmq.publisher import Publisher
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, Depends, HTTPException
@@ -34,6 +33,7 @@ class ModelEvaluationRequest(BaseModel):
     batch_size: int = BATCH_SIZE
     num_batches: int = NUM_BATCHES
     max_conc_batches: int = MAX_CONCURRENT_BATCHES
+
 
 class StopJobRequest(BaseModel):
     job_id: str
@@ -125,8 +125,7 @@ def dispatch_job(
             metrics=metrics,
         )
     )
-    
-    
+
     message = job.model_dump_json()
 
     _ = publisher.publish(message)

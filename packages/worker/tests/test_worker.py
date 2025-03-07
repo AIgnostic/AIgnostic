@@ -509,11 +509,12 @@ async def test_query_model_invalid_data_format_gives_worker_exception(mock_post)
 
     assert "Could not parse model response" in str(excinfo.value)
 
+
 @pytest.mark.asyncio
 async def test_query_model_error_results_in_worker_returning_worker_error():
-    with patch.object(worker, "fetch_data", new_callable=AsyncMock) as mock_fetch_data, \
+    with patch.object(worker, "fetch_data", new_callable=AsyncMock), \
          patch.object(worker, "query_model", new_callable=AsyncMock) as mock_query_model, \
-         patch.object(worker, "queue_error", new_callable=MagicMock) as mock_queue_error,\
+         patch.object(worker, "queue_error", new_callable=MagicMock) as mock_queue_error, \
          patch.object(worker, "send_status_error", new_callable=MagicMock) as mock_send_status_error:
         mock_query_model.side_effect = WorkerException("Some error occurred")
         _ = await worker.process_job(Batch(
@@ -530,9 +531,10 @@ async def test_query_model_error_results_in_worker_returning_worker_error():
                 model_type="binary classification",
             ))
         )
-        
+
         mock_queue_error.assert_called_once()
         mock_send_status_error.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_worker_exception_during_process_job_send_error_to_frontend():

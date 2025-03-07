@@ -122,7 +122,6 @@ class Worker:
                 raise WorkerException(f"Invalid batch format: {e}", status_code=400)
         return None
 
-
     async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> DatasetResponse:
         """
         Helper function to fetch data from the dataset API.
@@ -149,7 +148,7 @@ class Worker:
         except Timeout:
             raise WorkerException(detail=f"Request to dataset API at {url} timed out", status_code=504)
 
-        except HTTPError as e:
+        except HTTPError:
             try:
                 error_detail = response.json().get("detail", "Unknown error")
             except Exception:
@@ -162,18 +161,25 @@ class Worker:
         try:
             # Ensure response is JSON
             if "application/json" not in response.headers.get("Content-Type", ""):
-                raise WorkerException(f"Unexpected response type from dataset API: {response.headers.get('Content-Type')}", status_code=500)
+                raise WorkerException(
+                    f"Unexpected response type from dataset API: {response.headers.get('Content-Type')}",
+                    status_code=500
+                )
 
             dataset_response = DatasetResponse(**response.json())
             return dataset_response
 
         except ValidationError as e:
-            raise WorkerException(f"Data error - Incorrect format from dataset API: \n{e}", status_code=500)
+            raise WorkerException(
+                f"Data error - Incorrect format from dataset API: \n{e}",
+                status_code=500
+            )
 
         except Exception as e:
-            raise WorkerException(f"Could not parse dataset response - {e}; response = {response.text}", status_code=500)
-
-
+            raise WorkerException(
+                f"Could not parse dataset response - {e}; response = {response.text}",
+                status_code=500
+            )
 
     async def query_model(self, model_url: HttpUrl, data: DatasetResponse, model_api_key) -> ModelResponse:
         """
@@ -199,7 +205,7 @@ class Worker:
         except Timeout:
             raise WorkerException(detail=f"Request to model at {url} timed out", status_code=504)
 
-        except HTTPError as e:
+        except HTTPError:
             try:
                 error_detail = response.json().get("detail", "Unknown error")
             except Exception:
@@ -207,15 +213,24 @@ class Worker:
             raise WorkerException(detail=error_detail, status_code=response.status_code)
 
         except RequestException as e:
-            raise WorkerException(detail=f"An error occurred while contacting the model: {e}", status_code=500)
-        
+            raise WorkerException(
+                detail=f"An error occurred while contacting the model: {e}",
+                status_code=500
+            )
+
         except Exception as e:
-            raise WorkerException(detail=f"An unknown error occurred while querying the model: {e}", status_code=500)
+            raise WorkerException(
+                detail=f"An unknown error occurred while querying the model: {e}",
+                status_code=500
+            )
 
         try:
             # Ensure response is JSON
             if "application/json" not in response.headers.get("Content-Type", ""):
-                raise WorkerException(f"Unexpected response type from model: {response.headers.get('Content-Type')}", status_code=500)
+                raise WorkerException(
+                    f"Unexpected response type from model: {response.headers.get('Content-Type')}",
+                    status_code=500
+                )
 
             model_response = ModelResponse(**response.json())
             self._check_model_response(model_response.predictions, data.labels)
@@ -226,7 +241,6 @@ class Worker:
             raise WorkerException(
                 f"Could not parse model response - {e}; response = {response.text}", status_code=500
             )
-
 
     async def process_job(self, batch: Batch):
 

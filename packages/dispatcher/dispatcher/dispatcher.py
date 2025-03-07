@@ -10,7 +10,7 @@ from common.models.pipeline import (
     PipelineJob,
     JobFromAPI,
     PipelineJobType,
-    PipelineHalt)
+)
 from common.rabbitmq.constants import BATCH_QUEUE, JOB_QUEUE, STATUS_QUEUE
 from common.rabbitmq.connect import publish_to_queue
 from dispatcher.models import RunningJob

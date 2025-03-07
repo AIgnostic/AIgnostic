@@ -56,7 +56,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
       socket.close();
     }
 
-    let id = sessionStorage.getItem('userId');
+    const id = sessionStorage.getItem('userId');
     console.log("Stopping job with id: ", id);
     // ping api to stop processing batches for this job
     await fetch(BACKEND_STOP_JOB_URL, {
