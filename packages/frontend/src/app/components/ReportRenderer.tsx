@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     },
     boldText: {
         marginLeft: 8,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 'bold',
         fontFamily: 'Times-Roman',
     },
@@ -66,7 +66,8 @@ const styles = StyleSheet.create({
     },
     text: {
         fontSize: 12,
-        marginBottom: 8,
+        marginLeft: 8,
+        marginBottom: 10,
         fontFamily: 'Times-Roman',
     },
     hyperlink: {
@@ -175,6 +176,7 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
                                                 </Text>
                                             </View>
                                         ))}
+                                        {}
                                     </View>
                             ))}
                         </View>

@@ -40,12 +40,12 @@ def extract_legislation_text(article_num: str, url: str, article_extension: call
     return article_content.get_text(separator="\n").strip()
 
 
-def parse_legislation_text(article_content: str, article_num: str, article_type: str, info: LegislationInfo, url: str, article_extension: callable) -> dict:
+def parse_legislation_text(article_content: str, article_num: str, info: LegislationInfo) -> dict:
     """
     Parses the raw article content into structured data.
     """
     data = {
-        "article_type": article_type,
+        "article_type": info.name,
         "article_number": article_num,
         "article_title": "",
         "link": "",
@@ -105,7 +105,7 @@ def parse_legislation_text(article_content: str, article_num: str, article_type:
         i += 1
 
 
-    link = url + article_extension(article_num)
+    link = info.url + info.article_extract(article_num)
     data["link"] = link
     data["description"] = data["description"].strip()
     return data
@@ -155,29 +155,20 @@ def get_legislation_extracts(metrics_data: dict, legislation: LegislationInforma
 
         property_result["computed_metrics"] = computed_metrics_list
 
-        print("Reached this point before legislation insight.")
-        print("Legislation", legislation)
         property_result["legislation_extracts"] = []
         for id, info in legislation.items():
             final_legislation_extracts_per_leg = []
-            name = info.name
             url = info.url
             article_extract = info.article_extract 
-            print(f"Legislation checker: {name}, {url}, {article_extract}")
             for regulations in property_to_regulations[property]:
-                print(f"Entered in regulations")
                 article_content = extract_legislation_text(
                     regulations, 
                     url, 
                     article_extract)
-                print(f"Finished extracting article content")
                 parsed_data = parse_legislation_text(
                     article_content, 
                     regulations, 
-                    name, 
-                    info, 
-                    url, 
-                    article_extract)
+                    info)
                 final_legislation_extracts_per_leg.append(parsed_data)
             property_result["legislation_extracts"].append((
                 final_legislation_extracts_per_leg))
