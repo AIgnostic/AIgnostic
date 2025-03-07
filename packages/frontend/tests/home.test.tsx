@@ -35,6 +35,11 @@ jest.mock('@react-pdf/renderer', () => ({
   StyleSheet: { create: (styles: any) => styles },
 }));
 
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: jest.fn(),
+}));
+
 describe('Stepper Navigation', () => {
   it('should disable Next state if no API URLs inputted', () => {
     render(<Homepage />);

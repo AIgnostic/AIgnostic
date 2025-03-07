@@ -174,5 +174,4 @@ class WorkerResults(MetricConfig):
     Inherit from MetricConfig
     """
 
-    user_id: str
     user_defined_metrics: Optional[dict[str, dict]] = None

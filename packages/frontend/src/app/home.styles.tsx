@@ -43,6 +43,10 @@ const styles = {
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer' as const,
+    ml: '10px',
+    backgroundColor: theme.palette.secondary.main,
+    color: '#fff',
+
   },
   secondaryButton: {
     border: 'none',

@@ -12,10 +12,8 @@ from aggregator.aggregator import (
     on_result_fetched,
     aggregator_intermediate_metrics_log,
     aggregator_metrics_completion_log,
-    connected_clients,
     message_queue,
     websocket_handler,
-    send_to_clients,
     user_aggregators,
     manager,
 )
@@ -37,7 +35,6 @@ def reset_state():
     metrics_aggregator.samples_processed = 0
     metrics_aggregator.total_sample_size = 0
     user_aggregators.clear()
-    connected_clients.clear()
     while not message_queue.empty():
         message_queue.get()
 
@@ -136,15 +133,16 @@ def test_run_keyboard_interrupt(
 def test_on_result_fetched_for_error():
     body = AggregatorJob(
         job_type=JobType.ERROR,
+        user_id="user123",
         content=WorkerError(
             error_message="An error occurred",
-            error_code=500
+            error_code=500,
         )
     )
     bodyJson = body.model_dump_json()
     with patch("aggregator.aggregator.process_error_result", new_callable=MagicMock) as mock_process_error_result:
         on_result_fetched(None, None, None, bodyJson)
-        mock_process_error_result.assert_called_once_with(error_data=body.content)
+        mock_process_error_result.assert_called_once_with(error_data=body.content, user_id=body.user_id)
 
 
 @patch('aggregator.aggregator.manager.send_to_user')
@@ -158,8 +156,8 @@ def test_on_result_fetched(mock_generate_report, mock_send_to_user):
     # Define sample incoming message with a user_id.
     sample_message = {
         "job_type": "RESULT",
+        "user_id": "user123",
         "content": {
-            "user_id": "user123",
             "total_sample_size": 20,
             "batch_size": 10,
             "metric_values": {
@@ -245,41 +243,6 @@ def test_websocket_handler(mock_send_to_user):
     assert user_id not in manager.active_connections
 
 
-def test_send_to_clients_no_clients():
-    # Mock message
-    mock_message = "Test Message"
-    mesg = aggregator_intermediate_metrics_log(mock_message)
-
-    # Reset connected clients
-    connected_clients.clear()
-
-    # Call function under test
-    send_to_clients(mesg)
-
-    # Ensure message is stored in the queue
-    assert message_queue.qsize() == 1
-
-
-def test_send_to_clients_with_clients():
-    # Mock WebSocket clients
-    mock_client1 = MagicMock()
-    mock_client2 = MagicMock()
-    connected_clients.clear()
-    connected_clients.add(mock_client1)
-    connected_clients.add(mock_client2)
-
-    # Mock message
-    mock_message = "Test Message"
-    mesg = aggregator_intermediate_metrics_log(mock_message)
-
-    # Call function under test
-    send_to_clients(mesg)
-
-    # Ensure message is sent to all clients
-    mock_client1.send.assert_called_once()
-    mock_client2.send.assert_called_once()
-
-
 # @patch("aggregator.aggregator.aggregator_generate_report")
 # def test_aggregate_report(mock_generate_report):
 #     # Mock metrics data
@@ -316,15 +279,16 @@ def test_generate_and_send_report():
     with patch("aggregator.aggregator.aggregator_generate_report", new_callable=MagicMock) as mock_rep_gen, \
          patch.object(manager, "send_to_user") as mock_send_to_user:
         # Call function under test
+        user_id = "user123"
 
         mock_return_report = {"properties": [], "info": {}}
         mock_rep_gen.return_value = mock_return_report
 
-        generate_and_send_report("user123", aggregates, aggregator)
+        generate_and_send_report(user_id, aggregates, aggregator)
 
         # Ensure aggregator_generate_report is called
-        mock_rep_gen.assert_called_once_with(aggregates, aggregator)
-        mock_send_to_user.assert_called_once_with("user123", aggregator_final_report_log(mock_return_report))
+        mock_rep_gen.assert_called_once_with(user_id, aggregates, aggregator)
+        mock_send_to_user.assert_called_once_with(user_id, aggregator_final_report_log(mock_return_report))
 
 
 @patch("aggregator.aggregator.get_legislation_extracts")
@@ -341,7 +305,7 @@ def test_aggregator_generate_report(mock_add_llm_insights, mock_get_legislation_
     aggregator.total_sample_size = 20
 
     # Call function under test
-    report = aggregator_generate_report(metrics, aggregator)
+    report = aggregator_generate_report("user123", metrics, aggregator)
 
     # Ensure report is generated correctly
     assert "properties" in report
