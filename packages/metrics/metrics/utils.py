@@ -143,6 +143,8 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
     if info.model_api_key is None:
         response = requests.post(url=info.model_url, json=model_input.model_dump(mode="json"))
     else:
+
+        print(f"info.model_url = {info.model_url}")
         response = requests.post(
             url=info.model_url,
             json=model_input.model_dump(mode="json"),

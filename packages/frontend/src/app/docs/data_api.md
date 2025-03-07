@@ -30,7 +30,6 @@ async def fetch_datapoints(num_datapoints: int = Query(alias="n")):
     Given a list of indices, fetch the data at each index and convert into
     our expected JSON format, and returns it in a JSON response. Defaults to
     fetching the first row of the ACS data.
-
     Args:
         num_datapoints (int): The number of datapoints to fetch.
     Returns:
@@ -55,7 +54,6 @@ async def fetch_datapoints(num_datapoints: int = Query(alias="n")):
             float('inf'): None,
             float('-inf'): None
             })
-
         filtered_features = list(list(r) for r in filtered_features.values)
         filtered_labels = [[(bool(r) if isinstance(r, np.bool_) else r for r in row)] for row in filtered_labels.values]
         filtered_group_ids = list(filtered_group_ids.values)

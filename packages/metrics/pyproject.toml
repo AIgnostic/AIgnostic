@@ -17,6 +17,10 @@ include = "metrics"
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
 aif360 = "^0.6.1"
+nltk = "^3.9.1"
+rouge = "^1.0.1"
+editdistance = "^0.8.1"
+sentence-transformers = "^3.4.1"
 
 [tool.poetry.dependencies.common]
 path = "../common"
