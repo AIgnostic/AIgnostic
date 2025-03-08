@@ -12,6 +12,7 @@ import os
 import json
 import asyncio
 import random
+import threading
 from common.models.pipeline import Batch, JobStatus, JobStatusMessage
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues, publish_to_queue
 from metrics.models import WorkerResults, convert_calculate_request_to_dict
@@ -80,10 +81,7 @@ class Worker:
         """
         Function to queue the results of a job
         """
-        job = AggregatorJob(
-            job_type=JobType.RESULT,
-            user_id=user_id,
-            content=result)
+        job = AggregatorJob(job_type=JobType.RESULT, user_id=user_id, content=result)
 
         self._channel = publish_to_queue(
             self._channel, RESULT_QUEUE, job.model_dump_json()
@@ -105,24 +103,18 @@ class Worker:
     def close(self):
         self._channel.close()
 
-    def fetch_batch(self) -> Optional[Batch]:
-        """
-        Function to fetch a batch from the job queue
-        """
-        method_frame, header_frame, body = self._channel.basic_get(
-            queue=BATCH_QUEUE, auto_ack=True
-        )
-        if method_frame:
-            batch_data = json.loads(body)
-            print(f"Received job: {batch_data}")
-            try:
-                print("Unpacking batch data")
-                return Batch(**batch_data)
-            except ValueError as e:
-                raise WorkerException(f"Invalid batch format: {e}", status_code=400)
-        return None
+    def unpack_batch(self, data: str) -> Batch:
+        batch_data = json.loads(data)
+        print(f"Received job: {batch_data}")
+        try:
+            print("Unpacking batch data")
+            return Batch(**batch_data)
+        except ValueError as e:
+            raise WorkerException(f"Invalid batch format: {e}", status_code=400)
 
-    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> DatasetResponse:
+    async def fetch_data(
+        self, data_url: HttpUrl, dataset_api_key, batch_size: int
+    ) -> DatasetResponse:
         """
         Helper function to fetch data from the dataset API.
 
@@ -133,7 +125,9 @@ class Worker:
         """
 
         url = convert_localhost_url(str(data_url))
-        headers = {"Authorization": f"Bearer {dataset_api_key}"} if dataset_api_key else {}
+        headers = (
+            {"Authorization": f"Bearer {dataset_api_key}"} if dataset_api_key else {}
+        )
         params = {"n": batch_size}
 
         try:
@@ -145,25 +139,25 @@ class Worker:
         except ConnectionError as e:
             raise WorkerException(
                 detail=f"Failed to connect to dataset API at {url}: {e}",
-                status_code=503
+                status_code=503,
             )
 
         except Timeout as e:
             raise WorkerException(
                 detail=f"Request to dataset API at {url} timed out: {e}",
-                status_code=504
+                status_code=504,
             )
 
         except HTTPError as e:
             raise WorkerException(
                 detail=f"HHTP Error on request to dataset API at {url}: {e}",
-                status_code=response.status_code
+                status_code=response.status_code,
             )
 
         except RequestException as e:
             raise WorkerException(
                 detail=f"An error occurred while contacting the dataset API: {e}",
-                status_code=500
+                status_code=500,
             )
 
         try:
@@ -171,7 +165,7 @@ class Worker:
             if "application/json" not in response.headers.get("Content-Type", ""):
                 raise WorkerException(
                     f"Unexpected response type from dataset API: {response.headers.get('Content-Type')}",
-                    status_code=500
+                    status_code=500,
                 )
 
             dataset_response = DatasetResponse(**response.json())
@@ -180,16 +174,18 @@ class Worker:
         except ValidationError as e:
             raise WorkerException(
                 f"Data error - Incorrect format from dataset API: \n{e}",
-                status_code=500
+                status_code=500,
             )
 
         except Exception as e:
             raise WorkerException(
                 f"Could not parse dataset response - {e}; response = {response.text}",
-                status_code=500
+                status_code=500,
             )
 
-    async def query_model(self, model_url: HttpUrl, data: DatasetResponse, model_api_key) -> ModelResponse:
+    async def query_model(
+        self, model_url: HttpUrl, data: DatasetResponse, model_api_key
+    ) -> ModelResponse:
         """
         Helper function to query the model API
 
@@ -202,39 +198,39 @@ class Worker:
         headers = {"Authorization": f"Bearer {model_api_key}"} if model_api_key else {}
 
         try:
-            response = requests.post(url, json=data.model_dump(), headers=headers, timeout=10)
+            response = requests.post(
+                url, json=data.model_dump(), headers=headers, timeout=10
+            )
 
             # Raise for status (HTTPError for 4xx, 5xx)
             response.raise_for_status()
 
         except ConnectionError as e:
             raise WorkerException(
-                detail=f"Failed to connect to model at {url}: {e}",
-                status_code=503
+                detail=f"Failed to connect to model at {url}: {e}", status_code=503
             )
 
         except Timeout as e:
             raise WorkerException(
-                detail=f"Request to model at {url} timed out: {e}",
-                status_code=504
+                detail=f"Request to model at {url} timed out: {e}", status_code=504
             )
 
         except HTTPError as e:
             raise WorkerException(
                 detail=f"HHTP Error on request to dataset API at {url}: {e}",
-                status_code=response.status_code
+                status_code=response.status_code,
             )
 
         except RequestException as e:
             raise WorkerException(
                 detail=f"An error occurred while contacting the model: {e}",
-                status_code=500
+                status_code=500,
             )
 
         except Exception as e:
             raise WorkerException(
                 detail=f"An unknown error occurred while querying the model: {e}",
-                status_code=500
+                status_code=500,
             )
 
         try:
@@ -242,7 +238,7 @@ class Worker:
             if "application/json" not in response.headers.get("Content-Type", ""):
                 raise WorkerException(
                     f"Unexpected response type from model: {response.headers.get('Content-Type')}",
-                    status_code=500
+                    status_code=500,
                 )
 
             model_response = ModelResponse(**response.json())
@@ -252,7 +248,8 @@ class Worker:
 
         except Exception as e:
             raise WorkerException(
-                f"Could not parse model response - {e}; response = {response.text}", status_code=500
+                f"Could not parse model response - {e}; response = {response.text}",
+                status_code=500,
             )
 
     async def process_job(self, batch: Batch):
@@ -426,11 +423,36 @@ class Worker:
 
     def run(self):
         self.connect()
+
+        # Start event loop
+        def start_event_loop(loop: asyncio.AbstractEventLoop) -> None:
+            asyncio.set_event_loop(loop)
+            loop.run_forever()
+
+        # Create a new event to run batchs
+        loop = asyncio.new_event_loop()
+
+        # Start the loop in a new daemon thread
+        thread = threading.Thread(target=start_event_loop, args=(loop,), daemon=True)
+        thread.start()
+
+        # Use asyncio.run_coroutine_threadsafe()
+        def callback(channel, method, properties, body):
+            print(" [x] Received %r" % body)
+            print("[x] Unpacking batch")
+            batch = self.unpack_batch(body)
+            print("[x] Processing batch...")
+            task = asyncio.run_coroutine_threadsafe(self.process_job(batch), loop)
+            task.result()
+            print("[x] Done processing batch")
+
         try:
-            while True:
-                job = self.fetch_batch()
-                if job:
-                    asyncio.run(self.process_job(job))
+            self._channel.basic_consume(
+                queue=BATCH_QUEUE, on_message_callback=callback, auto_ack=True
+            )
+            print("Worker started")
+            # Block on the channel
+            self._channel.start_consuming()
         except KeyboardInterrupt:
             self.close()
             print("Worker stopped")
