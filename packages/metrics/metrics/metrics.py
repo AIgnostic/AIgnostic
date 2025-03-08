@@ -74,9 +74,9 @@ task_type_to_metric = {
         # "class_f1_score",
         "f1_score",
         "roc_auc",
-        # "explanation_stability_score",
-        # "explanation_sparsity_score",
-        # "explanation_fidelity_score",
+        "explanation_stability_score",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
         "ood_auroc",
     ],
     "regression": [
@@ -84,8 +84,8 @@ task_type_to_metric = {
         "mean_squared_error",
         "r_squared",
         "explanation_stability_score",
-        # "explanation_sparsity_score",
-        # "explanation_fidelity_score",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
     ],
     # TODO: Review which metrics really apply
     "text_classification": [
@@ -96,7 +96,8 @@ task_type_to_metric = {
         "roc_auc",
         "expl_stability_text_input",
         # "expl_sparsity_text_input",
-        # "expl_fidelity_text_input"
+        # "expl_fidelity_text_input",
+        "ood_auroc",
     ],
     "next_token_generation": [
         "expl_stability_text_input",

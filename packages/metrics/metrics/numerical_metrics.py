@@ -7,7 +7,8 @@ from metrics.models import (
 from metrics.utils import (
     _query_model,
     _lime_explanation,
-    _finite_difference_gradient
+    _finite_difference_gradient_predictions,
+    _finite_difference_gradient_confidence_scores
 )
 from sklearn.metrics import (
     f1_score,
@@ -418,15 +419,21 @@ def explanation_stability_score(info: CalculateRequest) -> float:
     lime_actual, _ = _lime_explanation(info)
 
     # Calculate gradients for perturbation
-    gradients = _finite_difference_gradient(info, 0.01)
+    gradients = (
+        _finite_difference_gradient_predictions(info, 0.01)
+        if info.regression_flag
+        else _finite_difference_gradient_confidence_scores(info, 0.01)
+    )
     perturbation_constant = 0.01
     perturbation = perturbation_constant * gradients
 
     # Go in direction of greatest loss
+    temp = info.input_features
     info.input_features = info.input_features + perturbation
 
     # Obtain perturbed lime output
     lime_perturbed, _ = _lime_explanation(info)
+    info.input_features = temp
 
     # use cosine-similarity for now but can be replaced with model-provider function later
     # TODO: Took absolute value of cosine similarity - verify if this is correct
@@ -504,8 +511,8 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
 
     :return: float - the estimated OOD AUROC score
     """
-    id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
-    d: int = id_data.shape[1]                       # Feature dimensionality
+    id_data: np.array = np.array(info.input_features)    # In-distribution dataset (N x d array).
+    d: int = id_data.shape[1]                           # Feature dimensionality
 
     id_scores: list[list] = info.confidence_scores  # Confidence scores for ID samples
 
@@ -516,18 +523,51 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(ood_data, info)
 
-    # Get confidence scores for OOD samples
-    ood_scores: list[list] = response.confidence_scores
+    # Ensure ID scores are correctly structured (flatten to a 1D list)
+    id_scores_flat = np.array([max(scores) for scores in id_scores])  # Take max probability for each ID sample
+
+    # Ensure OOD scores are correctly structured (take max confidence per sample)
+    ood_scores_flat = np.array(response.confidence_scores).max(axis=1)
+
+    # Debugging information
+    print(f"Length of ID Scores: {len(id_scores_flat)}")
+    print(f"Length of OOD Scores: {len(ood_scores_flat)}")
 
     # Construct labels: 1 for ID, 0 for OOD
-    labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])
+    labels = np.concatenate([np.ones(len(id_scores_flat)), np.zeros(num_ood_samples)])
 
-    # Flatten the confidence scores for both ID and OOD samples
-    scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
+    # Ensure the scores array has the same length as labels
+    scores = np.concatenate([id_scores_flat, ood_scores_flat])
+
+    print(f"Labels Length: {len(labels)}")
+    print(f"Scores Length: {len(scores)}")
 
     # Assert lengths match
-    assert len(labels) == len(scores), "Length mismatch between labels and scores in OOD-AUROC calculation."
+    assert len(labels) == len(scores), \
+        f"Length mismatch between labels and scores in OOD-AUROC calculation: {len(labels)} vs {len(scores)}"
 
+    # # Get confidence scores (softmax vector) for OOD samples
+    # ood_scores: list[list] = response.confidence_scores
+
+    # # Ensure shape conforms to N x 1 array
+    # ood_scores = [[max(scores)] for scores in response.confidence_scores]
+    # # print("OOD Scores:", ood_scores)
+    # # print("ID Scores:", id_scores)
+
+    # print("Length of ID Scores:", len(id_scores))
+    # print("Length of OOD Scores:", len(ood_scores))
+
+    # # Construct labels: 1 for ID, 0 for OOD
+    # labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])
+
+    # # Flatten the confidence scores for both ID and OOD samples
+    # scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
+
+    # # Assert lengths match
+    # assert len(labels) == len(
+    #     scores
+    # ), "Length mismatch between labels and scores in OOD-AUROC calculation: {} vs {}".format(len(labels), len(scores))
+    
     return roc_auc_score(labels, scores)
 
 

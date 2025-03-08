@@ -1,6 +1,6 @@
 from threading import Thread
 import pytest
-from mocks.dataset.mock_server import app as client_mock
+from mocks.dataset.folktables_mock_server import app as client_mock
 from api.dataset.validate_dataset_api import app as server_app
 from mocks.api_utils import MOCK_DATASET_API_KEY
 import uvicorn

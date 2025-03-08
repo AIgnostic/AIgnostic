@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from mocks.api_utils import MOCK_DATASET_API_KEY
-from mocks.dataset.mock_server import app as client_mock
+from mocks.dataset.folktables_mock_server import app as client_mock
 from api.dataset.validate_dataset_api import _validate_dataset_format
 from common.models import DatasetResponse
 import pytest
