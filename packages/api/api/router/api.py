@@ -4,7 +4,7 @@ from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from metrics.metrics import task_type_to_metric
-from metrics.models import MetricsInfo
+from metrics.models import MetricsInfo, TaskType
 from common.models.pipeline import (
     MetricCalculationJob,
     PipelineJob,
@@ -65,7 +65,7 @@ async def generate_metrics_from_info(
                 data_api_key=request.dataset_api_key,
                 model_api_key=request.model_api_key,
                 metrics=request.metrics,
-                model_type=request.model_type,
+                model_type=TaskType(request.model_type),
             ),
             batches=request.num_batches,
             batch_size=request.batch_size,

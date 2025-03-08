@@ -487,7 +487,7 @@ async def test_query_model_error_results_in_worker_returning_worker_error():
                     data_api_key="data_key",
                     model_api_key="model_key",
                     metrics=["accuracy"],
-                    model_type="binary classification",
+                    model_type=TaskType.BINARY_CLASSIFICATION,
                 ),
             )
         )
