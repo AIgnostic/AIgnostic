@@ -159,6 +159,12 @@ class Worker:
                 status_code=500,
             )
 
+        except Exception as e:
+            raise WorkerException(
+                detail=f"An unknown error occurred while querying the model: {e}",
+                status_code=500
+            )
+
         try:
             # Ensure response is JSON
             if "application/json" not in response.headers.get("Content-Type", ""):

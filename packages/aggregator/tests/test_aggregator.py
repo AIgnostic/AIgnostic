@@ -7,6 +7,7 @@ from aggregator.aggregator import (
     ResultsConsumer,
     aggregator_final_report_log,
     aggregator_generate_report,
+    aggregator_error_log,
     generate_and_send_report,
     get_api_key,
     on_result_fetched,
@@ -16,9 +17,11 @@ from aggregator.aggregator import (
     websocket_handler,
     user_aggregators,
     manager,
+    process_batch_result,
 )
 import json
 from common.models import AggregatorJob, JobType, WorkerError
+from metrics.models import WorkerResults, MetricValue, MetricsPackageExceptionModel
 
 
 @pytest.fixture(scope="module")
@@ -130,6 +133,51 @@ def test_run_keyboard_interrupt(
     mock_stop.assert_called_once()
 
 
+def test_process_batch_results_handles_user_added_metrics():
+    worker_results = WorkerResults(
+        metric_values={
+            "accuracy": {
+                "computed_value": 0.85,
+                "ideal_value": 1.0,
+                "range": [0.0, 1.0]
+            },
+        },
+        batch_size=10,
+        total_sample_size=20,
+        user_defined_metrics={
+            "custom_metric": {
+                "computed_value": 0.5,
+                "ideal_value": 0.0,
+                "range": [0.0, 1.0]
+            },
+            "custom_errored_metric": {
+                "error": "error",
+                "status_code": 500
+            }
+        }
+    )
+    metrics_aggregator = MagicMock()
+    user_aggregators["user123"] = metrics_aggregator
+    process_batch_result(worker_results, "user123")
+    assert metrics_aggregator.aggregate_new_batch.call_count == 1
+    assert metrics_aggregator.aggregate_new_batch.call_args[0][0] == {
+        "accuracy": MetricValue(
+            computed_value=0.85,
+            ideal_value=1.0,
+            range=[0.0, 1.0]
+        ),
+        "custom_metric": MetricValue(
+            computed_value=0.5,
+            ideal_value=0.0,
+            range=[0.0, 1.0]
+        ),
+        "custom_errored_metric": MetricsPackageExceptionModel(
+            detail="error",
+            status_code=500
+        )
+    }
+
+
 def test_on_result_fetched_for_error():
     body = AggregatorJob(
         job_type=JobType.ERROR,
@@ -209,6 +257,19 @@ def test_on_result_fetched(mock_generate_report, mock_send_to_user):
     # assert final_called, "Final report log was not sent."
     # Ensure the per-user aggregator is cleaned up after completion.
     assert "user123" not in user_aggregators, "Aggregator for user123 should be removed after processing."
+
+
+def test_erroring_generate_and_send_report():
+    with patch("aggregator.aggregator.aggregator_generate_report", side_effect=Exception("Test error")), \
+         patch.object(manager, "send_to_user") as mock_send_to_user:
+        # Call function under test
+        user_id = "user123"
+        metrics = {"accuracy": 0.85, "precision": 0.15}
+
+        generate_and_send_report(user_id, metrics, metrics_aggregator)
+
+        # Ensure error message is sent to user
+        mock_send_to_user.assert_called_once_with(user_id, aggregator_error_log("Test error"))
 
 
 @patch('aggregator.aggregator.manager.send_to_user')

@@ -158,6 +158,68 @@ def test_error_previous_batch_stays_error_in_new_batch():
     assert aggregator.samples_processed == 30
 
 
+def test_error_in_new_batch_overrides_previous_value():
+    """Test that the aggregator retains the error from the previous batch."""
+    aggregator = MetricsAggregator()
+    metric_info = {
+        "accuracy": MetricValue(
+            computed_value=0.9,
+            ideal_value=1.0,
+            range=(0, 1)),
+        "loss": MetricValue(
+            computed_value=0.4,
+            ideal_value=0.0,
+            range=(0, 1)),
+        "error": MetricValue(
+            computed_value=0.6,
+            ideal_value=0.0,
+            range=(0, None))
+    }
+    aggregator.aggregate_new_batch(metric_info, 20)
+
+    metric_info = {
+        "accuracy": MetricValue(
+            computed_value=0.8,
+            ideal_value=1.0,
+            range=(0, 1)),
+        "loss": MetricValue(
+            computed_value=0.5,
+            ideal_value=0.0,
+            range=(0, 1)),
+        "error": MetricsPackageExceptionModel(
+            detail="An error occurred",
+            status_code=500)
+    }
+
+    aggregator.aggregate_new_batch(metric_info, 10)
+
+    expected_metrics = {
+        "accuracy": {
+            "value": (0.8 * 10 + 0.9 * 20) / 30,
+            "count": 30,
+            "ideal_value": 1.0,
+            "range": (0, 1),
+            "error": None
+        },
+        "loss": {
+            "value": (0.5 * 10 + 0.4 * 20) / 30,
+            "count": 30,
+            "ideal_value": 0.0,
+            "range": (0, 1),
+            "error": None
+        },
+        "error": {
+            "value": None,
+            "ideal_value": None,
+            "range": None,
+            "count": 30,
+            "error": "An error occurred"  # stays error from new error
+        }
+    }
+    assert aggregator.metrics == expected_metrics
+    assert aggregator.samples_processed == 30
+
+
 def test_aggregate_multiple_batches():
     """Test aggregation with multiple batches."""
     aggregator = MetricsAggregator()
