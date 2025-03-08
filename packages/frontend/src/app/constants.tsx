@@ -14,6 +14,10 @@ const MOCK_FOLKTABLES_DATASET_API_URL =
   'http://folktables-dataset-api:5010/fetch-datapoints';
 const MOCK_FINANCIAL_DATASET_API_URL =
   'http://financial-dataset-api:5024/fetch-datapoints';
+const MOCK_SCIKIT_REGRESSOR_URL = 
+  'http://scikit-mock-regressor-api:5012/predict';
+const MOCK_SCIKIT_REGRESSION_DATASET_URL =
+  'http://scikit-mock-regression-dataset-api:5013/fetch-datapoints';
 // PROD URL
 const MOCK_SCIKIT_API_URL_PROD = 'http://206.189.119.159:5011/predict';
 const MOCK_FINBERT_API_URL_PROD = 'http://206.189.119.159:5001/predict';
@@ -21,6 +25,10 @@ const MOCK_FOLKTABLES_DATASET_API_URL_PROD =
   'http://206.189.119.159:5010/fetch-datapoints';
 const MOCK_FINANCIAL_DATASET_API_URL_PROD =
   'http://206.189.119.159:5024/fetch-datapoints';
+const MOCK_SCIKIT_REGRESSOR_URL_PROD =
+  'http://206.189.119.159:5012/predict';
+const MOCK_SCIKIT_REGRESSION_DATASET_URL_PROD =
+  'http://206.189.119.159:5013/fetch-datapoints';
 const USER_METRICS_SERVER_URL = 'http://localhost:8010';
 const steps = [
   {
@@ -59,14 +67,15 @@ const WEBSOCKET_URL = IS_PROD
 const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/retrieve-metric-info'
   : 'http://localhost:8000/retrieve-metric-info';
-
-  const AGGREGATOR_SERVER_URL = IS_PROD
+const AGGREGATOR_SERVER_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/fetch-frontend-information'
   : 'http://localhost:8005/fetch-frontend-information';
-
-  const AGGREGATOR_UPLOAD_URL = IS_PROD
+const AGGREGATOR_UPLOAD_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/upload-selected-legislation'
   : 'http://localhost:8005/upload-selected-legislation';
+const BACKEND_STOP_JOB_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/stop-job'
+  : 'http://localhost:8000/stop-job';
 
 let modelTypesToMetrics: { [key: string]: string[] } = {};
 let legislation: { id: string; label: string; selected: boolean }[] = [];
@@ -130,6 +139,7 @@ export {
   legislation,
   BACKEND_EVALUATE_URL,
   BACKEND_FETCH_METRIC_INFO_URL,
+  BACKEND_STOP_JOB_URL,
   RESULTS_URL,
   MOCK_SCIKIT_API_URL,
   MOCK_FINBERT_API_URL,
@@ -142,12 +152,12 @@ export {
   modelTypesToMetrics,
   activeStepToInputConditions,
   WEBSOCKET_URL,
-  MOCK_SCIKIT_API_URL_PROD,
-  MOCK_FINBERT_API_URL_PROD,
-  MOCK_FOLKTABLES_DATASET_API_URL_PROD,
-  MOCK_FINANCIAL_DATASET_API_URL_PROD,
   USER_METRICS_SERVER_URL,
   AGGREGATOR_SERVER_URL,
-  AGGREGATOR_UPLOAD_URL
+  AGGREGATOR_UPLOAD_URL,
+  MOCK_SCIKIT_REGRESSOR_URL,
+  MOCK_SCIKIT_REGRESSION_DATASET_URL,
+  MOCK_SCIKIT_REGRESSOR_URL_PROD,
+  MOCK_SCIKIT_REGRESSION_DATASET_URL_PROD,
 };
 

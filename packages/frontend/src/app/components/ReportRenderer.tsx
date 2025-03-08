@@ -7,10 +7,9 @@ import {
   Link,
   StyleSheet,
 } from '@react-pdf/renderer';
-import { Report, Metric, LegislationExtract } from '../types';
+import { Report, LegislationExtract } from '../types';
 import theme from '../theme';
 import MetricBarPDF from './MetricBarPDF';
-import { legislation } from '../constants';
 
 // Create styles
 const styles = StyleSheet.create({
@@ -96,19 +95,13 @@ const ReportRenderer: React.FC<ReportProps> = ({ report }) => (
       {/* Report Title */}
       <Text style={styles.mainTitle}>AIgnostic | Final Report</Text>
 
-      {/* Disclaimers Section */}
-      <View style={styles.section}>
-        <Text style={styles.header}>Legal Information and Disclaimers</Text>
-        <Text style={styles.text}>
-          AIgnostic is a tool for aiding audits and evaluations. It is merely a
-          framework and guide.
-        </Text>
-        <Text style={styles.text}>
-          The developers of this tool cannot be held liable for any decisions,
-          complaints, and legal matters that arise from the AIgnostic evaluation
-          or report.
-        </Text>
-      </View>
+            {/* Disclaimers Section */}
+            <View style={styles.section}>
+                <Text style={styles.header}>Legal Information and Disclaimers</Text>
+                <Text style={styles.text}>AIgnostic is a tool for aiding audits and evaluations. It is merely a framework and guide.</Text>
+                <Text style={styles.text}>AIgnostic, its computations, results and generated report are in no way legally binding. The report does not serve as legal or regulatory certification, and clients are entirely responsible for their interpretations of the results, and for any decisions they take as a result of the analysis. The analysis is only an indicator of the performance under certain assumptions, and under the metrics, methodologies and data used at the time of processing.</Text>
+                <Text style={styles.text}>The developers of this tool cannot be held liable for any decisions, complaints and legal matters that arise from the AIgnostic evaluation or report.  If you require legally binding model evaluations, independent audits, or regulatory approval, consult qualified professionals or relevant authorities.</Text>
+            </View>
 
       {/* General Info Section */}
       <View style={styles.section}>

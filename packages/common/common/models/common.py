@@ -15,7 +15,7 @@ class DatasetResponse(BaseModel):  # pragma: no cover
     """
     features: list[list]
     labels: list[list]
-    group_ids: list[int]
+    group_ids: Optional[list[int]]
 
     # @field_validator('features', 'labels', mode='after')
     # def convert_to_np_array(cls, v):
@@ -51,7 +51,7 @@ class LegislationInformation(BaseModel):
     legislation: dict[str, LegislationInfo]
 
 
-class AggregatorMessage(BaseModel, ABC):
+class AggregatorMessage(BaseModel, ABC):  # pragma: no cover
     """
     Model for messages sent by the aggregator to the frontend
     Params:
@@ -69,7 +69,7 @@ class AggregatorMessage(BaseModel, ABC):
         arbitrary_types_allowed = True
 
 
-class MessageType(str, Enum):
+class MessageType(str, Enum):  # pragma: no cover
     LOG = "LOG"
     ERROR = "ERROR"
     METRICS_INTERMEDIATE = "METRICS_INTERMEDIATE"
@@ -82,7 +82,7 @@ class JobType(str, Enum):
     ERROR = "ERROR"
 
 
-class WorkerError(BaseModel):
+class WorkerError(BaseModel):  # pragma: no cover
     """
     WorkerError pydantic model represents the structure of the errors found on the results queue
     i.e. what worker sends to the queue
@@ -92,17 +92,18 @@ class WorkerError(BaseModel):
     error_code: int
 
 
-class AggregatorJob(BaseModel):
+class AggregatorJob(BaseModel):  # pragma: no cover
     """
     AggregatorJob pydantic model represents the structure of the jobs found on the results queue
     i.e. what worker sends to the queue
     and what aggregator picks up from the queue
     """
     job_type: JobType
+    user_id: str
     content: Union[WorkerResults, WorkerError]
 
 
-class ComputeUserMetricRequest(BaseModel):
+class ComputeUserMetricRequest(BaseModel):  # pragma: no cover
     user_id: str
     function_name: str
     params: dict

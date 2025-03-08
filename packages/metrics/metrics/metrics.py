@@ -61,9 +61,9 @@ task_type_to_metric = {
         "positive_predictive_value",
         "true_positive_rate_difference",
         "explanation_stability_score",
-        # "explanation_sparsity_score",
-        # "explanation_fidelity_score",
-        # "ood_auroc",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
+        "ood_auroc",
     ],
     "multi_class_classification": [
         "accuracy",
@@ -77,13 +77,13 @@ task_type_to_metric = {
         # "explanation_stability_score",
         # "explanation_sparsity_score",
         # "explanation_fidelity_score",
-        # "ood_auroc",
+        "ood_auroc",
     ],
     "regression": [
         "mean_absolute_error",
         "mean_squared_error",
         "r_squared",
-        # "explanation_stability_score",
+        "explanation_stability_score",
         # "explanation_sparsity_score",
         # "explanation_fidelity_score",
     ],
@@ -226,7 +226,8 @@ metric_to_fn_and_requirements = {
     # Explainability metrics
     "explanation_stability_score": {
         "function": explanation_stability_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        # TODO: Refactor to nested dict for task to metric map for more fine grained checks
+        "required_inputs": ["input_features", "model_url", "model_api_key"],
         "range": (0, 1),
         "ideal_value": 0.8
     },

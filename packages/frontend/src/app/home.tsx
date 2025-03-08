@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { checkBatchConfig, checkURL } from './utils';
 import {
   steps,
@@ -34,7 +34,6 @@ import { HomepageState } from './types';
 import Dashboard from './dashboard';
 import theme from './theme';
 import { v4 as uuidv4 } from 'uuid';
-import { FileUpload } from '@mui/icons-material';
 import FileUploadComponent from './components/FileUploadComponent';
 import { IS_PROD } from './env';
 
@@ -94,6 +93,8 @@ function Homepage() {
     },
   };
 
+  const disconnectRef = useRef(false); // Track whether disconnect is intentional
+
   useEffect(() => {
     let userId = sessionStorage.getItem('userId');
     if (!userId) {
@@ -114,8 +115,11 @@ function Homepage() {
       };
 
       newSocket.onclose = () => {
-        console.log('WebSocket connection closed, attempting to reconnect...');
-        setTimeout(connectWebSocket, 1000);
+        if (!disconnectRef.current) {
+          // only attempt to reconnect if disconnect was not intentional
+          console.log('WebSocket connection closed, attempting to reconnect...');
+          setTimeout(connectWebSocket, 1000);
+        }
       };
 
       setSocket(newSocket);
@@ -125,6 +129,7 @@ function Homepage() {
     connectWebSocket();
 
     return () => {
+      disconnectRef.current = true; // Mark as intentionally disconnected
       if (socket) {
         socket.close();
       }
@@ -635,6 +640,7 @@ function Homepage() {
                           setStateWrapper('isGeneratingReport', false);
                         }}
                         socket={socket}
+                        disconnectRef={disconnectRef}
                         expectedItems={state.numberOfBatches}
                       />
                     )}

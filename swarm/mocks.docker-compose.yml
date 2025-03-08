@@ -23,6 +23,30 @@ services:
     ports:
       - '5024:5024'
 
+  tinystories_dataset_api:
+    image: ghcr.io/aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.dataset.tinystories_dataset_server --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
+      - '5026:5026'
+
+  boston_housing_data_api:
+    image: ghcr.io/aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.dataset.boston_housing_data_server --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
+      - '5013:5013'
+
   scikit_mock_model_api:
     image: ghcr.io/aignostic/mocks
     command: /app/.venv/bin/python -m uvicorn mocks.model.scikit_mock:app --host 0.0.0.0 --port 5011
@@ -31,6 +55,7 @@ services:
       - aignostic_network
     ports:
       - '5011:5011'
+
   finbert_mock_model_api:
     image: ghcr.io/aignostic/mocks
     command: /app/.venv/bin/python -m uvicorn mocks.model.finbert:app --host 0.0.0.0 --port 5001
@@ -39,14 +64,30 @@ services:
       - aignostic_network
     ports:
       - '5001:5001'
-  tinystories_dataset_api:
-    image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -m uvicorn mocks.model.scikit_mock:app --host 0.0.0.0 --port 5026
+
+  tinystories_mock_model_api:
+    image: ghcr.io/aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.model.tinystories_1M_mock --host 0.0.0.0 --reload
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
     ports:
-      - '5026:5026'
+      - '5027:5027'
+
+  scikit_regression_mock_model_api:
+    image: ghcr.io/aignostic/dev
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    command: poetry run python3 -u -m mocks.model.scikit_mock_regressor --host 0.0.0.0 --reload
+    working_dir: /app/packages/mocks
+    networks:
+      - aignostic_network
+    ports:
+      - '5012:5012'
 
 networks:
   aignostic_network:

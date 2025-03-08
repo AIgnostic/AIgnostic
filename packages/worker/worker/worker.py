@@ -33,6 +33,7 @@ from pydantic import ValidationError
 
 from pika.adapters.blocking_connection import BlockingChannel
 import re
+from requests.exceptions import RequestException, HTTPError, ConnectionError, Timeout
 
 
 RABBIT_MQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
@@ -75,22 +76,26 @@ class Worker:
         init_queues(self._channel)
         print("Connection established to RabbitMQ")
 
-    def queue_result(self, result: WorkerResults):
+    def queue_result(self, result: WorkerResults, user_id: str):
         """
         Function to queue the results of a job
         """
-        job = AggregatorJob(job_type=JobType.RESULT, content=result)
+        job = AggregatorJob(
+            job_type=JobType.RESULT,
+            user_id=user_id,
+            content=result)
 
         self._channel = publish_to_queue(
             self._channel, RESULT_QUEUE, job.model_dump_json()
         )
 
-    def queue_error(self, error: WorkerError):
+    def queue_error(self, error: WorkerError, user_id: str):
         """
         Function to queue an error message
         """
         job = AggregatorJob(
             job_type=JobType.ERROR,
+            user_id=user_id,
             content=error,
         )
         self._channel = publish_to_queue(
@@ -117,24 +122,19 @@ class Worker:
                 raise WorkerException(f"Invalid batch format: {e}", status_code=400)
         return None
 
-    async def fetch_data(
-        self, data_url: HttpUrl, dataset_api_key, batch_size: int
-    ) -> DatasetResponse:
+    async def fetch_data(self, data_url: HttpUrl, dataset_api_key, batch_size: int) -> DatasetResponse:
         """
-        Helper function to fetch data from the dataset API
+        Helper function to fetch data from the dataset API.
 
         Params:
         - dataURL : API URL of the dataset
         """
         # Send a GET request to the dataset API
-        print("fetch_data: enters into fetch_data")
         if dataset_api_key is None:
-            print("fetch_data: no api key found")
             response = requests.get(
                 convert_localhost_url(str(data_url)), params={"n": batch_size}
             )
         else:
-            print("fetch_data: checking api key")
             response = requests.get(
                 convert_localhost_url(str(data_url)),
                 headers={"Authorization": f"Bearer {dataset_api_key}"},
@@ -143,31 +143,29 @@ class Worker:
             print(f"fetch_data: response {response}")
 
         try:
-            response.raise_for_status()
-        except Exception as e:
-            if e.response and e.response.json():
+            # Ensure response is JSON
+            if "application/json" not in response.headers.get("Content-Type", ""):
                 raise WorkerException(
-                    detail=e.response.json()["detail"],
-                    status_code=e.response.status_code,
-                )
-            else:
-                raise WorkerException(
-                    detail=f"An unknown exception occured: {e}", status_code=400
+                    f"Unexpected response type from dataset API: {response.headers.get('Content-Type')}",
+                    status_code=500
                 )
 
-        try:
-            # Parse the response JSON
             dataset_response = DatasetResponse(**response.json())
-            # Return the data
             return dataset_response
+
         except ValidationError as e:
             raise WorkerException(
-                f"Data error - data returned from data provider of incorrect format: \n{e}"
+                f"Data error - Incorrect format from dataset API: \n{e}",
+                status_code=500
             )
 
-    async def query_model(
-        self, model_url: HttpUrl, data: DatasetResponse, model_api_key
-    ) -> ModelResponse:
+        except Exception as e:
+            raise WorkerException(
+                f"Could not parse dataset response - {e}; response = {response.text}",
+                status_code=500
+            )
+
+    async def query_model(self, model_url: HttpUrl, data: DatasetResponse, model_api_key) -> ModelResponse:
         """
         Helper function to query the model API
 
@@ -179,7 +177,6 @@ class Worker:
 
         # Send a POST request to the model API
         if model_api_key is None:
-            print("Entering into ")
             response = requests.post(
                 url=convert_localhost_url(str(model_url)), json=data.model_dump_json()
             )
@@ -192,29 +189,53 @@ class Worker:
 
         try:
             response.raise_for_status()
+
+        except ConnectionError as e:
+            raise WorkerException(
+                detail=f"Failed to connect to model at {url}: {e}",
+                status_code=503
+            )
+
+        except Timeout as e:
+            raise WorkerException(
+                detail=f"Request to model at {url} timed out: {e}",
+                status_code=504
+            )
+
+        except HTTPError as e:
+            raise WorkerException(
+                detail=f"HHTP Error on request to dataset API at {url}: {e}",
+                status_code=response.status_code
+            )
+
+        except RequestException as e:
+            raise WorkerException(
+                detail=f"An error occurred while contacting the model: {e}",
+                status_code=500
+            )
+
         except Exception as e:
-            if e.response and e.response.json():
-                raise WorkerException(
-                    detail=e.response.json()["detail"],
-                    status_code=e.response.status_code,
-                )
-            else:
-                raise WorkerException(
-                    detail=f"An unknown exception occured: {e}", status_code=400
-                )
+            raise WorkerException(
+                detail=f"An unknown error occurred while querying the model: {e}",
+                status_code=500
+            )
 
         try:
-            # Check if the request was successful
+            # Ensure response is JSON
+            if "application/json" not in response.headers.get("Content-Type", ""):
+                raise WorkerException(
+                    f"Unexpected response type from model: {response.headers.get('Content-Type')}",
+                    status_code=500
+                )
 
-            # Parse the response JSON
             model_response = ModelResponse(**response.json())
             self._check_model_response(model_response.predictions, data.labels)
 
-            # Return the model response
             return model_response
+
         except Exception as e:
             raise WorkerException(
-                f"Could not parse model response - {e}; response = {response.text}"
+                f"Could not parse model response - {e}; response = {response.text}", status_code=500
             )
 
     async def process_job(self, batch: Batch):
@@ -274,6 +295,7 @@ class Worker:
                 model_url=convert_localhost_url(str(metrics_data.model_url)),
                 model_api_key=metrics_data.model_api_key,
                 total_sample_size=batch.total_sample_size,
+                regression_flag=metrics_data.model_type == "regression",
             )
 
             # Calculate metrics
@@ -285,10 +307,12 @@ class Worker:
                 user_id=batch.job_id,
                 user_defined_metrics=None,
             )
+
+            # TODO: Add more robustness for server querying e.g. timeouts and retries
             try:
                 # query the user metric server to get the user-defined metrics
                 user_metrics_server_response = requests.get(
-                    f"{USER_METRIC_SERVER_URL}/inspect-uploaded-functions/{worker_results.user_id}",
+                    f"{USER_METRIC_SERVER_URL}/inspect-uploaded-functions/{batch.job_id}",
                 )
 
                 user_defined_metrics = []
@@ -312,7 +336,7 @@ class Worker:
                     exec_response = requests.post(
                         f"{USER_METRIC_SERVER_URL}/compute-metric",
                         json={
-                            "user_id": worker_results.user_id,
+                            "user_id": batch.job_id,
                             "function_name": metric,
                             "params": params_dict,
                         },
@@ -329,20 +353,31 @@ class Worker:
                 except Exception as e:
                     print(f"ERROR EXECUTING USER METRIC: {e}")
 
-            print(f"Final Results: {worker_results}")
-            self.queue_result(worker_results)
+            if len(user_defined_metrics) != 0 or user_defined_metrics is not None:
+                print(f"Final Results with user metrics: {worker_results}")
+                try:
+                    clear_response = requests.delete(
+                        f"{USER_METRIC_SERVER_URL}/clear-user-data/{batch.job_id}"
+                    )
+                    print(f"Clear response: {clear_response}")
+                except Exception as e:
+                    print(f"Error clearing user data: {e}")
+
+            self.queue_result(worker_results, batch.job_id)
             self.send_status_completed(batch.job_id, batch.batch_id)
             return
         except WorkerException as e:
             # known/caught error
             # should be sent back to user
             self.queue_error(
-                WorkerError(error_message=e.detail, error_code=e.status_code)
+                WorkerError(error_message=e.detail, error_code=e.status_code),
+                user_id=batch.job_id,
             )
             self.send_status_error(batch.job_id, batch.batch_id, e)
         except Exception as e:
             self.queue_error(
-                WorkerError(error_message="An unknown error occurred", error_code=500)
+                WorkerError(error_message="An unknown error occurred", error_code=500),
+                user_id=batch.job_id,
             )
             self.send_status_error(batch.job_id, batch.batch_id, e)
 

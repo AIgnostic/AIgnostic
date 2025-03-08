@@ -18,8 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-model: Pipeline = load_scikit_model()
+model: Pipeline = load_scikit_model('scikit_model.sav')
 
 
 @app.get("/")
@@ -40,12 +39,13 @@ def predict(input: DatasetResponse) -> ModelResponse:
             return ModelResponse(predictions=input.features)
         output: np.ndarray = model.predict(input.features).reshape(-1, 1)
         predictions: list[list] = output.tolist()
+        confidence_scores: np.ndarray = model.predict_proba(input.features).tolist()
         print(predictions)
     except Exception as e:
         raise HTTPException(detail=f"Error occured during model prediction: {e}", status_code=500)
 
     # Does not need to return confidence scores as a regression model
-    return ModelResponse(predictions=predictions)
+    return ModelResponse(predictions=predictions, confidence_scores=confidence_scores)
 
 
 if __name__ == "__main__":
