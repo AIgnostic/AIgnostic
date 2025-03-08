@@ -516,8 +516,11 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(ood_data, info)
 
-    # Get confidence scores for OOD samples
+    # Get confidence scores (softmax vector) for OOD samples
     ood_scores: list[list] = response.confidence_scores
+
+    # Ensure shape conforms to N x 1 array
+    ood_scores = [[max(scores)] for scores in response.confidence_scores]
 
     # Construct labels: 1 for ID, 0 for OOD
     labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])
@@ -526,8 +529,10 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
 
     # Assert lengths match
-    assert len(labels) == len(scores), "Length mismatch between labels and scores in OOD-AUROC calculation."
-
+    assert len(labels) == len(
+        scores
+    ), "Length mismatch between labels and scores in OOD-AUROC calculation: {} vs {}".format(len(labels), len(scores))
+    
     return roc_auc_score(labels, scores)
 
 
