@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from api.router.api import api
+from metrics.models import TaskType
 
 # Create a FastAPI TestClient
 client = TestClient(api)
@@ -36,7 +37,7 @@ def test_generate_metrics_from_info_success():
             "model_url": "https://example.com/model",
             "model_api_key": "test_model_key",
             "metrics": ["accuracy", "precision"],
-            "model_type": "binary_classification",
+            "model_type": TaskType.BINARY_CLASSIFICATION,
             "user_id": "1234",
         }
 
@@ -58,7 +59,7 @@ def test_generate_metrics_from_info_failure():
             "model_url": "https://example.com/model",
             "model_api_key": "test_model_key",
             "metrics": ["accuracy", "precision"],
-            "model_type": "binary_classification",
+            "model_type": TaskType.BINARY_CLASSIFICATION,
             "user_id": "1234",
         }
 

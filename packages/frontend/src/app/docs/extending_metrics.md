@@ -107,7 +107,7 @@ Note that:
 Moreover, the 'task_type_to_metric' dictionary maps the task type to the metrics that are valid for that task type. If the metric is valid for all task types, it must be added to all the model types.
 
 ```python
-task_type_to_metric["binary_classification"] = [
+task_type_to_metric[TaskType.BINARY_CLASSIFICATION] = [
     "accuracy",
     "balanced_accuracy",
     "equalized_odds_difference"

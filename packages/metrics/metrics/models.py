@@ -3,6 +3,19 @@ from typing import Optional, Any, Union, Tuple
 from common.utils import nested_list_to_np
 from metrics.exceptions import _MetricsPackageException
 import numpy as np
+from enum import Enum
+
+
+class TaskType(str, Enum):
+    """
+    Enum class representing the types of tasks available for metric calculation.
+    """
+
+    BINARY_CLASSIFICATION = "binary_classification"
+    MULTI_CLASS_CLASSIFICATION = "multi_class_classification"
+    TEXT_CLASSIFICATION = "text_classification"
+    REGRESSION = "regression"
+    NEXT_TOKEN_GENERATION = "next_token_generation"
 
 
 class MetricsInfo(BaseModel):
@@ -22,6 +35,7 @@ class CalculateRequest(BaseModel):
     :param metrics: list[str] - List of metrics to be calculated.
     :param task_name: Optional[str] - Name of the task for which metrics are calculated. Options:
         "binary_classification", "multi_class_classification", "regression", "next_token_generation.
+        Use the TaskType enum
     :param input_data: Optional[list[list]] - 2D list of input data where each nested list
         corresponds to one row of data.
     :param confidence_scores: Optional[list[list]] - 2D list of probabilities where each nested
@@ -42,7 +56,7 @@ class CalculateRequest(BaseModel):
     """
     metrics: list[str]
     # TODO: Refactor to make task_name non-optional and remove regression_flag
-    task_name: Optional[str] = None
+    task_name: Optional[TaskType] = None
     batch_size: Optional[int] = None
     input_features: Optional[list[list]] = None
     confidence_scores: Optional[list[list]] = None
