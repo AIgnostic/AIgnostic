@@ -37,7 +37,7 @@ jobs:
     with:
       run_poetry_install: true
       # nx_tasks: ${{ github.ref == 'refs/heads/main' && 'run-many -t test --all --parallel=5' || 'affected -t test' }}
-      nx_tasks: ${{ true && 'run-many -t test --all --parallel=5' || 'affected -t test' }}
+      nx_tasks: ${{ true && 'run-many -t test --all --parallel' || 'affected -t test' }}
       artifact_name: 'test-coverage'
       artifact_path: 'coverage/'
     secrets: inherit
