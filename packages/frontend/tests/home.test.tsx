@@ -121,8 +121,11 @@ describe('Stepper Navigation', () => {
 jest.mock('../src/app/utils', () => ({
   __esModule: true,
   checkURL: jest.fn(),
+  checkBatchConfig: jest.fn(),
   generateReportText: jest.fn(),
-  fetchMetricInfo: jest.fn(),
+  fetchMetricInfo: jest.fn().mockResolvedValue({
+    'Binary Classification': ['Binary Text Classification'],
+  }),
 }));
 
 describe('Form Validation', () => {
@@ -174,14 +177,6 @@ describe('Form Validation', () => {
     ).toBeInTheDocument();
   });
 });
-
-jest.mock('../src/app/utils', () => ({
-  __esModule: true,
-  checkBatchConfig: jest.fn(),
-  checkURL: jest.fn(),
-  generateReportText: jest.fn(),
-  fetchMetricInfo: jest.fn(),
-}));
 
 describe('Batch Configuration Validation', () => {
   test('should set isBatchConfigValid to false for invalid total sample size', async () => {
@@ -448,24 +443,35 @@ describe('API Calls', () => {
       target: { value: 'http://valid-dataset-url.com' },
     });
     fireEvent.click(screen.getAllByText('Next')[0]);
-    const radio = screen.getByLabelText('Binary Classification');
-    fireEvent.click(radio);
-    fireEvent.click(screen.getAllByText('Next')[1]);
-    fireEvent.click(screen.getAllByText('Next')[2]);
-    fireEvent.click(screen.getAllByText('Next')[3]);
-    fireEvent.click(screen.getByText('Generate Report'));
+    const radio = await screen.findByLabelText('Binary Classification');
+    await waitFor(() => {
+      fireEvent.click(radio);
+    });
+    await waitFor(() => {
+      const nextButtons = screen.getAllByText('Next');
+      expect(nextButtons.length).toBeGreaterThanOrEqual(1);
+    });
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    fireEvent.click(screen.getAllByText('Next')[0]);
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Generate Report'));
+    });
 
     // check that error message is displayed
     // with the correct error message
-    await waitFor(() => {
-      expect(screen.getByText('Error 500')).toBeInTheDocument();
-      expect(screen.getByText('Internal server error')).toBeInTheDocument();
-    });
+    // Now wait for the error message to be rendered
+    const errorHeader = await screen.findByText('Error 500');
+    const errorDetail = await screen.findByText('Internal server error');
+
+    expect(errorHeader).toBeInTheDocument();
+    expect(errorDetail).toBeInTheDocument();
   });
 });
 
 describe('Model Type Selection', () => {
-  it('should update metricChips based on selected model type', () => {
+  it('should update metricChips based on selected model type', async () => {
     render(<Homepage />);
     fireEvent.change(screen.getByLabelText(/Model API URL/i), {
       target: { value: 'http://valid-model-url.com' },
@@ -474,7 +480,10 @@ describe('Model Type Selection', () => {
       target: { value: 'http://valid-dataset-url.com' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    fireEvent.click(screen.getByLabelText('Binary Classification'));
+    const radio = await screen.findByLabelText('Binary Classification');
+    await waitFor(() => {
+      fireEvent.click(radio);
+    });
     fireEvent.click(screen.getAllByText('Next')[0]);
     fireEvent.click(screen.getAllByText('Next')[0]);
     const expectedMetrics = modelTypesToMetrics['Binary Classification'];
@@ -483,7 +492,7 @@ describe('Model Type Selection', () => {
     });
   });
 
-  it('should update selectedModelType state on radio button change', () => {
+  it('should update selectedModelType state on radio button change', async () => {
     render(<Homepage />);
     fireEvent.change(screen.getByLabelText(/Model API URL/i), {
       target: { value: 'http://valid-model-url.com' },
@@ -492,7 +501,7 @@ describe('Model Type Selection', () => {
       target: { value: 'http://valid-dataset-url.com' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    const radio = screen.getByLabelText('Binary Classification');
+    const radio = await screen.findByLabelText('Binary Classification');
     fireEvent.click(radio);
 
     expect(radio).toBeChecked();

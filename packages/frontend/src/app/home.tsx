@@ -1,10 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { checkBatchConfig, checkURL } from './utils';
+import { checkBatchConfig, checkURL, fetchMetricInfo } from './utils';
 import {
   steps,
   BACKEND_EVALUATE_URL,
   RESULTS_URL,
-  modelTypesToMetrics,
   activeStepToInputConditions,
   WEBSOCKET_URL,
   USER_METRICS_SERVER_URL,
@@ -91,6 +90,11 @@ function Homepage() {
   };
 
   const disconnectRef = useRef(false); // Track whether disconnect is intentional
+  // let modelTypesToMetrics: { [key: string]: string[] } = {};
+
+  const [modelTypesToMetrics, setModelTypesToMetrics] = useState<{
+    [key: string]: string[];
+  }>({});
 
   useEffect(() => {
     let userId = sessionStorage.getItem('userId');
@@ -126,6 +130,21 @@ function Homepage() {
     };
 
     connectWebSocket();
+    
+    const initializeModelTypesToMetrics = async () => {
+      try {
+        setModelTypesToMetrics(await fetchMetricInfo());
+        console.log('Fetched metrics successfully');
+      } catch (error) {
+        console.error('Failed to fetch metric info:', error);
+      } finally {
+        // Call the function again after 10 seconds
+        setTimeout(initializeModelTypesToMetrics, 10000);
+      }
+    };
+
+    // Call the initialization function
+    initializeModelTypesToMetrics();
 
     return () => {
       disconnectRef.current = true; // Mark as intentionally disconnected
@@ -158,14 +177,6 @@ function Homepage() {
     if (state.activeStep === 4) {
       setStateWrapper('showDashboard', false);
     }
-  };
-
-  const generateUniqueUserID = () => {
-    return Math.random().toString(36).substring(2, 15);
-  };
-
-  const handleReset = () => {
-    setStateWrapper('activeStep', 0);
   };
 
   const handleSubmit = async () => {
