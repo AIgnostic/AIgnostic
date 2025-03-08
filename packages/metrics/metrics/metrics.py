@@ -61,8 +61,8 @@ task_type_to_metric = {
         "positive_predictive_value",
         "true_positive_rate_difference",
         "explanation_stability_score",
-        "explanation_sparsity_score",
-        "explanation_fidelity_score",
+        # "explanation_sparsity_score",
+        # "explanation_fidelity_score",
         "ood_auroc",
     ],
     "multi_class_classification": [
@@ -96,7 +96,8 @@ task_type_to_metric = {
         "roc_auc",
         "expl_stability_text_input",
         # "expl_sparsity_text_input",
-        # "expl_fidelity_text_input"
+        # "expl_fidelity_text_input",
+        "ood_auroc",
     ],
     "next_token_generation": [
         "expl_stability_text_input",
