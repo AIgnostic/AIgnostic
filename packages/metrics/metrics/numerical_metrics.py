@@ -7,7 +7,8 @@ from metrics.models import (
 from metrics.utils import (
     _query_model,
     _lime_explanation,
-    _finite_difference_gradient_predictions
+    _finite_difference_gradient_predictions,
+    _finite_difference_gradient_confidence_scores
 )
 from sklearn.metrics import (
     f1_score,
@@ -418,7 +419,11 @@ def explanation_stability_score(info: CalculateRequest) -> float:
     lime_actual, _ = _lime_explanation(info)
 
     # Calculate gradients for perturbation
-    gradients = _finite_difference_gradient_predictions(info, 0.01)
+    gradients = (
+        _finite_difference_gradient_predictions(info, 0.01)
+        if info.regression_flag
+        else _finite_difference_gradient_confidence_scores(info, 0.01)
+    )
     perturbation_constant = 0.01
     perturbation = perturbation_constant * gradients
 

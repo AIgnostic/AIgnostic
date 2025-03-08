@@ -59,23 +59,29 @@ def _finite_difference_gradient_confidence_scores(
     X = np.array(info.input_features, dtype=np.float64)
     num_datapoints, num_columns = X.shape
     gradients = np.zeros_like(X)
+    print("Calculating finite difference gradient for confidence scores")
+    print(f"Info: {info}")
     for j in range(num_columns):
         X_forward = X.copy()
         X_backward = X.copy()
         X_forward[:, j] += h
         X_backward[:, j] -= h
 
+        print("reached calculation of target class indices")
         # target_class_indices should be a 2D array with shape (num_samples,)
         # It represents the index of the predicted class for each sample
         target_class_indices = np.argmax(info.confidence_scores, axis=1)
         
-        forward_out = _query_model(X_forward, info).confidence_scores
-        backward_out = _query_model(X_backward, info).confidence_scores
-        
+        print(f"target_class_indices: {target_class_indices}")
+        forward_out = np.array(_query_model(X_forward, info).confidence_scores)
+        backward_out = np.array(_query_model(X_backward, info).confidence_scores)
+        print(f"forward_out: {forward_out}")
+        print(f"backward_out: {backward_out}")
         # for each datapoint, get the confidence score of the target class
         column_forward = forward_out[np.arange(num_datapoints), target_class_indices]
         column_backward = backward_out[np.arange(num_datapoints), target_class_indices]
-
+        print(f"column_forward: {column_forward}")
+        print(f"column_backward: {column_backward}")
         gradients[:, j] = (column_forward - column_backward) / (2 * h)
     return gradients
 

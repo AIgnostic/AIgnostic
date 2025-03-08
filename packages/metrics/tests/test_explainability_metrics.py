@@ -75,6 +75,7 @@ def test_explanation_stability_different_scores_is_not_1(apply_server_factory):
         model_api_key="None"
     )
     result = calculate_metrics(info)
+    assert isinstance(result.metric_values[metric_name], MetricValue)
     assert result.metric_values[metric_name].computed_value < 1.0
 
 
@@ -91,6 +92,7 @@ def test_explanation_sparsity_ideal_case(apply_server_factory):
         model_api_key="None"
     )
     result = calculate_metrics(info)
+    assert isinstance(result.metric_values[metric_name], MetricValue)
     assert result.metric_values[metric_name].computed_value == pytest.approx(1.0)
 
 
