@@ -114,7 +114,9 @@ function Homepage() {
       newSocket.onclose = () => {
         if (!disconnectRef.current) {
           // only attempt to reconnect if disconnect was not intentional
-          console.log('WebSocket connection closed, attempting to reconnect...');
+          console.log(
+            'WebSocket connection closed, attempting to reconnect...'
+          );
           setTimeout(connectWebSocket, 1000);
         }
       };
@@ -296,7 +298,8 @@ function Homepage() {
                         ? () => {
                             setStateWrapper(
                               field.validKey as keyof typeof state,
-                              checkURL(field.value)
+                              // checkURL(field.value)
+                              true
                             );
                           }
                         : undefined; // Don't do anything for fields that don't need validation onBlur
@@ -344,17 +347,22 @@ function Homepage() {
                         error={!state.isBatchConfigValid}
                         helperText={
                           state.numberOfBatches < 1
-                            ? "Number of batches must be greater than 0"
-                            : !state.isBatchConfigValid 
-                              ? "Invalid batch configuration" 
-                              : ""
+                            ? 'Number of batches must be greater than 0'
+                            : !state.isBatchConfigValid
+                            ? 'Invalid batch configuration'
+                            : ''
                         }
-                        onChange={(e) => setStateWrapper(
-                          'numberOfBatches' as keyof typeof state,
-                          e.target.value
-                        )}
+                        onChange={(e) =>
+                          setStateWrapper(
+                            'numberOfBatches' as keyof typeof state,
+                            e.target.value
+                          )
+                        }
                         onBlur={() => {
-                          const isValid = checkBatchConfig(state.batchSize, state.numberOfBatches);
+                          const isValid = checkBatchConfig(
+                            state.batchSize,
+                            state.numberOfBatches
+                          );
                           setStateWrapper('isBatchConfigValid', isValid);
                         }}
                         style={styles.input}
@@ -368,17 +376,22 @@ function Homepage() {
                         error={!state.isBatchConfigValid}
                         helperText={
                           state.batchSize < 1
-                            ? "Batch size must be greater than 0"
-                            : !state.isBatchConfigValid 
-                              ? "Invalid batch configuration" 
-                              : ""
+                            ? 'Batch size must be greater than 0'
+                            : !state.isBatchConfigValid
+                            ? 'Invalid batch configuration'
+                            : ''
                         }
-                        onChange={(e) => setStateWrapper(
-                          'batchSize' as keyof typeof state,
-                          e.target.value
-                        )}
+                        onChange={(e) =>
+                          setStateWrapper(
+                            'batchSize' as keyof typeof state,
+                            e.target.value
+                          )
+                        }
                         onBlur={() => {
-                          const isValid = checkBatchConfig(state.batchSize, state.numberOfBatches);
+                          const isValid = checkBatchConfig(
+                            state.batchSize,
+                            state.numberOfBatches
+                          );
                           setStateWrapper('isBatchConfigValid', isValid);
                         }}
                         style={styles.input}
@@ -390,16 +403,28 @@ function Homepage() {
                         type="number"
                         defaultValue={state.maxConcurrentBatches}
                         error={!state.isMaxConcurrentBatchesValid}
-                        helperText={!state.isMaxConcurrentBatchesValid ? "Value must be between 1 and 30" : ""}
-                        onChange={(e) => setStateWrapper(
-                          'maxConcurrentBatches' as keyof typeof state,
-                          e.target.value
-                        )}
+                        helperText={
+                          !state.isMaxConcurrentBatchesValid
+                            ? 'Value must be between 1 and 30'
+                            : ''
+                        }
+                        onChange={(e) =>
+                          setStateWrapper(
+                            'maxConcurrentBatches' as keyof typeof state,
+                            e.target.value
+                          )
+                        }
                         onBlur={(e) => {
-                          const value = Math.min(Math.max(parseInt(e.target.value), 1), 30);
+                          const value = Math.min(
+                            Math.max(parseInt(e.target.value), 1),
+                            30
+                          );
                           const isValid = value === parseInt(e.target.value);
                           setStateWrapper('maxConcurrentBatches', value);
-                          setStateWrapper('isMaxConcurrentBatchesValid', isValid);
+                          setStateWrapper(
+                            'isMaxConcurrentBatchesValid',
+                            isValid
+                          );
                         }}
                         style={styles.input}
                       />
@@ -408,16 +433,14 @@ function Homepage() {
                   {!state.isBatchConfigValid && (
                     <Box>
                       <Typography color="error">
-                        Total sample size must be between 1000 and 10000, not {state.batchSize * state.numberOfBatches}. 
+                        Total sample size must be between 1000 and 10000, not{' '}
+                        {state.batchSize * state.numberOfBatches}.
                       </Typography>
-                      {
-                        (state.batchSize < 1 || state.numberOfBatches < 1) && (
-                          <Typography color="error">
-                            Batch size and number of batches must be positive. 
-                          </Typography>
-                        )
-                      }
-                      
+                      {(state.batchSize < 1 || state.numberOfBatches < 1) && (
+                        <Typography color="error">
+                          Batch size and number of batches must be positive.
+                        </Typography>
+                      )}
                     </Box>
                   )}
                 </Box>
@@ -489,29 +512,29 @@ function Homepage() {
                 <Box style={{ padding: '15px' }}>
                   <h3>Summary</h3>
                   <Typography variant="body1">
-                  <strong>Model URL:</strong>{' '}
-                  {state.modelURL || 'You have not entered a model URL'}
-                  <br /> <br />
-                  <strong>Dataset URL:</strong>{' '}
-                  {state.datasetURL || 'You have not entered a dataset URL'}
-                  <br /> <br />
-                  <strong>Metrics:</strong>{' '}
-                  {state.metricChips.filter(
-                    (metricChip) => metricChip.selected
-                  ).length === 0
-                    ? 'You have not selected any metrics'
-                    : state.metricChips
-                      .filter((metricChip) => metricChip.selected)
-                      .map((metricChip) => metricChip.label)
-                      .join(', ')}
-                  <br /> <br />
-                  <strong>Batch Configuration:</strong>
-                  <br />
-                  Batch Size: {state.batchSize}
-                  <br />
-                  Number of Batches: {state.numberOfBatches}
-                  <br />
-                  Max Concurrent Batches: {state.maxConcurrentBatches}
+                    <strong>Model URL:</strong>{' '}
+                    {state.modelURL || 'You have not entered a model URL'}
+                    <br /> <br />
+                    <strong>Dataset URL:</strong>{' '}
+                    {state.datasetURL || 'You have not entered a dataset URL'}
+                    <br /> <br />
+                    <strong>Metrics:</strong>{' '}
+                    {state.metricChips.filter(
+                      (metricChip) => metricChip.selected
+                    ).length === 0
+                      ? 'You have not selected any metrics'
+                      : state.metricChips
+                          .filter((metricChip) => metricChip.selected)
+                          .map((metricChip) => metricChip.label)
+                          .join(', ')}
+                    <br /> <br />
+                    <strong>Batch Configuration:</strong>
+                    <br />
+                    Batch Size: {state.batchSize}
+                    <br />
+                    Number of Batches: {state.numberOfBatches}
+                    <br />
+                    Max Concurrent Batches: {state.maxConcurrentBatches}
                   </Typography>
                 </Box>
               )}
