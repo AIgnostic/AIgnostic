@@ -2,7 +2,7 @@
 
 from typing import Callable
 from metrics.models import (
-    CalculateRequest
+    CalculateRequest,
 )
 from metrics.utils import (
     _query_model,
@@ -234,7 +234,14 @@ def roc_auc(info: CalculateRequest) -> float:
     """
     name = "roc_auc"
     is_valid_for_per_class_metrics(name, info.true_labels)
-    return roc_auc_score(info.true_labels, info.predicted_labels, average="macro", multi_class="ovr")
+    scores = (
+        np.max(info.confidence_scores, axis=1)
+        if info.task_name == "binary_classification"
+        else info.confidence_scores
+    )
+    
+    #TODO: Extend to text classification
+    return roc_auc_score(info.true_labels, scores, average="macro")
 
 
 def mean_absolute_error(info: CalculateRequest) -> float:
