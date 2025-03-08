@@ -1,17 +1,34 @@
-# How do I create a Model API for the model I wish to evaluate?
+# How do I create an API endpoint for the Model I wish to evaluate?
 
-If you are using the Production version of AIgnostic (i.e. hosted on https://aignostic.docsoc.co.uk) then you will need to be hosting your API endpoint on a URL on the public internet in order for AIgnostic to interface with it. If you are using the local deployment (i.e. running AIgnostic on localhost via ```./aignostic.py run```) then you can use locally hosted servers for your APIs.
+If you are using the Production version of AIgnostic (i.e. hosted on https://aignostic.docsoc.co.uk) then you will need to be hosting your API endpoint on a URL on the public internet in order for AIgnostic to interface with it. If you are using the local deployment (i.e. running AIgnostic on localhost via './aignostic.py run') then you can use locally hosted servers for your APIs.
 
-The Model API takes in `{features : List[List], labels: List[List], groups: List}`
-and should return a List of labels 
+The model API should expose a '/predict' POST endpoint, which expects model input to be in the format of
+
+```python
+class ModelRequest():
+    "features": List[List]
+    "labels": List[List]
+    "groups": Optional[List]
+```
+
+and should return a List of predictions and, optionally, confidence scores (some metrics require this).
+
+```python
+class ModelResponse():
+    "predictions": List[List]
+    "confidence_scores": Optional[List[List]]
+```
+
+
+#### Example Model API endpoint
 
 ```python
 @app.post("/predict")
-def predict(dataset: DataSet) -> DataSet:
+def predict(request: ModelRequest) ->  ModelResponse:
     """
-    Given a dataset, predict the expected outputs for the model
+    Given features, labels and groups, predict the expected outputs for the model
     """
-    # Return identical dataframe for now - fill this in with actual test models when trained
-    out: np.ndarray = model.predict(dataset.rows)
-    rows: list[list] = out.tolist() if len(dataset.rows) > 1 else [out.tolist()]
-    return DataSet(column_names=dataset.column_names, rows=rows)
+    predictions, confidence_scores = model.predict(request)
+    
+    return ModelResponse(predictions=predictions, confidence_scores=confidence_scores)
+```

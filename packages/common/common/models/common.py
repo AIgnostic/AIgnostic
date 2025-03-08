@@ -15,7 +15,7 @@ class DatasetResponse(BaseModel):  # pragma: no cover
     """
     features: list[list]
     labels: list[list]
-    group_ids: list[int]
+    group_ids: Optional[list[int]]
 
     # @field_validator('features', 'labels', mode='after')
     # def convert_to_np_array(cls, v):
@@ -33,7 +33,31 @@ class ModelResponse(BaseModel):  # pragma: no cover
     confidence_scores: Optional[list[list]] = None
 
 
-class AggregatorMessage(BaseModel, ABC):
+class LLMInput(DatasetResponse, BaseModel):  # pragma: no cover
+    """
+    A model for next token generation
+
+    Attributes:
+        prompt: str - the prompt for the language model
+        max_length: int - the maximum length of the generated sequence
+    """
+
+    prompt: str
+    max_length: int
+
+
+class LLMResponse(DatasetResponse, BaseModel):  # pragma: no cover
+    """
+    A model for next token generation
+
+    Attributes:
+        response: str - response generated from the model
+    """
+
+    response: str
+
+
+class AggregatorMessage(BaseModel, ABC):  # pragma: no cover
     """
     Model for messages sent by the aggregator to the frontend
     Params:
@@ -51,7 +75,7 @@ class AggregatorMessage(BaseModel, ABC):
         arbitrary_types_allowed = True
 
 
-class MessageType(str, Enum):
+class MessageType(str, Enum):  # pragma: no cover
     LOG = "LOG"
     ERROR = "ERROR"
     METRICS_INTERMEDIATE = "METRICS_INTERMEDIATE"
@@ -64,7 +88,7 @@ class JobType(str, Enum):
     ERROR = "ERROR"
 
 
-class WorkerError(BaseModel):
+class WorkerError(BaseModel):  # pragma: no cover
     """
     WorkerError pydantic model represents the structure of the errors found on the results queue
     i.e. what worker sends to the queue
@@ -74,7 +98,7 @@ class WorkerError(BaseModel):
     error_code: int
 
 
-class AggregatorJob(BaseModel):
+class AggregatorJob(BaseModel):  # pragma: no cover
     """
     AggregatorJob pydantic model represents the structure of the jobs found on the results queue
     i.e. what worker sends to the queue
@@ -85,7 +109,7 @@ class AggregatorJob(BaseModel):
     content: Union[WorkerResults, WorkerError]
 
 
-class ComputeUserMetricRequest(BaseModel):
+class ComputeUserMetricRequest(BaseModel):  # pragma: no cover
     user_id: str
     function_name: str
     params: dict
