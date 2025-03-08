@@ -14,6 +14,7 @@ from common.models import (
 from metrics.models import WorkerException, TaskType
 from worker.worker import Worker, USER_METRIC_SERVER_URL
 from requests.exceptions import HTTPError
+import json
 
 worker = Worker()
 
@@ -378,34 +379,28 @@ def test_check_model_response():
     worker._check_model_response(predictions, labels)
 
 
-# def test_invalid_job_format_raises_worker_exception():
-#     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
-#         job = Batch(
-#             job_id=str(uuid.uuid4()),
-#             batch_id=str(uuid.uuid4()),
-#             batch_size=1,
-#             metrics=MetricCalculationJob(
-#                 data_url="http://example.com/data",
-#                 model_url="http://example.com/model",
-#                 data_api_key="data_key",
-#                 model_api_key="model_key",
-#                 metrics=["accuracy"],
-#                 model_type="binary_classification",
-#             ),
-#             total_sample_size=500,
-#         )
-#         job_dict = job.model_dump()
-#         job_dict.pop("metrics")  # now an invalid Job
+def test_invalid_job_format_raises_worker_exception():
+    with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
+        job = Batch(
+            job_id=str(uuid.uuid4()),
+            batch_id=str(uuid.uuid4()),
+            batch_size=1,
+            metrics=MetricCalculationJob(
+                data_url="http://example.com/data",
+                model_url="http://example.com/model",
+                data_api_key="data_key",
+                model_api_key="model_key",
+                metrics=["accuracy"],
+                model_type=TaskType.BINARY_CLASSIFICATION,
+            ),
+            total_sample_size=500,
+        )
+        job_dict = job.model_dump()
+        job_dict.pop("metrics")  # now an invalid Job
 
-#         mock_channel.basic_get.return_value = (
-#             MagicMock(),
-#             MagicMock(),
-#             json.dumps(job_dict).encode("utf-8"),
-#         )
-
-#         with pytest.raises(WorkerException):
-#             worker.fetch_batch()
-#             mock_channel.basic_get.assert_called_once()
+        with pytest.raises(WorkerException):
+            worker.unpack_batch(json.dumps(job_dict))
+            mock_channel.basic_get.assert_called_once()
 
 
 @patch("worker.worker.requests.get")

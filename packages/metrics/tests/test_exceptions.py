@@ -50,7 +50,7 @@ def test_task_incompatible_metric_returns_error():
         metrics=["mean_squared_error"],
         true_labels=[[1], [0]] * 4,
         predicted_labels=[[1]] * 8,
-        task_name="binary_classification",
+        task_name=TaskType.BINARY_CLASSIFICATION,
         batch_size=2,
         total_sample_size=10
     )

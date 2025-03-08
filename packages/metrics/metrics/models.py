@@ -33,9 +33,13 @@ class CalculateRequest(BaseModel):
     data for the task.
 
     :param metrics: list[str] - List of metrics to be calculated.
-    :param task_name: Optional[str] - Name of the task for which metrics are calculated. Options:
-        "binary_classification", "multi_class_classification", "regression", "next_token_generation.
-        Use the TaskType enum
+    :param task_name: Optional[TaskName] - Name of the task for which metrics are calculated. Options:
+        Use the TaskType enum:
+        - TaskType.BINARY_CLASSIFICATION
+        - TaskType.MULTI_CLASS_CLASSIFICATION
+        - TaskType.TEXT_CLASSIFICATION
+        - TaskType.REGRESSION
+        - TaskType.NEXT_TOKEN_GENERATION
     :param input_data: Optional[list[list]] - 2D list of input data where each nested list
         corresponds to one row of data.
     :param confidence_scores: Optional[list[list]] - 2D list of probabilities where each nested
