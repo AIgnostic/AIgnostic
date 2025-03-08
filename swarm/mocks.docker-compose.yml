@@ -43,7 +43,7 @@ services:
 
   scikit_mock_model_api:
     image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -m uvicorn mocks.model.scikit_mock:app --host 0.0.0.0 --port 5011
+    command: /app/.venv/bin/python -m uvicorn mocks.model.scikit_mock_classifier:app --host 0.0.0.0 --port 5011
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
