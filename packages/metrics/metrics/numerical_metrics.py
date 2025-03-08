@@ -7,7 +7,7 @@ from metrics.models import (
 from metrics.utils import (
     _query_model,
     _lime_explanation,
-    _finite_difference_gradient
+    _finite_difference_gradient_predictions
 )
 from sklearn.metrics import (
     f1_score,
@@ -418,15 +418,17 @@ def explanation_stability_score(info: CalculateRequest) -> float:
     lime_actual, _ = _lime_explanation(info)
 
     # Calculate gradients for perturbation
-    gradients = _finite_difference_gradient(info, 0.01)
+    gradients = _finite_difference_gradient_predictions(info, 0.01)
     perturbation_constant = 0.01
     perturbation = perturbation_constant * gradients
 
     # Go in direction of greatest loss
+    temp = info.input_features
     info.input_features = info.input_features + perturbation
 
     # Obtain perturbed lime output
     lime_perturbed, _ = _lime_explanation(info)
+    info.input_features = temp
 
     # use cosine-similarity for now but can be replaced with model-provider function later
     # TODO: Took absolute value of cosine similarity - verify if this is correct

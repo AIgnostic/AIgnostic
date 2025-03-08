@@ -1,4 +1,4 @@
-from metrics.models import CalculateRequest
+from metrics.models import CalculateRequest, MetricValue
 from metrics.metrics import calculate_metrics
 import pytest
 from tests.server_factory import (
@@ -25,6 +25,21 @@ mock_name = "explanation_metrics"
 def apply_server_factory(server_factory):
     with server_factory(mock_name):
         yield
+
+
+def test_explanation_stability_with_non_numeric_classes(apply_server_factory):
+    metric_name = "explanation_stability_score"
+    info = CalculateRequest(
+        batch_size=10,
+        total_sample_size=10,
+        metrics=[metric_name],
+        input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
+        confidence_scores=[[0.5], [0.6], [0.2], [0.8], [0.9], [0.1]],
+        model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-non-numeric-ESS",
+        model_api_key="None"
+    )
+    result = calculate_metrics(info)
+    assert isinstance(result.metric_values[metric_name], MetricValue), result
 
 
 def test_explanation_stability_similar_scores_result_in_1(apply_server_factory):
