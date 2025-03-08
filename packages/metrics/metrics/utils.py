@@ -34,8 +34,10 @@ def _finite_difference_gradient_predictions(info: CalculateRequest,
 
         forward_out = np.array(_query_model(X_forward, info).predictions)
         assert forward_out.shape == (len(X), 1), f"Forward output shape is {forward_out.shape}"
+        
         backward_out = np.array(_query_model(X_backward, info).predictions)
         assert backward_out.shape == (len(X), 1), f"Backward output shape is {backward_out.shape}"
+        
         forward_out = forward_out.reshape(-1)
         backward_out = backward_out.reshape(-1)
 
@@ -72,17 +74,15 @@ def _finite_difference_gradient_confidence_scores(
         # It represents the index of the predicted class for each sample
         target_class_indices = np.argmax(info.confidence_scores, axis=1)
         
-        print(f"target_class_indices: {target_class_indices}")
         forward_out = np.array(_query_model(X_forward, info).confidence_scores)
         backward_out = np.array(_query_model(X_backward, info).confidence_scores)
-        print(f"forward_out: {forward_out}")
-        print(f"backward_out: {backward_out}")
+        
         # for each datapoint, get the confidence score of the target class
         column_forward = forward_out[np.arange(num_datapoints), target_class_indices]
         column_backward = backward_out[np.arange(num_datapoints), target_class_indices]
-        print(f"column_forward: {column_forward}")
-        print(f"column_backward: {column_backward}")
+        
         gradients[:, j] = (column_forward - column_backward) / (2 * h)
+    print("returning gradients")
     return gradients
 
 
