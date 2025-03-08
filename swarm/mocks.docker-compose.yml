@@ -58,6 +58,11 @@ services:
       - aignostic_network
     ports:
       - '5001:5001'
+    deploy:
+      resources:
+        reservations:
+          cpus: '4'
+          memory: 6G
 
   tinystories_mock_model_api:
     image: ghcr.io/aignostic/mocks
