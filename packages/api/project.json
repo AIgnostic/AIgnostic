@@ -98,7 +98,7 @@
     "mock-model": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "python3 -m mocks.model.scikit_mock",
+        "command": "python3 -m mocks.model.scikit_mock_classifier",
         "cwd": "packages/mocks"
       }
     },
