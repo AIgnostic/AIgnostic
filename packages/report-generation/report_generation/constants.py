@@ -1,13 +1,3 @@
-# property_to_regulations = {
-#     "adversarial robustness": ["article 15"],
-#     "explainability": ["article 13",
-#                        "article 14 (4c)"],
-#     "fairness": ["article 10",
-#                  "article 15"],
-#     "uncertainity": ["article 13"],
-#     "privacy": ["article 2"],
-#     "data minimality": ["article 10"],
-# }
 property_to_regulations = {
     "adversarial robustness": ["15"],
     "explainability": ["13",

@@ -127,44 +127,20 @@ class Worker:
         Helper function to fetch data from the dataset API.
 
         Params:
-        - data_url : API URL of the dataset
-        - dataset_api_key : API key for authentication
-        - batch_size : Number of records to fetch
+        - dataURL : API URL of the dataset
         """
-
-        url = convert_localhost_url(str(data_url))
-        headers = {"Authorization": f"Bearer {dataset_api_key}"} if dataset_api_key else {}
-        params = {"n": batch_size}
-
-        try:
-            response = requests.get(url, headers=headers, params=params, timeout=10)
-
-            # Raise for HTTP errors (4xx, 5xx)
-            response.raise_for_status()
-
-        except ConnectionError as e:
-            raise WorkerException(
-                detail=f"Failed to connect to dataset API at {url}: {e}",
-                status_code=503
+        # Send a GET request to the dataset API
+        if dataset_api_key is None:
+            response = requests.get(
+                convert_localhost_url(str(data_url)), params={"n": batch_size}
             )
-
-        except Timeout as e:
-            raise WorkerException(
-                detail=f"Request to dataset API at {url} timed out: {e}",
-                status_code=504
+        else:
+            response = requests.get(
+                convert_localhost_url(str(data_url)),
+                headers={"Authorization": f"Bearer {dataset_api_key}"},
+                params={"n": batch_size},
             )
-
-        except HTTPError as e:
-            raise WorkerException(
-                detail=f"HHTP Error on request to dataset API at {url}: {e}",
-                status_code=response.status_code
-            )
-
-        except RequestException as e:
-            raise WorkerException(
-                detail=f"An error occurred while contacting the dataset API: {e}",
-                status_code=500
-            )
+            print(f"fetch_data: response {response}")
 
         try:
             # Ensure response is JSON
@@ -198,13 +174,20 @@ class Worker:
         - data : Data to be passed to the model in JSON format with DataSet pydantic model type
         - modelAPIKey : API key for the model
         """
-        url = convert_localhost_url(str(model_url))
-        headers = {"Authorization": f"Bearer {model_api_key}"} if model_api_key else {}
+
+        # Send a POST request to the model API
+        if model_api_key is None:
+            response = requests.post(
+                url=convert_localhost_url(str(model_url)), json=data.model_dump_json()
+            )
+        else:
+            response = requests.post(
+                url=convert_localhost_url(str(model_url)),
+                json=data.model_dump(),
+                headers={"Authorization": f"Bearer {model_api_key}"},
+            )
 
         try:
-            response = requests.post(url, json=data.model_dump(), headers=headers, timeout=10)
-
-            # Raise for status (HTTPError for 4xx, 5xx)
             response.raise_for_status()
 
         except ConnectionError as e:
@@ -262,6 +245,7 @@ class Worker:
         metrics_data = batch.metrics
 
         try:
+            print("process_job: enters into process job")
             # fetch data from datasetURL
             print("Fetching data")
             dataset_response = await self.fetch_data(
@@ -278,7 +262,7 @@ class Worker:
                 dataset_response,
                 metrics_data.model_api_key,
             )
-
+            print("process_job: finishes querying model")
             true_labels = dataset_response.labels
             predicted_labels = model_response.predictions
 
@@ -430,6 +414,7 @@ class Worker:
             while True:
                 job = self.fetch_batch()
                 if job:
+                    print("Running process job")
                     asyncio.run(self.process_job(job))
         except KeyboardInterrupt:
             self.close()
