@@ -16,7 +16,7 @@ def _finite_difference_gradient(info: CalculateRequest,
 
     Args:
         info: Information required to compute the gradient including info.input_features,
-            model_url and model_api_key.
+              model_url and model_api_key.
         h: Perturbation magnitude.
 
     Returns:
@@ -122,7 +122,8 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=Fa
 
 def _query_model(generated_input_features: np.array, info: CalculateRequest) -> ModelResponse:
     """
-    Helper function to query the model API
+    Helper function to query the model API using the generated input features,
+    not the input features from the CalculateRequest object.
 
     Params:
     - generated_input : Input data to be sent to the model API

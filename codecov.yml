@@ -1,6 +1,6 @@
 coverage:
   ignore:
-    - 'mocks/mocks/model/train_*.py'
+    - 'packages/mocks/mocks/model/train_*.py'
   status:
     project:
       default:

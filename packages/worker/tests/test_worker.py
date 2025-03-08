@@ -13,7 +13,7 @@ from common.models import (
     ModelResponse,
 )
 from metrics.models import WorkerException
-from worker.worker import Worker
+from worker.worker import Worker, USER_METRIC_SERVER_URL
 from requests.exceptions import HTTPError
 
 worker = Worker()
@@ -92,7 +92,7 @@ def test_queue_result():
             total_sample_size=1,
             user_id="1234",
         )
-        worker.queue_result(result)
+        worker.queue_result(result, "1234")
         mock_channel.basic_publish.assert_called_once()
 
 
@@ -212,8 +212,9 @@ async def test_process_job_user_defined_metrics_server_error(mock_post, mock_get
 @patch("worker.worker.requests.post")
 @pytest.mark.asyncio
 async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_delete):
+    job_id = str(uuid.uuid4())
     job = Batch(
-        job_id=str(uuid.uuid4()),
+        job_id=job_id,
         batch_id=str(uuid.uuid4()),
         batch_size=1,
         metrics=MetricCalculationJob(
@@ -262,6 +263,9 @@ async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_
 
         mock_queue_result.assert_called_once()
         mock_send_status_completed.assert_called_once()
+        mock_delete.assert_called_once_with(
+            f"{USER_METRIC_SERVER_URL}/clear-user-data/{job_id}"
+        )
 
 
 @patch("worker.worker.requests.get")
@@ -320,7 +324,7 @@ async def test_process_job_user_defined_metrics_execution_error(mock_post, mock_
 def test_queue_error():
     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
         error_message = "Some error occurred"
-        worker.queue_error(WorkerError(error_message=error_message, error_code=500))
+        worker.queue_error(WorkerError(error_message=error_message, error_code=500), user_id="1234")
         mock_channel.basic_publish.assert_called_once()
 
 
@@ -378,6 +382,7 @@ async def test_process_job_success(mock_calculate_metrics):
 @pytest.mark.asyncio
 async def test_query_model_success(mock_post):
     mock_response = MagicMock()
+    mock_response.headers = {"Content-Type": "application/json"}
     mock_response.json.return_value = {"predictions": [[0], [1]]}
     mock_response.raise_for_status.return_value = None
     mock_post.return_value = mock_response
@@ -392,6 +397,7 @@ async def test_query_model_success(mock_post):
 @pytest.mark.asyncio
 async def test_fetch_data_success(mock_get):
     mock_response = MagicMock()
+    mock_response.headers = {"Content-Type": "application/json"}
     mock_response.json.return_value = {
         "features": [[1, 2]],
         "labels": [[0]],
@@ -457,6 +463,7 @@ async def test_fetch_data_http_error_gives_worker_exception(mock_get):
 async def test_fetch_data_invalid_data_format_gives_worker_exception(mock_get):
     """Test that WorkerException is raised when the data format is incorrect."""
     mock_response = MagicMock()
+    mock_response.headers = {"Content-Type": "application/json"}
     mock_response.json.return_value = {
         "invalid": "data"
     }  # Not matching DatasetResponse schema
@@ -466,7 +473,7 @@ async def test_fetch_data_invalid_data_format_gives_worker_exception(mock_get):
     with pytest.raises(WorkerException) as excinfo:
         await worker.fetch_data("http://example.com/data", "data_key", 1)
 
-    assert "Data error - data returned from data provider of incorrect format" in str(
+    assert "Data error - Incorrect format from dataset API:" in str(
         excinfo.value
     )
 
@@ -501,6 +508,32 @@ async def test_query_model_invalid_data_format_gives_worker_exception(mock_post)
         await worker.query_model("http://example.com/predict", mock_data, "model_key")
 
     assert "Could not parse model response" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_query_model_error_results_in_worker_returning_worker_error():
+    with patch.object(worker, "fetch_data", new_callable=AsyncMock), \
+         patch.object(worker, "query_model", new_callable=AsyncMock) as mock_query_model, \
+         patch.object(worker, "queue_error", new_callable=MagicMock) as mock_queue_error, \
+         patch.object(worker, "send_status_error", new_callable=MagicMock) as mock_send_status_error:
+        mock_query_model.side_effect = WorkerException("Some error occurred")
+        _ = await worker.process_job(Batch(
+            job_id=str(uuid.uuid4()),
+            batch_id=str(uuid.uuid4()),
+            batch_size=1,
+            total_sample_size=500,
+            metrics=MetricCalculationJob(
+                data_url="http://example.com/data",
+                model_url="http://example.com/model",
+                data_api_key="data_key",
+                model_api_key="model_key",
+                metrics=["accuracy"],
+                model_type="binary classification",
+            ))
+        )
+
+        mock_queue_error.assert_called_once()
+        mock_send_status_error.assert_called_once()
 
 
 @pytest.mark.asyncio

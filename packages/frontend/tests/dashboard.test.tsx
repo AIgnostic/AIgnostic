@@ -14,12 +14,18 @@ jest.mock("../src/app/components/ReportRenderer", () => () => (
   <div data-testid="report-renderer">Final Report</div>
 ));
 
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: jest.fn(),
+}));
+
 jest.mock("@react-pdf/renderer", () => ({
   pdf: jest.fn(() => ({
     toBlob: jest.fn(() => Promise.resolve(new Blob())),
   })),
 }));
 
+global.fetch = jest.fn()
 // Mock URL.createObjectURL
 global.URL.createObjectURL = jest.fn(() => "blob:http://localhost/blob");
 global.URL.revokeObjectURL = jest.fn();
@@ -46,15 +52,17 @@ describe("Dashboard Component", () => {
     render(<Dashboard
       onComplete={onCompleteMock}
       socket={mockWebSocket as WebSocket}
+      disconnectRef={{ current: false }}
       expectedItems={10} />);
     expect(screen.getByText("0 / 10 batches processed")).toBeInTheDocument();
-    expect(screen.getByText("Waiting for messages...")).toBeInTheDocument();
+    expect(screen.getByText("Log: Processing metrics...")).toBeInTheDocument();
   });
 
   test("updates log on LOG message", async () => {
     render(<Dashboard
       onComplete={onCompleteMock}
       socket={mockWebSocket as WebSocket}
+      disconnectRef={{ current: false }}
       expectedItems={10} />);
 
     await act(async () => {
@@ -63,13 +71,14 @@ describe("Dashboard Component", () => {
       });
     });
 
-    expect(screen.getByText("Processing started")).toBeInTheDocument();
+    expect(screen.getByText("Log: Processing started")).toBeInTheDocument();
   });
 
   test("displays error message on ERROR event", async () => {
     render(<Dashboard
       onComplete={onCompleteMock}
       socket={mockWebSocket as WebSocket}
+      disconnectRef={{ current: false }}
       expectedItems={10} />);
 
     await act(async () => {
@@ -85,6 +94,7 @@ describe("Dashboard Component", () => {
     const { container } = render(<Dashboard
       onComplete={onCompleteMock}
       socket={mockWebSocket as WebSocket}
+      disconnectRef={{ current: false }}
       expectedItems={10} />);
 
     await act(async () => {
@@ -149,6 +159,7 @@ describe("Dashboard Component", () => {
     render(<Dashboard 
       onComplete={onCompleteMock}
       socket={mockWebSocket as WebSocket}
+      disconnectRef={{ current: false }}
       expectedItems={10}/>
     );
 
@@ -169,6 +180,7 @@ describe("Dashboard Component", () => {
     const { unmount } = render(<Dashboard
       onComplete={onCompleteMock}
       socket={mockWebSocket as WebSocket}
+      disconnectRef={{ current: false }}
       expectedItems={10}/>);
     unmount();
     expect(mockWebSocket.close).toHaveBeenCalled();
