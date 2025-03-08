@@ -1,4 +1,4 @@
-from metrics.models import CalculateRequest, MetricValue
+from metrics.models import CalculateRequest, MetricValue, TaskType
 import pytest
 from tests.server_factory import (
     server_factory,
@@ -29,7 +29,7 @@ def test_high_stability_ntg(apply_server_factory):
         batch_size=10,
         total_sample_size=10,
         metrics=[metric_name],
-        task_name="regression",
+        task_name=TaskType.REGRESSION,
         input_features=TEST_DATA_REGRESSION.features,
         model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-perfect-stability",
         model_api_key="None",
@@ -55,7 +55,7 @@ def test_low_stability_ntg(apply_server_factory):
         batch_size=10,
         total_sample_size=10,
         metrics=[metric_name],
-        task_name="regression",
+        task_name=TaskType.REGRESSION,
         input_features=[[1, 2], [3, -4], [-5, 6], [1000, 984], [0, 60], [-34, 2222]],
         true_labels=[[1], [2], [3], [4], [5], [6]],
         predicted_labels=[[5], [6], [2], [8], [9], [1]],

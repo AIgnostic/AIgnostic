@@ -14,6 +14,7 @@ import pytest
 from unittest.mock import MagicMock
 from dispatcher.dispatcher import Dispatcher, DispatcherException, JobFromAPI, PipelineJobType
 from dispatcher.models import RunningJob
+from metrics.models import TaskType
 
 
 @pytest.fixture
@@ -52,7 +53,7 @@ def sample_job():
                     data_api_key="data_api_key",
                     model_api_key="model_api_key",
                     metrics=["accuracy"],
-                    model_type="model_type",
+                    model_type=TaskType.BINARY_CLASSIFICATION,
                 ),
             ),
         )

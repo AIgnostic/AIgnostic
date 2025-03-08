@@ -10,7 +10,7 @@ Each metric function should take a CalculateRequest object as input and return a
 ```python
 class CalculateRequest(BaseModel):
     metrics: list[str]
-    task_name: Optional[str]
+    task_name: Optional[TaskName]
     batch_size: Optional[int]
     input_features: Optional[list[list]]
     confidence_scores: Optional[list[list]]
@@ -23,8 +23,18 @@ class CalculateRequest(BaseModel):
     model_url: Optional[HttpUrl]
     model_api_key: Optional[str]
 ```
-
 Note that even though most of the expected attributes are 'Optional', the metric function should check for the presence of the required attributes before proceeding with the calculation.
+
+The TaskName Enum consists of the following:
+```python
+class TaskType(str, Enum):
+    BINARY_CLASSIFICATION = "binary_classification"
+    MULTI_CLASS_CLASSIFICATION = "multi_class_classification"
+    TEXT_CLASSIFICATION = "text_classification"
+    REGRESSION = "regression"
+    NEXT_TOKEN_GENERATION = "next_token_generation"
+
+```
 
 #### Step 1: Create a new metric
 
@@ -107,7 +117,7 @@ Note that:
 Moreover, the 'task_type_to_metric' dictionary maps the task type to the metrics that are valid for that task type. If the metric is valid for all task types, it must be added to all the model types.
 
 ```python
-task_type_to_metric["binary_classification"] = [
+task_type_to_metric[TaskType.BINARY_CLASSIFICATION] = [
     "accuracy",
     "balanced_accuracy",
     "equalized_odds_difference"

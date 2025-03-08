@@ -1,4 +1,4 @@
-from metrics.models import CalculateRequest, MetricValue
+from metrics.models import CalculateRequest, MetricValue, TaskType
 from common.models import ModelResponse
 import pytest
 from tests.server_factory import (
@@ -104,7 +104,7 @@ def test_high_stability_ntg(apply_server_factory):
         batch_size=10,
         total_sample_size=10,
         metrics=[metric_name],
-        task_name="next_token_generation",
+        task_name=TaskType.NEXT_TOKEN_GENERATION,
         input_features=TEST_INPUT_NEXT_TOKEN_GENERATION.features,
         model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-hs-ntg",
         model_api_key="None",
@@ -128,7 +128,7 @@ def test_low_stability_ntg(apply_server_factory):
         batch_size=10,
         total_sample_size=10,
         metrics=[metric_name],
-        task_name="next_token_generation",
+        task_name=TaskType.NEXT_TOKEN_GENERATION,
         input_features=TEST_INPUT_NEXT_TOKEN_GENERATION.features,
         model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict-ls-ntg",
         model_api_key="None",

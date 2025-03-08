@@ -296,12 +296,12 @@ function Homepage() {
                     const handleOnBlur =
                       field.validKey && field.isValid !== undefined
                         ? () => {
-                            setStateWrapper(
-                              field.validKey as keyof typeof state,
-                              // checkURL(field.value)
-                              true
-                            );
-                          }
+                          setStateWrapper(
+                            field.validKey as keyof typeof state,
+                            // checkURL(field.value)
+                            true
+                          );
+                        }
                         : undefined; // Don't do anything for fields that don't need validation onBlur
 
                     const errorProps =
@@ -349,8 +349,8 @@ function Homepage() {
                           state.numberOfBatches < 1
                             ? 'Number of batches must be greater than 0'
                             : !state.isBatchConfigValid
-                            ? 'Invalid batch configuration'
-                            : ''
+                              ? 'Invalid batch configuration'
+                              : ''
                         }
                         onChange={(e) =>
                           setStateWrapper(
@@ -378,8 +378,8 @@ function Homepage() {
                           state.batchSize < 1
                             ? 'Batch size must be greater than 0'
                             : !state.isBatchConfigValid
-                            ? 'Invalid batch configuration'
-                            : ''
+                              ? 'Invalid batch configuration'
+                              : ''
                         }
                         onChange={(e) =>
                           setStateWrapper(
@@ -524,9 +524,9 @@ function Homepage() {
                     ).length === 0
                       ? 'You have not selected any metrics'
                       : state.metricChips
-                          .filter((metricChip) => metricChip.selected)
-                          .map((metricChip) => metricChip.label)
-                          .join(', ')}
+                        .filter((metricChip) => metricChip.selected)
+                        .map((metricChip) => metricChip.label)
+                        .join(', ')}
                     <br /> <br />
                     <strong>Batch Configuration:</strong>
                     <br />

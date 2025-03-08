@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 import uuid
 from api.router.api import dispatch_job
 from common.models.pipeline import MetricCalculationJob
+from metrics.models import TaskType
 
 
 def test_dispatch_job():
@@ -24,7 +25,7 @@ def test_dispatch_job():
             data_api_key=data_api_key,
             model_api_key=model_api_key,
             metrics=metrics,
-            model_type="binary classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         batches=10,
         batch_size=10,

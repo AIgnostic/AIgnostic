@@ -20,6 +20,7 @@ from pydantic import (
     BaseModel,
     HttpUrl,
 )
+from metrics.models import TaskType
 
 
 class MetricCalculationJob(BaseModel):
@@ -40,7 +41,7 @@ class MetricCalculationJob(BaseModel):
     metrics: list[str]
     """List of metrics to be calculated"""
 
-    model_type: str
+    model_type: TaskType
     """Type of model"""
 
 

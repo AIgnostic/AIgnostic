@@ -1,4 +1,4 @@
-from metrics.models import CalculateRequest
+from metrics.models import CalculateRequest, TaskType
 from metrics.numerical_metrics import (
     explanation_sparsity_score,
     explanation_fidelity_score
@@ -28,7 +28,7 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         inp = info.input_features[i][0]
 
         # Obtain the confidence scores for the model
-        if info.task_name in ['next_token_generation', 'regression']:
+        if info.task_name in [TaskType.NEXT_TOKEN_GENERATION, TaskType.REGRESSION]:
             targets = info.predicted_labels
         else:
             targets = info.confidence_scores
@@ -42,7 +42,7 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         temp_scores = targets
         # Duplicate the confidence scores for the synonym perturbations shape = (num_perturbations, c)
         # where c is the number classes in the model
-        if info.task_name in ['next_token_generation', 'regression']:
+        if info.task_name in [TaskType.NEXT_TOKEN_GENERATION, TaskType.REGRESSION]:
             info.predicted_labels = np.array([targets[i]] * synonym_sentences.shape[0])
             assert info.predicted_labels.ndim == 2
         else:
@@ -60,7 +60,7 @@ def expl_stability_text_input(info: CalculateRequest) -> float:
         # Reset the input features and confidence scores to the original values after
         # obtaining the LIME coefficients for the synonym perturbations
         info.input_features = temp_input_features
-        if info.task_name in ['next_token_generation', 'regression']:
+        if info.task_name in [TaskType.NEXT_TOKEN_GENERATION, TaskType.REGRESSION]:
             info.predicted_labels = temp_scores
         else:
             info.confidence_scores = temp_scores

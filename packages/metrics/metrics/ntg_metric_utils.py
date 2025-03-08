@@ -5,7 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from rouge import Rouge
 import editdistance
-from metrics.models import CalculateRequest
+from metrics.models import CalculateRequest, TaskType
 from metrics.exceptions import (
     MetricsComputationException,
     InvalidParameterException,
@@ -271,13 +271,13 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
     # outputs.shape = (num_samples * num_perturbations_per_sample, num_classes) if classification
     outputs = (
         response.predictions
-        if info.task_name in ['next_token_generation', 'regression']
+        if info.task_name in [TaskType.NEXT_TOKEN_GENERATION, TaskType.REGRESSION]
         else response.confidence_scores
     )
 
     print("info.task_name: ", info.task_name)
 
-    if info.task_name not in ['next_token_generation', 'regression']:
+    if info.task_name not in [TaskType.NEXT_TOKEN_GENERATION, TaskType.REGRESSION]:
         if outputs is None:
             raise ModelQueryException(
                 detail="NOT NEXT TOKEN GENERATION",
@@ -291,7 +291,7 @@ def text_input_lime(info: CalculateRequest) -> tuple[np.array, Ridge]:
             status_code=400
         )
 
-    if info.task_name == 'next_token_generation':
+    if info.task_name == TaskType.NEXT_TOKEN_GENERATION:
         # convert to embeddings
         outputs = prompt_to_embeddings(np.array(outputs))
 
