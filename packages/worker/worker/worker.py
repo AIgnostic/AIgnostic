@@ -19,7 +19,6 @@ from metrics.models import WorkerResults, convert_calculate_request_to_dict
 import requests
 from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
-from typing import Optional
 from common.models import (
     CalculateRequest,
     DatasetResponse,
