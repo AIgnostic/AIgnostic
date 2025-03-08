@@ -298,8 +298,7 @@ function Homepage() {
                         ? () => {
                             setStateWrapper(
                               field.validKey as keyof typeof state,
-                              // checkURL(field.value)
-                              true
+                              checkURL(field.value)
                             );
                           }
                         : undefined; // Don't do anything for fields that don't need validation onBlur
