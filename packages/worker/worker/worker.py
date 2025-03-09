@@ -284,17 +284,6 @@ class Worker:
 
             print(f"Metrics to compute: {metrics_data.metrics}")
 
-            # some preprocessing for FinBERT
-            # TODO: Need to sort out how to handle this properly
-            if metrics_data.model_type == "binary_classification":
-                predicted_labels, true_labels = self.binarize_finbert_output(
-                    predicted_labels, true_labels
-                )
-            elif metrics_data.model_type == "multi_class_classification":
-                predicted_labels, true_labels = self.convert_to_numeric_classes(
-                    predicted_labels, true_labels
-                )
-
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
                 metrics=metrics_data.metrics,
