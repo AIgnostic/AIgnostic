@@ -3,6 +3,7 @@ import { Button, Box, Typography, Chip } from '@mui/material';
 import theme from '../theme';
 import { USER_METRICS_SERVER_URL } from '../constants';
 import { HomepageState } from '../types';
+import { useUser } from '../context/userid.context';
 
 interface FileUploadComponentProps {
   state: HomepageState & { dashboardKey: number }; // Replace 'any' with the appropriate type
@@ -21,6 +22,8 @@ function FileUploadComponent({
   const [error, setError] = useState<string | null>(null);
   const [functions, setFunctions] = useState<string[] | null>(null);
 
+  const { userId } = useUser();
+
   const handleFileChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     fileType: 'python' | 'requirements'
@@ -35,7 +38,6 @@ function FileUploadComponent({
     }
     setError(null);
   };
-  const userId = sessionStorage.getItem('userId');
 
   const handleSubmitFiles = async () => {
     if (!userId) {

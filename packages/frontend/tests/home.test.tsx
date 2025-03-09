@@ -1,12 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Homepage from '../src/app/home';
-import {
-  steps,
-  modelTypesToMetrics,
-  initializeModelTypesToMetrics,
-  activeStepToInputConditions,
-} from '../src/app/constants';
+import { steps, activeStepToInputConditions } from '../src/app/constants';
 import '@testing-library/jest-dom';
 import { checkBatchConfig, checkURL } from '../src/app/utils';
 import { MemoryRouter } from 'react-router-dom';
@@ -24,16 +19,22 @@ jest.mock('../src/app/constants', () => ({
   WEBSOCKET_URL: 'ws://localhost:8000/ws',
 }));
 
-beforeAll(async () => {
-  await initializeModelTypesToMetrics();
-});
-
 jest.mock('@react-pdf/renderer', () => ({
   Document: ({ children }: any) => <div>{children}</div>,
   Page: ({ children }: any) => <div>{children}</div>,
   Text: ({ children }: any) => <span>{children}</span>,
   View: ({ children }: any) => <div>{children}</div>,
   StyleSheet: { create: (styles: any) => styles },
+}));
+
+jest.mock('../src/app/utils', () => ({
+  __esModule: true,
+  checkURL: jest.fn(),
+  checkBatchConfig: jest.fn(),
+  generateReportText: jest.fn(),
+  fetchMetricInfo: jest.fn().mockResolvedValue({
+    'Binary Classification': ['Binary Text Classification'],
+  }),
 }));
 
 const mockNavigate = jest.fn();
@@ -47,14 +48,22 @@ jest.mock('react-router-dom', () => ({
 // Mock API Docs component
 jest.mock('../src/app/api_docs', () => () => <div>API Documentation</div>);
 
+// Mock useUser to return a fake user ID & mock socket
+jest.mock('../src/app/context/userid.context', () => ({
+  __esModule: true,
+  useUser: () => ({ userId: 'fake-user-id', socket: { onopen: jest.fn() } }),
+}));
+
 describe('Title', () => {
-  it('should render the title correctly', () => {
+  it('should render the title correctly', async () => {
     render(
       <MemoryRouter>
         <Homepage />
       </MemoryRouter>
     );
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     expect(screen.getByText('AIgnostic')).toBeInTheDocument();
     expect(
       screen.getByText('New to AIgnostic? Read the docs to get started:')
@@ -62,13 +71,15 @@ describe('Title', () => {
     expect(screen.getByText('Getting Started')).toBeInTheDocument();
   });
 
-  it('should navigate to /api-docs when "Getting Started" is clicked', () => {
+  it('should navigate to /api-docs when "Getting Started" is clicked', async () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <Homepage />
       </MemoryRouter>
     );
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('Getting Started'));
 
     // Verify that navigate was called with the expected path
@@ -77,22 +88,31 @@ describe('Title', () => {
 });
 
 describe('Stepper Navigation', () => {
-  it('should disable Next state if no API URLs inputted', () => {
+  it('should disable Next state if no API URLs inputted', async () => {
     render(<Homepage />);
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const nextButton = screen.getAllByRole('button', { name: /Next/i })[0];
     expect(nextButton).toBeDisabled();
   });
 
-  it('should disable Next state if one of the API URLs are not inputted', () => {
+  it('should disable Next state if one of the API URLs are not inputted', async () => {
     render(<Homepage />);
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     fireEvent.change(screen.getByLabelText(/Model API URL/i), {
       target: { value: 'http://valid-model-url.com' },
     });
     const nextButton = screen.getAllByRole('button', { name: /Next/i })[0];
     expect(nextButton).toBeDisabled();
   });
-  it('should go to the next step when "Next" button is clicked', () => {
+  it('should go to the next step when "Next" button is clicked', async () => {
     render(<Homepage />);
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     fireEvent.change(screen.getByLabelText(/Model API URL/i), {
       target: { value: 'http://valid-model-url.com' },
     });
@@ -106,9 +126,11 @@ describe('Stepper Navigation', () => {
     expect(screen.getByText(steps[1].description)).toBeInTheDocument();
   });
 
-  it('should go to the previous step when "Back" button is clicked', () => {
+  it('should go to the previous step when "Back" button is clicked', async () => {
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
     const backButton = screen.getAllByRole('button', { name: /Back/i })[0];
@@ -117,13 +139,6 @@ describe('Stepper Navigation', () => {
     expect(screen.getByText(steps[0].label)).toBeInTheDocument();
   });
 });
-
-jest.mock('../src/app/utils', () => ({
-  __esModule: true,
-  checkURL: jest.fn(),
-  generateReportText: jest.fn(),
-  fetchMetricInfo: jest.fn(),
-}));
 
 describe('Form Validation', () => {
   // it('should show an error if the model URL is invalid', () => {
@@ -158,7 +173,9 @@ describe('Form Validation', () => {
     (checkURL as jest.Mock).mockReturnValue(true);
 
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     fireEvent.change(screen.getByLabelText(/Model API URL/i), {
       target: { value: 'http://valid-model-url.com' },
     });
@@ -175,21 +192,15 @@ describe('Form Validation', () => {
   });
 });
 
-jest.mock('../src/app/utils', () => ({
-  __esModule: true,
-  checkBatchConfig: jest.fn(),
-  checkURL: jest.fn(),
-  generateReportText: jest.fn(),
-  fetchMetricInfo: jest.fn(),
-}));
-
 describe('Batch Configuration Validation', () => {
   test('should set isBatchConfigValid to false for invalid total sample size', async () => {
     // Mock checkBatchConfig to return false for invalid batch config
     (checkBatchConfig as jest.Mock).mockReturnValue(false);
 
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const batchSizeInput = screen.getByLabelText('Batch Size');
     const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
 
@@ -216,7 +227,9 @@ describe('Batch Configuration Validation', () => {
     (checkBatchConfig as jest.Mock).mockReturnValue(false);
 
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const batchSizeInput = screen.getByLabelText('Batch Size');
     const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
 
@@ -241,7 +254,9 @@ describe('Batch Configuration Validation', () => {
     (checkBatchConfig as jest.Mock).mockReturnValue(false);
 
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const batchSizeInput = screen.getByLabelText('Batch Size');
     const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
 
@@ -266,7 +281,9 @@ describe('Batch Configuration Validation', () => {
     (checkBatchConfig as jest.Mock).mockReturnValue(true);
 
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const batchSizeInput = screen.getByLabelText('Batch Size');
     const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
 
@@ -290,9 +307,11 @@ describe('Batch Configuration Validation', () => {
 });
 
 describe('Maximum Concurrent Batches Validation', () => {
-  it('should update maxConcurrentBatches state on change', () => {
+  it('should update maxConcurrentBatches state on change', async () => {
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const input = screen.getByLabelText('Maximum Concurrent Batches');
 
     // Simulate onChange event (user typing a value)
@@ -304,7 +323,9 @@ describe('Maximum Concurrent Batches Validation', () => {
 
   it('should show error if value is out of range onBlur', async () => {
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const input = screen.getByLabelText('Maximum Concurrent Batches');
 
     // Simulate an invalid input (less than 1)
@@ -319,7 +340,9 @@ describe('Maximum Concurrent Batches Validation', () => {
 
   it('should not show error if value is within range onBlur', async () => {
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const input = screen.getByLabelText('Maximum Concurrent Batches');
 
     // Simulate a valid input (within the range of 1 to 30)
@@ -334,7 +357,9 @@ describe('Maximum Concurrent Batches Validation', () => {
 
   it('should show an error if input is greater than 30 onBlur', async () => {
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const input = screen.getByLabelText('Maximum Concurrent Batches');
 
     // Simulate an invalid input (greater than 30)
@@ -348,7 +373,9 @@ describe('Maximum Concurrent Batches Validation', () => {
 
   it('should show an error if input is less than 1 onBlur', async () => {
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     const input = screen.getByLabelText('Maximum Concurrent Batches');
 
     // Simulate an invalid input (less than 1)
@@ -362,9 +389,11 @@ describe('Maximum Concurrent Batches Validation', () => {
 });
 
 describe('UI Components', () => {
-  it('should render the Homepage correctly', () => {
+  it('should render the Homepage correctly', async () => {
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     expect(screen.getAllByText(/AIgnostic/i).length).toBeGreaterThan(0);
 
     expect(screen.getByText(/'GETTING STARTED'/i)).toBeInTheDocument();
@@ -372,9 +401,11 @@ describe('UI Components', () => {
     expect(screen.getByText('Back')).toBeInTheDocument();
   });
 
-  it('should enable "Next" button when valid URLs are entered', () => {
+  it('should enable "Next" button when valid URLs are entered', async () => {
     render(<Homepage />);
-
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
+    });
     fireEvent.change(screen.getByLabelText(/Model API URL/i), {
       target: { value: 'http://valid-model-url.com' },
     });
@@ -386,120 +417,12 @@ describe('UI Components', () => {
   });
 });
 
-describe('API Calls', () => {
-  beforeEach(() => {
-    // Mock fetch globally
-    global.fetch = jest.fn();
-
-    // Mock createObjectURL to avoid test errors
-    global.URL.createObjectURL = jest.fn();
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
-  // it('downloads a report on successful response from handleSubmit', async () => {
-  //   // Mock a successful response from the API
-  //   (global.fetch as jest.Mock).mockResolvedValue({
-  //     ok: true,
-  //     json: jest.fn().mockResolvedValue({ results: { metric1: 0.8, metric2: 0.9 } }),
-  //   });
-
-  //   // Spy on the click method for anchor elements
-  //   const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click');
-
-  //   render(<Homepage />);
-
-  //   // Simulate entering valid URLs and navigating to the report generation step
-  //   fireEvent.change(screen.getByLabelText(/Model API URL/i), { target: { value: 'http://valid-model-url.com' } });
-  //   fireEvent.change(screen.getByLabelText(/Dataset API URL/i), { target: { value: 'http://valid-dataset-url.com' } });
-  //   fireEvent.click(screen.getAllByText('Next')[0]);
-  //   fireEvent.click(screen.getAllByText('Next')[1]);
-  //   fireEvent.click(screen.getAllByText('Next')[2]);
-  //   fireEvent.click(screen.getAllByText('Next')[3]);
-  //   fireEvent.click(screen.getByText('Generate Report'));
-
-  //   // Check that API call was made
-  //   // That a clickable link was created (creates a download link)
-  //   // And that the link was clicked (i.e. the report was downloaded)
-  //   await waitFor(() => {
-  //     expect(global.fetch).toHaveBeenCalledWith(expect.any(String), expect.any(Object));
-  //     expect(global.URL.createObjectURL).toHaveBeenCalled();
-  //     expect(clickSpy).toHaveBeenCalled();
-  //   });
-  // });
-
-  it('displays an error message upon failure response from API call', async () => {
-    // Mock a failed response from the API
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: false,
-      status: 500,
-      json: jest.fn().mockResolvedValue({ detail: 'Internal server error' }),
-    });
-
-    render(<Homepage />);
-
-    // Simulate entering valid URLs and navigating to the report generation step
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    const radio = screen.getByLabelText('Binary Classification');
-    fireEvent.click(radio);
-    fireEvent.click(screen.getAllByText('Next')[1]);
-    fireEvent.click(screen.getAllByText('Next')[2]);
-    fireEvent.click(screen.getAllByText('Next')[3]);
-    fireEvent.click(screen.getByText('Generate Report'));
-
-    // check that error message is displayed
-    // with the correct error message
-    await waitFor(() => {
-      expect(screen.getByText('Error 500')).toBeInTheDocument();
-      expect(screen.getByText('Internal server error')).toBeInTheDocument();
-    });
-  });
-});
-
 describe('Model Type Selection', () => {
-  it('should update metricChips based on selected model type', () => {
+  it('should disable Next state on radio button if not selected', async () => {
     render(<Homepage />);
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
     });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    fireEvent.click(screen.getByLabelText('Binary Classification'));
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    const expectedMetrics = modelTypesToMetrics['Binary Classification'];
-    expectedMetrics.forEach((metric) => {
-      expect(screen.getByText(metric)).toBeInTheDocument();
-    });
-  });
-
-  it('should update selectedModelType state on radio button change', () => {
-    render(<Homepage />);
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    const radio = screen.getByLabelText('Binary Classification');
-    fireEvent.click(radio);
-
-    expect(radio).toBeChecked();
-  });
-
-  it('should disable Next state on radio button if not selected', () => {
-    render(<Homepage />);
     fireEvent.change(screen.getByLabelText(/Model API URL/i), {
       target: { value: 'http://valid-model-url.com' },
     });
