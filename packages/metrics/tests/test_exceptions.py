@@ -1,7 +1,5 @@
-from metrics.models import CalculateRequest, MetricsPackageExceptionModel
-from metrics.metrics import calculate_metrics, check_metrics_are_supported_for_task
-from metrics.exceptions import DataProvisionException
-import pytest
+from metrics.models import CalculateRequest, MetricsPackageExceptionModel, TaskType
+from metrics.metrics import calculate_metrics
 from metrics.metrics import task_type_to_metric
 
 
@@ -42,28 +40,6 @@ def test_empty_true_labels_returns_metric_exception_for_per_class_metrics():
     assert results.metric_values["f1_score"].exception_type == "DataProvisionException"
 
 
-def test_unknown_task_name_raises_data_prov_error():
-    """
-    Test that a DataProvisionException is raised when an unknown task name is provided.
-    """
-    # Arrange
-    info = CalculateRequest(
-        metrics=["accuracy"],
-        true_labels=[[1], [0]] * 4,
-        predicted_labels=[[1]] * 8,
-        task_name="invalid_task_name",
-        batch_size=2,
-        total_sample_size=10
-    )
-    with pytest.raises(DataProvisionException) as exc_info:
-        check_metrics_are_supported_for_task(info)
-        assert exc_info.value.detail == (
-            "Data inconsistency error: Task invalid_task_name is not supported. "
-            "Please choose a valid task."
-        )
-        assert exc_info.value.status_code == 400
-
-
 def test_task_incompatible_metric_returns_error():
     """
     Test that a DataProvisionException is raised when an incompatible metric is requested for a
@@ -74,7 +50,7 @@ def test_task_incompatible_metric_returns_error():
         metrics=["mean_squared_error"],
         true_labels=[[1], [0]] * 4,
         predicted_labels=[[1]] * 8,
-        task_name="binary_classification",
+        task_name=TaskType.BINARY_CLASSIFICATION,
         batch_size=2,
         total_sample_size=10
     )
@@ -96,7 +72,7 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
     """
     Test that when some metrics fail, the pipeline continues to calculate the other metrics.
     """
-    task_type_to_metric["binary_classification"].append("explanation_stability_score")
+    task_type_to_metric[TaskType.BINARY_CLASSIFICATION].append("explanation_stability_score")
     # Arrange
     info = CalculateRequest(
         metrics=[
@@ -106,7 +82,7 @@ def test_some_failing_metrics_dont_break_pipeline_for_invalid_input_format():
         ],
         true_labels=[[1], [0]] * 4,
         predicted_labels=[[1]] * 8,
-        task_name="binary_classification",
+        task_name=TaskType.BINARY_CLASSIFICATION,
         batch_size=2,
         total_sample_size=10
     )

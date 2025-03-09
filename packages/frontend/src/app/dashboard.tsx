@@ -14,6 +14,7 @@ import { pdf } from '@react-pdf/renderer';
 import { BACKEND_STOP_JOB_URL } from './constants';
 import { styles } from './home.styles';
 import { Button } from '@mui/material';
+import { v4 as uuidv4 } from 'uuid';
 
 interface DashboardProps {
   onComplete: () => void;
@@ -37,7 +38,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
 
   const buttonRetry = (
     <button
-      onClick={() => navigate(0)}
+      onClick={() => {
+        // make new user id
+        let userId = sessionStorage.getItem('userId');
+        if (!userId) {
+          userId = uuidv4();
+          console.log('Generated new user ID:', userId);
+          sessionStorage.setItem('userId', userId);
+        }
+        disconnectRef.current = false;
+        navigate(0)
+
+      
+      }
+      }
       style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
     > 
       Retry

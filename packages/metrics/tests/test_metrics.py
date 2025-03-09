@@ -22,7 +22,7 @@ from metrics.exceptions import (
     DataInconsistencyException,
     DataProvisionException
 )
-from metrics.models import CalculateRequest, MetricsPackageExceptionModel
+from metrics.models import CalculateRequest, MetricsPackageExceptionModel, TaskType
 import pytest
 
 
@@ -382,7 +382,7 @@ def test_calculate_fairness_metrics():
 def test_calculate_metrics_with_missing_information_returns_insufficient_data_errors():
     info = CalculateRequest(
         metrics=["accuracy"],
-        task_name="binary_classification",
+        task_name=TaskType.BINARY_CLASSIFICATION,
         batch_size=1,
         total_sample_size=10,
     )

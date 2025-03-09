@@ -11,6 +11,7 @@ from metrics.models import (
     CalculateRequest,
     MetricValue,
     MetricConfig,
+    TaskType,
 )
 from metrics.exceptions import (
     MetricsComputationException,
@@ -46,7 +47,7 @@ from metrics.textual_input_metrics import (
 
 
 task_type_to_metric = {
-    "binary_classification": [
+    TaskType.BINARY_CLASSIFICATION: [
         "accuracy",
         "precision",
         "recall",
@@ -65,7 +66,7 @@ task_type_to_metric = {
         "explanation_fidelity_score",
         "ood_auroc",
     ],
-    "multi_class_classification": [
+    TaskType.MULTI_CLASS_CLASSIFICATION: [
         "accuracy",
         # "class_precision",
         "precision",
@@ -79,8 +80,16 @@ task_type_to_metric = {
         "explanation_fidelity_score",
         "ood_auroc",
     ],
+    TaskType.REGRESSION: [
+        "mean_absolute_error",
+        "mean_squared_error",
+        "r_squared",
+        "explanation_stability_score",
+        # "explanation_sparsity_score",
+        # "explanation_fidelity_score",
+    ],
     # TODO: Review which metrics really apply
-    "text_classification": [
+    TaskType.TEXT_CLASSIFICATION: [
         "accuracy",
         "precision",
         "recall",
@@ -99,7 +108,7 @@ task_type_to_metric = {
         "explanation_sparsity_score",
         "explanation_fidelity_score",
     ],
-    "next_token_generation": [
+    TaskType.NEXT_TOKEN_GENERATION: [
         "expl_stability_text_input",
         "hello_score"
     ]
@@ -319,7 +328,7 @@ def check_metrics_are_supported_for_task(info: CalculateRequest):
         metrics_to_exceptions[metric] = MetricsComputationException(
             metric,
             detail=(
-                f"Metric {metric} is not supported for {info.task_name} tasks."
+                f"Metric {metric} is not supported for {info.task_name.value} tasks."
                 " Please only choose valid metrics for the task type."
                 "\nSupported metrics for this task type are:\n"
                 f" {task_type_to_metric[info.task_name]}"
