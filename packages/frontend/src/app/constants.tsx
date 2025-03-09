@@ -13,7 +13,7 @@ const MOCK_FOLKTABLES_DATASET_API_URL =
   'http://folktables-dataset-api:5010/fetch-datapoints';
 const MOCK_FINANCIAL_DATASET_API_URL =
   'http://financial-dataset-api:5024/fetch-datapoints';
-const MOCK_SCIKIT_REGRESSOR_URL = 
+const MOCK_SCIKIT_REGRESSOR_URL =
   'http://scikit-mock-regressor-api:5012/predict';
 const MOCK_SCIKIT_REGRESSION_DATASET_URL =
   'http://scikit-mock-regression-dataset-api:5013/fetch-datapoints';
@@ -24,8 +24,7 @@ const MOCK_FOLKTABLES_DATASET_API_URL_PROD =
   'http://206.189.119.159:5010/fetch-datapoints';
 const MOCK_FINANCIAL_DATASET_API_URL_PROD =
   'http://206.189.119.159:5024/fetch-datapoints';
-const MOCK_SCIKIT_REGRESSOR_URL_PROD =
-  'http://206.189.119.159:5012/predict';
+const MOCK_SCIKIT_REGRESSOR_URL_PROD = 'http://206.189.119.159:5012/predict';
 const MOCK_SCIKIT_REGRESSION_DATASET_URL_PROD =
   'http://206.189.119.159:5013/fetch-datapoints';
 const USER_METRICS_SERVER_URL = 'http://localhost:8010';
@@ -70,16 +69,6 @@ const BACKEND_STOP_JOB_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/stop-job'
   : 'http://localhost:8000/stop-job';
 
-let modelTypesToMetrics: { [key: string]: string[] } = {};
-export async function initializeModelTypesToMetrics() {
-  try {
-    modelTypesToMetrics = await fetchMetricInfo();
-  } catch (error) {
-    console.error('Failed to fetch metric info:', error);
-  }
-}
-// Call the initialization function
-initializeModelTypesToMetrics();
 /*
   These conditions indicate the requirements for the user to proceed the next step
   i.e. we can only proceed to the next step if the given conditions are met
@@ -120,7 +109,6 @@ export {
   MOCK_WIKI_DATASET_API_URL,
   AIGNOSTIC,
   HOME,
-  modelTypesToMetrics,
   activeStepToInputConditions,
   WEBSOCKET_URL,
   USER_METRICS_SERVER_URL,
