@@ -12,27 +12,20 @@ import ErrorMessage from './components/ErrorMessage';
 import {
   Box,
   Button,
-  Chip,
-  TextField,
   Stepper,
   Step,
   StepLabel,
   StepContent,
   Typography,
-  FormControl,
-  RadioGroup,
-  FormLabel,
-  FormControlLabel,
-  Radio,
   CircularProgress,
 } from '@mui/material';
 import { HomepageState } from './types';
 import Dashboard from './dashboard';
 import theme from './theme';
 import { v4 as uuidv4 } from 'uuid';
-import FileUploadComponent from './components/FileUploadComponent';
-import { IS_PROD } from './env';
 import ApiAndBatchConfig from './components/ApiAndBatchConfig';
+import SelectModelType from './components/SelectModelType';
+import MetricsSelector from './components/MetricsSelector';
 
 function Homepage() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -96,8 +89,6 @@ function Homepage() {
     [key: string]: string[];
   }>({});
 
-  const [counter, incCounter] = useState(0);
-
   useEffect(() => {
     let userId = sessionStorage.getItem('userId');
     if (!userId) {
@@ -115,8 +106,6 @@ function Homepage() {
       newSocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log('Received message:', data);
-        incCounter(counter + 1);
-        console.log(counter);
       };
 
       newSocket.onclose = () => {
@@ -323,64 +312,29 @@ function Homepage() {
               )}
               {/* 2. SELECT MODEL TYPE */}
               {index === 1 && (
-                <Box style={{ padding: '15px' }}>
-                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
-
-                  <FormControl component="fieldset">
-                    <FormLabel component="legend">Select Model Type</FormLabel>
-                    <RadioGroup
-                      value={state.selectedModelType}
-                      onChange={(event) => {
-                        handleModelTypeChange(event.target.value);
-                        setStateWrapper(
-                          'selectedModelType',
-                          event.target.value
-                        );
-                      }}
-                    >
-                      {Object.keys(modelTypesToMetrics).map((modelType) => (
-                        <FormControlLabel
-                          key={modelType}
-                          value={modelType}
-                          control={<Radio color="secondary" />}
-                          label={modelType
-                            .replace(/_/g, ' ')
-                            .replace(/\b\w/g, (char) => char.toUpperCase())}
-                        />
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                </Box>
+                <SelectModelType
+                  state={state}
+                  metricsHelperText={state.metricsHelperText}
+                  modelTypesToMetrics={modelTypesToMetrics}
+                  handleModelTypeChange={handleModelTypeChange}
+                  setStateWrapper={setStateWrapper}
+                />
               )}
 
               {/* 3. SELECT METRICS */}
               {index === 3 && (
-                <Box style={{ padding: '15px' }}>
-                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
-                  {state.metricChips.map((metricChip, index) => (
-                    <Chip
-                      key={metricChip.id || index}
-                      label={metricChip.label}
-                      variant="filled"
-                      onDelete={() => {
-                        metricChip.selected = !metricChip.selected;
-                        setStateWrapper('metricChips', [...state.metricChips]);
-                      }}
-                      onClick={() => {
-                        metricChip.selected = !metricChip.selected;
-                        setStateWrapper('metricChips', [...state.metricChips]);
-                      }}
-                      color={metricChip.selected ? 'secondary' : 'default'}
-                      style={{ margin: '5px' }}
-                    />
-                  ))}
-                  {!IS_PROD && (
-                    <FileUploadComponent
-                      state={state}
-                      setStateWrapper={setStateWrapper}
-                    />
-                  )}
-                </Box>
+                <MetricsSelector
+                  metricsHelperText={state.metricsHelperText}
+                  metricChips={state.metricChips}
+                  onToggleMetric={(index) => {
+                    const newMetricChips = [...state.metricChips];
+                    newMetricChips[index].selected =
+                      !newMetricChips[index].selected;
+                    setStateWrapper('metricChips', newMetricChips);
+                  }}
+                  state={state}
+                  setStateWrapper={setStateWrapper}
+                />
               )}
 
               {/* 4. SUMMARY AND GENERATE REPORT */}
