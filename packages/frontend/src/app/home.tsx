@@ -3,10 +3,8 @@ import { checkBatchConfig, checkURL, fetchMetricInfo } from './utils';
 import {
   steps,
   BACKEND_EVALUATE_URL,
-  RESULTS_URL,
   activeStepToInputConditions,
   WEBSOCKET_URL,
-  USER_METRICS_SERVER_URL,
 } from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
@@ -26,6 +24,7 @@ import {
   FormLabel,
   FormControlLabel,
   Radio,
+  CircularProgress,
 } from '@mui/material';
 import { HomepageState } from './types';
 import Dashboard from './dashboard';
@@ -130,7 +129,7 @@ function Homepage() {
     };
 
     connectWebSocket();
-    
+
     const initializeModelTypesToMetrics = async () => {
       try {
         setModelTypesToMetrics(await fetchMetricInfo());
@@ -264,6 +263,21 @@ function Homepage() {
         }))
       );
     }
+  }
+
+  if (!socket || Object.keys(modelTypesToMetrics).length === 0) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
