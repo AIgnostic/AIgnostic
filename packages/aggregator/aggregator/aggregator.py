@@ -22,7 +22,8 @@ from aggregator.connection_manager import ConnectionManager
 from fastapi import FastAPI, Request
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-from .utils import LEGISLATION_INFORMATION, update_legislation_information
+from .utils import LEGISLATION_INFORMATION, update_legislation_information, userLegislation, LegRequest
+from pydantic import BaseModel
 
 
 manager = ConnectionManager()
@@ -45,7 +46,6 @@ def read_root():
 def fetch_frontend_information():
     try:
         labels = []
-        print("LEGISLATION_INFORMATION", LEGISLATION_INFORMATION)
         for legislation in LEGISLATION_INFORMATION.values():
             labels.append(legislation.name)
         print("Labels", labels)
@@ -55,14 +55,17 @@ def fetch_frontend_information():
 
 
 @app.post("/upload-selected-legislation")
-async def upload_selected_legislation(request: Request):
+async def upload_selected_legislation(request: LegRequest):
     try:
         print("entered into upload selected legislation")
-        body = await request.json()
-        legislation_list = body.get('legislation', [])
-        LEGISLATION_INFORMATION = update_legislation_information(legislation_list)
-        print('LEGISLATION_INFORMATION UPDATED', LEGISLATION_INFORMATION)
+        legislation_list = request.legislation
+        print(legislation_list)
+        # LEGISLATION_INFORMATION = update_legislation_information(legislation_list)
+        # print('LEGISLATION_INFORMATION UPDATED', LEGISLATION_INFORMATION)
+        selected_legislation = update_legislation_information(legislation_list)
+        userLegislation[request.user_id] = selected_legislation
     except Exception as e:
+        print(f"Uploading legilation errored: {e}")
         return {"error": str(e)}
 
 
@@ -355,7 +358,7 @@ def aggregator_generate_report(user_id, aggregates, aggregator):
             content=None,
         )
     )
-    report_properties_section = get_legislation_extracts(aggregates, LEGISLATION_INFORMATION)
+    report_properties_section = get_legislation_extracts(aggregates, userLegislation[user_id])
     print("Adding LLM Insights")
     manager.send_to_user(
         user_id,

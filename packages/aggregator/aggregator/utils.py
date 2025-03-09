@@ -1,5 +1,5 @@
 from common.models import LegislationInfo
-
+from pydantic import BaseModel
 
 def create_legislation_info(name, url):
     return LegislationInfo(
@@ -21,6 +21,12 @@ LEGISLATION_INFORMATION = {
         article_extract=lambda article_number: f"article/{article_number}/"
     )
 }
+
+class LegRequest(BaseModel):
+    user_id: str
+    legislation: list[str]
+
+userLegislation = {}
 
 
 def update_legislation_information(labels: list[str]):
