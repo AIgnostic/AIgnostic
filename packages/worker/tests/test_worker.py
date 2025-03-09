@@ -1,4 +1,3 @@
-import json
 import uuid
 
 from common.models.common import WorkerError
@@ -12,9 +11,10 @@ from common.models import (
     DatasetResponse,
     ModelResponse,
 )
-from metrics.models import WorkerException
+from metrics.models import WorkerException, TaskType
 from worker.worker import Worker, USER_METRIC_SERVER_URL
 from requests.exceptions import HTTPError
+import json
 
 worker = Worker()
 
@@ -33,49 +33,6 @@ def test_connect_worker(mock_init_queues, mock_connect_to_rabbitmq):
     mock_connect_to_rabbitmq.assert_called_once()
     mock_connection.channel.assert_called_once()
     mock_init_queues.assert_called_once_with(mock_channel)
-
-
-def test_fetch_job_success():
-
-    mock_method_frame = MagicMock()
-    mock_header_frame = MagicMock()
-    mock_body = (
-        Batch(
-            job_id=str(uuid.uuid4()),
-            batch_id=str(uuid.uuid4()),
-            batch_size=10,
-            metrics=MetricCalculationJob(
-                data_url="http://example.com/data",
-                model_url="http://example.com/model",
-                data_api_key="data_key",
-                model_api_key="model_key",
-                metrics=["accuracy"],
-                model_type="binary_classification",
-            ),
-            total_sample_size=500,
-        )
-        .json()
-        .encode("utf-8")
-    )
-
-    with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
-        mock_channel.basic_get.return_value = (
-            mock_method_frame,
-            mock_header_frame,
-            mock_body,
-        )
-
-        result = worker.fetch_batch()
-        assert isinstance(result, Batch)
-        assert str(result.metrics.data_url) == "http://example.com/data"
-
-
-def test_fetch_job_no_job():
-
-    with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
-        mock_channel.basic_get.return_value = (None, None, None)
-        result = worker.fetch_batch()
-        assert result is None
 
 
 def test_queue_result():
@@ -110,7 +67,7 @@ async def test_process_job_with_user_defined_metrics(mock_post, mock_get):
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -139,11 +96,15 @@ async def test_process_job_with_user_defined_metrics(mock_post, mock_get):
 
         mock_post.return_value = MagicMock(
             status_code=200,
-            json=MagicMock(return_value={"result": {
-                "computed_value": 0.85,
-                "ideal_value": 1,
-                "range": [0, 1]
-            }}),
+            json=MagicMock(
+                return_value={
+                    "result": {
+                        "computed_value": 0.85,
+                        "ideal_value": 1,
+                        "range": [0, 1],
+                    }
+                }
+            ),
         )
 
         await worker.process_job(job)
@@ -151,11 +112,7 @@ async def test_process_job_with_user_defined_metrics(mock_post, mock_get):
         mock_queue_result.assert_called_once()
         mock_send_status_completed.assert_called_once()
         assert mock_queue_result.call_args[0][0].user_defined_metrics == {
-            "user_metric_1": {
-                "computed_value": 0.85,
-                "ideal_value": 1,
-                "range": [0, 1]
-            }
+            "user_metric_1": {"computed_value": 0.85, "ideal_value": 1, "range": [0, 1]}
         }
 
 
@@ -173,7 +130,7 @@ async def test_process_job_user_defined_metrics_server_error(mock_post, mock_get
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -223,7 +180,7 @@ async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -252,11 +209,15 @@ async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_
 
         mock_post.return_value = MagicMock(
             status_code=200,
-            json=MagicMock(return_value={"result": {
-                "computed_value": 0.85,
-                "ideal_value": 1,
-                "range": [0, 1]
-            }}),
+            json=MagicMock(
+                return_value={
+                    "result": {
+                        "computed_value": 0.85,
+                        "ideal_value": 1,
+                        "range": [0, 1],
+                    }
+                }
+            ),
         )
 
         await worker.process_job(job)
@@ -282,7 +243,7 @@ async def test_process_job_user_defined_metrics_execution_error(mock_post, mock_
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -324,7 +285,9 @@ async def test_process_job_user_defined_metrics_execution_error(mock_post, mock_
 def test_queue_error():
     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
         error_message = "Some error occurred"
-        worker.queue_error(WorkerError(error_message=error_message, error_code=500), user_id="1234")
+        worker.queue_error(
+            WorkerError(error_message=error_message, error_code=500), user_id="1234"
+        )
         mock_channel.basic_publish.assert_called_once()
 
 
@@ -350,7 +313,7 @@ async def test_process_job_success(mock_calculate_metrics):
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -428,21 +391,15 @@ def test_invalid_job_format_raises_worker_exception():
                 data_api_key="data_key",
                 model_api_key="model_key",
                 metrics=["accuracy"],
-                model_type="binary_classification",
+                model_type=TaskType.BINARY_CLASSIFICATION,
             ),
             total_sample_size=500,
         )
         job_dict = job.model_dump()
         job_dict.pop("metrics")  # now an invalid Job
 
-        mock_channel.basic_get.return_value = (
-            MagicMock(),
-            MagicMock(),
-            json.dumps(job_dict).encode("utf-8"),
-        )
-
         with pytest.raises(WorkerException):
-            worker.fetch_batch()
+            worker.unpack_batch(json.dumps(job_dict))
             mock_channel.basic_get.assert_called_once()
 
 
@@ -473,9 +430,7 @@ async def test_fetch_data_invalid_data_format_gives_worker_exception(mock_get):
     with pytest.raises(WorkerException) as excinfo:
         await worker.fetch_data("http://example.com/data", "data_key", 1)
 
-    assert "Data error - Incorrect format from dataset API:" in str(
-        excinfo.value
-    )
+    assert "Data error - Incorrect format from dataset API:" in str(excinfo.value)
 
 
 @patch("worker.worker.requests.post")
@@ -512,24 +467,29 @@ async def test_query_model_invalid_data_format_gives_worker_exception(mock_post)
 
 @pytest.mark.asyncio
 async def test_query_model_error_results_in_worker_returning_worker_error():
-    with patch.object(worker, "fetch_data", new_callable=AsyncMock), \
-         patch.object(worker, "query_model", new_callable=AsyncMock) as mock_query_model, \
-         patch.object(worker, "queue_error", new_callable=MagicMock) as mock_queue_error, \
-         patch.object(worker, "send_status_error", new_callable=MagicMock) as mock_send_status_error:
+    with patch.object(worker, "fetch_data", new_callable=AsyncMock), patch.object(
+        worker, "query_model", new_callable=AsyncMock
+    ) as mock_query_model, patch.object(
+        worker, "queue_error", new_callable=MagicMock
+    ) as mock_queue_error, patch.object(
+        worker, "send_status_error", new_callable=MagicMock
+    ) as mock_send_status_error:
         mock_query_model.side_effect = WorkerException("Some error occurred")
-        _ = await worker.process_job(Batch(
-            job_id=str(uuid.uuid4()),
-            batch_id=str(uuid.uuid4()),
-            batch_size=1,
-            total_sample_size=500,
-            metrics=MetricCalculationJob(
-                data_url="http://example.com/data",
-                model_url="http://example.com/model",
-                data_api_key="data_key",
-                model_api_key="model_key",
-                metrics=["accuracy"],
-                model_type="binary classification",
-            ))
+        _ = await worker.process_job(
+            Batch(
+                job_id=str(uuid.uuid4()),
+                batch_id=str(uuid.uuid4()),
+                batch_size=1,
+                total_sample_size=500,
+                metrics=MetricCalculationJob(
+                    data_url="http://example.com/data",
+                    model_url="http://example.com/model",
+                    data_api_key="data_key",
+                    model_api_key="model_key",
+                    metrics=["accuracy"],
+                    model_type=TaskType.BINARY_CLASSIFICATION,
+                ),
+            )
         )
 
         mock_queue_error.assert_called_once()
@@ -548,7 +508,7 @@ async def test_worker_exception_during_process_job_send_error_to_frontend():
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )

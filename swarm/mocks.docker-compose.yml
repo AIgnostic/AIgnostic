@@ -25,7 +25,7 @@ services:
 
   tinystories_dataset_api:
     image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -m uvicorn mocks.dataset.tinystories_dataset_server --host 0.0.0.0 --port 5026
+    command: /app/.venv/bin/python -m uvicorn mocks.dataset.tinystories_dataset_server:app --host 0.0.0.0 --port 5026
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
@@ -34,7 +34,7 @@ services:
 
   boston_housing_data_api:
     image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -m uvicorn mocks.dataset.boston_housing_data_server --host 0.0.0.0 --port 5013
+    command: /app/.venv/bin/python -m uvicorn mocks.dataset.boston_housing_data_server:app --host 0.0.0.0 --port 5013
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
@@ -58,10 +58,15 @@ services:
       - aignostic_network
     ports:
       - '5001:5001'
+    deploy:
+      resources:
+        reservations:
+          cpus: '4'
+          memory: 6G
 
   tinystories_mock_model_api:
     image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -m uvicorn mocks.model.tinystories_1M_mock --host 0.0.0.0 --port 5027
+    command: /app/.venv/bin/python -m uvicorn mocks.model.tinystories_1M_mock:app --host 0.0.0.0 --port 5027
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
@@ -70,7 +75,7 @@ services:
 
   scikit_regression_mock_model_api:
     image: ghcr.io/aignostic/mocks
-    command: /app/.venv/bin/python -m uvicorn mocks.model.scikit_mock_regressor --host 0.0.0.0 --port 5012
+    command: /app/.venv/bin/python -m uvicorn mocks.model.scikit_mock_regressor:app --host 0.0.0.0 --port 5012
     working_dir: /app/packages/mocks
     networks:
       - aignostic_network
