@@ -48,6 +48,12 @@ jest.mock('react-router-dom', () => ({
 // Mock API Docs component
 jest.mock('../src/app/api_docs', () => () => <div>API Documentation</div>);
 
+// Mock useUser to return a fake user ID & mock socket
+jest.mock('../src/app/context/userid.context', () => ({
+  __esModule: true,
+  useUser: () => ({ userId: 'fake-user-id', socket: { onopen: jest.fn() } }),
+}));
+
 describe('Title', () => {
   it('should render the title correctly', async () => {
     render(

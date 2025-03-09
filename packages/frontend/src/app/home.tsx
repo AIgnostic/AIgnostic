@@ -26,9 +26,10 @@ import { v4 as uuidv4 } from 'uuid';
 import ApiAndBatchConfig from './components/ApiAndBatchConfig';
 import SelectModelType from './components/SelectModelType';
 import MetricsSelector from './components/MetricsSelector';
+import { useUser } from './context/userid.context';
 
 function Homepage() {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  // const [socket, setSocket] = useState<WebSocket | null>(null);
   const [state, setState] = useState<HomepageState & { dashboardKey: number }>({
     modelURL: '',
     datasetURL: '',
@@ -82,48 +83,16 @@ function Homepage() {
     },
   };
 
-  const disconnectRef = useRef(false); // Track whether disconnect is intentional
+  // const disconnectRef = useRef(false); // Track whether disconnect is intentional
   // let modelTypesToMetrics: { [key: string]: string[] } = {};
 
   const [modelTypesToMetrics, setModelTypesToMetrics] = useState<{
     [key: string]: string[];
   }>({});
 
+  const { socket, userId } = useUser();
+
   useEffect(() => {
-    let userId = sessionStorage.getItem('userId');
-    if (!userId) {
-      userId = uuidv4();
-      console.log('Generated new user ID:', userId);
-      sessionStorage.setItem('userId', userId);
-    }
-
-    const connectWebSocket = () => {
-      const newSocket = new WebSocket(WEBSOCKET_URL);
-      newSocket.onopen = () => {
-        console.log('WebSocket connection established');
-        newSocket.send(userId.toString());
-      };
-      newSocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log('Received message:', data);
-      };
-
-      newSocket.onclose = () => {
-        if (!disconnectRef.current) {
-          // only attempt to reconnect if disconnect was not intentional
-          console.log(
-            'WebSocket connection closed, attempting to reconnect...'
-          );
-          setTimeout(connectWebSocket, 1000);
-        }
-      };
-
-      setSocket(newSocket);
-      console.log('Connection set');
-    };
-
-    connectWebSocket();
-
     const initModelTypesToMetrics = () => {
       fetchMetricInfo()
         .then((metrics) => {
@@ -140,13 +109,6 @@ function Homepage() {
     // Call the initialization function
 
     initModelTypesToMetrics();
-
-    return () => {
-      disconnectRef.current = true; // Mark as intentionally disconnected
-      if (socket) {
-        socket.close();
-      }
-    };
   }, []);
 
   const setStateWrapper = <K extends keyof typeof state>(
@@ -187,13 +149,6 @@ function Homepage() {
         text: 'Please wait for the current report to finish generating.',
       });
       return;
-    }
-
-    let userId = sessionStorage.getItem('userId');
-
-    if (!userId) {
-      userId = uuidv4(); // Generate a new user ID if not found
-      sessionStorage.setItem('userId', userId);
     }
 
     setStateWrapper('isGeneratingReport', true); // Prevent multiple clicks
@@ -432,8 +387,6 @@ function Homepage() {
                         onComplete={() => {
                           setStateWrapper('isGeneratingReport', false);
                         }}
-                        socket={socket}
-                        disconnectRef={disconnectRef}
                         expectedItems={state.numberOfBatches}
                       />
                     )}
