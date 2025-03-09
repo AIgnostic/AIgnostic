@@ -15,6 +15,11 @@ global.fetch = jest.fn(() =>
 const dummyState = { dashboardKey: 0 };
 const setStateWrapper = jest.fn();
 
+//mock userid.contxt.tsx useUser hook
+jest.mock('../src/app/context/userid.context', () => ({
+  useUser: () => ({ userId: '123' }),
+}));
+
 describe('FileUploadComponent', () => {
   beforeEach(() => {
     jest.clearAllMocks();

@@ -1,5 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { checkBatchConfig, fetchMetricInfo, fetchLegislationInfo } from './utils';
+import {
+  checkBatchConfig,
+  fetchMetricInfo,
+  fetchLegislationInfo,
+} from './utils';
 import {
   steps,
   BACKEND_EVALUATE_URL,
@@ -13,28 +17,25 @@ import ErrorMessage from './components/ErrorMessage';
 import {
   Box,
   Button,
-  Chip,
-  TextField,
   Stepper,
   Step,
   StepLabel,
   StepContent,
   Typography,
-  FormControl,
-  RadioGroup,
-  FormLabel,
-  FormControlLabel,
-  Radio,
+  CircularProgress,
+  Chip,
 } from '@mui/material';
 import { HomepageState } from './types';
 import Dashboard from './dashboard';
 import theme from './theme';
 import { v4 as uuidv4 } from 'uuid';
-import FileUploadComponent from './components/FileUploadComponent';
-import { IS_PROD } from './env';
+import ApiAndBatchConfig from './components/ApiAndBatchConfig';
+import SelectModelType from './components/SelectModelType';
+import MetricsSelector from './components/MetricsSelector';
+import { useUser } from './context/userid.context';
 
 function Homepage() {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  // const [socket, setSocket] = useState<WebSocket | null>(null);
   const [state, setState] = useState<HomepageState & { dashboardKey: number }>({
     modelURL: '',
     datasetURL: '',
@@ -89,87 +90,8 @@ function Homepage() {
     },
   };
 
-  const disconnectRef = useRef(false); // Track whether disconnect is intentional
+  // const disconnectRef = useRef(false); // Track whether disconnect is intentional
   // let modelTypesToMetrics: { [key: string]: string[] } = {};
-
-  const [modelTypesToMetrics, setModelTypesToMetrics] = useState<{
-    [key: string]: string[];
-  }>({});
-
-  useEffect(() => {
-    let userId = sessionStorage.getItem('userId');
-    if (!userId) {
-      userId = uuidv4();
-      console.log('Generated new user ID:', userId);
-      sessionStorage.setItem('userId', userId);
-    }
-
-    const connectWebSocket = () => {
-      const newSocket = new WebSocket(WEBSOCKET_URL);
-      newSocket.onopen = () => {
-        console.log('WebSocket connection established');
-        newSocket.send(userId.toString());
-      };
-      newSocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log('Received message:', data);
-      };
-
-      newSocket.onclose = () => {
-        if (!disconnectRef.current) {
-          // only attempt to reconnect if disconnect was not intentional
-          console.log(
-            'WebSocket connection closed, attempting to reconnect...'
-          );
-          setTimeout(connectWebSocket, 1000);
-        }
-      };
-
-      setSocket(newSocket);
-      console.log('Connection set');
-    };
-
-    connectWebSocket();
-    
-    const initializeModelTypesToMetrics = async () => {
-      try {
-        setModelTypesToMetrics(await fetchMetricInfo());
-        console.log('Fetched metrics successfully');
-      } catch (error) {
-        console.error('Failed to fetch metric info:', error);
-      } finally {
-        // Call the function again after 10 seconds
-        setTimeout(initializeModelTypesToMetrics, 10000);
-      }
-    };
-
-    initializeModelTypesToMetrics();
-
-    const initalizeLegislationLabels = async () => {
-      try {
-        const legislations = await fetchLegislationInfo();
-        const legislationChips = legislations.legislation.map((item: string) => {
-          return {
-            id: item,
-            label: item,
-            selected: true,
-          };
-        });
-        setStateWrapper("legislationChips", legislationChips)
-      } catch (error) {
-        console.error('Failed to fetch metric info:', error);
-      }
-    }
-
-    initalizeLegislationLabels();
-
-    return () => {
-      disconnectRef.current = true; // Mark as intentionally disconnected
-      if (socket) {
-        socket.close();
-      }
-    };
-  }, []);
 
   const setStateWrapper = <K extends keyof typeof state>(
     key: K,
@@ -180,6 +102,53 @@ function Homepage() {
       [key]: value,
     }));
   };
+
+  const [modelTypesToMetrics, setModelTypesToMetrics] = useState<{
+    [key: string]: string[];
+  }>({});
+
+  const { socket, userId } = useUser();
+
+  useEffect(() => {
+    const initModelTypesToMetrics = () => {
+      fetchMetricInfo()
+        .then((metrics) => {
+          setModelTypesToMetrics(metrics);
+          console.log('Fetched metrics successfully');
+        })
+        .catch((error) => {
+          console.error('Failed to fetch metric info:', error);
+          // Call the function again after 10 seconds
+          setTimeout(initModelTypesToMetrics, 10000);
+        });
+    };
+
+    const initLegislationLabels = () => {
+      fetchLegislationInfo()
+        .then((legislation) => {
+          const legislationChips = legislation.legislation.map(
+            (item: string) => {
+              return {
+                id: item,
+                label: item,
+                selected: true,
+              };
+            }
+          );
+          console.log('legislation info: ', legislationChips);
+          setStateWrapper('legislationChips', legislationChips);
+          console.log('legislation info2: ', legislationChips);
+        })
+        .catch((error) => {
+          console.error('Failed to fetch legislation info:', error);
+          // Call the function after 10 seconds
+          setTimeout(initLegislationLabels, 10000);
+        });
+    };
+    initModelTypesToMetrics();
+    initLegislationLabels();
+  }, []);
+
   const getErrorProps = (isValid: boolean, errorMessage: string) => ({
     error: !isValid,
     helperText: !isValid ? errorMessage : '',
@@ -211,13 +180,6 @@ function Homepage() {
       return;
     }
 
-    let userId = sessionStorage.getItem('userId');
-
-    if (!userId) {
-      userId = uuidv4(); // Generate a new user ID if not found
-      sessionStorage.setItem('userId', userId);
-    }
-
     setStateWrapper('isGeneratingReport', true); // Prevent multiple clicks
     setStateWrapper('dashboardKey', state.dashboardKey + 1);
     setStateWrapper('showDashboard', true);
@@ -241,17 +203,17 @@ function Homepage() {
       user_id: userId,
       legislation: state.legislationChips
         .filter((legislationChip) => legislationChip.selected)
-        .map((legislationChip) => legislationChip.label)
-    }
-    console.log("Data:", frontend_info)
+        .map((legislationChip) => legislationChip.label),
+    };
+    console.log('Data:', frontend_info);
     try {
       // Send POST request to backend server
       const postFrontend = await fetch(AGGREGATOR_UPLOAD_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(frontend_info),
-    });
-      console.log("Status: ", postFrontend.status)
+      });
+      console.log('Status: ', postFrontend.status);
       if (postFrontend.status !== 200) {
         const errorData = await postFrontend.json();
         console.log('Error:', errorData.detail);
@@ -265,7 +227,7 @@ function Homepage() {
 
       console.log('Job accepted. Waiting for results');
     } catch (error: any) {
-      console.log('Legislation Error status code:', error)
+      console.log('Legislation Error status code:', error);
       console.error('Error while posting to aggregator:', error.message);
       setStateWrapper('error', true);
       setStateWrapper('errorMessage', {
@@ -302,7 +264,6 @@ function Homepage() {
         text: error.message,
       });
     }
-
   };
 
   function handleModelTypeChange(value: string) {
@@ -319,6 +280,21 @@ function Homepage() {
         }))
       );
     }
+  }
+
+  if (!socket || Object.keys(modelTypesToMetrics).length === 0) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
@@ -349,198 +325,24 @@ function Homepage() {
 
               {/* 1. ENTER MODEL AND DATASET API  URLS CONTENT */}
               {index === 0 && (
-                <Box style={{ padding: '15px' }}>
-                  {(
-                    [
-                      'modelURL',
-                      'datasetURL',
-                      'modelAPIKey',
-                      'datasetAPIKey',
-                    ] as (keyof typeof getValues)[]
-                  ).map((key) => {
-                    const field = getValues[key];
-                    const handleOnBlur =
-                      field.validKey && field.isValid !== undefined
-                        ? () => {
-                          setStateWrapper(
-                            field.validKey as keyof typeof state,
-                            // checkURL(field.value)
-                            true
-                          );
-                        }
-                        : undefined; // Don't do anything for fields that don't need validation onBlur
-
-                    const errorProps =
-                      field.isValid !== undefined
-                        ? getErrorProps(field.isValid, 'Invalid URL') // Only set errorProps if the field has isValid
-                        : undefined;
-
-                    return (
-                      <TextField
-                        style={styles.input}
-                        key={key}
-                        label={field.label}
-                        value={field.value}
-                        onChange={(e) => {
-                          setStateWrapper(key, e.target.value);
-                        }}
-                        onBlur={handleOnBlur}
-                        helperText={
-                          field.isValid !== undefined
-                            ? errorProps?.helperText
-                            : ''
-                        }
-                        error={
-                          field.isValid !== undefined
-                            ? errorProps?.error
-                            : false
-                        }
-                        variant="filled"
-                        InputProps={{
-                          sx: {
-                            color: '#fff',
-                          },
-                        }}
-                      />
-                    );
-                  })}
-                  <Box mt={2} display="flex" gap={2} flexWrap="wrap">
-                    <Box flex={1}>
-                      <TextField
-                        label="Number of Batches"
-                        type="number"
-                        defaultValue={state.numberOfBatches}
-                        error={!state.isBatchConfigValid}
-                        helperText={
-                          state.numberOfBatches < 1
-                            ? 'Number of batches must be greater than 0'
-                            : !state.isBatchConfigValid
-                              ? 'Invalid batch configuration'
-                              : ''
-                        }
-                        onChange={(e) =>
-                          setStateWrapper(
-                            'numberOfBatches' as keyof typeof state,
-                            e.target.value
-                          )
-                        }
-                        onBlur={() => {
-                          const isValid = checkBatchConfig(
-                            state.batchSize,
-                            state.numberOfBatches
-                          );
-                          setStateWrapper('isBatchConfigValid', isValid);
-                        }}
-                        style={styles.input}
-                      />
-                    </Box>
-                    <Box flex={1}>
-                      <TextField
-                        label="Batch Size"
-                        type="number"
-                        defaultValue={state.batchSize}
-                        error={!state.isBatchConfigValid}
-                        helperText={
-                          state.batchSize < 1
-                            ? 'Batch size must be greater than 0'
-                            : !state.isBatchConfigValid
-                              ? 'Invalid batch configuration'
-                              : ''
-                        }
-                        onChange={(e) =>
-                          setStateWrapper(
-                            'batchSize' as keyof typeof state,
-                            e.target.value
-                          )
-                        }
-                        onBlur={() => {
-                          const isValid = checkBatchConfig(
-                            state.batchSize,
-                            state.numberOfBatches
-                          );
-                          setStateWrapper('isBatchConfigValid', isValid);
-                        }}
-                        style={styles.input}
-                      />
-                    </Box>
-                    <Box flex={1}>
-                      <TextField
-                        label="Maximum Concurrent Batches"
-                        type="number"
-                        defaultValue={state.maxConcurrentBatches}
-                        error={!state.isMaxConcurrentBatchesValid}
-                        helperText={
-                          !state.isMaxConcurrentBatchesValid
-                            ? 'Value must be between 1 and 30'
-                            : ''
-                        }
-                        onChange={(e) =>
-                          setStateWrapper(
-                            'maxConcurrentBatches' as keyof typeof state,
-                            e.target.value
-                          )
-                        }
-                        onBlur={(e) => {
-                          const value = Math.min(
-                            Math.max(parseInt(e.target.value), 1),
-                            30
-                          );
-                          const isValid = value === parseInt(e.target.value);
-                          setStateWrapper('maxConcurrentBatches', value);
-                          setStateWrapper(
-                            'isMaxConcurrentBatchesValid',
-                            isValid
-                          );
-                        }}
-                        style={styles.input}
-                      />
-                    </Box>
-                  </Box>
-                  {!state.isBatchConfigValid && (
-                    <Box>
-                      <Typography color="error">
-                        Total sample size must be between 1000 and 10000, not{' '}
-                        {state.batchSize * state.numberOfBatches}.
-                      </Typography>
-                      {(state.batchSize < 1 || state.numberOfBatches < 1) && (
-                        <Typography color="error">
-                          Batch size and number of batches must be positive.
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
-                </Box>
+                <ApiAndBatchConfig
+                  getValues={getValues}
+                  state={state}
+                  setStateWrapper={setStateWrapper}
+                  checkBatchConfig={checkBatchConfig}
+                  getErrorProps={getErrorProps}
+                  styles={styles}
+                />
               )}
               {/* 2. SELECT MODEL TYPE */}
               {index === 1 && (
-                <Box style={{ padding: '15px' }}>
-                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
-
-                  <FormControl component="fieldset">
-                    <FormLabel component="legend">Select Model Type</FormLabel>
-                    <RadioGroup
-                      value={state.selectedModelType}
-                      onChange={(event) => {
-                        handleModelTypeChange(event.target.value);
-                        setStateWrapper(
-                          'selectedModelType',
-                          event.target.value
-                        );
-                      }}
-                    >
-                      {Object.keys(modelTypesToMetrics).map((modelType) => (
-                        <FormControlLabel
-                          key={modelType}
-                          value={modelType}
-                          control={<Radio color="secondary" />}
-                          label={modelType
-                            .replace(/_/g, ' ')
-                            .replace(/\b\w/g, (char) => char.toUpperCase())}
-                        />
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                </Box>
+                <SelectModelType
+                  state={state}
+                  metricsHelperText={state.metricsHelperText}
+                  modelTypesToMetrics={modelTypesToMetrics}
+                  handleModelTypeChange={handleModelTypeChange}
+                  setStateWrapper={setStateWrapper}
+                />
               )}
               {/* 3. SELECT METRICS */}
               {index === 2 && (
@@ -567,32 +369,18 @@ function Homepage() {
               )}
               {/* 3. SELECT METRICS */}
               {index === 3 && (
-                <Box style={{ padding: '15px' }}>
-                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
-                  {state.metricChips.map((metricChip, index) => (
-                    <Chip
-                      key={metricChip.id || index}
-                      label={metricChip.label}
-                      variant="filled"
-                      onDelete={() => {
-                        metricChip.selected = !metricChip.selected;
-                        setStateWrapper('metricChips', [...state.metricChips]);
-                      }}
-                      onClick={() => {
-                        metricChip.selected = !metricChip.selected;
-                        setStateWrapper('metricChips', [...state.metricChips]);
-                      }}
-                      color={metricChip.selected ? 'secondary' : 'default'}
-                      style={{ margin: '5px' }}
-                    />
-                  ))}
-                  {!IS_PROD && (
-                    <FileUploadComponent
-                      state={state}
-                      setStateWrapper={setStateWrapper}
-                    />
-                  )}
-                </Box>
+                <MetricsSelector
+                  metricsHelperText={state.metricsHelperText}
+                  metricChips={state.metricChips}
+                  onToggleMetric={(index) => {
+                    const newMetricChips = [...state.metricChips];
+                    newMetricChips[index].selected =
+                      !newMetricChips[index].selected;
+                    setStateWrapper('metricChips', newMetricChips);
+                  }}
+                  state={state}
+                  setStateWrapper={setStateWrapper}
+                />
               )}
 
               {/* 4. SUMMARY AND GENERATE REPORT */}
@@ -612,9 +400,9 @@ function Homepage() {
                     ).length === 0
                       ? 'You have not selected any metrics'
                       : state.metricChips
-                        .filter((metricChip) => metricChip.selected)
-                        .map((metricChip) => metricChip.label)
-                        .join(', ')}
+                          .filter((metricChip) => metricChip.selected)
+                          .map((metricChip) => metricChip.label)
+                          .join(', ')}
                     <br /> <br />
                     <strong>Batch Configuration:</strong>
                     <br />
@@ -687,8 +475,6 @@ function Homepage() {
                         onComplete={() => {
                           setStateWrapper('isGeneratingReport', false);
                         }}
-                        socket={socket}
-                        disconnectRef={disconnectRef}
                         expectedItems={state.numberOfBatches}
                       />
                     )}
