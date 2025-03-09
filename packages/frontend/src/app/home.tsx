@@ -124,19 +124,22 @@ function Homepage() {
 
     connectWebSocket();
 
-    const initializeModelTypesToMetrics = async () => {
-      try {
-        setModelTypesToMetrics(await fetchMetricInfo());
-        console.log('Fetched metrics successfully');
-      } catch (error) {
-        console.error('Failed to fetch metric info:', error);
-        // Call the function again after 10 seconds
-        setTimeout(initializeModelTypesToMetrics, 10000);
-      }
+    const initModelTypesToMetrics = () => {
+      fetchMetricInfo()
+        .then((metrics) => {
+          setModelTypesToMetrics(metrics);
+          console.log('Fetched metrics successfully');
+        })
+        .catch((error) => {
+          console.error('Failed to fetch metric info:', error);
+          // Call the function again after 10 seconds
+          setTimeout(initModelTypesToMetrics, 10000);
+        });
     };
 
     // Call the initialization function
-    initializeModelTypesToMetrics();
+
+    initModelTypesToMetrics();
 
     return () => {
       disconnectRef.current = true; // Mark as intentionally disconnected
