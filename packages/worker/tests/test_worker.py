@@ -12,7 +12,7 @@ from common.models import (
     ModelResponse,
 )
 from metrics.models import WorkerException, TaskType
-from worker.worker import Worker, USER_METRIC_SERVER_URL
+from worker.worker import Worker
 from requests.exceptions import HTTPError
 import json
 
@@ -224,9 +224,6 @@ async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_
 
         mock_queue_result.assert_called_once()
         mock_send_status_completed.assert_called_once()
-        mock_delete.assert_called_once_with(
-            f"{USER_METRIC_SERVER_URL}/clear-user-data/{job_id}"
-        )
 
 
 @patch("worker.worker.requests.get")

@@ -360,8 +360,6 @@ class Worker:
                 except Exception as e:
                     print(f"ERROR EXECUTING USER METRIC: {e}")
 
-
-
             self.queue_result(worker_results, batch.job_id)
             self.send_status_completed(batch.job_id, batch.batch_id)
             return
