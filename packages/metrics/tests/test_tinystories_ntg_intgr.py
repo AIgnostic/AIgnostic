@@ -1,4 +1,4 @@
-from metrics.models import CalculateRequest, MetricValue
+from metrics.models import CalculateRequest, MetricValue, TaskType
 from metrics.metrics import calculate_metrics
 import pytest
 from tests.server_factory import (
@@ -38,7 +38,7 @@ def test_tinystories_works_with_explanation_metrics(apply_server_factory):
         confidence_scores=[[1.0]],
         model_url=f"http://{HOST}:{server_configs[mock_name]['port']}/predict",
         model_api_key="None",  # Key passed directly to mock for testing other functionality
-        task_name="next_token_generation"
+        task_name=TaskType.NEXT_TOKEN_GENERATION
     )
 
     result = calculate_metrics(info)

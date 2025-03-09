@@ -2,6 +2,7 @@
 
 
 from common.models.pipeline import MetricCalculationJob
+from metrics.models import TaskType
 
 
 def test_can_import_and_init_common_models():
@@ -26,7 +27,7 @@ def test_total_sample_size_should_be_multiplication():
             data_api_key="",
             model_api_key="",
             metrics=["accuracy"],
-            model_type="classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
     )
     assert job.total_sample_size == 500
