@@ -17,6 +17,8 @@ from sklearn.metrics import (
     mean_squared_error as mse,
     r2_score,
 )
+from metrics.ntg_metric_utils import synonym_perturbation
+import random
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
 from aif360.metrics import ClassificationMetric
@@ -542,17 +544,34 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     :return: float - the estimated OOD AUROC score
     """
     if info.task_name == "text_classification":
-        # TODO: Implement text classification OOD-AUROC
-        input_features : list[list[str]] = info.input_features
-        d = len(input_features)
+        # In-distribution dataset (list of single-element lists, extracting strings)
+        id_data: list[str] = [sample[0] for sample in info.input_features]  # Flatten to List[str]
 
-        id_scores = info.confidence_scores
+        id_scores: list[list] = info.confidence_scores      # Confidence scores for ID samples
 
-        # Generate OOD samples, by generating strings of 10 random words not from the input features
-        ood_data = [" ".join(np.random.choice(list("abcdefghijklmnopqrstuvwxyz"), 10)) for _ in range(num_ood_samples)]
+        # Generate OOD samples via synonym perturbation (TODO: Update to more sophisticated method)
+        ood_data = [synonym_perturbation(text) for text in random.choices(id_data, k=num_ood_samples)]
 
-        
-        raise NotImplementedError("Text classification OOD-AUROC not yet implemented")
+        # Call model endpoint to get confidence scores for OOD samples
+        response: ModelResponse = _query_model(ood_data, info)
+
+        # Flatten ID scores (take max probability for each ID sample)
+        id_scores_flat = np.array([max(scores) for scores in id_scores])
+
+        # Flatten OOD scores (take max confidence per sample)
+        ood_scores_flat = np.max(response.confidence_scores, axis=1)
+
+        # Construct labels: 1 for ID, 0 for OOD
+        labels = np.concatenate([np.ones(len(id_scores_flat)), np.zeros(num_ood_samples)])
+
+        # Ensure the scores array has the same length as labels
+        scores = np.concatenate([id_scores_flat, ood_scores_flat])
+
+        # Assert lengths match
+        assert len(labels) == len(scores), \
+            f"Length mismatch between labels and scores in OOD-AUROC calculation: {len(labels)} vs {len(scores)}"
+
+        return roc_auc_score(labels, scores)
 
     id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
     d: int = id_data.shape[1]                           # Feature dimensionality

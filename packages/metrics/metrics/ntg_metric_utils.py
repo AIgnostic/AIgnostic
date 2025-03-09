@@ -21,18 +21,31 @@ from sklearn.linear_model import Ridge
 from math import ceil
 from sentence_transformers import SentenceTransformer
 import torch
+import random
 
 MIN_AVERAGE_SENTENCE_LENGTH = 4
 MASK_WORD = "[MASK]"
 DEFAULT_ENCODER = "sentence-transformers/distiluse-base-multilingual-cased-v1"
 
+nltk.download('wordnet')
+
+def synonym_perturbation(text: str, num_perturbations: int = 1) -> str:
+    words = text.split()
+    for _ in range(num_perturbations):
+        idx = random.randint(0, len(words) - 1)
+        synonyms = wn.synsets(words[idx])
+        if synonyms:
+            lemmas = [lemma.name() for synonym in synonyms for lemma in synonym.lemmas()]
+            lemmas = list(set(lemmas))  # Remove duplicates
+            if lemmas:
+                words[idx] = random.choice(lemmas)
+    return ' '.join(words)
 
 def generate_synonym_perturbations(sentence: str, mask=MASK_WORD, limit=10) -> list[str]:
     """
     Given a sentence, generate a list of sentences where one word is replaced by a synonym.
     """
     # Download WordNet data if not already present
-    nltk.download('wordnet')
     words = sentence.split()
     perturbations = []
     for i, word in enumerate(words):
