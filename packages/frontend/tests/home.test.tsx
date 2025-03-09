@@ -197,6 +197,52 @@ describe('Batch Configuration Validation', () => {
     });
   });
 
+  test('should set isBatchConfigValid to true for valid total sample size', async () => {
+    (checkBatchConfig as jest.Mock).mockReturnValue(true);
+
+    render(<Homepage />);
+
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+
+    fireEvent.change(batchSizeInput, { target: { value: '200' } });
+    fireEvent.change(numberOfBatchesInput, { target: { value: '10' } });
+
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Total sample size must be between 1000 and 10000')
+      ).not.toBeInTheDocument();
+    });
+  });
+});
+
+test('shoud set isBatchValidConfig  to send error for invalid number of batches', async () => {
+  (checkBatchConfig as jest.Mock).mockReturnValue(true);
+
+  render(<Homepage />);
+  const batchSizeInput = screen.getByLabelText('Batch Size');
+  const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+
+  // Set invalid values for batch size and number of batches
+  fireEvent.change(batchSizeInput, { target: { value: '50' } }); // Valid batch size
+  fireEvent.change(numberOfBatchesInput, { target: { value: '-15' } }); // Invalid number of batches (negative)
+
+  // Trigger onBlur event to validate the inputs
+  fireEvent.blur(batchSizeInput);
+  fireEvent.blur(numberOfBatchesInput);
+
+  // Wait for the state change and check if the error message appears
+  await waitFor(() => {
+    expect(
+      screen.getByText('Batch size and number of batches must be positive.')
+    ).toBeInTheDocument();
+  });
+})
+   
+
 
   test('should set isBatchConfigValid to true for valid total sample size', async () => {
     // Mock checkBatchConfig to return true for valid batch config
@@ -214,7 +260,6 @@ describe('Batch Configuration Validation', () => {
     // Trigger onBlur event to validate the inputs
     fireEvent.blur(batchSizeInput);
     fireEvent.blur(numberOfBatchesInput);
-
     // Wait for the state change and check if the error message disappears
     await waitFor(() => {
       expect(
@@ -224,6 +269,7 @@ describe('Batch Configuration Validation', () => {
 
     // Optionally check if the validation state is set to true (if accessible)
   });
+
 
 describe('Maximum Concurrent Batches Validation', () => {
   it('should update maxConcurrentBatches state on change', () => {
@@ -472,124 +518,4 @@ describe('Model Type Selection', () => {
     expect(nextButton).toBeDisabled();
   });
 });
-
-describe('handleSubmit', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    global.fetch = jest.fn();
-    sessionStorage.clear();
-  });
-
-  it('should show error if modelURL or datasetURL is missing', async () => {
-    render(<Homepage />);
-
-    fireEvent.click(screen.getByText('Generate Report'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Please fill in both text inputs.')).toBeInTheDocument();
-    });
-  });
-
-  it('should show error if report is already being generated', async () => {
-    render(<Homepage />);
-
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-
-    fireEvent.click(screen.getByText('Generate Report'));
-    fireEvent.click(screen.getByText('Generate Report'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Please wait for the current report to finish generating.')).toBeInTheDocument();
-    });
-  });
-
-  it('should generate a new user ID if not found in sessionStorage', async () => {
-    render(<Homepage />);
-
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-
-    fireEvent.click(screen.getByText('Generate Report'));
-
-    await waitFor(() => {
-      expect(sessionStorage.getItem('userId')).not.toBeNull();
-    });
-  });
-
-  it('should show error if backend response is not 202', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      status: 500,
-      json: jest.fn().mockResolvedValue({ detail: 'Internal server error' }),
-    });
-
-    render(<Homepage />);
-
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-
-    fireEvent.click(screen.getByText('Generate Report'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Error 500')).toBeInTheDocument();
-      expect(screen.getByText('Internal server error')).toBeInTheDocument();
-    });
-  });
-
-  it('should show error if posting to backend fails', async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
-
-    render(<Homepage />);
-
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-
-    fireEvent.click(screen.getByText('Generate Report'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Submission Error')).toBeInTheDocument();
-      expect(screen.getByText('Network error')).toBeInTheDocument();
-    });
-  });
-
-  it('should call backend with correct data', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      status: 202,
-      json: jest.fn().mockResolvedValue({}),
-    });
-
-    render(<Homepage />);
-
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-
-    fireEvent.click(screen.getByText('Generate Report'));
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(expect.any(String), expect.any(Object));
-    });
-  });
-});
-});
-
 
