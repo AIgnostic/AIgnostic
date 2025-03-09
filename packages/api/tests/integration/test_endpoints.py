@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from api.router.api import api
-from metrics.models import TaskType
+
 
 # Create a FastAPI TestClient
 client = TestClient(api)
