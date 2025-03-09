@@ -204,7 +204,7 @@ class Worker:
 
         try:
             response = requests.post(
-                url, json=data.model_dump(), headers=headers, timeout=10
+                url, json=data.model_dump(), headers=headers, timeout=90
             )
 
             # Raise for status (HTTPError for 4xx, 5xx)
