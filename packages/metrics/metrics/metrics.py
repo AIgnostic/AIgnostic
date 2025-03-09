@@ -88,8 +88,8 @@ task_type_to_metric = {
         "f1_score",
         "roc_auc",
         "expl_stability_text_input",
-        "expl_sparsity_text_input", # TODO: Test
-        "expl_fidelity_text_input", # TODO: Test
+        # "expl_sparsity_text_input",  # TODO: Test
+        # "expl_fidelity_text_input",  # TODO: Test
         "ood_auroc",
     ],
     TaskType.REGRESSION: [

@@ -561,6 +561,9 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     :return: float - the estimated OOD AUROC score
     """
     if info.task_name == TaskType.TEXT_CLASSIFICATION:
+        # Introduce hard limit to ood_samples due to size constraints
+        num_ood_samples = min(num_ood_samples, 100)
+
         # In-distribution dataset (list of single-element lists, extracting strings)
         id_data: list[str] = [sample[0] for sample in info.input_features]
 
