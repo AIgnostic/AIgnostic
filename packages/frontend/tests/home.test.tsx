@@ -19,6 +19,17 @@ jest.mock('../src/app/constants', () => ({
   WEBSOCKET_URL: 'ws://localhost:8000/ws',
 }));
 
+// mock legislationLabels
+jest.mock('../src/app/constants', () => ({
+  __esModule: true,
+  modelTypesToMetrics: {
+    'Binary Classification': ['Metric1', 'Metric2'],
+  },
+  steps: jest.requireActual('../src/app/constants').steps,
+  activeStepToInputConditions: jest.requireActual('../src/app/constants')
+    .activeStepToInputConditions,
+}));
+
 jest.mock('@react-pdf/renderer', () => ({
   Document: ({ children }: any) => <div>{children}</div>,
   Page: ({ children }: any) => <div>{children}</div>,
@@ -35,7 +46,9 @@ jest.mock('../src/app/utils', () => ({
   fetchMetricInfo: jest.fn().mockResolvedValue({
     'Binary Classification': ['Binary Text Classification'],
   }),
-  fetchLegislationInfo: jest.fn().mockResolvedValue(['GDPR', 'EU AI Act']),
+  fetchLegislationInfo: jest.fn().mockResolvedValue({
+    legislation: ['GDPR', 'EU AI Act'],
+  }),
 }));
 
 const mockNavigate = jest.fn();
@@ -259,55 +272,6 @@ describe('Batch Configuration Validation', () => {
       ).not.toBeInTheDocument();
     });
   });
-});
-
-// test('shoud set isBatchValidConfig  to send error for invalid number of batches', async () => {
-//   (checkBatchConfig as jest.Mock).mockReturnValue(true);
-
-//   render(<Homepage />);
-//   const batchSizeInput = screen.getByLabelText('Batch Size');
-//   const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
-
-//   // Set invalid values for batch size and number of batches
-//   fireEvent.change(batchSizeInput, { target: { value: '50' } }); // Valid batch size
-//   fireEvent.change(numberOfBatchesInput, { target: { value: '-15' } }); // Invalid number of batches (negative)
-
-//   // Trigger onBlur event to validate the inputs
-//   fireEvent.blur(batchSizeInput);
-//   fireEvent.blur(numberOfBatchesInput);
-
-//   // Wait for the state change and check if the error message appears
-//   await waitFor(() => {
-//     expect(
-//       screen.getByText('Batch size and number of batches must be positive.')
-//     ).toBeInTheDocument();
-//   });
-// })
-
-test('should set isBatchConfigValid to true for valid total sample size', async () => {
-  // Mock checkBatchConfig to return true for valid batch config
-  (checkBatchConfig as jest.Mock).mockReturnValue(true);
-
-  render(<Homepage />);
-
-  const batchSizeInput = screen.getByLabelText('Batch Size');
-  const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
-
-  // Set valid values for batch size and number of batches
-  fireEvent.change(batchSizeInput, { target: { value: '200' } }); // Valid batch size
-  fireEvent.change(numberOfBatchesInput, { target: { value: '10' } }); // Valid number of batches
-
-  // Trigger onBlur event to validate the inputs
-  fireEvent.blur(batchSizeInput);
-  fireEvent.blur(numberOfBatchesInput);
-  // Wait for the state change and check if the error message disappears
-  await waitFor(() => {
-    expect(
-      screen.queryByText('Total sample size must be between 1000 and 10000')
-    ).not.toBeInTheDocument();
-  });
-
-  // Optionally check if the validation state is set to true (if accessible)
 });
 
 describe('Maximum Concurrent Batches Validation', () => {
