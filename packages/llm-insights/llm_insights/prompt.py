@@ -43,12 +43,12 @@ Please provide your response in a maximum of 2 paragraphs.
 
 def construct_articles(article_extracts: List[List]) -> str:
     finalStr = ""
-    print("construct_articles: Article Extracts: ", article_extracts)
+    if (len(article_extracts) == 0) or (len(article_extracts[0]) == 0):
+        return ""
     for legislations in article_extracts:
         if len(legislations) != 0:
             article_type = legislations[0]["article_type"]
 
-        print(f"construct_articles: Legislation: {legislations}")
         intermediateStr = ""
         for extract in legislations:
             article_number = extract["article_number"]
