@@ -24,8 +24,6 @@ jest.mock('../src/app/constants', () => ({
   WEBSOCKET_URL: 'ws://localhost:8000/ws',
 }));
 
-beforeAll(async () => {});
-
 jest.mock('@react-pdf/renderer', () => ({
   Document: ({ children }: any) => <div>{children}</div>,
   Page: ({ children }: any) => <div>{children}</div>,
