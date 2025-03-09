@@ -284,6 +284,8 @@ class Worker:
 
             print(f"Metrics to compute: {metrics_data.metrics}")
 
+            print(f"Confidence scores from model: {model_response.confidence_scores}")
+
             # Construct CalculateRequest
             metrics_request = CalculateRequest(
                 metrics=metrics_data.metrics,

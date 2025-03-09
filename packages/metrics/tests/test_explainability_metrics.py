@@ -147,5 +147,5 @@ def test_low_fidelity(apply_server_factory):
     result = calculate_metrics(info)
     assert result.metric_values[metric_name].computed_value == pytest.approx(
         BAD_FIDELITY_EXPECTED_SCORE,
-        FIDELITY_MARGIN
+        abs=FIDELITY_MARGIN
     )

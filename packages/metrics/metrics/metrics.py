@@ -234,13 +234,13 @@ metric_to_fn_and_requirements = {
     },
     "explanation_sparsity_score": {
         "function": explanation_sparsity_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "required_inputs": ["input_features", "model_url", "model_api_key"],
         "range": (0, 1),
         "ideal_value": 0.7
     },
     "explanation_fidelity_score": {
         "function": explanation_fidelity_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "required_inputs": ["input_features", "model_url", "model_api_key"],
         "range": (0, 1),
         "ideal_value": 0.85
     },

@@ -239,8 +239,8 @@ def roc_auc(info: CalculateRequest) -> float:
         if info.task_name == "binary_classification"
         else info.confidence_scores
     )
-    
-    #TODO: Extend to text classification
+
+    # TODO: Extend to text classification
     result = roc_auc_score(info.true_labels, scores, average="macro")
     if np.isnan(result):
         raise MetricsComputationException(
@@ -501,11 +501,27 @@ def explanation_fidelity_score(info: CalculateRequest, lime_fn=_lime_explanation
 
     # TODO: Update fidelity_fn implementation after discussion with supervisor
     # Used L-1 Norm for now -> using L2 norm may mean we have to divide by sqrt(N) instead of N
-    def fidelity_fn(x, y) -> float:
-        return np.linalg.norm(x - y, 1)
+    def fidelity_fn(predicted, actual) -> float:
+
+        epsilon = 1e-10
+
+        # Normalise the predictions and actual values to ensure scale invariance
+        predicted = predicted / (np.max(np.abs(predicted)) + epsilon)
+        actual = actual / (np.max(np.abs(actual)) + epsilon)
+
+        return (
+            np.linalg.norm(predicted - actual, 2)
+            / np.sqrt(len(predicted))  # Find average distance using RMSE to ensure scale invariance
+        )
 
     ps = reg_model.predict(info.input_features).reshape(-1, 1)
-    subtracted = fidelity_fn(info.confidence_scores, ps) / len(info.confidence_scores)
+
+    actual = info.predicted_labels if info.regression_flag else info.confidence_scores
+    actual = actual.reshape(-1, 1)
+
+    subtracted = fidelity_fn(ps, actual)
+    print(subtracted)
+
     return 1 - subtracted
 
 
@@ -581,10 +597,10 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     # assert len(labels) == len(
     #     scores
     # ), "Length mismatch between labels and scores in OOD-AUROC calculation: {} vs {}".format(len(labels), len(scores))
-    
+
     return roc_auc_score(labels, scores)
 
 
 def hello_score(info: CalculateRequest) -> float:
-    print("Predicted Labels:", info.predicted_labels)
+    print("Hello, world!")
     return 0.6
