@@ -17,6 +17,7 @@ from sklearn.metrics import (
     mean_squared_error as mse,
     r2_score,
 )
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
 from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
@@ -234,14 +235,29 @@ def roc_auc(info: CalculateRequest) -> float:
     """
     name = "roc_auc"
     is_valid_for_per_class_metrics(name, info.true_labels)
-    scores = (
-        np.max(info.confidence_scores, axis=1)
-        if info.task_name == "binary_classification"
-        else info.confidence_scores
-    )
-    
-    #TODO: Extend to text classification
-    result = roc_auc_score(info.true_labels, scores, average="macro")
+
+
+    if info.task_name == "binary_classification":
+        # Take the maximum confidence score as the score for the label
+        scores = np.max(info.confidence_scores, axis=1)
+        
+        result = roc_auc_score(info.true_labels, scores, average="macro")
+    elif info.task_name in ["multi_class_classification", "text_classification"]:
+        # Retain original softmax scores for each class
+        scores = info.confidence_scores
+
+        # Convert string class labels to numeric labels
+        label_encoder = LabelEncoder()
+        numeric_labels = label_encoder.fit_transform(np.array(info.true_labels).ravel())
+
+        result = roc_auc_score(numeric_labels, scores, average="macro", multi_class="ovr")
+    else:
+        raise MetricsComputationException(
+            metric_name=name,
+            detail="Task name is not supported - cannot calculate ROC-AUC",
+            status_code=400,
+        )
+
     if np.isnan(result):
         raise MetricsComputationException(
             metric_name=name,
@@ -525,7 +541,20 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
 
     :return: float - the estimated OOD AUROC score
     """
-    id_data: np.array = np.array(info.input_features)    # In-distribution dataset (N x d array).
+    if info.task_name == "text_classification":
+        # TODO: Implement text classification OOD-AUROC
+        input_features : list[list[str]] = info.input_features
+        d = len(input_features)
+
+        id_scores = info.confidence_scores
+
+        # Generate OOD samples, by generating strings of 10 random words not from the input features
+        ood_data = [" ".join(np.random.choice(list("abcdefghijklmnopqrstuvwxyz"), 10)) for _ in range(num_ood_samples)]
+
+        
+        raise NotImplementedError("Text classification OOD-AUROC not yet implemented")
+
+    id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
     d: int = id_data.shape[1]                           # Feature dimensionality
 
     id_scores: list[list] = info.confidence_scores  # Confidence scores for ID samples
@@ -541,11 +570,7 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     id_scores_flat = np.array([max(scores) for scores in id_scores])  # Take max probability for each ID sample
 
     # Ensure OOD scores are correctly structured (take max confidence per sample)
-    ood_scores_flat = np.array(response.confidence_scores).max(axis=1)
-
-    # Debugging information
-    print(f"Length of ID Scores: {len(id_scores_flat)}")
-    print(f"Length of OOD Scores: {len(ood_scores_flat)}")
+    ood_scores_flat = np.max(response.confidence_scores, axis=1)
 
     # Construct labels: 1 for ID, 0 for OOD
     labels = np.concatenate([np.ones(len(id_scores_flat)), np.zeros(num_ood_samples)])
@@ -553,35 +578,10 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     # Ensure the scores array has the same length as labels
     scores = np.concatenate([id_scores_flat, ood_scores_flat])
 
-    print(f"Labels Length: {len(labels)}")
-    print(f"Scores Length: {len(scores)}")
-
     # Assert lengths match
     assert len(labels) == len(scores), \
         f"Length mismatch between labels and scores in OOD-AUROC calculation: {len(labels)} vs {len(scores)}"
 
-    # # Get confidence scores (softmax vector) for OOD samples
-    # ood_scores: list[list] = response.confidence_scores
-
-    # # Ensure shape conforms to N x 1 array
-    # ood_scores = [[max(scores)] for scores in response.confidence_scores]
-    # # print("OOD Scores:", ood_scores)
-    # # print("ID Scores:", id_scores)
-
-    # print("Length of ID Scores:", len(id_scores))
-    # print("Length of OOD Scores:", len(ood_scores))
-
-    # # Construct labels: 1 for ID, 0 for OOD
-    # labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])
-
-    # # Flatten the confidence scores for both ID and OOD samples
-    # scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
-
-    # # Assert lengths match
-    # assert len(labels) == len(
-    #     scores
-    # ), "Length mismatch between labels and scores in OOD-AUROC calculation: {} vs {}".format(len(labels), len(scores))
-    
     return roc_auc_score(labels, scores)
 
 
