@@ -110,34 +110,6 @@ describe('Stepper Navigation', () => {
 });
 
 describe('Form Validation', () => {
-  // it('should show an error if the model URL is invalid', () => {
-  //   (checkURL as jest.Mock).mockReturnValue(false);
-
-  //   render(<Homepage />);
-
-  //   fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-  //     target: { value: 'invalid-url' },
-  //   });
-
-  //   fireEvent.blur(screen.getByLabelText(/Model API URL/i));
-
-  //   expect(screen.getByText('Invalid URL')).toBeInTheDocument();
-  // });
-
-  // it('should show an error if the dataset URL is invalid', () => {
-  //   (checkURL as jest.Mock).mockReturnValue(false);
-
-  //   render(<Homepage />);
-
-  //   fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-  //     target: { value: 'invalid-dataset-url' },
-  //   });
-
-  //   fireEvent.blur(screen.getByLabelText(/Dataset API URL/i));
-
-  //   expect(screen.getByText('Invalid URL')).toBeInTheDocument();
-  // });
-
   it('should navigate to the next step when URLs are valid', async () => {
     (checkURL as jest.Mock).mockReturnValue(true);
 
@@ -161,7 +133,6 @@ describe('Form Validation', () => {
 
 describe('Batch Configuration Validation', () => {
   test('should set isBatchConfigValid to false for invalid total sample size', async () => {
-    // Mock checkBatchConfig to return false for invalid batch config
     (checkBatchConfig as jest.Mock).mockReturnValue(false);
 
     render(<Homepage />);
@@ -169,15 +140,12 @@ describe('Batch Configuration Validation', () => {
     const batchSizeInput = screen.getByLabelText('Batch Size');
     const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
 
-    // Set invalid values for batch size and number of batches
-    fireEvent.change(batchSizeInput, { target: { value: '50' } }); // Invalid batch size (too small)
-    fireEvent.change(numberOfBatchesInput, { target: { value: '15' } }); // Invalid number of batches (too small)
+    fireEvent.change(batchSizeInput, { target: { value: '50' } });
+    fireEvent.change(numberOfBatchesInput, { target: { value: '15' } });
 
-    // Trigger onBlur event to validate the inputs
     fireEvent.blur(batchSizeInput);
     fireEvent.blur(numberOfBatchesInput);
 
-    // Wait for the state change and check if the error message appears
     await waitFor(() => {
       expect(
         screen.getByText(
@@ -188,7 +156,6 @@ describe('Batch Configuration Validation', () => {
   });
 
   test('should set isBatchConfigValid to false for negative batch size', async () => {
-    // Mock checkBatchConfig to return false for invalid batch config
     (checkBatchConfig as jest.Mock).mockReturnValue(false);
 
     render(<Homepage />);
@@ -196,15 +163,12 @@ describe('Batch Configuration Validation', () => {
     const batchSizeInput = screen.getByLabelText('Batch Size');
     const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
 
-    // Set invalid values for batch size and number of batches
-    fireEvent.change(batchSizeInput, { target: { value: '-50' } }); // Invalid batch size (negative)
-    fireEvent.change(numberOfBatchesInput, { target: { value: '15' } }); // Valid number of batches
+    fireEvent.change(batchSizeInput, { target: { value: '-50' } });
+    fireEvent.change(numberOfBatchesInput, { target: { value: '15' } });
 
-    // Trigger onBlur event to validate the inputs
     fireEvent.blur(batchSizeInput);
     fireEvent.blur(numberOfBatchesInput);
 
-    // Wait for the state change and check if the error message appears
     await waitFor(() => {
       expect(
         screen.getByText('Batch size and number of batches must be positive.')
@@ -213,12 +177,48 @@ describe('Batch Configuration Validation', () => {
   });
 
   test('should set isBatchConfigValid to false for negative number of batches', async () => {
-    // Mock checkBatchConfig to return false for invalid batch config
     (checkBatchConfig as jest.Mock).mockReturnValue(false);
 
     render(<Homepage />);
 
     const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+
+    fireEvent.change(batchSizeInput, { target: { value: '50' } });
+    fireEvent.change(numberOfBatchesInput, { target: { value: '-15' } });
+
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Batch size and number of batches must be positive.')
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('should set isBatchConfigValid to true for valid total sample size', async () => {
+    (checkBatchConfig as jest.Mock).mockReturnValue(true);
+
+    render(<Homepage />);
+
+    const batchSizeInput = screen.getByLabelText('Batch Size');
+    const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
+
+    fireEvent.change(batchSizeInput, { target: { value: '200' } });
+    fireEvent.change(numberOfBatchesInput, { target: { value: '10' } });
+
+    fireEvent.blur(batchSizeInput);
+    fireEvent.blur(numberOfBatchesInput);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Total sample size must be between 1000 and 10000')
+      ).not.toBeInTheDocument();
+    });
+  });
+});
+
     const numberOfBatchesInput = screen.getByLabelText('Number of Batches');
 
     // Set invalid values for batch size and number of batches
@@ -512,4 +512,3 @@ describe('Model Type Selection', () => {
     expect(nextButton).toBeDisabled();
   });
 });
-

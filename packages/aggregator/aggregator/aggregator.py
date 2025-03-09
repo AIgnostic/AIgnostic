@@ -440,7 +440,7 @@ def start_websocket_server():
 def start_http_server():
     uvicorn.run(app, host="0.0.0.0", port=8005)
     print("HTTP server started on ws://0.0.0.0:8005")
-    server.serve_forever()  # Blocking call
+
 
 if __name__ == "__main__":
     # Load environment variables
