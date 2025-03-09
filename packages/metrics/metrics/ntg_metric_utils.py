@@ -29,18 +29,18 @@ DEFAULT_ENCODER = "sentence-transformers/distiluse-base-multilingual-cased-v1"
 
 nltk.download('wordnet')
 
+def generate_random_strings(num_samples: int, word_count: int = 10) -> np.array:
+    """Generates `num_samples` random strings, each with `word_count` words from WordNet."""
+    
+    # Get all WordNet words
+    words = list(set(word.lemma_names()[0] for word in wn.all_synsets()))
+    
+    # Generate random sentences
+    strs = [
+        " ".join(random.choices(words, k=word_count)) for _ in range(num_samples)
+    ]
 
-def synonym_perturbation(text: str, num_perturbations: int = 1) -> str:
-    words = text.split()
-    for _ in range(num_perturbations):
-        idx = random.randint(0, len(words) - 1)
-        synonyms = wn.synsets(words[idx])
-        if synonyms:
-            lemmas = [lemma.name() for synonym in synonyms for lemma in synonym.lemmas()]
-            lemmas = list(set(lemmas))  # Remove duplicates
-            if lemmas:
-                words[idx] = random.choice(lemmas)
-    return ' '.join(words)
+    return np.array(strs)
 
 
 def generate_synonym_perturbations(sentence: str, mask=MASK_WORD, limit=10) -> list[str]:

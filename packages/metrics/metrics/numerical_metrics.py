@@ -17,7 +17,7 @@ from sklearn.metrics import (
     mean_squared_error as mse,
     r2_score,
 )
-from metrics.ntg_metric_utils import synonym_perturbation
+from metrics.ntg_metric_utils import generate_random_strings
 import random
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
@@ -550,7 +550,7 @@ def explanation_fidelity_score(info: CalculateRequest, lime_fn=_lime_explanation
 """
 
 
-def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
+def ood_auroc(info: CalculateRequest, num_ood_samples: int = 10) -> float:
     """
     Estimate OOD AUROC by comparing in-distribution (ID) and out-of-distribution (OOD)
     confidence scores.
@@ -563,24 +563,29 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     """
     if info.task_name == "text_classification":
         # In-distribution dataset (list of single-element lists, extracting strings)
-        id_data: list[str] = [sample[0] for sample in info.input_features]  # Flatten to List[str]
-
-        id_scores: list[list] = info.confidence_scores      # Confidence scores for ID samples
+        id_data: list[str] = [sample[0] for sample in info.input_features]
 
         # Generate OOD samples via synonym perturbation (TODO: Update to more sophisticated method)
-        ood_data = [synonym_perturbation(text) for text in random.choices(id_data, k=num_ood_samples)]
+        # ood_data = [synonym_perturbation(text) for text in random.choices(id_data, k=num_ood_samples)]        
+        ood_data: np.array = generate_random_strings(num_ood_samples).reshape(-1, 1)
 
-        print("ID Data:", id_data)
-        print("OOD Data:", ood_data)
+        print("OOD Data shape: ", ood_data.shape)
+
+        print("Length of ID Data:", len(id_data))
+        print("Length of OOD Data:", len(ood_data))
 
         # Call model endpoint to get confidence scores for OOD samples
         response: ModelResponse = _query_model(ood_data, info)
 
         # Flatten ID scores (take max probability for each ID sample)
-        id_scores_flat = np.array([max(scores) for scores in id_scores])
+        id_scores_flat: np.array = np.max(info.confidence_scores, axis=1)
+
+        print("ID scores length:", len(id_scores_flat))
 
         # Flatten OOD scores (take max confidence per sample)
-        ood_scores_flat = np.max(response.confidence_scores, axis=1)
+        ood_scores_flat: np.array = np.max(response.confidence_scores, axis=1)
+
+        print("OOD scores length:", len(ood_scores_flat))
 
         # Construct labels: 1 for ID, 0 for OOD
         labels = np.concatenate([np.ones(len(id_scores_flat)), np.zeros(num_ood_samples)])
