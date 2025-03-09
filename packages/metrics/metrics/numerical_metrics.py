@@ -238,12 +238,15 @@ def roc_auc(info: CalculateRequest) -> float:
     name = "roc_auc"
     is_valid_for_per_class_metrics(name, info.true_labels)
 
-    if info.task_name == "binary_classification":
+    if info.task_name in ["binary_classification", "multi_class_classification"]:
         # Take the maximum confidence score as the score for the label
         scores = np.max(info.confidence_scores, axis=1)
+        
+        # Ensure true_labels is a 1D array
+        true_labels = np.array(info.true_labels).ravel()
 
-        result = roc_auc_score(info.true_labels, scores, average="macro")
-    elif info.task_name in ["multi_class_classification", "text_classification"]:
+        result = roc_auc_score(true_labels, scores, average="macro", multi_class="ovr")
+    elif info.task_name in ["text_classification"]:
         # Retain original softmax scores for each class
         scores = info.confidence_scores
 
@@ -566,6 +569,9 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
 
         # Generate OOD samples via synonym perturbation (TODO: Update to more sophisticated method)
         ood_data = [synonym_perturbation(text) for text in random.choices(id_data, k=num_ood_samples)]
+
+        print("ID Data:", id_data)
+        print("OOD Data:", ood_data)
 
         # Call model endpoint to get confidence scores for OOD samples
         response: ModelResponse = _query_model(ood_data, info)
