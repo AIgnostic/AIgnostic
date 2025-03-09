@@ -241,7 +241,14 @@ def roc_auc(info: CalculateRequest) -> float:
     )
     
     #TODO: Extend to text classification
-    return roc_auc_score(info.true_labels, scores, average="macro")
+    result = roc_auc_score(info.true_labels, scores, average="macro")
+    if np.isnan(result):
+        raise MetricsComputationException(
+            metric_name=name,
+            detail="ROC-AUC score is NaN - check if the input is valid",
+            status_code=400,
+        )
+    return result
 
 
 def mean_absolute_error(info: CalculateRequest) -> float:

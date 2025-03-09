@@ -79,14 +79,6 @@ task_type_to_metric = {
         "explanation_fidelity_score",
         "ood_auroc",
     ],
-    "regression": [
-        "mean_absolute_error",
-        "mean_squared_error",
-        "r_squared",
-        "explanation_stability_score",
-        "explanation_sparsity_score",
-        "explanation_fidelity_score",
-    ],
     # TODO: Review which metrics really apply
     "text_classification": [
         "accuracy",
@@ -98,6 +90,14 @@ task_type_to_metric = {
         # "expl_sparsity_text_input",
         # "expl_fidelity_text_input",
         "ood_auroc",
+    ],
+    "regression": [
+        "mean_absolute_error",
+        "mean_squared_error",
+        "r_squared",
+        "explanation_stability_score",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
     ],
     "next_token_generation": [
         "expl_stability_text_input",
