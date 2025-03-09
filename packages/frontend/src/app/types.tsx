@@ -6,14 +6,16 @@ export type MarkdownFiles = Record<string, string>;
 export interface ReportPropertySection {
   property: string;
   computed_metrics: {
-    metric: string;
-    ideal_value: string;
-    range: (string | null)[]; // nulls represent infinities
-    value: string;
+      metric: string;
+      ideal_value: string;
+      range: (string | null)[];  // nulls represent infinities
+      value: string;
+      error: string | null;
   }[];
-  legislation_extracts: LegislationExtract[][];
+  legislation_extracts: LegislationExtract[];
   llm_insights: string[];
 }
+
 
 export interface Report {
   info: { [key: string]: any };

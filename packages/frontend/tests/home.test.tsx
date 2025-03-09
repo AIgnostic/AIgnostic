@@ -1,32 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Homepage from '../src/app/home';
-import {
-  steps,
-  modelTypesToMetrics,
-  initializeModelTypesToMetrics,
-  activeStepToInputConditions,
-} from '../src/app/constants';
 import '@testing-library/jest-dom';
 import { checkBatchConfig, checkURL } from '../src/app/utils';
 import { MemoryRouter } from 'react-router-dom';
-
-// mock modelTypesToMetrics
-jest.mock('../src/app/constants', () => ({
-  __esModule: true,
-  modelTypesToMetrics: {
-    'Binary Classification': ['Metric1', 'Metric2'],
-  },
-  steps: jest.requireActual('../src/app/constants').steps,
-  activeStepToInputConditions: jest.requireActual('../src/app/constants')
-    .activeStepToInputConditions,
-  initializeModelTypesToMetrics: jest.fn(),
-  WEBSOCKET_URL: 'ws://localhost:8000/ws',
-}));
-
-beforeAll(async () => {
-  await initializeModelTypesToMetrics();
-});
+import { steps } from '../src/app/constants';
 
 jest.mock('@react-pdf/renderer', () => ({
   Document: ({ children }: any) => <div>{children}</div>,
@@ -44,6 +22,9 @@ jest.mock('../src/app/utils', () => ({
   fetchMetricInfo: jest.fn().mockResolvedValue({
     'Binary Classification': ['Binary Text Classification'],
   }),
+  fetchLegislationInfo: jest.fn().mockResolvedValue(
+    ["GDPR", "EU AI Act"]
+  )
 }));
 
 const mockNavigate = jest.fn();
@@ -531,3 +512,4 @@ describe('Model Type Selection', () => {
     expect(nextButton).toBeDisabled();
   });
 });
+
