@@ -68,10 +68,12 @@ def test_construct_articles():
     assert "Title 2" in result
     assert "Description 2" in result
 
+
 def test_construct_articles_empty():
     article_extracts = [[]]
     result = construct_articles(article_extracts)
     assert result == ""
+
 
 def test_construct_articles_multiple_legislations():
     article_extracts = [
@@ -101,6 +103,7 @@ def test_construct_articles_multiple_legislations():
     assert "2" in result
     assert "Title 2" in result
     assert "Description 2" in result
+
 
 def test_construct_prompt():
     property_name = "Fairness"
