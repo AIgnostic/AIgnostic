@@ -28,6 +28,6 @@ def update_legislation_information(labels: list[str]):
     filtered_legislation_information = {
         key: value
         for key, value in legislation_information.items()
-        if value["name"] in labels
+        if value.name in labels
     }
     return filtered_legislation_information

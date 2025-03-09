@@ -49,11 +49,12 @@ def construct_articles(article_extracts: List[List]) -> str:
             article_type = legislations[0]["article_type"]
 
         print(f"construct_articles: Legislation: {legislations}")
+        intermediateStr = ""
         for extract in legislations:
             article_number = extract["article_number"]
             article_title = extract["article_title"]
             description = extract["description"]
-            intermediateStr = f"""
+            intermediateStr += f"""
 <article_number>{article_number}</article_number>
 <article_title>{article_title}</article_title>
 <description>{description}</description>
