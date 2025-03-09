@@ -1,12 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Homepage from '../src/app/home';
-import {
-  steps,
-  modelTypesToMetrics,
-  initializeModelTypesToMetrics,
-  activeStepToInputConditions,
-} from '../src/app/constants';
+import { steps, activeStepToInputConditions } from '../src/app/constants';
 import '@testing-library/jest-dom';
 import { checkBatchConfig, checkURL } from '../src/app/utils';
 import { MemoryRouter } from 'react-router-dom';
