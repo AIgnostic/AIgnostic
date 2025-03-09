@@ -32,6 +32,7 @@ import theme from './theme';
 import { v4 as uuidv4 } from 'uuid';
 import FileUploadComponent from './components/FileUploadComponent';
 import { IS_PROD } from './env';
+import ApiAndBatchConfig from './components/ApiAndBatchConfig';
 
 function Homepage() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -95,6 +96,8 @@ function Homepage() {
     [key: string]: string[];
   }>({});
 
+  const [counter, incCounter] = useState(0);
+
   useEffect(() => {
     let userId = sessionStorage.getItem('userId');
     if (!userId) {
@@ -112,6 +115,8 @@ function Homepage() {
       newSocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log('Received message:', data);
+        incCounter(counter + 1);
+        console.log(counter);
       };
 
       newSocket.onclose = () => {
@@ -136,7 +141,6 @@ function Homepage() {
         console.log('Fetched metrics successfully');
       } catch (error) {
         console.error('Failed to fetch metric info:', error);
-      } finally {
         // Call the function again after 10 seconds
         setTimeout(initializeModelTypesToMetrics, 10000);
       }
@@ -308,167 +312,14 @@ function Homepage() {
 
               {/* 1. ENTER MODEL AND DATASET API  URLS CONTENT */}
               {index === 0 && (
-                <Box style={{ padding: '15px' }}>
-                  {(
-                    [
-                      'modelURL',
-                      'datasetURL',
-                      'modelAPIKey',
-                      'datasetAPIKey',
-                    ] as (keyof typeof getValues)[]
-                  ).map((key) => {
-                    const field = getValues[key];
-                    const handleOnBlur =
-                      field.validKey && field.isValid !== undefined
-                        ? () => {
-                          setStateWrapper(
-                            field.validKey as keyof typeof state,
-                            // checkURL(field.value)
-                            true
-                          );
-                        }
-                        : undefined; // Don't do anything for fields that don't need validation onBlur
-
-                    const errorProps =
-                      field.isValid !== undefined
-                        ? getErrorProps(field.isValid, 'Invalid URL') // Only set errorProps if the field has isValid
-                        : undefined;
-
-                    return (
-                      <TextField
-                        style={styles.input}
-                        key={key}
-                        label={field.label}
-                        value={field.value}
-                        onChange={(e) => {
-                          setStateWrapper(key, e.target.value);
-                        }}
-                        onBlur={handleOnBlur}
-                        helperText={
-                          field.isValid !== undefined
-                            ? errorProps?.helperText
-                            : ''
-                        }
-                        error={
-                          field.isValid !== undefined
-                            ? errorProps?.error
-                            : false
-                        }
-                        variant="filled"
-                        InputProps={{
-                          sx: {
-                            color: '#fff',
-                          },
-                        }}
-                      />
-                    );
-                  })}
-                  <Box mt={2} display="flex" gap={2} flexWrap="wrap">
-                    <Box flex={1}>
-                      <TextField
-                        label="Number of Batches"
-                        type="number"
-                        defaultValue={state.numberOfBatches}
-                        error={!state.isBatchConfigValid}
-                        helperText={
-                          state.numberOfBatches < 1
-                            ? 'Number of batches must be greater than 0'
-                            : !state.isBatchConfigValid
-                              ? 'Invalid batch configuration'
-                              : ''
-                        }
-                        onChange={(e) =>
-                          setStateWrapper(
-                            'numberOfBatches' as keyof typeof state,
-                            e.target.value
-                          )
-                        }
-                        onBlur={() => {
-                          const isValid = checkBatchConfig(
-                            state.batchSize,
-                            state.numberOfBatches
-                          );
-                          setStateWrapper('isBatchConfigValid', isValid);
-                        }}
-                        style={styles.input}
-                      />
-                    </Box>
-                    <Box flex={1}>
-                      <TextField
-                        label="Batch Size"
-                        type="number"
-                        defaultValue={state.batchSize}
-                        error={!state.isBatchConfigValid}
-                        helperText={
-                          state.batchSize < 1
-                            ? 'Batch size must be greater than 0'
-                            : !state.isBatchConfigValid
-                              ? 'Invalid batch configuration'
-                              : ''
-                        }
-                        onChange={(e) =>
-                          setStateWrapper(
-                            'batchSize' as keyof typeof state,
-                            e.target.value
-                          )
-                        }
-                        onBlur={() => {
-                          const isValid = checkBatchConfig(
-                            state.batchSize,
-                            state.numberOfBatches
-                          );
-                          setStateWrapper('isBatchConfigValid', isValid);
-                        }}
-                        style={styles.input}
-                      />
-                    </Box>
-                    <Box flex={1}>
-                      <TextField
-                        label="Maximum Concurrent Batches"
-                        type="number"
-                        defaultValue={state.maxConcurrentBatches}
-                        error={!state.isMaxConcurrentBatchesValid}
-                        helperText={
-                          !state.isMaxConcurrentBatchesValid
-                            ? 'Value must be between 1 and 30'
-                            : ''
-                        }
-                        onChange={(e) =>
-                          setStateWrapper(
-                            'maxConcurrentBatches' as keyof typeof state,
-                            e.target.value
-                          )
-                        }
-                        onBlur={(e) => {
-                          const value = Math.min(
-                            Math.max(parseInt(e.target.value), 1),
-                            30
-                          );
-                          const isValid = value === parseInt(e.target.value);
-                          setStateWrapper('maxConcurrentBatches', value);
-                          setStateWrapper(
-                            'isMaxConcurrentBatchesValid',
-                            isValid
-                          );
-                        }}
-                        style={styles.input}
-                      />
-                    </Box>
-                  </Box>
-                  {!state.isBatchConfigValid && (
-                    <Box>
-                      <Typography color="error">
-                        Total sample size must be between 1000 and 10000, not{' '}
-                        {state.batchSize * state.numberOfBatches}.
-                      </Typography>
-                      {(state.batchSize < 1 || state.numberOfBatches < 1) && (
-                        <Typography color="error">
-                          Batch size and number of batches must be positive.
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
-                </Box>
+                <ApiAndBatchConfig
+                  getValues={getValues}
+                  state={state}
+                  setStateWrapper={setStateWrapper}
+                  checkBatchConfig={checkBatchConfig}
+                  getErrorProps={getErrorProps}
+                  styles={styles}
+                />
               )}
               {/* 2. SELECT MODEL TYPE */}
               {index === 1 && (
@@ -549,9 +400,9 @@ function Homepage() {
                     ).length === 0
                       ? 'You have not selected any metrics'
                       : state.metricChips
-                        .filter((metricChip) => metricChip.selected)
-                        .map((metricChip) => metricChip.label)
-                        .join(', ')}
+                          .filter((metricChip) => metricChip.selected)
+                          .map((metricChip) => metricChip.label)
+                          .join(', ')}
                     <br /> <br />
                     <strong>Batch Configuration:</strong>
                     <br />
