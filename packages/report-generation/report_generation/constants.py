@@ -1,13 +1,5 @@
-# property_to_regulations = {
-#     "adversarial robustness": ["article 15"],
-#     "explainability": ["article 13",
-#                        "article 14 (4c)"],
-#     "fairness": ["article 10",
-#                  "article 15"],
-#     "uncertainity": ["article 13"],
-#     "privacy": ["article 2"],
-#     "data minimality": ["article 10"],
-# }
+"""This file contains the constants used in the report generation module."""
+
 property_to_regulations = {
     "adversarial robustness": ["15"],
     "explainability": ["13",
@@ -20,10 +12,6 @@ property_to_regulations = {
 }
 
 property_to_metrics = {
-    "adversarial robustness": [
-        "fast gradient sign method",
-        "projected gradient descent",
-    ],
     "explainability": [
         "gradient explanations",
         "LIME",
@@ -47,8 +35,13 @@ property_to_metrics = {
     "uncertainity": [
         "ood auroc",
     ],
+    "adversarial robustness": [
+        # TODO: Implement metrics for adversarial robustness
+    ],
     "privacy": [
+        # TODO: Implement metrics for privacy
     ],
     "data minimality": [
+        # TODO: Implement metrics for data minimality
     ],
 }

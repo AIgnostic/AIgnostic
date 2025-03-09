@@ -80,14 +80,6 @@ task_type_to_metric = {
         "explanation_fidelity_score",
         "ood_auroc",
     ],
-    TaskType.REGRESSION: [
-        "mean_absolute_error",
-        "mean_squared_error",
-        "r_squared",
-        "explanation_stability_score",
-        # "explanation_sparsity_score",
-        # "explanation_fidelity_score",
-    ],
     # TODO: Review which metrics really apply
     TaskType.TEXT_CLASSIFICATION: [
         "accuracy",
@@ -96,11 +88,11 @@ task_type_to_metric = {
         "f1_score",
         "roc_auc",
         "expl_stability_text_input",
-        # "expl_sparsity_text_input",
-        # "expl_fidelity_text_input",
+        "expl_sparsity_text_input", # TODO: Test
+        "expl_fidelity_text_input", # TODO: Test
         "ood_auroc",
     ],
-    "regression": [
+    TaskType.REGRESSION: [
         "mean_absolute_error",
         "mean_squared_error",
         "r_squared",

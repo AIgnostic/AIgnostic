@@ -28,7 +28,7 @@ from metrics.exceptions import (
     MetricsComputationException,
     DataProvisionException
 )
-from common.models import ModelResponse
+from common.models import ModelResponse, TaskType
 
 
 def is_valid_for_per_class_metrics(metric_name, true_labels):
@@ -237,7 +237,7 @@ def roc_auc(info: CalculateRequest) -> float:
     name = "roc_auc"
     is_valid_for_per_class_metrics(name, info.true_labels)
 
-    if info.task_name in ["binary_classification", "multi_class_classification"]:
+    if info.task_name in [TaskType.BINARY_CLASSIFICATION, TaskType.MULTI_CLASS_CLASSIFICATION]:
         # Take the maximum confidence score as the score for the label
         scores = np.max(info.confidence_scores, axis=1)
 
@@ -245,7 +245,7 @@ def roc_auc(info: CalculateRequest) -> float:
         true_labels = np.array(info.true_labels).ravel()
 
         result = roc_auc_score(true_labels, scores, average="macro", multi_class="ovr")
-    elif info.task_name in ["text_classification"]:
+    elif info.task_name in [TaskType.TEXT_CLASSIFICATION]:
         # Retain original softmax scores for each class
         scores = info.confidence_scores
 
@@ -549,7 +549,7 @@ def explanation_fidelity_score(info: CalculateRequest, lime_fn=_lime_explanation
 """
 
 
-def ood_auroc(info: CalculateRequest, num_ood_samples: int = 10) -> float:
+def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     """
     Estimate OOD AUROC by comparing in-distribution (ID) and out-of-distribution (OOD)
     confidence scores.
@@ -560,11 +560,11 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 10) -> float:
 
     :return: float - the estimated OOD AUROC score
     """
-    if info.task_name == "text_classification":
+    if info.task_name == TaskType.TEXT_CLASSIFICATION:
         # In-distribution dataset (list of single-element lists, extracting strings)
         id_data: list[str] = [sample[0] for sample in info.input_features]
 
-        # Generate OOD samples via random strings of length 10 
+        # Generate OOD samples via random strings of length 10
         # (TODO: Update to more sophisticated method)
         ood_data: np.array = generate_random_strings(num_ood_samples).reshape(-1, 1)
 
