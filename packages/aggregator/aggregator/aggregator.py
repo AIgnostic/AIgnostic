@@ -15,15 +15,17 @@ from common.models import (
     WorkerError,
     LegislationList
 )
-from worker.worker import USER_METRIC_SERVER_URL
-from aggregator.connection_manager import ConnectionManager
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
+from worker.worker import USER_METRIC_SERVER_URL
+from aggregator.connection_manager import ConnectionManager
 from fastapi import FastAPI, Request
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from .utils import LEGISLATION_INFORMATION, update_legislation_information
 
+
+manager = ConnectionManager()
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -62,9 +64,6 @@ async def upload_selected_legislation(request: Request):
         print('LEGISLATION_INFORMATION UPDATED', LEGISLATION_INFORMATION)
     except Exception as e:
         return {"error": str(e)}
-
-
-manager = ConnectionManager()
 
 
 def aggregator_metrics_completion_log():
@@ -439,9 +438,9 @@ def start_websocket_server():
 
 
 def start_http_server():
-    print("HTTP Server started on port 8005")
     uvicorn.run(app, host="0.0.0.0", port=8005)
-
+    print("HTTP server started on ws://0.0.0.0:8005")
+    server.serve_forever()  # Blocking call
 
 if __name__ == "__main__":
     # Load environment variables
@@ -450,10 +449,11 @@ if __name__ == "__main__":
 
     load_dotenv()
 
-    # Start HTTP server in a separate thread
-    threading.Thread(target=start_http_server, daemon=True).start()
     # Start WebSocket server in a separate thread
     threading.Thread(target=start_websocket_server, daemon=True).start()
+
+    # Start HTTPs server in a separate thread
+    threading.Thread(target=start_http_server, daemon=True).start()
 
     # Start RabbitMQ consumer (blocking)
     consumer = ResultsConsumer(RABBIT_MQ_HOST)
