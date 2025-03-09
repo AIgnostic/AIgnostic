@@ -29,12 +29,13 @@ DEFAULT_ENCODER = "sentence-transformers/distiluse-base-multilingual-cased-v1"
 
 nltk.download('wordnet')
 
+
 def generate_random_strings(num_samples: int, word_count: int = 10) -> np.array:
     """Generates `num_samples` random strings, each with `word_count` words from WordNet."""
-    
+
     # Get all WordNet words
     words = list(set(word.lemma_names()[0] for word in wn.all_synsets()))
-    
+
     # Generate random sentences
     strs = [
         " ".join(random.choices(words, k=word_count)) for _ in range(num_samples)

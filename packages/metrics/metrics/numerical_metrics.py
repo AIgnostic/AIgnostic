@@ -18,7 +18,6 @@ from sklearn.metrics import (
     r2_score,
 )
 from metrics.ntg_metric_utils import generate_random_strings
-import random
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
 from aif360.metrics import ClassificationMetric
@@ -241,7 +240,7 @@ def roc_auc(info: CalculateRequest) -> float:
     if info.task_name in ["binary_classification", "multi_class_classification"]:
         # Take the maximum confidence score as the score for the label
         scores = np.max(info.confidence_scores, axis=1)
-        
+
         # Ensure true_labels is a 1D array
         true_labels = np.array(info.true_labels).ravel()
 
@@ -565,14 +564,9 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 10) -> float:
         # In-distribution dataset (list of single-element lists, extracting strings)
         id_data: list[str] = [sample[0] for sample in info.input_features]
 
-        # Generate OOD samples via synonym perturbation (TODO: Update to more sophisticated method)
-        # ood_data = [synonym_perturbation(text) for text in random.choices(id_data, k=num_ood_samples)]        
+        # Generate OOD samples via random strings of length 10 
+        # (TODO: Update to more sophisticated method)
         ood_data: np.array = generate_random_strings(num_ood_samples).reshape(-1, 1)
-
-        print("OOD Data shape: ", ood_data.shape)
-
-        print("Length of ID Data:", len(id_data))
-        print("Length of OOD Data:", len(ood_data))
 
         # Call model endpoint to get confidence scores for OOD samples
         response: ModelResponse = _query_model(ood_data, info)
@@ -580,12 +574,8 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 10) -> float:
         # Flatten ID scores (take max probability for each ID sample)
         id_scores_flat: np.array = np.max(info.confidence_scores, axis=1)
 
-        print("ID scores length:", len(id_scores_flat))
-
         # Flatten OOD scores (take max confidence per sample)
         ood_scores_flat: np.array = np.max(response.confidence_scores, axis=1)
-
-        print("OOD scores length:", len(ood_scores_flat))
 
         # Construct labels: 1 for ID, 0 for OOD
         labels = np.concatenate([np.ones(len(id_scores_flat)), np.zeros(num_ood_samples)])
