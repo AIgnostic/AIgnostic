@@ -36,6 +36,16 @@ jest.mock('@react-pdf/renderer', () => ({
   StyleSheet: { create: (styles: any) => styles },
 }));
 
+jest.mock('../src/app/utils', () => ({
+  __esModule: true,
+  checkURL: jest.fn(),
+  checkBatchConfig: jest.fn(),
+  generateReportText: jest.fn(),
+  fetchMetricInfo: jest.fn().mockResolvedValue({
+    'Binary Classification': ['Binary Text Classification'],
+  }),
+}));
+
 const mockNavigate = jest.fn();
 
 // Mock useNavigate to return our fake navigate function
@@ -117,16 +127,6 @@ describe('Stepper Navigation', () => {
     expect(screen.getByText(steps[0].label)).toBeInTheDocument();
   });
 });
-
-jest.mock('../src/app/utils', () => ({
-  __esModule: true,
-  checkURL: jest.fn(),
-  checkBatchConfig: jest.fn(),
-  generateReportText: jest.fn(),
-  fetchMetricInfo: jest.fn().mockResolvedValue({
-    'Binary Classification': ['Binary Text Classification'],
-  }),
-}));
 
 describe('Form Validation', () => {
   // it('should show an error if the model URL is invalid', () => {
@@ -381,6 +381,38 @@ describe('UI Components', () => {
   });
 });
 
+describe('Metric Chips', () => {
+  it('should update metricChips based on selected model type', async () => {
+    render(<Homepage />);
+
+    // Simulate entering valid URLs and navigating to the report generation step
+    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
+      target: { value: 'http://valid-model-url.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
+      target: { value: 'http://valid-dataset-url.com' },
+    });
+
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    const radio = await screen.findByLabelText('Binary Classification');
+    await waitFor(() => {
+      fireEvent.click(radio);
+    });
+    await waitFor(() => {
+      const nextButtons = screen.getAllByText('Next');
+      expect(nextButtons.length).toBeGreaterThanOrEqual(1);
+    });
+    fireEvent.click(screen.getAllByText('Next')[0]);
+    fireEvent.click(screen.getAllByText('Next')[0]);
+
+    // Verify the expected metrics
+    const expectedMetrics = ['Binary Text Classification'];
+    expectedMetrics.forEach((metric) => {
+      expect(screen.getByText(metric)).toBeInTheDocument();
+    });
+  });
+});
+
 describe('API Calls', () => {
   beforeEach(() => {
     // Mock fetch globally
@@ -388,10 +420,6 @@ describe('API Calls', () => {
 
     // Mock createObjectURL to avoid test errors
     global.URL.createObjectURL = jest.fn();
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks();
   });
 
   // it('downloads a report on successful response from handleSubmit', async () => {
@@ -471,27 +499,6 @@ describe('API Calls', () => {
 });
 
 describe('Model Type Selection', () => {
-  it('should update metricChips based on selected model type', async () => {
-    render(<Homepage />);
-    fireEvent.change(screen.getByLabelText(/Model API URL/i), {
-      target: { value: 'http://valid-model-url.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
-      target: { value: 'http://valid-dataset-url.com' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    const radio = await screen.findByLabelText('Binary Classification');
-    await waitFor(() => {
-      fireEvent.click(radio);
-    });
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    fireEvent.click(screen.getAllByText('Next')[0]);
-    const expectedMetrics = modelTypesToMetrics['Binary Classification'];
-    expectedMetrics.forEach((metric) => {
-      expect(screen.getByText(metric)).toBeInTheDocument();
-    });
-  });
-
   it('should update selectedModelType state on radio button change', async () => {
     render(<Homepage />);
     fireEvent.change(screen.getByLabelText(/Model API URL/i), {
@@ -500,9 +507,11 @@ describe('Model Type Selection', () => {
     fireEvent.change(screen.getByLabelText(/Dataset API URL/i), {
       target: { value: 'http://valid-dataset-url.com' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+    fireEvent.click(screen.getAllByText('Next')[0]);
     const radio = await screen.findByLabelText('Binary Classification');
-    fireEvent.click(radio);
+    await waitFor(() => {
+      fireEvent.click(radio);
+    });
 
     expect(radio).toBeChecked();
   });
