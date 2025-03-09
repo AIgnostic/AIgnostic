@@ -102,7 +102,7 @@ task_type_to_metric = {
     ],
     TaskType.NEXT_TOKEN_GENERATION: [
         "expl_stability_text_input",
-        "hello_score"
+        "hello_score",
     ]
 }
 """

@@ -16,11 +16,6 @@ property_to_regulations = {
 }
 
 property_to_metrics = {
-    "explainability": [
-        "explanation stability score",
-        "explanation sparsity score",
-        "explanation fidelity score",
-    ],
     "fairness": [
         "accuracy",
         "precision",
@@ -35,6 +30,14 @@ property_to_metrics = {
         "negative predictive value",
         "positive predictive value",
         "roc auc",
+        "mean absolute error",
+        "mean squared error",
+        "r squared",
+    ],
+    "explainability": [
+        "explanation stability score",
+        "explanation sparsity score",
+        "explanation fidelity score",
     ],
     "uncertainty": [
         "ood auroc",

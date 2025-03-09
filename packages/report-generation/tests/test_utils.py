@@ -221,8 +221,8 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
 
     result = get_legislation_extracts(metrics_data)
 
-    assert result[1]["property"] == "fairness"
-    assert result[1]["computed_metrics"] == [{
+    assert result[0]["property"] == "fairness"
+    assert result[0]["computed_metrics"] == [{
         "metric": "equal opportunity difference",
         "value": 0.5,
         "ideal_value": 0,
@@ -239,8 +239,8 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
         "error": None
     }]
 
-    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["explainability"])
-    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["fairness"])
+    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["fairness"])
+    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
     assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["uncertainty"])
     assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
     assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
@@ -259,8 +259,8 @@ def test_generate_report_with_empty_metrics(mock_dependencies):
     assert result[4]["computed_metrics"] == []
     assert result[5]["computed_metrics"] == []
 
-    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["explainability"])
-    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["fairness"])
+    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["fairness"])
+    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
     assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["uncertainty"])
     assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
     assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
@@ -281,8 +281,8 @@ def test_generate_report_with_non_existent_metric(mock_dependencies):
     assert result[4]["computed_metrics"] == []
     assert result[5]["computed_metrics"] == []
 
-    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["explainability"])
-    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["fairness"])
+    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["fairness"])
+    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
     assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["uncertainty"])
     assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
     assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
