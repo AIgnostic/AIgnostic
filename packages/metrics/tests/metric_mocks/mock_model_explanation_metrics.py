@@ -13,6 +13,14 @@ app.add_middleware(
 )
 
 
+@app.post('/predict-non-numeric-ESS', response_model=ModelResponse)
+async def predict_non_numeric(input_data: DatasetResponse):
+    return ModelResponse(
+        predictions=[['Positive'] for _ in range(len(input_data.features))],
+        confidence_scores=[[1] for _ in range(len(input_data.features))]
+    )
+
+
 @app.post('/predict-10000-ESS', response_model=ModelResponse)
 async def predict_10000(input_data: DatasetResponse):
     return ModelResponse(

@@ -285,6 +285,7 @@ class Worker:
             predicted_labels = model_response.predictions
 
             print(f"Metrics to compute: {metrics_data.metrics}")
+            print(f"Confidence scores from model: {model_response.confidence_scores}")
 
             if metrics_data.model_type == TaskType.BINARY_CLASSIFICATION or \
                metrics_data.model_type == TaskType.MULTI_CLASS_CLASSIFICATION:
