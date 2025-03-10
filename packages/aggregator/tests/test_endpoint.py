@@ -39,7 +39,7 @@ def test_create_legislation_info():
 
 def test_filter_legislation_information():
     labels = ["GDPR"]
-    updated_info =  filter_legislation_information(labels)
+    updated_info = filter_legislation_information(labels)
     assert "gdpr" in updated_info
     assert updated_info["gdpr"].name == "GDPR"
     assert updated_info["gdpr"].url == "https://gdpr-info.eu/"
@@ -49,13 +49,13 @@ def test_filter_legislation_information():
 
 def test_filter_legislation_information_empty():
     labels = []
-    updated_info =  filter_legislation_information(labels)
+    updated_info = filter_legislation_information(labels)
     assert updated_info == {}
 
 
 def test_filter_legislation_information_multiple():
     labels = ["GDPR", "EU AI Act"]
-    updated_info =  filter_legislation_information(labels)
+    updated_info = filter_legislation_information(labels)
     assert "gdpr" in updated_info
     assert "eu_ai" in updated_info
     assert updated_info["gdpr"].name == "GDPR"
