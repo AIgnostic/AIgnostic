@@ -38,6 +38,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, expectedItems }) => {
   const { disconnectRef, userId, socket, refreshUserId, closeSocket } =
     useUser();
 
+  const [stopped, setStopped] = useState(false);
+
   const buttonRetry = (
     <button
       onClick={() => {
@@ -221,37 +223,54 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, expectedItems }) => {
         />
       )}
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }}
-      >
-        <p>{log}</p>
+      {!stopped ? (
+        <>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '10px',
+            }}
+          >
+            <p>{log}</p>
 
-        <Button
-          onClick={async () => {
-            await earlyStop();
-            setItems([]);
-            setLog('Log: Evaluation pipeline cancelled. Reload page?');
-            setRetryButton(buttonRetry);
+            <Button
+              onClick={async () => {
+                await earlyStop();
+                setItems([]);
+                setLog('Log: Evaluation pipeline cancelled. Reload page?');
+                setRetryButton(buttonRetry);
+                setStopped(true);
+              }}
+              style={styles.button}
+            >
+              Stop Early
+            </Button>
+          </div>
+
+          <BorderLinearProgress
+            variant="determinate"
+            value={overallProgress * 100}
+          />
+          <p>
+            {items.length} / {expectedItems} batches processed
+          </p>
+        </>
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '10px',
           }}
-          style={styles.button}
         >
-          Stop Early
-        </Button>
-      </div>
-
-      <BorderLinearProgress
-        variant="determinate"
-        value={overallProgress * 100}
-      />
-      <p>
-        {items.length} / {expectedItems} batches processed
-      </p>
+          <p>Pipeline Cancelled.</p>
+        </div>
+      )}
 
       {/* Render each item as a card */}
       <div
