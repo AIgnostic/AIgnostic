@@ -66,10 +66,10 @@ const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/retrieve-metric-info'
   : 'http://localhost:8000/retrieve-metric-info';
 const AGGREGATOR_SERVER_URL = IS_PROD
-  ? 'https://aignostic-api.docsoc.co.uk/fetch-frontend-information'
+  ? 'https://aignostic-api.docsoc.co.uk/aggregator/fetch-frontend-information'
   : 'http://localhost:8005/fetch-frontend-information';
 const AGGREGATOR_UPLOAD_URL = IS_PROD
-  ? 'https://aignostic-api.docsoc.co.uk/upload-selected-legislation'
+  ? 'https://aignostic-api.docsoc.co.uk/aggregator/upload-selected-legislation'
   : 'http://localhost:8005/upload-selected-legislation';
 const BACKEND_STOP_JOB_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/stop-job'
@@ -130,4 +130,3 @@ export {
   MOCK_SCIKIT_REGRESSOR_URL_PROD,
   MOCK_SCIKIT_REGRESSION_DATASET_URL_PROD,
 };
-
