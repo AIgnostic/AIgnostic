@@ -143,7 +143,7 @@ class MetricsAggregator:
                     continue
                 if isinstance(metric_value_obj, MetricsPackageExceptionModel):
                     self.metrics[metric]["count"] += batch_size
-                    self.metrics[metric]["error"] = metric_value_obj.error_message
+                    self.metrics[metric]["error"] = metric_value_obj.detail
                     continue
 
                 # Update the running average incrementally
