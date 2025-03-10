@@ -1,21 +1,9 @@
 import jsPDF from 'jspdf';
 import {
   BACKEND_FETCH_METRIC_INFO_URL,
-  MOCK_WIKI_DATASET_API_URL,
-  MOCK_GEMINI_API_URL,
-  MOCK_SCIKIT_REGRESSOR_URL,
-  MOCK_SCIKIT_REGRESSION_DATASET_URL,
-  MOCK_SCIKIT_REGRESSOR_URL_PROD,
-  MOCK_SCIKIT_REGRESSION_DATASET_URL_PROD,
-  MOCK_SCIKIT_API_URL,
-  MOCK_FINBERT_API_URL,
-  MOCK_FOLKTABLES_DATASET_API_URL,
-  MOCK_FINANCIAL_DATASET_API_URL,
-  MOCK_SCIKIT_API_URL_PROD,
-  MOCK_FINBERT_API_URL_PROD,
-  MOCK_FOLKTABLES_DATASET_API_URL_PROD,
-  MOCK_FINANCIAL_DATASET_API_URL_PROD,
+  AGGREGATOR_SERVER_URL,
 } from './constants';
+
 
 const MIN_SAMPLE_SIZE = 1000;
 const MAX_SAMPLE_SIZE = 10000;
@@ -30,41 +18,33 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
     throw error; // Rethrow the error so the caller can handle it
   }
 }
-function checkURL(str: string): boolean {
-  const regex = /^(https?:\/\/)?(([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*)(\.[a-zA-Z]{2,})?|([0-9]{1,3}\.){3}[0-9]{1,3})(:\d+)?(\/[^\s]*)?$/;
 
-  const validURLS = [
-    MOCK_SCIKIT_API_URL,
-    MOCK_FINBERT_API_URL,
-    MOCK_FOLKTABLES_DATASET_API_URL,
-    MOCK_FINANCIAL_DATASET_API_URL,
-    "http://localhost:5001/predict",
-    "http://localhost:5024/fetch-datapoints",
-    "http://localhost:9001/predict",
-    "http://localhost:5025/fetch-datapoints",
-    "http://localhost:5011/predict",
-    "http://localhost:5010/fetch-datapoints",
-    // Prod
-    MOCK_SCIKIT_API_URL_PROD,
-    MOCK_FINBERT_API_URL_PROD,
-    MOCK_FOLKTABLES_DATASET_API_URL_PROD,
-    MOCK_FINANCIAL_DATASET_API_URL_PROD,
-    MOCK_GEMINI_API_URL,
-    MOCK_WIKI_DATASET_API_URL,
-    MOCK_SCIKIT_REGRESSOR_URL,
-    MOCK_SCIKIT_REGRESSION_DATASET_URL,
-    MOCK_SCIKIT_REGRESSOR_URL_PROD,
-    MOCK_SCIKIT_REGRESSION_DATASET_URL_PROD,
-  ];
-
-  if (validURLS.includes(str)) {
-    return true;
+async function fetchLegislationInfo(): Promise<LegislationList> {
+  try {
+    console.log('fetching legislation info');
+    const response = await fetch(AGGREGATOR_SERVER_URL);
+    console.log('fetched legislation info');
+    console.log("response", response);
+    const data: LegislationList = await response.json();
+    console.log("data", data);
+    if (!data.legislation) {
+      throw new Error('No legislation found');
+    }
+    console.log('acquired legislation info');
+    return { legislation: data.legislation };
+  } catch (error) {
+    console.error('Error:', error);
+    throw error; // Rethrow the error so the caller can handle it
   }
+}
 
+
+function checkValidURL(str: string): boolean {
+  const regex = /^(https?:\/\/)?(([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*)(\.[a-zA-Z]{2,})?|([0-9]{1,3}\.){3}[0-9]{1,3})(:\d+)?(\/[^\s]*)?$/;
   if (!regex.test(str)) {
     return false;
   }
-  
+
   let url;
   try {
     url = new URL(str);
@@ -82,18 +62,19 @@ function checkBatchConfig(batchSize: number, numberOfBatches: number): boolean {
   const totalSampleSize = batchSize * numberOfBatches;
   return MIN_SAMPLE_SIZE <= totalSampleSize && totalSampleSize <= MAX_SAMPLE_SIZE;
 }
-
 export interface TaskToMetricMap {
   [taskType: string]: string[];
 }
-
 export interface MetricInfo {
   task_to_metric_map: TaskToMetricMap;
 }
 
+export interface LegislationList {
+  legislation: string[];
+}
 function applyStyle(doc: jsPDF, style: any) {
   doc.setFont(style.font, style.style);
   doc.setFontSize(style.size);
 }
 
-export { checkURL, checkBatchConfig, applyStyle, fetchMetricInfo };
+export { checkValidURL as checkURL, checkBatchConfig, applyStyle, fetchMetricInfo, fetchLegislationInfo };

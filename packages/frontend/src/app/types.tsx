@@ -16,6 +16,7 @@ export interface ReportPropertySection {
   llm_insights: string[];
 }
 
+
 export interface Report {
   info: { [key: string]: any };
   properties: ReportPropertySection[];
@@ -24,9 +25,14 @@ export interface Report {
 export interface LegislationExtract {
   article_number: number;
   article_title: string;
+  article_type: string;
   link: string;
   description: string;
   suitable_recitals: string[];
+}
+
+export interface LegislationExtracts {
+  legislation: LegislationExtract[];
 }
 
 export interface Metric {
@@ -58,6 +64,7 @@ export interface HomepageState {
   activeStep: number;
   selectedItem: string;
   metricChips: { id: string; label: string; selected: boolean }[];
+  legislationChips: { id: string; label: string; selected: boolean }[];
   metricsHelperText: string;
   selectedModelType: string;
   error: boolean;

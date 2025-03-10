@@ -64,13 +64,14 @@ describe('ReportRenderer', () => {
                         error: 'Computing this metric failed.'
                     }
                 ],
-                legislation_extracts: [
+                legislation_extracts: [[
                     { article_number: 5, 
+                    article_type: "GDPR",
                      article_title: 'Fair AI Act', 
                      link: 'https://example.com',
                      description: 'AI systems must be unbiased.', 
                      suitable_recitals: ['Recital 1', 'Recital 2']}
-                ],
+                ]],
                 llm_insights: ['This model demonstrates low bias but needs further evaluation.']
             }
         ]
@@ -110,7 +111,7 @@ describe('ReportRenderer', () => {
         expect(metricBars.length).toBe(3);
 
         expect(getByText('Legislation')).toBeTruthy();
-        expect(getByText('• Article 5 [Fair AI Act]:')).toBeTruthy();
+        expect(getByText('Article 5: Fair AI Act')).toBeTruthy();
         expect(getByText('https://example.com')).toBeTruthy();
         expect(getByText('LLM Insights')).toBeTruthy();
         expect(getByText('This model demonstrates low bias but needs further evaluation.')).toBeTruthy();
@@ -123,7 +124,7 @@ describe('ReportRenderer', () => {
     it("renders error metrics correctly", () => {
         const { getByText } = render(<ReportRenderer report={sampleReport} />);
         expect(getByText('Errored Metric')).toBeTruthy();
-        expect(getByText('An error occured during the computation of this metric.'));
+        expect(getByText('An error occurred during the computation of this metric.'));
     });
 
 });

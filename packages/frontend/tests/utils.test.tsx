@@ -1,6 +1,7 @@
 import { checkURL, checkBatchConfig } from '../src/app/utils';
 import '@testing-library/jest-dom';
 import {
+
   MOCK_SCIKIT_API_URL,
   MOCK_FINBERT_API_URL,
   MOCK_FOLKTABLES_DATASET_API_URL,
@@ -10,7 +11,8 @@ import {
   MOCK_SCIKIT_REGRESSION_DATASET_URL,
   MOCK_SCIKIT_REGRESSOR_URL,
 } from '../src/app/constants';
-
+import { fetchLegislationInfo } from '../src/app/utils';
+import { AGGREGATOR_SERVER_URL } from '../src/app/constants';
 describe('checkURL function', () => {
   it('should return true for valid URLs', () => {
     const validUrls = [
@@ -89,5 +91,42 @@ describe('checkBatchConfig function', () => {
     invalidConfigs.forEach(({ batchSize, numberOfBatches }) => {
       expect(checkBatchConfig(batchSize, numberOfBatches)).toBe(false);
     });
+  });
+});
+
+
+
+describe('fetchLegislationInfo function', () => {
+  beforeEach(() => {
+    global.fetch = jest.fn();
+  });
+
+  it('should fetch and return legislation info successfully', async () => {
+    const mockLegislationList = { legislation: [{ id: 1, name: 'Legislation 1' }] };
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      json: jest.fn().mockResolvedValueOnce(mockLegislationList),
+    });
+
+    const result = await fetchLegislationInfo();
+    expect(result).toEqual(mockLegislationList);
+    expect(global.fetch).toHaveBeenCalledWith(AGGREGATOR_SERVER_URL);
+  });
+
+  it('should throw an error if no legislation is found', async () => {
+    const mockEmptyLegislationList = { legislation: null };
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      json: jest.fn().mockResolvedValueOnce(mockEmptyLegislationList),
+    });
+
+    await expect(fetchLegislationInfo()).rejects.toThrow('No legislation found');
+    expect(global.fetch).toHaveBeenCalledWith(AGGREGATOR_SERVER_URL);
+  });
+
+  it('should throw an error if fetch fails', async () => {
+    const mockError = new Error('Fetch failed');
+    (global.fetch as jest.Mock).mockRejectedValueOnce(mockError);
+
+    await expect(fetchLegislationInfo()).rejects.toThrow('Fetch failed');
+    expect(global.fetch).toHaveBeenCalledWith(AGGREGATOR_SERVER_URL);
   });
 });

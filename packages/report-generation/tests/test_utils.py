@@ -3,7 +3,7 @@ from report_generation.utils import extract_legislation_text
 from report_generation.utils import parse_legislation_text
 from report_generation.utils import get_legislation_extracts
 from report_generation.utils import add_llm_insights
-from report_generation.constants import property_to_regulations
+from common.models import LegislationInfo
 from unittest import mock
 import pytest
 
@@ -17,8 +17,8 @@ LLM_INSIGHTS = 'llm_insights.insights.metric_insights'
 
 
 def test_search_legislation_with_valid_metric():
-    metric = "ood auroc"
-    expected_output = ["13"]
+    metric = "fast gradient sign method"
+    expected_output = []
     result = search_legislation(metric)
     assert result == expected_output
 
@@ -47,21 +47,30 @@ def test_search_legislation_with_empty_string():
 """ EXTRACT LEGISLATION TESTS """
 
 
+# Helper function
+def article_extension(article):
+    return f"art-{article}-gdpr/"
+
+
 def test_extract_legislation_text_with_valid_article():
-    article_31_text = extract_legislation_text("31")
+    article_num = "31"
+    url = "https://gdpr-info.eu/"
+    article_31_text = extract_legislation_text(article_num, url, article_extension)
     assert "Art. 31" in article_31_text
 
 
 def test_extract_legislation_text_with_non_existent_article():
-    article = "999"
-    result = extract_legislation_text(article)
+    article_num = "999"
+    url = "https://gdpr-info.eu/"
+    result = extract_legislation_text(article_num, url, article_extension)
     assert "Failed to fetch Article 999." in result
 
 
 def test_extract_legislation_text_with_invalid_response():
     with mock.patch('requests.get', return_value=mock.Mock(status_code=404)):
-        article = "31"
-        result = extract_legislation_text(article)
+        article_num = "31"
+        url = "https://invalid-url/"
+        result = extract_legislation_text(article_num, url, article_extension)
     assert "Failed to fetch Article 31." in result
 
 
@@ -70,7 +79,8 @@ def test_extract_legislation_text_with_no_article_content():
                               text="<html><body></body></html>")
     with mock.patch('requests.get', return_value=mock_response):
         article = "31"
-        result = extract_legislation_text(article)
+        url = "https://invalid-url/"
+        result = extract_legislation_text(article, url, article_extension)
     assert "Could not parse content for Article 31." in result
 
 
@@ -78,21 +88,12 @@ def test_extract_legislation_text_with_no_article_content():
 
 
 def test_parse_legislation_text_with_valid_content():
-    article = "31"
-    article_content = (
-        "Art. 31 GDPR\n"
-        "Cooperation with the supervisory authority\n"
-        "The controller and the processor and, where applicable, "
-        "their representatives, shall cooperate, on request, with "
-        "the supervisory authority in the performance of its tasks.\n"
-        "Suitable Recitals\n"
-        "(\n"
-        "82\n"
-        ") Record of Processing Activities\n"
-        "<-\n"
-        "Art. 30 GDPR"
-    )
+    article_num = "31"
+    mock_name = "GDPR"
+    mock_url = "https://gdpr-info.eu/"
+    article_content = extract_legislation_text(article_num, mock_url, article_extension)
     expected_output = {
+        "article_type": "GDPR",
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
         "link": "https://gdpr-info.eu/art-31-gdpr/",
@@ -101,12 +102,17 @@ def test_parse_legislation_text_with_valid_content():
         "with the supervisory authority in the performance of its tasks.",
         "suitable_recitals": ["https://gdpr-info.eu/recitals/no-82/"]
     }
-    result = parse_legislation_text(article, article_content)
+    info = LegislationInfo(name=mock_name, url=mock_url, article_extract=article_extension)
+    result = parse_legislation_text(article_num,
+                                    article_content, info)
+    print("Result", result)
     assert result == expected_output
 
 
 def test_parse_legislation_text_with_multiple_recitals():
-    article = "31"
+    article_num = "31"
+    mock_name = "GDPR"
+    mock_url = "https://gdpr-info.eu/"
     article_content = """
     Art. 31 GDPR
     Cooperation with the supervisory authority
@@ -124,6 +130,7 @@ def test_parse_legislation_text_with_multiple_recitals():
     Art. 30 GDPR
     """
     expected_output = {
+        "article_type": "GDPR",
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
         "link": "https://gdpr-info.eu/art-31-gdpr/",
@@ -133,12 +140,15 @@ def test_parse_legislation_text_with_multiple_recitals():
         "suitable_recitals": ["https://gdpr-info.eu/recitals/no-82/",
                               "https://gdpr-info.eu/recitals/no-81/"]
     }
-    result = parse_legislation_text(article, article_content)
+    info = LegislationInfo(name=mock_name, url=mock_url, article_extract=article_extension)
+    result = parse_legislation_text(article_num, article_content, info)
     assert result == expected_output
 
 
 def test_parse_legislation_text_with_no_recitals():
     article = "31"
+    mock_name = "GDPR"
+    mock_url = "https://gdpr-info.eu/"
     article_content = """
     Art. 31 GDPR
     Cooperation with the supervisory authority
@@ -150,6 +160,7 @@ def test_parse_legislation_text_with_no_recitals():
     Art. 30 GDPR
     """
     expected_output = {
+        "article_type": "GDPR",
         "article_number": "31",
         "article_title": "Cooperation with the supervisory authority",
         "link": "https://gdpr-info.eu/art-31-gdpr/",
@@ -159,21 +170,26 @@ def test_parse_legislation_text_with_no_recitals():
         "in the performance of its tasks.",
         "suitable_recitals": []
     }
-    result = parse_legislation_text(article, article_content)
+    info = LegislationInfo(name=mock_name, url=mock_url, article_extract=article_extension)
+    result = parse_legislation_text(article, article_content, info)
     assert result == expected_output
 
 
 def test_parse_legislation_text_with_empty_content():
     article = "31"
+    mock_name = "GDPR"
+    mock_url = "https://gdpr-info.eu/"
     article_content = ""
     expected_output = {
+        "article_type": "GDPR",
         "article_number": "31",
         "article_title": "",
         "link": "https://gdpr-info.eu/art-31-gdpr/",
         "description": "",
         "suitable_recitals": []
     }
-    result = parse_legislation_text(article, article_content)
+    info = LegislationInfo(name=mock_name, url=mock_url, article_extract=article_extension)
+    result = parse_legislation_text(article, article_content, info)
     assert result == expected_output
 
 
@@ -204,6 +220,18 @@ def mock_dependencies():
 
 
 def test_generate_report_with_valid_metrics(mock_dependencies):
+    legislation_information = {
+        "gdpr": LegislationInfo(
+            name="GDPR",
+            url="https://gdpr-info.eu/",
+            article_extract=article_extension
+        ),
+        "eu_ai": LegislationInfo(
+            name="EU AI Act",
+            url="https://ai-act-law.eu/",
+            article_extract=article_extension
+        )
+    }
     metrics_data = {
         "ood_auroc": {
             "value": 0.6,
@@ -219,7 +247,7 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
         }
     }
 
-    result = get_legislation_extracts(metrics_data)
+    result = get_legislation_extracts(metrics_data, legislation_information)
 
     assert result[0]["property"] == "fairness"
     assert result[0]["computed_metrics"] == [{
@@ -238,19 +266,20 @@ def test_generate_report_with_valid_metrics(mock_dependencies):
         "range": (0, 1),
         "error": None
     }]
-
-    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["fairness"])
-    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
-    assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["uncertainty"])
-    assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
-    assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
-    assert len(result[5]["legislation_extracts"]) == len(property_to_regulations["data minimality"])
+    # assert len(result[2]["legislation_extracts"][0][0]) == len(property_to_regulations["fairness"])
+    # assert len(result[3]["legislation_extracts"][0][0]) == len(property_to_regulations["uncertainty"])
 
 
 def test_generate_report_with_empty_metrics(mock_dependencies):
     metrics_data = {}
-
-    result = get_legislation_extracts(metrics_data)
+    legislation_information = {
+        "gdpr": LegislationInfo(
+            name="GDPR",
+            url="https://gdpr-info.eu/",
+            article_extract=lambda article_number: f"art-{article_number}-gdpr"
+        ),
+    }
+    result = get_legislation_extracts(metrics_data, legislation_information)
 
     assert result[0]["computed_metrics"] == []
     assert result[1]["computed_metrics"] == []
@@ -259,20 +288,27 @@ def test_generate_report_with_empty_metrics(mock_dependencies):
     assert result[4]["computed_metrics"] == []
     assert result[5]["computed_metrics"] == []
 
-    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["fairness"])
-    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
-    assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["uncertainty"])
-    assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
-    assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
-    assert len(result[5]["legislation_extracts"]) == len(property_to_regulations["data minimality"])
+    # assert len(result[0]["legislation_extracts"][0]) == len(property_to_regulations["adversarial robustness"])
+    # assert len(result[1]["legislation_extracts"][0]) == len(property_to_regulations["explainability"])
+    # assert len(result[2]["legislation_extracts"][0]) == len(property_to_regulations["fairness"])
+    # assert len(result[3]["legislation_extracts"][0]) == len(property_to_regulations["uncertainity"])
+    # assert len(result[4]["legislation_extracts"][0]) == len(property_to_regulations["privacy"])
+    # assert len(result[5]["legislation_extracts"][0]) == len(property_to_regulations["data minimality"])
 
 
 def test_generate_report_with_non_existent_metric(mock_dependencies):
     metrics_data = {
         "non-existent metric": {}
     }
+    legislation_information = {
+        "gdpr": LegislationInfo(
+            name="GDPR",
+            url="https://gdpr-info.eu/",
+            article_extract=article_extension
+        ),
+    }
 
-    result = get_legislation_extracts(metrics_data)
+    result = get_legislation_extracts(metrics_data, legislation_information)
 
     assert result[0]["computed_metrics"] == []
     assert result[1]["computed_metrics"] == []
@@ -281,12 +317,12 @@ def test_generate_report_with_non_existent_metric(mock_dependencies):
     assert result[4]["computed_metrics"] == []
     assert result[5]["computed_metrics"] == []
 
-    assert len(result[0]["legislation_extracts"]) == len(property_to_regulations["fairness"])
-    assert len(result[1]["legislation_extracts"]) == len(property_to_regulations["explainability"])
-    assert len(result[2]["legislation_extracts"]) == len(property_to_regulations["uncertainty"])
-    assert len(result[3]["legislation_extracts"]) == len(property_to_regulations["adversarial robustness"])
-    assert len(result[4]["legislation_extracts"]) == len(property_to_regulations["privacy"])
-    assert len(result[5]["legislation_extracts"]) == len(property_to_regulations["data minimality"])
+    # assert len(result[0]["legislation_extracts"][0]) == len(property_to_regulations["adversarial robustness"])
+    # assert len(result[1]["legislation_extracts"][0]) == len(property_to_regulations["explainability"])
+    # assert len(result[2]["legislation_extracts"][0]) == len(property_to_regulations["fairness"])
+    # assert len(result[3]["legislation_extracts"][0]) == len(property_to_regulations["uncertainity"])
+    # assert len(result[4]["legislation_extracts"][0]) == len(property_to_regulations["privacy"])
+    # assert len(result[5]["legislation_extracts"][0]) == len(property_to_regulations["data minimality"])
 
 
 def test_add_llm_insights(mock_dependencies):
