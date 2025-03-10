@@ -9,13 +9,14 @@ def test_metric_insights():
         {"metric": "Bias", "value": "0.2"},
         {"metric": "Representation", "value": "0.8"}
     ]
-    article_extracts = [
+    article_extracts = [[
         {
+            "article_type": "GDPR",
             "article_number": "1",
             "article_title": "Title 1",
             "description": "Description 1",
         }
-    ]
+    ]]
 
     mock_llm = MagicMock()
     mock_response = "Mocked LLM Response"

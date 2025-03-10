@@ -33,28 +33,22 @@ class ModelResponse(BaseModel):  # pragma: no cover
     confidence_scores: Optional[list[list]] = None
 
 
-class LLMInput(DatasetResponse, BaseModel):  # pragma: no cover
-    """
-    A model for next token generation
-
-    Attributes:
-        prompt: str - the prompt for the language model
-        max_length: int - the maximum length of the generated sequence
-    """
-
-    prompt: str
-    max_length: int
+class LegislationList(BaseModel):
+    legislation: list[str]
 
 
-class LLMResponse(DatasetResponse, BaseModel):  # pragma: no cover
-    """
-    A model for next token generation
+class LegislationInfo(BaseModel):
+    name: str
+    url: str
+    article_extract: callable
 
-    Attributes:
-        response: str - response generated from the model
-    """
+    class Config:
+        arbitrary_types_allowed = True
 
-    response: str
+
+class LegislationInformation(BaseModel):
+    user_id: str
+    legislation: dict[str, LegislationInfo]
 
 
 class AggregatorMessage(BaseModel, ABC):  # pragma: no cover

@@ -1,6 +1,6 @@
 import { IS_PROD } from './env';
 import { ConditionAlertFailure, HomepageState } from './types';
-import { fetchMetricInfo } from './utils';
+
 const AIGNOSTIC = 'AIgnostic';
 const HOME = '/';
 
@@ -65,6 +65,12 @@ const WEBSOCKET_URL = IS_PROD
 const BACKEND_FETCH_METRIC_INFO_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/retrieve-metric-info'
   : 'http://localhost:8000/retrieve-metric-info';
+const AGGREGATOR_SERVER_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/aggregator/fetch-frontend-information'
+  : 'http://localhost:8005/fetch-frontend-information';
+const AGGREGATOR_UPLOAD_URL = IS_PROD
+  ? 'https://aignostic-api.docsoc.co.uk/aggregator/upload-selected-legislation'
+  : 'http://localhost:8005/upload-selected-legislation';
 const BACKEND_STOP_JOB_URL = IS_PROD
   ? 'https://aignostic-api.docsoc.co.uk/stop-job'
   : 'http://localhost:8000/stop-job';
@@ -85,6 +91,11 @@ const activeStepToInputConditions: { [key: number]: ConditionAlertFailure } = {
   1: {
     pred: (state: HomepageState) => state.selectedModelType !== '',
     error_msg: 'Please select a model type.',
+  },
+
+  2: {
+    pred: (state: HomepageState) => state.legislationChips.length > 0,
+    error_msg: 'Please select at least one legislation.',
   },
   3: {
     pred: (state: HomepageState) => state.metricChips.length > 0,
@@ -112,6 +123,8 @@ export {
   activeStepToInputConditions,
   WEBSOCKET_URL,
   USER_METRICS_SERVER_URL,
+  AGGREGATOR_SERVER_URL,
+  AGGREGATOR_UPLOAD_URL,
   MOCK_SCIKIT_REGRESSOR_URL,
   MOCK_SCIKIT_REGRESSION_DATASET_URL,
   MOCK_SCIKIT_REGRESSOR_URL_PROD,

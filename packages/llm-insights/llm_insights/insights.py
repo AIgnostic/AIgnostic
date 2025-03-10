@@ -33,7 +33,7 @@ def init_llm(api_key: str) -> BaseChatModel:
 def metric_insights(
     property_name: str,
     metrics: List[Dict[str, str]],
-    article_extracts: List[dict],
+    article_extracts: List[List],
     llm: BaseChatModel,
 ) -> BaseMessage:
     """Obtain insights into multiple metrics using an LLM.
@@ -41,7 +41,7 @@ def metric_insights(
     Args:
         property_name (str): Name of the property in question
         metrics (List[Dict[str, str]]): List of dictionaries with 'metric' and 'value' keys
-        article_extracts (List[dict]): Extracts of articles related to the metrics/property to use
+        article_extracts (Dict[List]): Extracts of articles related to the metrics/property to use
         llm (BaseChatModel): LLM to use, likely created using init_llm but can be any LLM from LangChain
 
     Returns:

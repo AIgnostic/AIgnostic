@@ -13,14 +13,55 @@ from common.models import (
     JobType,
     AggregatorJob,
     WorkerError,
+    LegislationList
 )
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
 from worker.worker import USER_METRIC_SERVER_URL
 from aggregator.connection_manager import ConnectionManager
+from fastapi import FastAPI
+import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
+from .utils import LEGISLATION_INFORMATION, filter_legislation_information, userLegislation, LegRequest
 
 
 manager = ConnectionManager()
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+def read_root():
+    return {"Welcome to the Aggregator Service"}
+
+
+@app.get("/fetch-frontend-information")
+def fetch_frontend_information():
+    try:
+        labels = []
+        for legislation in LEGISLATION_INFORMATION.values():
+            labels.append(legislation.name)
+        print("Labels", labels)
+        return LegislationList(legislation=labels)
+    except Exception as e:
+        return {"error": str(e)}  # TODO: Catch the error
+
+
+@app.post("/upload-selected-legislation")
+async def upload_selected_legislation(request: LegRequest):
+    try:
+        legislation_list = request.legislation
+        selected_legislation = filter_legislation_information(legislation_list)
+        userLegislation[request.user_id] = selected_legislation
+    except Exception as e:
+        print(f"Uploading legislation errored: {e}")
+        return {"error": str(e)}
 
 
 def aggregator_metrics_completion_log():
@@ -319,7 +360,13 @@ def aggregator_generate_report(user_id, aggregates, aggregator):
             content=None,
         )
     )
-    report_properties_section = get_legislation_extracts(aggregates)
+
+    leg = LEGISLATION_INFORMATION
+
+    if user_id in userLegislation:
+        leg = userLegislation[user_id]
+
+    report_properties_section = get_legislation_extracts(aggregates, leg)
     print("Adding LLM Insights")
     manager.send_to_user(
         user_id,
@@ -401,6 +448,11 @@ def start_websocket_server():
     server.serve_forever()  # Blocking call
 
 
+def start_http_server():
+    uvicorn.run(app, host="0.0.0.0", port=8005)
+    print("HTTP server started on ws://0.0.0.0:8005")
+
+
 if __name__ == "__main__":
     # Load environment variables
 
@@ -410,6 +462,9 @@ if __name__ == "__main__":
 
     # Start WebSocket server in a separate thread
     threading.Thread(target=start_websocket_server, daemon=True).start()
+
+    # Start HTTPs server in a separate thread
+    threading.Thread(target=start_http_server, daemon=True).start()
 
     # Start RabbitMQ consumer (blocking)
     consumer = ResultsConsumer(RABBIT_MQ_HOST)

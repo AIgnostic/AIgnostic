@@ -1,10 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
-import { checkBatchConfig, checkURL, fetchMetricInfo } from './utils';
+import {
+  checkBatchConfig,
+  fetchMetricInfo,
+  fetchLegislationInfo,
+} from './utils';
 import {
   steps,
   BACKEND_EVALUATE_URL,
   activeStepToInputConditions,
   WEBSOCKET_URL,
+  AGGREGATOR_UPLOAD_URL,
 } from './constants';
 import Title from './components/title';
 import { styles } from './home.styles';
@@ -18,6 +23,7 @@ import {
   StepContent,
   Typography,
   CircularProgress,
+  Chip,
 } from '@mui/material';
 import { HomepageState } from './types';
 import Dashboard from './dashboard';
@@ -45,6 +51,7 @@ function Homepage() {
     activeStep: 0,
     selectedItem: '',
     metricChips: [],
+    legislationChips: [],
     metricsHelperText: '',
     selectedModelType: '',
     error: false,
@@ -86,6 +93,16 @@ function Homepage() {
   // const disconnectRef = useRef(false); // Track whether disconnect is intentional
   // let modelTypesToMetrics: { [key: string]: string[] } = {};
 
+  const setStateWrapper = <K extends keyof typeof state>(
+    key: K,
+    value: (typeof state)[K]
+  ) => {
+    setState((prevState) => ({
+      ...prevState,
+      [key]: value,
+    }));
+  };
+
   const [modelTypesToMetrics, setModelTypesToMetrics] = useState<{
     [key: string]: string[];
   }>({});
@@ -106,20 +123,32 @@ function Homepage() {
         });
     };
 
-    // Call the initialization function
-
+    const initLegislationLabels = () => {
+      fetchLegislationInfo()
+        .then((legislation) => {
+          const legislationChips = legislation.legislation.map(
+            (item: string) => {
+              return {
+                id: item,
+                label: item,
+                selected: true,
+              };
+            }
+          );
+          console.log('legislation info: ', legislationChips);
+          setStateWrapper('legislationChips', legislationChips);
+          console.log('legislation info2: ', legislationChips);
+        })
+        .catch((error) => {
+          console.error('Failed to fetch legislation info:', error);
+          // Call the function after 10 seconds
+          setTimeout(initLegislationLabels, 10000);
+        });
+    };
     initModelTypesToMetrics();
+    initLegislationLabels();
   }, []);
 
-  const setStateWrapper = <K extends keyof typeof state>(
-    key: K,
-    value: (typeof state)[K]
-  ) => {
-    setState((prevState) => ({
-      ...prevState,
-      [key]: value,
-    }));
-  };
   const getErrorProps = (isValid: boolean, errorMessage: string) => ({
     error: !isValid,
     helperText: !isValid ? errorMessage : '',
@@ -169,6 +198,43 @@ function Homepage() {
       num_batches: state.numberOfBatches,
       max_conc_batches: state.maxConcurrentBatches,
     };
+
+    const frontend_info = {
+      user_id: userId,
+      legislation: state.legislationChips
+        .filter((legislationChip) => legislationChip.selected)
+        .map((legislationChip) => legislationChip.label),
+    };
+    console.log('Data:', frontend_info);
+    try {
+      // Send POST request to backend server
+      const postFrontend = await fetch(AGGREGATOR_UPLOAD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(frontend_info),
+      });
+      console.log('Status: ', postFrontend.status);
+      if (postFrontend.status !== 200) {
+        const errorData = await postFrontend.json();
+        console.log('Error:', errorData.detail);
+        console.error(`Error: ${postFrontend.status}`, errorData.detail);
+        setStateWrapper('error', true);
+        setStateWrapper('errorMessage', {
+          header: `Error ${postFrontend.status}`,
+          text: errorData.detail,
+        });
+      }
+
+      console.log('Job accepted. Waiting for results');
+    } catch (error: any) {
+      console.log('Legislation Error status code:', error);
+      console.error('Error while posting to aggregator:', error.message);
+      setStateWrapper('error', true);
+      setStateWrapper('errorMessage', {
+        header: 'Submission Error',
+        text: error.message,
+      });
+    }
 
     try {
       // Send POST request to backend server
@@ -278,7 +344,29 @@ function Homepage() {
                   setStateWrapper={setStateWrapper}
                 />
               )}
-
+              {/* 3. SELECT METRICS */}
+              {index === 2 && (
+                <Box style={{ padding: '15px' }}>
+                  <p style={{ color: 'red' }}>{state.metricsHelperText}</p>
+                  {state.legislationChips.map((legislationChip, index) => (
+                    <Chip
+                      key={legislationChip.id || index}
+                      label={legislationChip.label}
+                      variant="filled"
+                      onDelete={() => {
+                        legislationChip.selected = !legislationChip.selected;
+                        setStateWrapper('metricChips', [...state.metricChips]);
+                      }}
+                      onClick={() => {
+                        legislationChip.selected = !legislationChip.selected;
+                        setStateWrapper('metricChips', [...state.metricChips]);
+                      }}
+                      color={legislationChip.selected ? 'secondary' : 'default'}
+                      style={{ margin: '5px' }}
+                    />
+                  ))}
+                </Box>
+              )}
               {/* 3. SELECT METRICS */}
               {index === 3 && (
                 <MetricsSelector
