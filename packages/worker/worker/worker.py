@@ -130,7 +130,7 @@ class Worker:
         params = {"n": batch_size}
 
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response = requests.get(url, headers=headers, params=params, timeout=90)
 
             # Raise for HTTP errors (4xx, 5xx)
             response.raise_for_status()
@@ -162,7 +162,7 @@ class Worker:
         except Exception as e:
             raise WorkerException(
                 detail=f"An unknown error occurred while querying the model: {e}",
-                status_code=500
+                status_code=500,
             )
 
         try:
@@ -287,8 +287,10 @@ class Worker:
             print(f"Metrics to compute: {metrics_data.metrics}")
             print(f"Confidence scores from model: {model_response.confidence_scores}")
 
-            if metrics_data.model_type == TaskType.BINARY_CLASSIFICATION or \
-               metrics_data.model_type == TaskType.MULTI_CLASS_CLASSIFICATION:
+            if (
+                metrics_data.model_type == TaskType.BINARY_CLASSIFICATION
+                or metrics_data.model_type == TaskType.MULTI_CLASS_CLASSIFICATION
+            ):
                 predicted_labels, true_labels = self.convert_to_numeric_classes(
                     predicted_labels, true_labels
                 )
