@@ -32,7 +32,7 @@ class LegRequest(BaseModel):
 userLegislation = {}
 
 
-def update_legislation_information(labels: list[str]):
+def filter_legislation_information(labels: list[str]):
     legislation_information = LEGISLATION_INFORMATION
     filtered_legislation_information = {
         key: value

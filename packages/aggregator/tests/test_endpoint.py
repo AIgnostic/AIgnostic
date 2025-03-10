@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from aggregator.aggregator import app
-from aggregator.utils import create_legislation_info, update_legislation_information
+from aggregator.utils import create_legislation_info,  filter_legislation_information
 
 client = TestClient(app)
 
@@ -37,9 +37,9 @@ def test_create_legislation_info():
     assert legislation_info.article_extract(1) == "art-1-test_legislation"
 
 
-def test_update_legislation_information():
+def test_filter_legislation_information():
     labels = ["GDPR"]
-    updated_info = update_legislation_information(labels)
+    updated_info =  filter_legislation_information(labels)
     assert "gdpr" in updated_info
     assert updated_info["gdpr"].name == "GDPR"
     assert updated_info["gdpr"].url == "https://gdpr-info.eu/"
@@ -47,15 +47,15 @@ def test_update_legislation_information():
     assert "eu_ai" not in updated_info
 
 
-def test_update_legislation_information_empty():
+def test_filter_legislation_information_empty():
     labels = []
-    updated_info = update_legislation_information(labels)
+    updated_info =  filter_legislation_information(labels)
     assert updated_info == {}
 
 
-def test_update_legislation_information_multiple():
+def test_filter_legislation_information_multiple():
     labels = ["GDPR", "EU AI Act"]
-    updated_info = update_legislation_information(labels)
+    updated_info =  filter_legislation_information(labels)
     assert "gdpr" in updated_info
     assert "eu_ai" in updated_info
     assert updated_info["gdpr"].name == "GDPR"

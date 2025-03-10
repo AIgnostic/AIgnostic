@@ -22,7 +22,7 @@ from aggregator.connection_manager import ConnectionManager
 from fastapi import FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-from .utils import LEGISLATION_INFORMATION, update_legislation_information, userLegislation, LegRequest
+from .utils import LEGISLATION_INFORMATION, filter_legislation_information, userLegislation, LegRequest
 
 
 manager = ConnectionManager()
@@ -56,15 +56,11 @@ def fetch_frontend_information():
 @app.post("/upload-selected-legislation")
 async def upload_selected_legislation(request: LegRequest):
     try:
-        print("entered into upload selected legislation")
         legislation_list = request.legislation
-        print(legislation_list)
-        # LEGISLATION_INFORMATION = update_legislation_information(legislation_list)
-        # print('LEGISLATION_INFORMATION UPDATED', LEGISLATION_INFORMATION)
-        selected_legislation = update_legislation_information(legislation_list)
+        selected_legislation = filter_legislation_information(legislation_list)
         userLegislation[request.user_id] = selected_legislation
     except Exception as e:
-        print(f"Uploading legilation errored: {e}")
+        print(f"Uploading legislation errored: {e}")
         return {"error": str(e)}
 
 
