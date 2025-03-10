@@ -138,8 +138,13 @@ class MetricsAggregator:
                     self.metrics[metric]["count"] += batch_size
                     continue
                 if isinstance(metric_value_obj, MetricsPackageExceptionModel):
-                    self.metrics[metric]["count"] += batch_size
-                    self.metrics[metric]["error"] = metric_value_obj.detail
+                    self.metrics[metric] = {
+                        "value": None,
+                        "ideal_value": None,
+                        "range": None,
+                        "count": self.metrics[metric]["count"] + batch_size,
+                        "error": metric_value_obj.detail,
+                    }
                     continue
 
                 # Update the running average incrementally
@@ -269,7 +274,9 @@ def process_batch_result(worker_results: WorkerResults, user_id: str):
         for metric, metric_value in worker_results.user_defined_metrics.items():
 
             metric_value_obj = (
-                MetricsPackageExceptionModel(**metric_value)
+                MetricsPackageExceptionModel(
+                    detail=metric_value["error"], status_code=metric_value["status_code"]
+                )
                 if "error" in metric_value
                 else MetricValue(**metric_value)
             )

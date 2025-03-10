@@ -1,7 +1,6 @@
 import uuid
 
 from common.models.common import WorkerError
-from common.models.pipeline import Batch, MetricCalculationJob
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from common.models import (
@@ -11,10 +10,13 @@ from common.models import (
     DatasetResponse,
     ModelResponse,
 )
-from metrics.models import WorkerException, TaskType
 from worker.worker import Worker
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestException
+from common.rabbitmq.constants import STATUS_QUEUE
+from common.models.pipeline import Batch, JobStatus, JobStatusMessage, MetricCalculationJob
+from metrics.models import WorkerException, TaskType
 import json
+
 
 worker = Worker()
 
@@ -428,6 +430,119 @@ async def test_fetch_data_invalid_data_format_gives_worker_exception(mock_get):
         await worker.fetch_data("http://example.com/data", "data_key", 1)
 
     assert "Data error - Incorrect format from dataset API:" in str(excinfo.value)
+
+
+@patch("worker.worker.requests.get")
+@pytest.mark.asyncio
+async def test_fetch_data_get_exceptions_are_handled(mock_get):
+    """Test that WorkerException is raised when an error occurs during get request."""
+
+    errors = [
+        ConnectionError("Connection error"),
+        Timeout("Timeout error"),
+        HTTPError("HTTP error"),
+        RequestException("Request error"),
+        Exception("Some other error occurred"),
+    ]
+
+    for error in errors:
+        mock_response = MagicMock()
+        mock_response.raise_for_status.side_effect = error
+        mock_get.return_value = mock_response
+
+        with pytest.raises(WorkerException):
+            await worker.fetch_data("http://example.com/data", "data_key", 1)
+
+
+@patch("worker.worker.requests.get")
+@pytest.mark.asyncio
+async def test_fetch_data_unknown_exception_during_parsing(mock_get):
+    """Test that WorkerException is raised when an unknown exception occurs during parsing."""
+    mock_response = MagicMock()
+    mock_response.headers = {"Content-Type": "application/json"}
+    mock_response.json.side_effect = Exception("Some error occurred")
+    mock_response.raise_for_status.return_value = None
+    mock_get.return_value = mock_response
+
+    with pytest.raises(WorkerException):
+        await worker.fetch_data("http://example.com/data", "data_key", 1)
+
+
+@patch("worker.worker.requests.post")
+@pytest.mark.asyncio
+async def test_query_model_post_exceptions_are_handled(mock_post):
+
+    errors = [
+        ConnectionError("Connection error"),
+        Timeout("Timeout error"),
+        HTTPError("HTTP error"),
+        RequestException("Request error"),
+        Exception("Some other error occurred"),
+    ]
+
+    for error in errors:
+        mock_response = MagicMock()
+        mock_response.raise_for_status.side_effect = error
+        mock_post.return_value = mock_response
+
+        mock_data = DatasetResponse(features=[[1, 2]], labels=[[0]], group_ids=[1])
+
+        with pytest.raises(WorkerException):
+            await worker.query_model("http://example.com/predict", mock_data, "model_key")
+
+
+@patch("worker.worker.requests.post")
+@pytest.mark.asyncio
+async def test_query_model_unknown_exception_during_parsing(mock_post):
+    """Test that WorkerException is raised when an unknown exception occurs during parsing."""
+    mock_response = MagicMock()
+    mock_response.headers = {"Content-Type": "application/json"}
+    mock_response.json.side_effect = Exception("Some error occurred")
+    mock_response.raise_for_status.return_value = None
+    mock_post.return_value = mock_response
+
+    mock_data = DatasetResponse(features=[[1, 2]], labels=[[0]], group_ids=[1])
+    with pytest.raises(WorkerException):
+        await worker.query_model("http://example.com/predict", mock_data, "model_key")
+
+
+def test_send_status_completed():
+    with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel, \
+         patch("worker.worker.publish_to_queue") as mock_publish_to_queue:
+        worker.send_status_completed("1234", "ABCD")
+        mock_publish_to_queue.assert_called_once_with(
+            mock_channel,
+            STATUS_QUEUE,
+            JobStatusMessage(
+                job_id="1234",
+                batch_id="ABCD",
+                status=JobStatus.COMPLETED,
+            ).model_dump_json()
+        )
+
+
+def test_send_status_error():
+    with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel, \
+         patch("worker.worker.publish_to_queue") as mock_publish_to_queue:
+        worker.send_status_error("1234", "ABCD", "error message")
+        mock_publish_to_queue.assert_called_once_with(
+            mock_channel,
+            STATUS_QUEUE,
+            JobStatusMessage(
+                job_id="1234",
+                batch_id="ABCD",
+                status=JobStatus.ERRORED,
+                errorMessage="error message",
+            ).model_dump_json()
+        )
+
+
+def test_convert_to_numeric_classes():
+    predicted_labels = [["Class A"], ["Class B"], ["Class A"], ["Class B"]]
+    true_labels = [["Class B"], ["Class B"], ["Class A"], ["Class B"]]
+    new_predicted_labels, new_true_labels = worker.convert_to_numeric_classes(predicted_labels, true_labels)
+    assert (new_predicted_labels == [[0], [1], [0], [1]] and new_true_labels == [[1], [1], [0], [1]]) or \
+           (new_predicted_labels == [[1], [0], [1], [0]] and new_true_labels == [[0], [0], [1], [0]])
 
 
 @patch("worker.worker.requests.post")
