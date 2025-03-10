@@ -9,8 +9,10 @@ import requests
 # TODO: Update pydocs for regression tasks
 
 
-def _finite_difference_gradient(info: CalculateRequest,
-                                h: float = 1e-5) -> np.ndarray:
+def _finite_difference_gradient_predictions(
+    info: CalculateRequest,
+    h: float = 1e-5
+) -> np.ndarray:
     """
     Compute the finite difference approximation of the gradient for given data.
 
@@ -32,18 +34,57 @@ def _finite_difference_gradient(info: CalculateRequest,
         X_forward[:, i] += h
         X_backward[:, i] -= h
 
-        def predict(x):
-            # Helper function to query the model with perturbed inputs
-            nonlocal info
-            return _query_model(x.reshape(1, -1), info).predictions[0][0]
+        forward_out = np.array(_query_model(X_forward, info).predictions)
+        assert forward_out.shape == (len(X), 1), f"Forward output shape is {forward_out.shape}"
 
-        # Compute the function values (assuming the metric function is applied row-wise)
-        f_forward = np.apply_along_axis(predict, 1, X_forward)
-        f_backward = np.apply_along_axis(predict, 1, X_backward)
+        backward_out = np.array(_query_model(X_backward, info).predictions)
+        assert backward_out.shape == (len(X), 1), f"Backward output shape is {backward_out.shape}"
+
+        forward_out = forward_out.reshape(-1)
+        backward_out = backward_out.reshape(-1)
 
         # Compute gradient using central difference
-        gradients[:, i] = (f_forward - f_backward) / (2 * h)
+        gradients[:, i] = (forward_out - backward_out) / (2 * h)
 
+    return gradients
+
+
+def _finite_difference_gradient_confidence_scores(
+    info: CalculateRequest,
+    h: float = 1e-5
+) -> np.ndarray:
+    """
+    Compute the finite difference approximation of the gradient for given data. Use the
+    confidence scores for the predicted class instead of the predictions.
+
+    :param info: Information required to compute the gradient including info.input_features,
+                 info.confidence_scores, model_url and model_api_key.
+    """
+    X = np.array(info.input_features, dtype=np.float64)
+    num_datapoints, num_columns = X.shape
+    gradients = np.zeros_like(X)
+    print("Calculating finite difference gradient for confidence scores")
+    print(f"Info: {info}")
+    for j in range(num_columns):
+        X_forward = X.copy()
+        X_backward = X.copy()
+        X_forward[:, j] += h
+        X_backward[:, j] -= h
+
+        print("reached calculation of target class indices")
+        # target_class_indices should be a 2D array with shape (num_samples,)
+        # It represents the index of the predicted class for each sample
+        target_class_indices = np.argmax(info.confidence_scores, axis=1)
+
+        forward_out = np.array(_query_model(X_forward, info).confidence_scores)
+        backward_out = np.array(_query_model(X_backward, info).confidence_scores)
+
+        # for each datapoint, get the confidence score of the target class
+        column_forward = forward_out[np.arange(num_datapoints), target_class_indices]
+        column_backward = backward_out[np.arange(num_datapoints), target_class_indices]
+
+        gradients[:, j] = (column_forward - column_backward) / (2 * h)
+    print("returning gradients")
     return gradients
 
 
