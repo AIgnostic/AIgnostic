@@ -6,7 +6,6 @@ from api.__init__ import create_application
 from common.models.pipeline import PipelineJobType, JobFromAPI, PipelineHalt
 
 
-
 # Create a FastAPI TestClient
 app = create_application()
 client = TestClient(app)
