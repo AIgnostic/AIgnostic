@@ -13,7 +13,7 @@ from common.models import (
     JobType,
     AggregatorJob,
     WorkerError,
-    LegislationList
+    LegislationList,
 )
 from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionModel
 from report_generation.utils import get_legislation_extracts, add_llm_insights
@@ -22,7 +22,12 @@ from aggregator.connection_manager import ConnectionManager
 from fastapi import FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-from .utils import LEGISLATION_INFORMATION, filter_legislation_information, userLegislation, LegRequest
+from .utils import (
+    LEGISLATION_INFORMATION,
+    filter_legislation_information,
+    userLegislation,
+    LegRequest,
+)
 
 
 manager = ConnectionManager()
@@ -275,7 +280,8 @@ def process_batch_result(worker_results: WorkerResults, user_id: str):
 
             metric_value_obj = (
                 MetricsPackageExceptionModel(
-                    detail=metric_value["error"], status_code=metric_value["status_code"]
+                    detail=metric_value["error"],
+                    status_code=metric_value["status_code"],
                 )
                 if "error" in metric_value
                 else MetricValue(**metric_value)
@@ -316,7 +322,7 @@ def process_batch_result(worker_results: WorkerResults, user_id: str):
                 message="Generating final report - this may take a few minutes",
                 statusCode=200,
                 content=None,
-            )
+            ),
         )
 
         # send completion message
@@ -358,7 +364,7 @@ def aggregator_generate_report(user_id, aggregates, aggregator):
             message="Fetching Legislation Extracts",
             statusCode=200,
             content=None,
-        )
+        ),
     )
 
     leg = LEGISLATION_INFORMATION
@@ -375,7 +381,7 @@ def aggregator_generate_report(user_id, aggregates, aggregator):
             message="Adding LLM Insights",
             statusCode=200,
             content=None,
-        )
+        ),
     )
     report_properties_section = add_llm_insights(
         report_properties_section, get_api_key()
@@ -388,7 +394,7 @@ def aggregator_generate_report(user_id, aggregates, aggregator):
             message="Added LLM Insights. Sending final report...",
             statusCode=200,
             content=None,
-        )
+        ),
     )
     report_info_section = {
         # TODO: Update with codecarbon info and calls to model from metrics
@@ -413,7 +419,7 @@ def on_result_fetched(ch, method, properties, body):
     body = json.loads(body)
     job = AggregatorJob(**body)
 
-    print(f"Received job: {job}")
+    print(f"Received job of type {job.job_type}: {job}")
 
     if job.job_type == JobType.RESULT:
         process_batch_result(worker_results=job.content, user_id=job.user_id)

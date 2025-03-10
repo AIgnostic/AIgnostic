@@ -90,6 +90,7 @@ class Worker:
         """
         Function to queue an error message
         """
+        print(f"Queueing error for job {user_id}: {error}")
         job = AggregatorJob(
             job_type=JobType.ERROR,
             user_id=user_id,
