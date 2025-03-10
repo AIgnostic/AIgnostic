@@ -1,7 +1,7 @@
 from threading import Thread
 import pytest
 from api.router.api import api
-from mocks.dataset.mock_server import app as data_app
+from mocks.dataset.folktables_mock_server import app as data_app
 from mocks.model.scikit_mock_classifier import app as sk_model_app
 from mocks.api_utils import MOCK_DATASET_API_KEY, MOCK_MODEL_API_KEY
 import uvicorn

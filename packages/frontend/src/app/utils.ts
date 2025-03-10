@@ -8,7 +8,6 @@ import {
 const MIN_SAMPLE_SIZE = 1000;
 const MAX_SAMPLE_SIZE = 10000;
 
-
 async function fetchMetricInfo(): Promise<TaskToMetricMap> {
   try {
     const response = await fetch(BACKEND_FETCH_METRIC_INFO_URL);
@@ -19,7 +18,6 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
     throw error; // Rethrow the error so the caller can handle it
   }
 }
-
 
 async function fetchLegislationInfo(): Promise<LegislationList> {
   try {

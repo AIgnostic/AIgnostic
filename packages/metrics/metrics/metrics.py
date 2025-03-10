@@ -75,18 +75,10 @@ task_type_to_metric = {
         # "class_f1_score",
         "f1_score",
         "roc_auc",
-        # "explanation_stability_score",
-        # "explanation_sparsity_score",
-        # "explanation_fidelity_score",
-        "ood_auroc",
-    ],
-    TaskType.REGRESSION: [
-        "mean_absolute_error",
-        "mean_squared_error",
-        "r_squared",
         "explanation_stability_score",
-        # "explanation_sparsity_score",
-        # "explanation_fidelity_score",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
+        "ood_auroc",
     ],
     # TODO: Review which metrics really apply
     TaskType.TEXT_CLASSIFICATION: [
@@ -96,12 +88,21 @@ task_type_to_metric = {
         "f1_score",
         "roc_auc",
         "expl_stability_text_input",
-        # "expl_sparsity_text_input",
-        # "expl_fidelity_text_input"
+        # "expl_sparsity_text_input",  # TODO: Test
+        # "expl_fidelity_text_input",  # TODO: Test
+        "ood_auroc",
+    ],
+    TaskType.REGRESSION: [
+        "mean_absolute_error",
+        "mean_squared_error",
+        "r_squared",
+        "explanation_stability_score",
+        "explanation_sparsity_score",
+        "explanation_fidelity_score",
     ],
     TaskType.NEXT_TOKEN_GENERATION: [
         "expl_stability_text_input",
-        "hello_score"
+        "hello_score",
     ]
 }
 """
@@ -234,13 +235,13 @@ metric_to_fn_and_requirements = {
     },
     "explanation_sparsity_score": {
         "function": explanation_sparsity_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "required_inputs": ["input_features", "model_url", "model_api_key"],
         "range": (0, 1),
         "ideal_value": 0.7
     },
     "explanation_fidelity_score": {
         "function": explanation_fidelity_score,
-        "required_inputs": ["input_features", "confidence_scores", "model_url", "model_api_key"],
+        "required_inputs": ["input_features", "model_url", "model_api_key"],
         "range": (0, 1),
         "ideal_value": 0.85
     },
