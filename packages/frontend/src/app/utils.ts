@@ -1,12 +1,13 @@
 import jsPDF from 'jspdf';
-
 import {
   BACKEND_FETCH_METRIC_INFO_URL,
   AGGREGATOR_SERVER_URL,
 } from './constants';
 
+
 const MIN_SAMPLE_SIZE = 1000;
 const MAX_SAMPLE_SIZE = 10000;
+
 
 async function fetchMetricInfo(): Promise<TaskToMetricMap> {
   try {
@@ -18,6 +19,7 @@ async function fetchMetricInfo(): Promise<TaskToMetricMap> {
     throw error; // Rethrow the error so the caller can handle it
   }
 }
+
 
 async function fetchLegislationInfo(): Promise<LegislationList> {
   try {

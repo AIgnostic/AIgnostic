@@ -1,6 +1,7 @@
 from common.models import LegislationInfo
 from pydantic import BaseModel
 
+
 def create_legislation_info(name, url):
     return LegislationInfo(
         name=name,
@@ -22,9 +23,11 @@ LEGISLATION_INFORMATION = {
     )
 }
 
+
 class LegRequest(BaseModel):
     user_id: str
     legislation: list[str]
+
 
 userLegislation = {}
 

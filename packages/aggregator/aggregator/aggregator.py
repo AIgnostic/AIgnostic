@@ -19,11 +19,10 @@ from metrics.models import MetricValue, WorkerResults, MetricsPackageExceptionMo
 from report_generation.utils import get_legislation_extracts, add_llm_insights
 from worker.worker import USER_METRIC_SERVER_URL
 from aggregator.connection_manager import ConnectionManager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from .utils import LEGISLATION_INFORMATION, update_legislation_information, userLegislation, LegRequest
-from pydantic import BaseModel
 
 
 manager = ConnectionManager()
@@ -358,7 +357,13 @@ def aggregator_generate_report(user_id, aggregates, aggregator):
             content=None,
         )
     )
-    report_properties_section = get_legislation_extracts(aggregates, userLegislation[user_id])
+
+    leg = LEGISLATION_INFORMATION
+
+    if user_id in userLegislation:
+        leg = userLegislation[user_id]
+
+    report_properties_section = get_legislation_extracts(aggregates, leg)
     print("Adding LLM Insights")
     manager.send_to_user(
         user_id,

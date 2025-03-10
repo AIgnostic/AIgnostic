@@ -18,7 +18,13 @@ def test_fetch_frontend_information():
 
 
 def test_upload_selected_legislation():
-    response = client.post("/upload-selected-legislation", json={"legislation": ["Legislation1", "Legislation2"]})
+    response = client.post(
+        "/upload-selected-legislation",
+        json={
+            "user_id": "123",
+            "legislation": ["Legislation1", "Legislation2"]
+        }
+    )
     print(response.json())
     assert response.status_code == 200
     assert response.json() is None
