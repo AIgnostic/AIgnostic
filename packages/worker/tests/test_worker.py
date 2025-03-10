@@ -10,11 +10,13 @@ from common.models import (
     DatasetResponse,
     ModelResponse,
 )
-from metrics.models import WorkerException
-from worker.worker import Worker, USER_METRIC_SERVER_URL
+from worker.worker import Worker
 from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestException
 from common.rabbitmq.constants import STATUS_QUEUE
 from common.models.pipeline import Batch, JobStatus, JobStatusMessage, MetricCalculationJob
+from metrics.models import WorkerException, TaskType
+import json
+
 
 worker = Worker()
 
@@ -67,7 +69,7 @@ async def test_process_job_with_user_defined_metrics(mock_post, mock_get):
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -130,7 +132,7 @@ async def test_process_job_user_defined_metrics_server_error(mock_post, mock_get
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -180,7 +182,7 @@ async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -224,9 +226,6 @@ async def test_process_job_clear_user_data_on_success(mock_post, mock_get, mock_
 
         mock_queue_result.assert_called_once()
         mock_send_status_completed.assert_called_once()
-        mock_delete.assert_called_once_with(
-            f"{USER_METRIC_SERVER_URL}/clear-user-data/{job_id}"
-        )
 
 
 @patch("worker.worker.requests.get")
@@ -243,7 +242,7 @@ async def test_process_job_user_defined_metrics_execution_error(mock_post, mock_
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -313,7 +312,7 @@ async def test_process_job_success(mock_calculate_metrics):
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )
@@ -379,34 +378,28 @@ def test_check_model_response():
     worker._check_model_response(predictions, labels)
 
 
-# def test_invalid_job_format_raises_worker_exception():
-#     with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
-#         job = Batch(
-#             job_id=str(uuid.uuid4()),
-#             batch_id=str(uuid.uuid4()),
-#             batch_size=1,
-#             metrics=MetricCalculationJob(
-#                 data_url="http://example.com/data",
-#                 model_url="http://example.com/model",
-#                 data_api_key="data_key",
-#                 model_api_key="model_key",
-#                 metrics=["accuracy"],
-#                 model_type="binary_classification",
-#             ),
-#             total_sample_size=500,
-#         )
-#         job_dict = job.model_dump()
-#         job_dict.pop("metrics")  # now an invalid Job
+def test_invalid_job_format_raises_worker_exception():
+    with patch.object(worker, "_channel", new_callable=MagicMock) as mock_channel:
+        job = Batch(
+            job_id=str(uuid.uuid4()),
+            batch_id=str(uuid.uuid4()),
+            batch_size=1,
+            metrics=MetricCalculationJob(
+                data_url="http://example.com/data",
+                model_url="http://example.com/model",
+                data_api_key="data_key",
+                model_api_key="model_key",
+                metrics=["accuracy"],
+                model_type=TaskType.BINARY_CLASSIFICATION,
+            ),
+            total_sample_size=500,
+        )
+        job_dict = job.model_dump()
+        job_dict.pop("metrics")  # now an invalid Job
 
-#         mock_channel.basic_get.return_value = (
-#             MagicMock(),
-#             MagicMock(),
-#             json.dumps(job_dict).encode("utf-8"),
-#         )
-
-#         with pytest.raises(WorkerException):
-#             worker.fetch_batch()
-#             mock_channel.basic_get.assert_called_once()
+        with pytest.raises(WorkerException):
+            worker.unpack_batch(json.dumps(job_dict))
+            mock_channel.basic_get.assert_called_once()
 
 
 @patch("worker.worker.requests.get")
@@ -606,7 +599,7 @@ async def test_query_model_error_results_in_worker_returning_worker_error():
                     data_api_key="data_key",
                     model_api_key="model_key",
                     metrics=["accuracy"],
-                    model_type="binary classification",
+                    model_type=TaskType.BINARY_CLASSIFICATION,
                 ),
             )
         )
@@ -627,7 +620,7 @@ async def test_worker_exception_during_process_job_send_error_to_frontend():
             data_api_key="data_key",
             model_api_key="model_key",
             metrics=["accuracy"],
-            model_type="binary_classification",
+            model_type=TaskType.BINARY_CLASSIFICATION,
         ),
         total_sample_size=500,
     )

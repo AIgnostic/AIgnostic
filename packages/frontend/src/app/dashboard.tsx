@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ErrorMessage from './components/ErrorMessage';
 import theme from './theme';
@@ -14,16 +14,16 @@ import { pdf } from '@react-pdf/renderer';
 import { BACKEND_STOP_JOB_URL } from './constants';
 import { styles } from './home.styles';
 import { Button } from '@mui/material';
+import { v4 as uuidv4 } from 'uuid';
+import { useUser } from './context/userid.context';
 
 interface DashboardProps {
   onComplete: () => void;
-  socket: WebSocket | null;
-  disconnectRef: React.MutableRefObject<boolean>;
   expectedItems: number;
 }
 
 // Each item from the websocket is an array of Metric objects.
-const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef, expectedItems }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onComplete, expectedItems }) => {
   // 'items' holds each item (which is an array of Metric objects) received from the socket.
   const [items, setItems] = useState<Metric[]>([]);
   const [log, setLog] = useState<string>('Log: Processing metrics...');
@@ -35,40 +35,44 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
   const [retryButton, setRetryButton] = useState<JSX.Element | null>(null);
   const navigate = useNavigate();
 
+  const { disconnectRef, userId, socket, refreshUserId, closeSocket } =
+    useUser();
+
   const buttonRetry = (
     <button
-      onClick={() => navigate(0)}
-      style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-    > 
+      onClick={() => {
+        navigate(0);
+      }}
+      style={{
+        marginTop: '10px',
+        padding: '10px',
+        backgroundColor: '#f44336',
+        color: 'white',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+      }}
+    >
       Retry
     </button>
   );
 
   // const [report, setReport] = useState<Report | null>(null);
 
-  const earlyStop = async () => {
+  const earlyStop = useCallback(async () => {
     // close the socket so that you dont keep receiving errors
-    console.log("Closing socket due to error");
-    if (socket) {
-      disconnectRef.current = true; // intentional disconnect, don't retry
-      socket.close();
-    }
+    console.log('Closing socket due to error');
+    closeSocket();
 
-    const id = sessionStorage.getItem('userId');
-    console.log("Stopping job with id: ", id);
     // ping api to stop processing batches for this job
     await fetch(BACKEND_STOP_JOB_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ job_id: id }),
+      body: JSON.stringify({ job_id: userId }),
     });
-
-    // clear userId in session storage
-    // to avoid reconnecting with the same userId on reload
-    sessionStorage.removeItem('userId');
-  }
+  }, [closeSocket, userId]);
 
   useEffect(() => {
     if (socket) {
@@ -136,11 +140,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
           case 'ERROR': {
             const handleError = () => {
               setShowError(true);
-              setError({ header: 'Error 500:', text: `${data.message} : ${data.content}` });
-              earlyStop()
-              setLog("Log: An error occurred during the computation of the metrics. Please try again later.");
+              setError({
+                header: 'Error 500:',
+                text: `${data.message} : ${data.content}`,
+              });
+              earlyStop();
+              setLog(
+                'Log: An error occurred during the computation of the metrics. Please try again later.'
+              );
               setRetryButton(buttonRetry);
-            }
+            };
             handleError();
             break;
           }
@@ -221,17 +230,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
           marginBottom: '10px',
         }}
       >
-
         <p>{log}</p>
 
-        <Button onClick={async () => {
-          await earlyStop();
-          setItems([]);
-          setLog("Log: Evaluation pipeline cancelled. Reload page?");
-          setRetryButton(buttonRetry);
-        }}
-          style={styles.button}>
-          
+        <Button
+          onClick={async () => {
+            await earlyStop();
+            setItems([]);
+            setLog('Log: Evaluation pipeline cancelled. Reload page?');
+            setRetryButton(buttonRetry);
+          }}
+          style={styles.button}
+        >
           Stop Early
         </Button>
       </div>
@@ -283,32 +292,41 @@ const Dashboard: React.FC<DashboardProps> = ({ onComplete, socket, disconnectRef
                           marginBottom: '8px',
                         }}
                       >
-                        <h3>{metric_name.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</h3>
+                        <h3>
+                          {metric_name
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, (char) => char.toUpperCase())}
+                        </h3>
                       </div>
                       <div>
-                        {(metric_info.error !== null) ?
+                        {metric_info.error !== null ? (
                           <div>
-                            <p style={{ color: 'red' }}>An error occurred during the computation of this metric.</p>
+                            <p style={{ color: 'red' }}>
+                              An error occurred during the computation of this
+                              metric.
+                            </p>
                           </div>
-                          :
+                        ) : (
                           <MetricBar
-
                             min={metric_info.range[0]}
                             max={metric_info.range[1]}
                             actual={metric_info.value}
                             ideal={metric_info.ideal_value}
                             label=""
                           />
-                        }
+                        )}
                       </div>
                     </div>
-                  ))}
+                  )
+                )}
               </div>
             );
           })
-        ) :
-          (retryButton === null) ? <p></p> : retryButton
-        }
+        ) : retryButton === null ? (
+          <p></p>
+        ) : (
+          retryButton
+        )}
       </div>
     </div>
   );

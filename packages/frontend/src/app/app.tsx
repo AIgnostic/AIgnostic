@@ -9,9 +9,9 @@ import Homepage from './home';
 import APIDocs from './api_docs';
 import Dashboard from './dashboard';
 import { MarkdownFiles } from './types';
+import { UserIdSocketProvider } from './context/userid.context';
 
 export function App() {
-
   const location = useLocation();
 
   // Set the tab name based on the current route
@@ -31,7 +31,11 @@ export function App() {
   // Dependency injection-friendly function
   const defaultMarkdownLoader = () => {
     if (import.meta) {
-      return import.meta.glob('./docs/*.md', { query: '?raw', import: 'default', eager: true }) as MarkdownFiles;
+      return import.meta.glob('./docs/*.md', {
+        query: '?raw',
+        import: 'default',
+        eager: true,
+      }) as MarkdownFiles;
     }
     return {} as MarkdownFiles;
   };
@@ -39,10 +43,15 @@ export function App() {
   return (
     <div>
       <ThemeProvider theme={theme}>
-        <Routes>
-          <Route path={`/`} element={<Homepage />} />
-          <Route path={`/api-docs`} element={<APIDocs getMarkdownFiles={defaultMarkdownLoader} />} />
-        </Routes>
+        <UserIdSocketProvider>
+          <Routes>
+            <Route path={`/`} element={<Homepage />} />
+            <Route
+              path={`/api-docs`}
+              element={<APIDocs getMarkdownFiles={defaultMarkdownLoader} />}
+            />
+          </Routes>
+        </UserIdSocketProvider>
       </ThemeProvider>
     </div>
   );

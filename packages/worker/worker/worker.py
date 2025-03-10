@@ -15,7 +15,7 @@ import random
 import threading
 from common.models.pipeline import Batch, JobStatus, JobStatusMessage
 from common.rabbitmq.connect import connect_to_rabbitmq, init_queues, publish_to_queue
-from metrics.models import WorkerResults, convert_calculate_request_to_dict
+from metrics.models import WorkerResults, convert_calculate_request_to_dict, TaskType
 import requests
 from pydantic.networks import HttpUrl
 import metrics.metrics as metrics_lib
@@ -204,7 +204,7 @@ class Worker:
 
         try:
             response = requests.post(
-                url, json=data.model_dump(), headers=headers, timeout=10
+                url, json=data.model_dump(), headers=headers, timeout=90
             )
 
             # Raise for status (HTTPError for 4xx, 5xx)
@@ -286,13 +286,8 @@ class Worker:
 
             print(f"Metrics to compute: {metrics_data.metrics}")
 
-            # some preprocessing for FinBERT
-            # TODO: Need to sort out how to handle this properly
-            if metrics_data.model_type == "binary_classification":
-                predicted_labels, true_labels = self.binarize_finbert_output(
-                    predicted_labels, true_labels
-                )
-            elif metrics_data.model_type == "multi_class_classification":
+            if metrics_data.model_type == TaskType.BINARY_CLASSIFICATION or \
+               metrics_data.model_type == TaskType.MULTI_CLASS_CLASSIFICATION:
                 predicted_labels, true_labels = self.convert_to_numeric_classes(
                     predicted_labels, true_labels
                 )
@@ -313,7 +308,7 @@ class Worker:
                 model_url=convert_localhost_url(str(metrics_data.model_url)),
                 model_api_key=metrics_data.model_api_key,
                 total_sample_size=batch.total_sample_size,
-                regression_flag=metrics_data.model_type == "regression",
+                regression_flag=metrics_data.model_type == TaskType.REGRESSION,
             )
 
             # Calculate metrics
@@ -370,16 +365,6 @@ class Worker:
 
                 except Exception as e:
                     print(f"ERROR EXECUTING USER METRIC: {e}")
-
-            if len(user_defined_metrics) != 0 or user_defined_metrics is not None:
-                print(f"Final Results with user metrics: {worker_results}")
-                try:
-                    clear_response = requests.delete(
-                        f"{USER_METRIC_SERVER_URL}/clear-user-data/{batch.job_id}"
-                    )
-                    print(f"Clear response: {clear_response}")
-                except Exception as e:
-                    print(f"Error clearing user data: {e}")
 
             self.queue_result(worker_results, batch.job_id)
             self.send_status_completed(batch.job_id, batch.batch_id)
