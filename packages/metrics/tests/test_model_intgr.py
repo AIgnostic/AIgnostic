@@ -1,5 +1,5 @@
 from metrics.models import CalculateRequest
-from metrics.utils import _finite_difference_gradient
+from metrics.utils import _finite_difference_gradient_predictions
 from tests.metric_mocks.mock_model_finite_diff_grad import (
     TEST_INPUT,
     EPSILON,
@@ -27,7 +27,7 @@ def test_finite_diff_gradient(server_factory):
             model_url=f"http://{HOST}:{server_configs[metric_name]['port']}/predict",
         )
 
-        result = _finite_difference_gradient(info, EPSILON)
+        result = _finite_difference_gradient_predictions(info, EPSILON)
 
         assert len(result) == len(TEST_INPUT), (
             f"Expected gradient to have {len(TEST_INPUT)} samples, but got {len(result)}"

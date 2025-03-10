@@ -2,12 +2,13 @@
 
 from typing import Callable
 from metrics.models import (
-    CalculateRequest
+    CalculateRequest,
 )
 from metrics.utils import (
     _query_model,
     _lime_explanation,
-    _finite_difference_gradient
+    _finite_difference_gradient_predictions,
+    _finite_difference_gradient_confidence_scores
 )
 from sklearn.metrics import (
     f1_score,
@@ -16,6 +17,8 @@ from sklearn.metrics import (
     mean_squared_error as mse,
     r2_score,
 )
+from metrics.ntg_metric_utils import generate_random_strings
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
 from aif360.metrics import ClassificationMetric
 from aif360.datasets import BinaryLabelDataset
@@ -25,7 +28,7 @@ from metrics.exceptions import (
     MetricsComputationException,
     DataProvisionException
 )
-from common.models import ModelResponse
+from common.models import ModelResponse, TaskType
 
 
 def is_valid_for_per_class_metrics(metric_name, true_labels):
@@ -233,7 +236,38 @@ def roc_auc(info: CalculateRequest) -> float:
     """
     name = "roc_auc"
     is_valid_for_per_class_metrics(name, info.true_labels)
-    return roc_auc_score(info.true_labels, info.predicted_labels, average="macro", multi_class="ovr")
+
+    if info.task_name in [TaskType.BINARY_CLASSIFICATION, TaskType.MULTI_CLASS_CLASSIFICATION]:
+        # Take the maximum confidence score as the score for the label
+        scores = np.max(info.confidence_scores, axis=1)
+
+        # Ensure true_labels is a 1D array
+        true_labels = np.array(info.true_labels).ravel()
+
+        result = roc_auc_score(true_labels, scores, average="macro", multi_class="ovr")
+    elif info.task_name in [TaskType.TEXT_CLASSIFICATION]:
+        # Retain original softmax scores for each class
+        scores = info.confidence_scores
+
+        # Convert string class labels to numeric labels
+        label_encoder = LabelEncoder()
+        numeric_labels = label_encoder.fit_transform(np.array(info.true_labels).ravel())
+
+        result = roc_auc_score(numeric_labels, scores, average="macro", multi_class="ovr")
+    else:
+        raise MetricsComputationException(
+            metric_name=name,
+            detail="Task name is not supported - cannot calculate ROC-AUC",
+            status_code=400,
+        )
+
+    if np.isnan(result):
+        raise MetricsComputationException(
+            metric_name=name,
+            detail="ROC-AUC score is NaN - check if the input is valid",
+            status_code=400,
+        )
+    return result
 
 
 def mean_absolute_error(info: CalculateRequest) -> float:
@@ -418,15 +452,21 @@ def explanation_stability_score(info: CalculateRequest) -> float:
     lime_actual, _ = _lime_explanation(info)
 
     # Calculate gradients for perturbation
-    gradients = _finite_difference_gradient(info, 0.01)
+    gradients = (
+        _finite_difference_gradient_predictions(info, 0.01)
+        if info.regression_flag
+        else _finite_difference_gradient_confidence_scores(info, 0.01)
+    )
     perturbation_constant = 0.01
     perturbation = perturbation_constant * gradients
 
     # Go in direction of greatest loss
+    temp = info.input_features
     info.input_features = info.input_features + perturbation
 
     # Obtain perturbed lime output
     lime_perturbed, _ = _lime_explanation(info)
+    info.input_features = temp
 
     # use cosine-similarity for now but can be replaced with model-provider function later
     # TODO: Took absolute value of cosine similarity - verify if this is correct
@@ -480,11 +520,27 @@ def explanation_fidelity_score(info: CalculateRequest, lime_fn=_lime_explanation
 
     # TODO: Update fidelity_fn implementation after discussion with supervisor
     # Used L-1 Norm for now -> using L2 norm may mean we have to divide by sqrt(N) instead of N
-    def fidelity_fn(x, y) -> float:
-        return np.linalg.norm(x - y, 1)
+    def fidelity_fn(predicted, actual) -> float:
+
+        epsilon = 1e-10
+
+        # Normalise the predictions and actual values to ensure scale invariance
+        predicted = predicted / (np.max(np.abs(predicted)) + epsilon)
+        actual = actual / (np.max(np.abs(actual)) + epsilon)
+
+        return (
+            np.linalg.norm(predicted - actual, 2)
+            / np.sqrt(len(predicted))  # Find average distance using RMSE to ensure scale invariance
+        )
 
     ps = reg_model.predict(info.input_features).reshape(-1, 1)
-    subtracted = fidelity_fn(info.confidence_scores, ps) / len(info.confidence_scores)
+
+    actual = info.predicted_labels if info.regression_flag else info.confidence_scores
+    actual = actual.reshape(-1, 1)
+
+    subtracted = fidelity_fn(ps, actual)
+    print(subtracted)
+
     return 1 - subtracted
 
 
@@ -504,8 +560,40 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
 
     :return: float - the estimated OOD AUROC score
     """
+    if info.task_name == TaskType.TEXT_CLASSIFICATION:
+        # Introduce hard limit to ood_samples due to size constraints
+        num_ood_samples = min(num_ood_samples, 100)
+
+        # In-distribution dataset (list of single-element lists, extracting strings)
+        id_data: list[str] = [sample[0] for sample in info.input_features]
+
+        # Generate OOD samples via random strings of length 10
+        # (TODO: Update to more sophisticated method)
+        ood_data: np.array = generate_random_strings(num_ood_samples).reshape(-1, 1)
+
+        # Call model endpoint to get confidence scores for OOD samples
+        response: ModelResponse = _query_model(ood_data, info)
+
+        # Flatten ID scores (take max probability for each ID sample)
+        id_scores_flat: np.array = np.max(info.confidence_scores, axis=1)
+
+        # Flatten OOD scores (take max confidence per sample)
+        ood_scores_flat: np.array = np.max(response.confidence_scores, axis=1)
+
+        # Construct labels: 1 for ID, 0 for OOD
+        labels = np.concatenate([np.ones(len(id_scores_flat)), np.zeros(num_ood_samples)])
+
+        # Ensure the scores array has the same length as labels
+        scores = np.concatenate([id_scores_flat, ood_scores_flat])
+
+        # Assert lengths match
+        assert len(labels) == len(scores), \
+            f"Length mismatch between labels and scores in OOD-AUROC calculation: {len(labels)} vs {len(scores)}"
+
+        return roc_auc_score(labels, scores)
+
     id_data: np.array = np.array(info.input_features)   # In-distribution dataset (N x d array).
-    d: int = id_data.shape[1]                       # Feature dimensionality
+    d: int = id_data.shape[1]                           # Feature dimensionality
 
     id_scores: list[list] = info.confidence_scores  # Confidence scores for ID samples
 
@@ -516,21 +604,25 @@ def ood_auroc(info: CalculateRequest, num_ood_samples: int = 1000) -> float:
     # Call model endpoint to get confidence scores
     response: ModelResponse = _query_model(ood_data, info)
 
-    # Get confidence scores for OOD samples
-    ood_scores: list[list] = response.confidence_scores
+    # Ensure ID scores are correctly structured (flatten to a 1D list)
+    id_scores_flat = np.array([max(scores) for scores in id_scores])  # Take max probability for each ID sample
+
+    # Ensure OOD scores are correctly structured (take max confidence per sample)
+    ood_scores_flat = np.max(response.confidence_scores, axis=1)
 
     # Construct labels: 1 for ID, 0 for OOD
-    labels = np.concatenate([np.ones(len(id_scores)), np.zeros(num_ood_samples)])
+    labels = np.concatenate([np.ones(len(id_scores_flat)), np.zeros(num_ood_samples)])
 
-    # Flatten the confidence scores for both ID and OOD samples
-    scores = np.concatenate([np.array(id_scores).flatten(), np.array(ood_scores).flatten()])
+    # Ensure the scores array has the same length as labels
+    scores = np.concatenate([id_scores_flat, ood_scores_flat])
 
     # Assert lengths match
-    assert len(labels) == len(scores), "Length mismatch between labels and scores in OOD-AUROC calculation."
+    assert len(labels) == len(scores), \
+        f"Length mismatch between labels and scores in OOD-AUROC calculation: {len(labels)} vs {len(scores)}"
 
     return roc_auc_score(labels, scores)
 
 
 def hello_score(info: CalculateRequest) -> float:
-    print("Predicted Labels:", info.predicted_labels)
+    print("Hello, world!")
     return 0.6
