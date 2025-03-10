@@ -261,7 +261,7 @@ task_type_to_metric[TaskType.BINARY_CLASSIFICATION] = [
 When developing metrics, you may find it useful to use the utility functions provided in the 'metrics/utils.py' file. These functions are designed to help you compute common metrics and perform common operations on your data. Below are some of the utility functions available to you:
 
 \`\`\`python
-def _finite_difference_gradient(info: CalculateRequest,
+def _finite_difference_gradient_predictions(info: CalculateRequest,
                                 h: float = 1e-5) -> np.ndarray:
     """
     Compute the finite difference approximation of the gradient for given data.
@@ -317,7 +317,7 @@ def _lime_explanation(info: CalculateRequest, kernel_width: float = 0.75, esp=Fa
 \`\`\`python
 def _query_model(generated_input_features: np.array, info: CalculateRequest) -> ModelResponse:
     """
-    Helper function to query the model API using the generated input features, 
+    Helper function to query the model API using the generated input features,
     not the input features from the CalculateRequest object.
 
     Params:
@@ -330,7 +330,8 @@ def _query_model(generated_input_features: np.array, info: CalculateRequest) -> 
     ...
     return response
 \`\`\`
-Note that '_query_model' is called multiple times in the '_finite_difference_gradient' and 'lime_explanation' functions during their evaluation. This function sends the generated input data to the model API and returns the predicted response from the supplied model API.
+
+Note that '\\_query_model' is called multiple times in the '\\_finite_difference_gradient_predictions', '\\_finite_difference_gradient_confidence_scores' and 'lime_explanation' functions during their evaluation. This function sends the generated input data to the model API and returns the predicted response from the supplied model API.
 `,eue=`# How do I create an API endpoint for the Model I wish to evaluate?
 
 If you are using the Production version of AIgnostic (i.e. hosted on https://aignostic.docsoc.co.uk) then you will need to be hosting your API endpoint on a URL on the public internet in order for AIgnostic to interface with it. If you are using the local deployment (i.e. running AIgnostic on localhost via './aignostic.py run') then you can use locally hosted servers for your APIs.
