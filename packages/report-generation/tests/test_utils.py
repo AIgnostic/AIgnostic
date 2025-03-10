@@ -3,7 +3,6 @@ from report_generation.utils import extract_legislation_text
 from report_generation.utils import parse_legislation_text
 from report_generation.utils import get_legislation_extracts
 from report_generation.utils import add_llm_insights
-from report_generation.constants import property_to_regulations
 from common.models import LegislationInfo
 from unittest import mock
 import pytest
