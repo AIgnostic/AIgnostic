@@ -12,6 +12,8 @@ Click the 'Getting Started' button to go to our docs page containing information
 - Add your own metrics
 - ...and a lot more information about how you can get the most out of AIgnostic
 
+PLEASE NOTE: If our prod deployment seems to be unavailable, we may have taken it down due to financial constraints (e.g. running out of Digital Ocean student credits). SEGP markers can reach out to kishansambhi@hotmail.co.uk to get the production deployment reinstated. Alternatively use the local environment as described below.
+
 To get started with the local environment (runs a Docker Compose under the hood to run the services in containers locally):
 - Prerequisites: ensure that you have the following dependencies installed
     - ```docker```
