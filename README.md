@@ -12,6 +12,8 @@ Click the 'Getting Started' button to go to our docs page containing information
 - Add your own metrics
 - ...and a lot more information about how you can get the most out of AIgnostic
 
+PLEASE NOTE: If our prod deployment seems to be unavailable, we may have taken it down due to financial constraints (e.g. running out of Digital Ocean student credits). SEGP markers can reach out to kishansambhi@hotmail.co.uk to get the production deployment reinstated. Alternatively use the local environment as described below.
+
 To get started with the local environment (runs a Docker Compose under the hood to run the services in containers locally):
 - Prerequisites: ensure that you have the following dependencies installed
     - ```docker```
@@ -26,6 +28,21 @@ To get started with the local environment (runs a Docker Compose under the hood 
 
 - Currently we can only guarantee that this works on Linux and WSL systems
 - Note that the first build can take a long time (10/20 minutes)
+
+### Mock dataset and model servers
+We have deployed a few mock servers for our own testing purposes.
+SEGP markers may like to use these:
+Finbert prod: http://206.189.119.159:5001/predict
+Finance dataset: http://206.189.119.159:5024/fetch-datapoints
+
+Scikit classifier: http://206.189.119.159:5011/predict
+Folktables dataset: http://206.189.119.159:5010/fetch-datapoints
+
+Scikit regressor: http://206.189.119.159:5012/predict
+Boston housing dataset: http://206.189.119.159:5013/fetch-datapoints
+
+NTG tinystories model: http://206.189.119.159:5027/predict
+Tinystories dataset: http://206.189.119.159:5026/fetch-datapoints
 
 ## Contact
 If you run into any issues or face any bugs that require troubleshooting, feel free to reach out to us via the Discussions section of the AIgnostic repo. We will get back to you at earliest convenience.
